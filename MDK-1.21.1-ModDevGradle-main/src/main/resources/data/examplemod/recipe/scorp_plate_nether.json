@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "X X",
+        "XXX",
+        "XXX"
+    ],
+    "key": {
+        "X": {
+        "item": "examplemod:chitin_nether"
+        }
+    },
+    "result": {
+        "id": "examplemod:scorp_plate_nether",
+        "count": 1
+    }
+}

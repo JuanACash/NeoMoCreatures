@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "XXX",
+    "X X"
+  ],
+  "key": {
+    "X": { "item": "examplemod:reptile_hide" }
+  },
+  "result": { "id": "examplemod:reptile_helmet", "count": 1 }
+}

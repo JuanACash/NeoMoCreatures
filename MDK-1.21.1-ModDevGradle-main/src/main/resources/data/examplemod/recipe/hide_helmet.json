@@ -1,0 +1,16 @@
+{
+    "type":"minecraft:crafting_shaped",
+    "pattern":[
+        "XXX",
+        "X X"
+    ],
+    "key":{
+        "X":{
+            "item":"examplemod:hide"
+        }
+    },
+    "result":{
+        "id":"examplemod:hide_helmet",
+        "count":1
+    }
+}

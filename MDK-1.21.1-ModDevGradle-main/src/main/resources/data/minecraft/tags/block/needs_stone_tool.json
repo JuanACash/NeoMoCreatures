@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:cobbled_wyvstone",
+    "examplemod:cobbled_deep_wyvstone",
+    "examplemod:mossy_cobbled_wyvstone",
+    "examplemod:mossy_cobbled_deep_wyvstone",
+    "examplemod:wyvern_iron_ore",
+    "examplemod:wyvern_lapis_ore",
+    "examplemod:ancient_silver_block"
+  ]
+}

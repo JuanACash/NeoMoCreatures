@@ -1,0 +1,20 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XXX",
+        "XFX",
+        "XXX"
+    ],
+    "key": {
+        "X": {
+        "item": "minecraft:glass"
+        },
+        "F": {
+        "item": "examplemod:firestone_chunk"
+        }
+    },
+    "result": {
+        "id": "examplemod:glass_gleaming",
+        "count": 1
+    }
+}

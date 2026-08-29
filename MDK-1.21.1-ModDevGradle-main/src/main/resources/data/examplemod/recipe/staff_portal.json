@@ -1,0 +1,24 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "  E",
+        " U ",
+        "B  "
+    ],
+    "key": {
+        "E": {
+            "item": "minecraft:ender_eye"
+        },
+        "U": {
+            "item": "examplemod:unicorn_horn"
+        },
+        "B": {
+            "item": "minecraft:blaze_rod"
+        }
+    },
+    "result": {
+        "id": "examplemod:staff_portal",
+        "count": 1
+    }
+    
+}

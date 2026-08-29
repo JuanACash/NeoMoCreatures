@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XXX",
+        "X X",
+        "X X"
+    ],
+    "key": {
+        "X": {
+        "item": "examplemod:ancient_silver_ingot"
+        }
+    },
+    "result": {
+        "id": "examplemod:ancient_silver_leggings",
+        "count": 1
+    }
+}

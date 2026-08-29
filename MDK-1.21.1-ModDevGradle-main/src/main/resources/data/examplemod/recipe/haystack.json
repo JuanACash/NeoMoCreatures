@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WWW",
+    "WWW"
+  ],
+  "key": {
+    "W": { "item": "minecraft:wheat" }
+  },
+  "result": { "id": "examplemod:haystack", "count": 1 }
+}

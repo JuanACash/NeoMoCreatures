@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "examplemod:rat_raw" },
+  "result": { "id": "examplemod:rat_cooked", "count": 1 },
+  "experience": 0.35,
+  "cookingtime": 200
+}

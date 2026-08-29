@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_bottom_top",
+  "textures": {
+    "bottom": "examplemod:block/dirt_ogre_lair",
+    "top": "examplemod:block/grass_top_ogre_lair",
+    "side": "examplemod:block/grass_side_ogre_lair"
+  }
+}

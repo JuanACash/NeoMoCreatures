@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PF",
+    "R "
+  ],
+  "key": {
+    "P": { "item": "minecraft:paper" },
+    "F": { "item": "minecraft:feather" },
+    "R": { "item": "minecraft:redstone" }
+
+  },
+  "result": { "id": "examplemod:scroll_of_freedom", "count": 1 }
+}

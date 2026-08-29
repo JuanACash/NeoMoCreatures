@@ -1,0 +1,20 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " XX",
+        " SX",
+        " S "
+    ],
+    "key": {
+        "X": {
+        "item": "examplemod:ancient_silver_ingot"
+        },
+        "S": {
+        "item": "minecraft:stick"
+        }
+    },
+    "result": {
+        "id": "examplemod:silver_axe",
+        "count": 1
+    }
+}

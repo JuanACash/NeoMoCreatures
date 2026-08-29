@@ -1,0 +1,22 @@
+{
+  "values": [
+    "examplemod:wyvstone",
+    "examplemod:cobbled_wyvstone",
+    "examplemod:deep_wyvstone",
+    "examplemod:cobbled_deep_wyvstone",
+    "examplemod:mossy_cobbled_wyvstone",
+    "examplemod:mossy_cobbled_deep_wyvstone",
+    "examplemod:wyvern_diamond_ore",
+    "examplemod:wyvern_emerald_ore",
+    "examplemod:wyvern_lapis_ore",
+    "examplemod:wyvern_gold_ore",
+    "examplemod:wyvern_iron_ore",
+    "examplemod:wyvern_ancient_ore",
+    "examplemod:ancient_silver_block",
+    "examplemod:silver_sandstone",
+    "examplemod:silver_sandstone_carved",
+    "examplemod:silver_sandstone_smooth",
+    "examplemod:ore_firestone",
+    "examplemod:glass_gleaming"
+  ]
+}

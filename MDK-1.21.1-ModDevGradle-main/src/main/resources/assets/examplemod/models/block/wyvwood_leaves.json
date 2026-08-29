@@ -1,0 +1,6 @@
+{
+  "parent": "block/leaves",
+  "textures": {
+    "all": "examplemod:block/leaves_wyvwood"
+  }
+}

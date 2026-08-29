@@ -1,0 +1,23 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XGX",
+        "GEG",
+        "XGX"
+    ],
+    "key": {
+        "X": {
+        "item": "minecraft:bone"
+        },
+        "G": {
+        "item": "minecraft:gold_nugget"
+        },
+        "E": {
+        "item": "minecraft:ender_pearl"
+        }
+    },
+    "result": {
+        "id": "examplemod:amulet_bone",
+        "count": 1
+    }
+}

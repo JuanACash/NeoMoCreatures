@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:scorp_boots_cave", "examplemod:scorp_boots_dirt", "examplemod:scorp_boots_nether",
+    "examplemod:scorp_boots_frost", "examplemod:scorp_boots_undead",
+    "examplemod:ancient_silver_boots",
+    "examplemod:fur_boots", "examplemod:reptile_boots", "examplemod:hide_boots"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XS",
+        "SS"
+    ],
+    "key": {
+        "X": {
+        "item": "minecraft:diamond_axe"
+        },
+        "S": {
+        "item": "examplemod:scorp_sting_cave"
+        }
+    },
+    "result": {
+        "id": "examplemod:scorp_axe_cave",
+        "count": 1
+    }
+}

@@ -1,0 +1,5 @@
+{
+  "parent": "block/leaves",
+  "render_type": "minecraft:cutout_mipped",
+  "textures": { "all": "examplemod:block/leaves_ogre_lair" }
+}

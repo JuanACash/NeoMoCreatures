@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XXX",
+        "X X"
+    ],
+    "key": {
+        "X": {
+        "item": "examplemod:chitin_frost"
+        }
+    },
+    "result": {
+        "id": "examplemod:scorp_helmet_frost",
+        "count": 1
+    }
+}

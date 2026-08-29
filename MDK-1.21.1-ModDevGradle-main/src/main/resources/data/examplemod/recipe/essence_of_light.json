@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " A ",
+    " B ",
+    " C "
+  ],
+  "key": {
+    "A": { "item": "examplemod:essence_of_undead" },
+    "B": { "item": "examplemod:essence_of_fire" },
+    "C": { "item": "examplemod:essence_of_darkness" }
+  },
+  "result": { "id": "examplemod:essence_of_light", "count": 1 }
+}

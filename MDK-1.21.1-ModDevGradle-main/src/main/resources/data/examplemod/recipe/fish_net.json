@@ -1,0 +1,20 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " S ",
+        "TST",
+        "STS"
+    ],
+    "key": {
+        "T": {
+        "item": "examplemod:shark_teeth"
+        },
+        "S": {
+            "item": "minecraft:string"
+        }
+    },
+    "result": {
+        "id": "examplemod:fish_net",
+        "count": 1
+    }
+}

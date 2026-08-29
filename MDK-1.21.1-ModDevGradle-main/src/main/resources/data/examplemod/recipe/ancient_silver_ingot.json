@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "###",
+        "###",
+        "###"
+    ],
+    "key": {
+        "#": {
+            "item": "examplemod:ancient_silver_nugget"
+        }
+    },
+    "result": {
+        "id": "examplemod:ancient_silver_ingot",
+        "count": 1
+    }
+}

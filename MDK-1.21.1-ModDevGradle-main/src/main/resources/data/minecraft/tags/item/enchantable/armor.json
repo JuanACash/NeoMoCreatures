@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:scorp_helmet_cave", "examplemod:scorp_plate_cave", "examplemod:scorp_legs_cave", "examplemod:scorp_boots_cave",
+    "examplemod:scorp_helmet_dirt", "examplemod:scorp_plate_dirt", "examplemod:scorp_legs_dirt", "examplemod:scorp_boots_dirt",
+    "examplemod:scorp_helmet_nether", "examplemod:scorp_plate_nether", "examplemod:scorp_legs_nether", "examplemod:scorp_boots_nether",
+    "examplemod:scorp_helmet_frost", "examplemod:scorp_plate_frost", "examplemod:scorp_legs_frost", "examplemod:scorp_boots_frost",
+    "examplemod:scorp_helmet_undead", "examplemod:scorp_plate_undead", "examplemod:scorp_legs_undead", "examplemod:scorp_boots_undead",
+    "examplemod:ancient_silver_helmet", "examplemod:ancient_silver_chestplate", "examplemod:ancient_silver_leggings", "examplemod:ancient_silver_boots",
+    "examplemod:fur_helmet", "examplemod:fur_chest", "examplemod:fur_legs", "examplemod:fur_boots",
+    "examplemod:reptile_helmet", "examplemod:reptile_plate", "examplemod:reptile_legs", "examplemod:reptile_boots",
+    "examplemod:hide_helmet", "examplemod:hide_chest", "examplemod:hide_legs", "examplemod:hide_boots"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:scorp_helmet_cave", "examplemod:scorp_helmet_dirt", "examplemod:scorp_helmet_nether",
+    "examplemod:scorp_helmet_frost", "examplemod:scorp_helmet_undead",
+    "examplemod:ancient_silver_helmet",
+    "examplemod:fur_helmet", "examplemod:reptile_helmet", "examplemod:hide_helmet"
+  ]
+}

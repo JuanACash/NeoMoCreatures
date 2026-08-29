@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " W ",
+    "CHC",
+    " W "
+  ],
+  "key": {
+    "W": { "item": "minecraft:white_wool" },
+    "C": { "item": "minecraft:chest" },
+    "H": { "item": "examplemod:hide" }
+  },
+  "result": { "id": "examplemod:elephant_chest", "count": 1 }
+}

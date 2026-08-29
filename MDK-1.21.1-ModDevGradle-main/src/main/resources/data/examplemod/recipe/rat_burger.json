@@ -1,0 +1,26 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "PB ",
+        "SRS",
+        " B "
+    ],
+    "key": {
+        "B": {
+        "item": "minecraft:bread"
+        },
+        "S": {
+        "item": "minecraft:wheat_seeds"
+        },
+        "P": {
+        "item": "minecraft:pumpkin_seeds"
+        },
+        "R": {
+        "item": "examplemod:rat_cooked"
+        }
+    },
+    "result": {
+        "id": "examplemod:rat_burger",
+        "count": 1
+    }
+}

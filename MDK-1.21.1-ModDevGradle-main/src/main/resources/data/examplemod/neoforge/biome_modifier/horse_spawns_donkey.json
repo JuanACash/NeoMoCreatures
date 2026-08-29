@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:savanna_plateau", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga"],
+  "spawners": [
+    { "type": "examplemod:moc_horse", "weight": 6, "minCount": 2, "maxCount": 6 }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CCC",
+    "CHC",
+    "H H"
+  ],
+  "key": {
+    "C": { "item": "minecraft:leather" },
+    "H": { "item": "minecraft:iron_ingot" }
+  },
+  "result": { "id": "examplemod:horse_saddle", "count": 1 }
+}

@@ -1,0 +1,17 @@
+{
+    "type":"minecraft:crafting_shaped",
+    "pattern":[
+        "XXX",
+        "X X",
+        "X X"
+    ],
+    "key":{
+        "X":{
+            "item":"examplemod:fur"
+        }
+    },
+    "result":{
+        "id":"examplemod:fur_legs",
+        "count":1
+    }
+}

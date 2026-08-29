@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:cod" },
+    { "item": "minecraft:porkchop" }
+  ],
+  "result": { "id": "examplemod:pet_food", "count": 4 }
+}

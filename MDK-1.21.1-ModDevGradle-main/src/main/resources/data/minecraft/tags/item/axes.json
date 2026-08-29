@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:silver_axe",
+    "examplemod:shark_axe",
+    "examplemod:scorp_axe_cave",
+    "examplemod:scorp_axe_dirt",
+    "examplemod:scorp_axe_frost",
+    "examplemod:scorp_axe_nether",
+    "examplemod:scorp_axe_undead"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "examplemod:scorp_plate_cave", "examplemod:scorp_plate_dirt", "examplemod:scorp_plate_nether",
+    "examplemod:scorp_plate_frost", "examplemod:scorp_plate_undead",
+    "examplemod:ancient_silver_chestplate",
+    "examplemod:fur_chest", "examplemod:reptile_plate", "examplemod:hide_chest"
+  ]
+}

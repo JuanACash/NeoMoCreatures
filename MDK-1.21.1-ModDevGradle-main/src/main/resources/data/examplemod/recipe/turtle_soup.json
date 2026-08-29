@@ -1,0 +1,12 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "T",
+        "B"
+    ],
+    "key": {
+        "T": { "item": "examplemod:turtle_cooked" },
+        "B": { "item": "minecraft:bowl" }
+    },
+    "result": { "id": "examplemod:turtle_soup", "count": 1 }
+}
