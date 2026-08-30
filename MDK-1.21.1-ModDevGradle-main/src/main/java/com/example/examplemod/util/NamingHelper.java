@@ -28,4 +28,11 @@ public final class NamingHelper {
             PacketDistributor.sendToPlayer(owner, new OpenNamingScreenPayload(entity.getId()));
         }
     }
+
+    /** For a tamed-but-ownerless mob (Scroll of Sale / Reset Owner): opens the
+     *  naming screen for whoever is interacting, since they're the one who will
+     *  become the new owner once they submit a name (see ModNetworking). */
+    public static void promptRenameAndAdopt(Entity entity, ServerPlayer interactingPlayer) {
+        PacketDistributor.sendToPlayer(interactingPlayer, new OpenNamingScreenPayload(entity.getId()));
+    }
 }

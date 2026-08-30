@@ -1,6 +1,7 @@
 package com.example.examplemod.network;
 
 import com.example.examplemod.client.MoCNamingScreen;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -33,9 +34,30 @@ public class ModNetworking {
                                     && context.player().getUUID().equals(tamable.getOwnerUUID()))
                             || (entity instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse
                                     && context.player().getUUID().equals(horse.getOwnerUUID()));
-                    if (entity != null && isOwner) {
+                    // A tamed-but-ownerless mob (Scroll of Sale / Reset Owner) is
+                    // adopted by whoever successfully renames it first.
+                    boolean isAdoptableOwnerless = (entity instanceof net.minecraft.world.entity.TamableAnimal tamable2
+                                    && tamable2.isTame() && tamable2.getOwnerUUID() == null)
+                            || (entity instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse2
+                                    && horse2.isTamed() && horse2.getOwnerUUID() == null);
+                    if (entity != null && (isOwner || isAdoptableOwnerless)) {
+                        if (isAdoptableOwnerless) {
+                            if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable3) {
+                                tamable3.setOwnerUUID(context.player().getUUID());
+                            } else if (entity instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse3) {
+                                horse3.setOwnerUUID(context.player().getUUID());
+                            }
+                        }
                         entity.setCustomName(Component.literal(payload.name()));
                         entity.setCustomNameVisible(true);
+                    }
+                }));
+
+        registrar.playToClient(OpenPlayerInventoryPayload.TYPE, OpenPlayerInventoryPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
                     }
                 }));
                 

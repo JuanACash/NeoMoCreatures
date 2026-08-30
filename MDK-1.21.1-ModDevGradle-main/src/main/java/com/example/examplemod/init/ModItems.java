@@ -445,9 +445,12 @@ public class ModItems {
     public static final ResourceKey<JukeboxSong> SHUFFLING_SONG = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "shuffling"));
     public static final DeferredItem<Item> RECORD_SHUFFLE = ITEMS.registerSimpleItem("record_shuffle", new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(SHUFFLING_SONG));
     public static final DeferredItem<Item> ROPE = ITEMS.registerSimpleItem("rope", new Item.Properties());
-    public static final DeferredItem<Item> SCROLL_OF_FREEDOM = ITEMS.registerSimpleItem("scroll_of_freedom", new Item.Properties());
-    public static final DeferredItem<Item> SCROLL_OF_OWNER = ITEMS.registerSimpleItem("scroll_of_owner", new Item.Properties());
-    public static final DeferredItem<Item> SCROLL_OF_SALE = ITEMS.registerSimpleItem("scroll_of_sale", new Item.Properties());
+    public static final DeferredItem<Item> SCROLL_OF_FREEDOM = ITEMS.register("scroll_of_freedom",
+            () -> new com.example.examplemod.item.ScrollOfFreedomItem(new Item.Properties()));
+    public static final DeferredItem<Item> SCROLL_OF_OWNER = ITEMS.register("scroll_of_owner",
+            () -> new com.example.examplemod.item.ScrollOfResetOwnerItem(new Item.Properties()));
+    public static final DeferredItem<Item> SCROLL_OF_SALE = ITEMS.register("scroll_of_sale",
+            () -> new com.example.examplemod.item.ScrollOfSaleItem(new Item.Properties()));
     public static final DeferredItem<Item> STAFF = ITEMS.registerSimpleItem("staff", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> STAFF2 = ITEMS.registerSimpleItem("staff2", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> STAFF3 = ITEMS.registerSimpleItem("staff3", new Item.Properties().stacksTo(1));

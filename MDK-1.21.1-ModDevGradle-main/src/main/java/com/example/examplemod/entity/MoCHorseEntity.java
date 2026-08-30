@@ -117,10 +117,13 @@ public class MoCHorseEntity extends AbstractHorse {
     public static final int UNDEAD_STAGE_3 = 4;
     public static final int UNDEAD_SKELETON = 5;
 
-    private static final int UNDEAD_STAGE_DURATION_TICKS = 48000; // 2 dias in-game / 40 minutos reales
+    //Time it takes to change to next undead stage. 48000 ticks = 2 in-game days = 40 real-life minutes
+    private static final int UNDEAD_STAGE_DURATION_TICKS = 48000;
 
     private int undeadDecayTicks = 0;
-            
+
+    //Immunity of a horse that jumps over 4 blocks
+    private int fallImmuneTicks = 0;
 
     private static final int UNSET = -1;
     private static final int GESTATION_TICKS = 300;
@@ -215,6 +218,7 @@ public class MoCHorseEntity extends AbstractHorse {
                 if (chosen == Species.HORSE) {
                     setCoat(MoCHorseGenetics.randomWildCoat());
                 }
+                this.setHealth((float) this.getMaxHealth());
             }
             // "Occasionally, babies will spawn in herds."
             if (this.random.nextInt(5) == 0) {
@@ -230,6 +234,7 @@ public class MoCHorseEntity extends AbstractHorse {
         Coat coat = MoCHorseGenetics.randomWildCoat();
         setSpecies(species);
         setCoat(coat);
+        this.setHealth((float) this.getMaxHealth());
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -237,6 +242,73 @@ public class MoCHorseEntity extends AbstractHorse {
                 .add(Attributes.MAX_HEALTH, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.225D)
                 .add(Attributes.JUMP_STRENGTH, 0.7D);
+    }
+
+    // ---------------------------------------------------------------
+    // Per-species/tier stats (salud, velocidad, salto). Los valores de
+    // salto vienen de simular la física real de salto de un caballo
+    // (gravedad 0.08 bloques/tick², drag 0.98) para llegar a la altura
+    // exacta en bloques que se pidió, ya que jump_strength no es lineal
+    // con la altura. Undead/Skeleton no se tocan aparte: al no cambiar
+    // getSpecies(), heredan automáticamente las stats de su contraparte.
+    // ---------------------------------------------------------------
+    private static final double JUMP_1_5_BLOCKS = 0.4965D;
+    private static final double JUMP_2_BLOCKS = 0.5750D;
+    private static final double JUMP_3_BLOCKS = 0.7099D;
+    private static final double JUMP_4_BLOCKS = 0.8254D;
+    private static final double JUMP_4_5_BLOCKS = 0.8791D;
+    private static final double JUMP_5_5_BLOCKS = 0.9790D;
+
+    private static int coatTier(Coat coat) {
+        return switch (coat) {
+            case WHITE, CREAMY, BROWN, DARKBROWN, BLACK -> 1;
+            case BRIGHTCREAMY, SPECKLED, PALEBROWN, GREY -> 2;
+            case PINTO, BRIGHTPINTO, PALESPECKLES -> 3;
+            case SPOTTED, COW -> 4;
+        };
+    }
+
+    private void applyMoCAttributes() {
+        double health;
+        double speed;
+        double jump;
+
+        switch (getSpecies()) {
+            case DONKEY -> { health = 16D; speed = 0.175D; jump = JUMP_1_5_BLOCKS; }
+            case MULE, ZONKY -> { health = 18D; speed = 0.1901D; jump = JUMP_1_5_BLOCKS; }
+            case ZEBRA -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; }
+            case ZORSE -> { health = 24D; speed = 0.2594D; jump = JUMP_4_BLOCKS; }
+            case BATHORSE, NIGHTMARE -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
+            case UNICORN -> { health = 28D; speed = 0.4D; jump = JUMP_5_5_BLOCKS; }
+            // Pegasus/Dark Pegasus: sin dato de salto propio, se asume igual a "especiales".
+            case PEGASUS -> { health = 28D; speed = 0.37D; jump = JUMP_4_5_BLOCKS; }
+            case DARK_PEGASUS -> { health = 28D; speed = 0.34D; jump = JUMP_4_5_BLOCKS; }
+            // Fairy: mismo salto asumido que especiales; velocidad igual al unicornio (pedido explícito).
+            case FAIRY_HORSE -> { health = 30D; speed = 0.4D; jump = JUMP_4_5_BLOCKS; }
+            // Ghost/Ghost winged/Horse bug: no estaban en la lista, se dejan como "especiales" por default.
+            case GHOST, GHOST_WINGED, HORSE_BUG -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
+            case HORSE -> {
+                switch (coatTier(getCoat())) {
+                    case 3 -> { health = 20D; speed = 0.2432D; jump = JUMP_3_BLOCKS; }
+                    case 4 -> { health = 24D; speed = 0.2594D; jump = JUMP_4_BLOCKS; }
+                    default -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; } // tier 1 y 2
+                }
+            }
+            default -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; }
+        }
+
+        net.minecraft.world.entity.ai.attributes.AttributeInstance healthAttr = this.getAttribute(Attributes.MAX_HEALTH);
+        if (healthAttr != null) healthAttr.setBaseValue(health);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speedAttr != null) speedAttr.setBaseValue(speed);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance jumpAttr = this.getAttribute(Attributes.JUMP_STRENGTH);
+        if (jumpAttr != null) jumpAttr.setBaseValue(jump);
+
+        // Nunca cura de gratis (carga/transformación no debe subir la vida actual),
+        // solo evita que quede por encima del nuevo máximo.
+        if (this.getHealth() > this.getMaxHealth()) {
+            this.setHealth(this.getMaxHealth());
+        }
     }
 
     @Override
@@ -332,6 +404,9 @@ public class MoCHorseEntity extends AbstractHorse {
         }
         if (tag.contains("MoCCoat")) {
             setCoat(Coat.valueOf(tag.getString("MoCCoat")));
+        }
+        if (!tag.contains("Health")) {
+            this.setHealth((float) this.getMaxHealth());
         }
 
         if (tag.contains("MoCFairyColor")) {
@@ -571,6 +646,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
     public void setSpecies(Species species) {
         this.entityData.set(DATA_SPECIES, species.ordinal());
+        applyMoCAttributes();
     }
 
     public Coat getCoat() {
@@ -596,6 +672,9 @@ public class MoCHorseEntity extends AbstractHorse {
 
     public void setCoat(Coat coat) {
         this.entityData.set(DATA_COAT, coat.ordinal());
+        if (getSpecies() == Species.HORSE) {
+            applyMoCAttributes();
+        }
     }
 
     public boolean isSterileHybrid() {
@@ -816,7 +895,12 @@ public class MoCHorseEntity extends AbstractHorse {
             openChestMenu(player);
             return;
         }
-        super.openCustomInventoryScreen(player);
+        // Sin cofre: nada de menú de silla/armadura de vanilla — en su lugar,
+        // le pedimos al cliente que abra el inventario normal del jugador.
+        if (player instanceof ServerPlayer serverPlayer) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                    new com.example.examplemod.network.OpenPlayerInventoryPayload());
+        }
     }
 
     @Override
@@ -913,6 +997,15 @@ public class MoCHorseEntity extends AbstractHorse {
         }
         if (this.isTamed() && this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()
                 && !isHorseArmorItem(stack) && !isEssenceItem(stack) && !isVanishing()) {
+            // Antes de montar, dale prioridad a lo que el item en mano quiera hacer
+            // (scrolls, futuros items con su propio interactLivingEntity). Así no hay
+            // que ir agregando exclusiones a mano cada vez que se crea un item nuevo.
+            if (!stack.isEmpty()) {
+                InteractionResult itemResult = stack.interactLivingEntity(player, this, hand);
+                if (itemResult.consumesAction()) {
+                    return itemResult;
+                }
+            }
             if (!this.level().isClientSide) {
                 player.startRiding(this);
             }
@@ -953,9 +1046,16 @@ public class MoCHorseEntity extends AbstractHorse {
         }
 
         // A book lets the owner rename an already-tamed animal at any time.
-        if (this.isTamed() && stack.is(Items.BOOK) && player.getUUID().equals(this.getOwnerUUID())) {
-            if (!this.level().isClientSide) {
-                com.example.examplemod.util.NamingHelper.promptRename(this, this.getOwnerUUID());
+        // An owner-less tamed horse (Scroll of Sale / Reset Owner) can be
+        // renamed by anyone, which makes the renamer its new owner.
+        if (this.isTamed() && stack.is(Items.BOOK)
+                && (player.getUUID().equals(this.getOwnerUUID()) || this.getOwnerUUID() == null)) {
+            if (!this.level().isClientSide && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                if (this.getOwnerUUID() == null) {
+                    com.example.examplemod.util.NamingHelper.promptRenameAndAdopt(this, serverPlayer);
+                } else {
+                    com.example.examplemod.util.NamingHelper.promptRename(this, this.getOwnerUUID());
+                }
             }
             return InteractionResult.SUCCESS;
         }
@@ -1407,6 +1507,9 @@ public class MoCHorseEntity extends AbstractHorse {
             if (this.getMouthTicks() > 0) {
                 this.entityData.set(DATA_MOUTH_TICKS, this.getMouthTicks() - 1);
             }
+            if (this.fallImmuneTicks > 0) {
+                this.fallImmuneTicks--;
+            }
             this.entityData.set(DATA_SYNCED_AGE, this.getAge());
 
             if (this.isVehicle() && this.getGrazeTicks() > 0) {
@@ -1441,11 +1544,7 @@ public class MoCHorseEntity extends AbstractHorse {
                     setSpecies(getTransformTarget());
                     this.entityData.set(DATA_TRANSFORM_TARGET, UNSET);
                     dropArmorIfIncompatible();
-                    if (getSpecies() == Species.PEGASUS) {
-                        applyPegasusSpeedBonus();
-                    } else if (getSpecies() == Species.DARK_PEGASUS) {
-                        applyDarkPegasusSpeedBonus();
-                    }
+                    this.setHealth((float) this.getMaxHealth());
                 }
             }
 
@@ -1488,6 +1587,7 @@ public class MoCHorseEntity extends AbstractHorse {
                     setUndeadStage(UNDEAD_STAGE_0);
                     undeadDecayTicks = 0;
                     dropArmorIfIncompatible();
+                    this.setHealth((float) this.getMaxHealth());
                 }
             }
 
@@ -1683,8 +1783,8 @@ public class MoCHorseEntity extends AbstractHorse {
         foal.setCoat(foalCoat);
         if (foalSpecies == Species.FAIRY_HORSE) {
             foal.setFairyColor(foalFairyColor);
-            foal.applyPegasusSpeedBonus();
         }
+        foal.setHealth((float) foal.getMaxHealth());
         foal.setAge(-24000);
         if (this.getOwnerUUID() != null) {
             foal.setOwnerUUID(this.getOwnerUUID());
@@ -1999,6 +2099,15 @@ public class MoCHorseEntity extends AbstractHorse {
         moveFunction.accept(passenger, x, y, z);
     }
 
+    private double getSafeFallBlocks() {
+        return switch (getSpecies()) {
+            case ZORSE -> 4.2D;
+            case NIGHTMARE, HORSE_BUG -> 4.2D;
+            case HORSE -> coatTier(getCoat()) == 4 ? 4.2D : 3.2D;
+            default -> 3.2D;
+        };
+    }
+
     @Override
     public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
         if (getSpecies() == Species.BATHORSE || getSpecies() == Species.UNICORN
@@ -2006,7 +2115,11 @@ public class MoCHorseEntity extends AbstractHorse {
                 || getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
             return false;
         }
-        return super.causeFallDamage(fallDistance, multiplier, source);
+        double safe = getSafeFallBlocks();
+        if (fallDistance <= safe) {
+            return false;
+        }
+        return super.causeFallDamage(fallDistance - (float) safe, multiplier, source);
     }
 
     @Override
