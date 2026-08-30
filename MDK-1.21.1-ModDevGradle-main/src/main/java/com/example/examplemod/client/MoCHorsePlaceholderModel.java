@@ -214,10 +214,10 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
                 CubeListBuilder.create().texOffs(80, 12).addBox(-2.5F, -10.1F, -7F, 5, 5, 12, new CubeDeformation(0.2F)), headPivot);
         root.addOrReplaceChild("bag_left",
                 CubeListBuilder.create().texOffs(0, 34).addBox(-3F, 0F, 0F, 8, 8, 3),
-                PartPose.offsetAndRotation(-7.5F, 3F, 10F, 0F, 1.570796F, 0F));
+                PartPose.offsetAndRotation(-7.5F, 3.5F, 10F, 0F, 1.570796F, 0F));
         root.addOrReplaceChild("bag_right",
                 CubeListBuilder.create().texOffs(0, 47).addBox(-3F, 0F, 0F, 8, 8, 3),
-                PartPose.offsetAndRotation(4.5F, 3F, 10F, 0F, 1.570796F, 0F));
+                PartPose.offsetAndRotation(4.5F, 3.5F, 10F, 0F, 1.570796F, 0F));
 
         root.addOrReplaceChild("wing_inner_l",
                 CubeListBuilder.create().texOffs(0, 96).addBox(0F, 0F, 0F, 7, 2, 11),
@@ -425,7 +425,20 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         this.bagLeft.visible = chested;
         this.bagRight.visible = chested;
 
-        boolean mouthOpen = entity.getMouthTicks() > 0;
+        int grazeTicks = entity.getGrazeTicks();
+        boolean grazing = grazeTicks > 0;
+
+        float biteAmount = 0F;
+        if (grazing) {
+            int elapsed = MoCHorseEntity.GRAZE_DURATION_TICKS - grazeTicks;
+            float easeIn = Math.min(1F, elapsed / 5F);
+            float easeOut = Math.min(1F, grazeTicks / 5F);
+            biteAmount = Math.min(easeIn, easeOut);
+        }
+
+        boolean chewing = grazing && biteAmount > 0.9F && Mth.sin(ageInTicks * 0.5F) > 0F;
+
+        boolean mouthOpen = entity.getMouthTicks() > 0 || chewing;
         this.upperMouth.visible = !mouthOpen;
         this.lowerMouth.visible = !mouthOpen;
         this.upperMouthOpen.visible = mouthOpen;
@@ -466,21 +479,11 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
                 this.leg4Upper.xRot = danceLeft;
                 }
 
-        int grazeTicks = entity.getGrazeTicks();
-        boolean grazing = grazeTicks > 0;
 
         float tailSway = (grazing || limbSwingAmount > 0.05F) ? Mth.cos(ageInTicks * 0.3F) * 0.15F : 0.0F;
         this.tailA.yRot = tailSway;
         this.tailB.yRot = tailSway;
         this.tailC.yRot = tailSway;
-
-        float biteAmount = 0F;
-        if (grazing) {
-            int elapsed = MoCHorseEntity.GRAZE_DURATION_TICKS - grazeTicks;
-            float easeIn = Math.min(1F, elapsed / 5F);
-            float easeOut = Math.min(1F, grazeTicks / 5F);
-            biteAmount = Math.min(easeIn, easeOut);
-        }
 
         float headBob = entity.isFlyingNow() ? 0F : (dancing
                 ? Mth.cos(ageInTicks * 0.4F) * 0.15F

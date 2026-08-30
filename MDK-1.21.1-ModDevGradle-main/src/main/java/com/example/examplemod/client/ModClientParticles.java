@@ -36,5 +36,6 @@ public class ModClientParticles {
                 sprites -> new com.example.examplemod.client.particle.StarParticle.Provider(sprites, 1.0F, 0.25F, 0.25F));
         event.registerSpriteSet(ModParticles.STAR_FX_BLACK.get(),
                 sprites -> new com.example.examplemod.client.particle.StarParticle.Provider(sprites, 0.35F, 0.35F, 0.35F));
+        event.registerSpriteSet(ModParticles.VANISH_FX.get(), com.example.examplemod.client.particle.StarParticle.Provider::new);
     }
 }

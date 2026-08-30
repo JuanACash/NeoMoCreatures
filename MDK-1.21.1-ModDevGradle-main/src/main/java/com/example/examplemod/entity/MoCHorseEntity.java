@@ -99,7 +99,13 @@ public class MoCHorseEntity extends AbstractHorse {
         SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_VANISH_TICKS =
         SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
+        private static final EntityDataAccessor<Integer> DATA_VANISH_DURATION_TICKS =
+            SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
 
+
+    public static final int AMULET_VANISH_DURATION_TICKS = 140; // 7 segundos
+    private net.minecraft.world.item.Item pendingAmuletTemplate = null;
+    private java.util.UUID pendingAmuletOwner = null;
 
     public static final int VANISH_DURATION_TICKS = 100; // 5 segundos, igual que el original
 
@@ -268,6 +274,7 @@ public class MoCHorseEntity extends AbstractHorse {
         builder.define(DATA_FAIRY_COLOR_LOCKED, false);
         builder.define(DATA_WING_FLAP_TICKS, 0);
         builder.define(DATA_VANISH_TICKS, 0);
+        builder.define(DATA_VANISH_DURATION_TICKS, VANISH_DURATION_TICKS);
     }
 
     @Override
@@ -403,12 +410,159 @@ public class MoCHorseEntity extends AbstractHorse {
 
     /** 0 = recién nacido el fairy horse, 1 = totalmente opaco, VANISH_DURATION_TICKS = totalmente invisible. */
     public float getVanishAlpha() {
-        return 1.0F - Math.min(1.0F, this.getVanishTicks() / (float) VANISH_DURATION_TICKS);
+        int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
+        return 1.0F - Math.min(1.0F, this.getVanishTicks() / (float) duration);
     }
 
     public void startVanish() {
         this.entityData.set(DATA_VANISH_TICKS, 1);
+        this.entityData.set(DATA_VANISH_DURATION_TICKS, VANISH_DURATION_TICKS);
         this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 0.7F);
+    }
+
+    /** Especie que puede ser capturada por cada tipo de amuleto (vacío). */
+    private boolean matchesAmulet(ItemStack amulet) {
+        if (amulet.is(ModItems.AMULET_BONE.get())) return isUndead();
+        if (amulet.is(ModItems.AMULET_FAIRY.get())) return getSpecies() == Species.FAIRY_HORSE;
+        if (amulet.is(ModItems.AMULET_PEGASUS.get())) {
+            return (getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS) && !isUndead();
+        }
+        if (amulet.is(ModItems.AMULET_GHOST.get())) return getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
+        if (amulet.is(ModItems.PET_AMULET.get())) {
+            boolean excluded = isUndead() // cubre tambien skeleton, ya que isSkeletonStage() implica isUndead()
+                    || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS
+                    || getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED
+                    || getSpecies() == Species.FAIRY_HORSE;
+            return !excluded;
+        }
+        return false;
+    }
+
+    private net.minecraft.world.item.Item filledAmuletFor(net.minecraft.world.item.Item emptyAmulet) {
+        if (emptyAmulet == ModItems.AMULET_BONE.get()) return ModItems.AMULET_BONE_FULL.get();
+        if (emptyAmulet == ModItems.AMULET_FAIRY.get()) return ModItems.AMULET_FAIRY_FULL.get();
+        if (emptyAmulet == ModItems.AMULET_PEGASUS.get()) return ModItems.AMULET_PEGASUS_FULL.get();
+        if (emptyAmulet == ModItems.AMULET_GHOST.get()) return ModItems.AMULET_GHOST_FULL.get();
+        if (emptyAmulet == ModItems.PET_AMULET.get()) return ModItems.PET_AMULET_FULL.get();
+        return null;
+    }
+
+    /** Snapshot completo del caballo — stats generales, pensado para que a futuro cada stage guarde lo suyo. */
+    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("Species", getSpecies().name());
+        tag.putString("Coat", getCoat().name());
+        tag.putFloat("Health", this.getHealth());
+        tag.putDouble("MaxHealth", this.getAttributeValue(Attributes.MAX_HEALTH));
+        tag.putDouble("MovementSpeed", this.getAttributeValue(Attributes.MOVEMENT_SPEED));
+        tag.putDouble("JumpStrength", this.getAttributeValue(Attributes.JUMP_STRENGTH));
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        if (getSpecies() == Species.FAIRY_HORSE) {
+            tag.putString("FairyColor", getFairyColor().name());
+        }
+        if (isUndead()) {
+            tag.putInt("UndeadStage", getUndeadStage());
+            tag.putBoolean("UndeadLocked", isUndeadLocked());
+            tag.putInt("UndeadDecayTicks", this.undeadDecayTicks);
+        }
+        return tag;
+    }
+
+    /** Escribe el tag en el ítem lleno y lo suelta en el suelo — nunca al inventario. */
+    private void finishCapture(net.minecraft.world.item.Item filledItem, CompoundTag tag, boolean preserveEquipment) {
+        if (preserveEquipment) {
+            ItemStack saddle = this.inventory.getItem(0);
+            if (!saddle.isEmpty()) {
+                tag.putString("SaddleItem", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(saddle.getItem()).toString());
+            }
+            ItemStack armor = this.getItemBySlot(EquipmentSlot.BODY);
+            if (!armor.isEmpty()) {
+                tag.putString("ArmorItem", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(armor.getItem()).toString());
+            }
+            if (hasChest()) {
+                tag.putBoolean("HasChest", true);
+                ListTag chestItems = new ListTag();
+                for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                    ItemStack chestStack = chestInventory.getItem(slot);
+                    if (!chestStack.isEmpty()) {
+                        CompoundTag itemTag = new CompoundTag();
+                        itemTag.putInt("Slot", slot);
+                        chestItems.add(chestStack.save(this.registryAccess(), itemTag));
+                    }
+                }
+                tag.put("ChestItems", chestItems);
+            }
+        }
+
+        ItemStack result = new ItemStack(filledItem);
+        result.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        this.spawnAtLocation(result); // siempre al suelo, donde estaba el caballo
+        this.discard();
+    }
+
+    private void startAmuletCapture(ItemStack amulet, Player player) {
+        net.minecraft.world.item.Item filledItem = filledAmuletFor(amulet.getItem());
+        if (filledItem == null) {
+            return;
+        }
+        this.pendingAmuletTemplate = amulet.getItem();
+        this.pendingAmuletOwner = player.getUUID();
+        this.entityData.set(DATA_VANISH_TICKS, 1);
+        this.entityData.set(DATA_VANISH_DURATION_TICKS, AMULET_VANISH_DURATION_TICKS);
+        this.getNavigation().stop();
+        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.playSound(ModSounds.AMULET_VANISH.get(), 1.0F, 1.0F);
+    }
+
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropSaddleAndArmor();
+        dropChestAndContents();
+        CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled); // se transforma en la mano, no cae al suelo
+        this.discard();
+    }
+
+    private void completeAmuletCapture() {
+        net.minecraft.world.item.Item filledItem = filledAmuletFor(this.pendingAmuletTemplate);
+        this.pendingAmuletTemplate = null;
+        if (filledItem == null) {
+            return;
+        }
+        CompoundTag tag = buildAmuletTag(this.pendingAmuletOwner);
+        this.pendingAmuletOwner = null;
+        finishCapture(filledItem, tag, true);
+    }
+
+    public void setSaddle(ItemStack saddle) {
+        this.inventory.setItem(0, saddle);
+    }
+
+    public void setHasChestPublic(boolean value) {
+        setHasChest(value);
+    }
+
+    public void setChestSlotPublic(int slot, ItemStack stack) {
+        chestInventory.setItem(slot, stack);
+    }
+
+    public void setUndeadStagePublic(int stage) {
+        setUndeadStage(stage);
+    }
+
+    public void setUndeadLockedPublic(boolean locked) {
+        setUndeadLocked(locked);
+    }
+
+    public void setUndeadDecayTicksPublic(int ticks) {
+        this.undeadDecayTicks = ticks;
     }
 
     public void setDescendHeld(boolean held) {
@@ -436,7 +590,7 @@ public class MoCHorseEntity extends AbstractHorse {
         return this.entityData.get(DATA_FAIRY_COLOR_LOCKED);
     }
 
-    private void setFairyColorLocked(boolean locked) {
+    public void setFairyColorLocked(boolean locked) {
         this.entityData.set(DATA_FAIRY_COLOR_LOCKED, locked);
     }
 
@@ -534,7 +688,8 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     public boolean wantsChest() {
-        return getSpecies() == Species.DONKEY || getSpecies() == Species.MULE || getSpecies() == Species.ZONKY;
+        return getSpecies() == Species.DONKEY || getSpecies() == Species.MULE || getSpecies() == Species.ZONKY
+                || getSpecies() == Species.FAIRY_HORSE;
     }
 
     public boolean hasChest() {
@@ -635,12 +790,14 @@ public class MoCHorseEntity extends AbstractHorse {
      */
     private void openChestMenu(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
+                    ? this.getDisplayName().copy().append(" Storage")
+                    : Component.literal(this.getSpecies().name() + " Storage");
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inv, p) -> ChestMenu.threeRows(id, inv, this.chestInventory),
-                    Component.literal(this.getSpecies().name() + " Storage")));
+                    title));
         }
     }
-
     /**
      * AbstractHorse already wires up the E-while-riding key to this exact
      * method (that's inherited plumbing, not something added here) — it's
@@ -743,6 +900,17 @@ public class MoCHorseEntity extends AbstractHorse {
         }
 
 
+        if (this.isTamed() && !this.isBaby() && !isVanishing() && matchesAmulet(stack)) {
+            if (!this.level().isClientSide) {
+                if (stack.is(ModItems.PET_AMULET.get())) {
+                    capturePetInstant(player, hand);
+                } else {
+                    ItemStack amulet = stack.split(1);
+                    startAmuletCapture(amulet, player);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
         if (this.isTamed() && this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()
                 && !isHorseArmorItem(stack) && !isEssenceItem(stack) && !isVanishing()) {
             if (!this.level().isClientSide) {
@@ -1231,6 +1399,11 @@ public class MoCHorseEntity extends AbstractHorse {
         this.calculateEntityAnimation(false);
 
         if (!this.level().isClientSide) {
+            if (isVanishing()) {
+                this.getNavigation().stop();
+                this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            }
+
             if (this.getMouthTicks() > 0) {
                 this.entityData.set(DATA_MOUTH_TICKS, this.getMouthTicks() - 1);
             }
@@ -1242,7 +1415,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
             if (this.getGrazeTicks() > 0) {
                 this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
-            } else if (!this.isBaby() && !this.isVehicle() && this.random.nextInt(400) == 0) {
+            } else if (!this.isBaby() && !this.isVehicle() && this.random.nextInt(1000) == 0) { //How common is grazing
                 this.entityData.set(DATA_GRAZE_TICKS, 100);
             }
 
@@ -1287,12 +1460,16 @@ public class MoCHorseEntity extends AbstractHorse {
                     this.entityData.set(DATA_COLOR_TRANSFORM_TARGET, UNSET);
                 }
             }
-
             if (isVanishing()) {
                 int ticks = getVanishTicks() + 1;
-                if (ticks > VANISH_DURATION_TICKS) {
-                    this.dropSaddleAndArmor();
-                    this.discard();
+                int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
+                if (ticks > duration) {
+                    if (this.pendingAmuletTemplate != null) {
+                        completeAmuletCapture(); // ya hace discard() internamente
+                    } else {
+                        this.dropSaddleAndArmor();
+                        this.discard();
+                    }
                 } else {
                     this.entityData.set(DATA_VANISH_TICKS, ticks);
                 }
@@ -1397,6 +1574,24 @@ public class MoCHorseEntity extends AbstractHorse {
                         this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
                         this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
                         dx, dy, dz);
+            }
+
+            if (isVanishing()) {
+                int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
+                float progress = this.getVanishTicks() / (float) duration; // 0 al empezar, 1 al terminar
+                double maxRadius = this.getBbWidth() * 1.3D;
+                double radius = maxRadius * Math.pow(1.0D - progress, 2.0D); // se cierra, cada vez mas rapido
+                double spinSpeed = 0.5D + progress * 2.5D; // rota cada vez mas rapido tambien
+
+                int points = 8;
+                double baseAngle = this.getVanishTicks() * spinSpeed;
+                for (int i = 0; i < points; i++) {
+                    double angle = baseAngle + (2 * Math.PI * i / points);
+                    double px = this.getX() + Math.cos(angle) * radius;
+                    double pz = this.getZ() + Math.sin(angle) * radius;
+                    double py = this.getY() + 0.1D;
+                    this.level().addParticle(ModParticles.VANISH_FX.get(), px, py, pz, 0.0D, 0.01D, 0.0D);
+                }
             }
             // dentro del bloque else (cliente) que ya tienes para el baile de la zebra:
             if (isUndead() && !isSkeletonStage() && !isUndeadLocked() && this.random.nextInt(8) == 0) {                this.level().addParticle(ModParticles.UNDEAD_DECAY.get(),
@@ -1508,7 +1703,7 @@ public class MoCHorseEntity extends AbstractHorse {
         }
     }
 
-    private void dropSaddleAndArmor() {
+    public void dropSaddleAndArmor() {
         ItemStack saddle = this.inventory.getItem(0);
         if (!saddle.isEmpty()) {
             this.spawnAtLocation(saddle);
@@ -1518,6 +1713,20 @@ public class MoCHorseEntity extends AbstractHorse {
         if (!armor.isEmpty()) {
             this.spawnAtLocation(armor);
             this.setItemSlot(EquipmentSlot.BODY, ItemStack.EMPTY);
+        }
+    }
+
+    public void dropChestAndContents() {
+        if (hasChest()) {
+            this.spawnAtLocation(Items.CHEST);
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack stack = chestInventory.getItem(slot);
+                if (!stack.isEmpty()) {
+                    this.spawnAtLocation(stack);
+                }
+            }
+            chestInventory.clearContent();
+            setHasChest(false);
         }
     }
 
@@ -1669,6 +1878,12 @@ public class MoCHorseEntity extends AbstractHorse {
                 && this.getControllingPassenger() == net.minecraft.client.Minecraft.getInstance().player) {
             ascend = net.minecraft.client.Minecraft.getInstance().options.keyJump.isDown();
             descend = com.example.examplemod.client.ModKeyMappings.DESCEND.isDown();
+        }
+
+        if (!this.isVehicle() && this.getGrazeTicks() > 0) {
+            this.getNavigation().stop();
+            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            return;
         }
 
         if (canControlFlight) {

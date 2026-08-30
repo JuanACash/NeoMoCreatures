@@ -49,6 +49,8 @@ public class ModParticles {
             PARTICLE_TYPES.register("star_fx_red", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_BLACK =
             PARTICLE_TYPES.register("star_fx_black", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VANISH_FX =
+            PARTICLE_TYPES.register("vanish_fx", () -> new SimpleParticleType(false));
 
     private static final Map<FairyColor, DeferredHolder<ParticleType<?>, SimpleParticleType>> FAIRY_STAR_BY_COLOR =
             new EnumMap<>(FairyColor.class);

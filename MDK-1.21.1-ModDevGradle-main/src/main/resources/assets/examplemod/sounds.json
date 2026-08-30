@@ -46,6 +46,9 @@
   "item.horse_hurt_ghost": { "sounds": ["examplemod:moc_horse/horse_hurt_ghost"] },
   "item.horse_dying_ghost": { "sounds": ["examplemod:moc_horse/horse_dying_ghost"] },
   "item.horse_mad_ghost": { "sounds": ["examplemod:horse_mad_ghost"] },
+"moc_horse.amulet_appear": { "sounds": ["examplemod:moc_horse/appear"] },
+"moc_horse.amulet_appear_magic": { "sounds": ["examplemod:moc_horse/appear_magic"] },
+"moc_horse.amulet_vanish": { "sounds": ["examplemod:moc_horse/vanish"] },
   "item.whip": {
     "sounds": ["examplemod:items/whip"]
   },

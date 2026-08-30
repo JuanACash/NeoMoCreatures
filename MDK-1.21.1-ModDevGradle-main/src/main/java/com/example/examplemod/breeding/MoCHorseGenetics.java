@@ -56,6 +56,27 @@ public final class MoCHorseGenetics {
                     || this == HORSE_BUG;
         }
     }
+
+    /** Returns the display name for a given species. */
+    public static String displayName(Species species) {
+        return switch (species) {
+            case HORSE -> "Horse";
+            case ZEBRA -> "Zebra";
+            case DONKEY -> "Donkey";
+            case MULE -> "Mule";
+            case ZONKY -> "Zonkey";
+            case ZORSE -> "Zorse";
+            case BATHORSE -> "Bat Horse";
+            case NIGHTMARE -> "Nightmare";
+            case UNICORN -> "Unicorn";
+            case PEGASUS -> "Pegasus";
+            case DARK_PEGASUS -> "Dark Pegasus";
+            case FAIRY_HORSE -> "Fairy Horse";
+            case GHOST -> "Ghost Horse";
+            case GHOST_WINGED -> "Winged Ghost Horse";
+            case HORSE_BUG -> "???";
+        };
+    }
     
     /** Species that can be found/tamed in the wild (zebra has a special taming rule — see notes). */
     public static final Species[] WILD_SPECIES = {

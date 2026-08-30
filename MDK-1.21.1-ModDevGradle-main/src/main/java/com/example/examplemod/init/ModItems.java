@@ -41,16 +41,20 @@ public class ModItems {
     // ==== Items importados de mocreatures_texture_items.zip (placeholders, sin funcion aun) ====
     // ---- Amulets ----
     public static final DeferredItem<Item> AMULET_BONE = ITEMS.registerSimpleItem("amulet_bone", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> AMULET_BONE_FULL = ITEMS.registerSimpleItem("amulet_bone_full", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> AMULET_BONE_FULL = ITEMS.register("amulet_bone_full",
+            () -> new com.example.examplemod.item.FilledAmuletItem(new Item.Properties().stacksTo(1), false, AMULET_BONE.get()));
     public static final DeferredItem<Item> AMULET_FAIRY = ITEMS.registerSimpleItem("amulet_fairy", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> AMULET_FAIRY_FULL = ITEMS.registerSimpleItem("amulet_fairy_full", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> AMULET_FAIRY_FULL = ITEMS.register("amulet_fairy_full",
+            () -> new com.example.examplemod.item.FilledAmuletItem(new Item.Properties().stacksTo(1), true, AMULET_FAIRY.get()));
     public static final DeferredItem<Item> AMULET_GHOST = ITEMS.registerSimpleItem("amulet_ghost", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> AMULET_GHOST_FULL = ITEMS.registerSimpleItem("amulet_ghost_full", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> AMULET_GHOST_FULL = ITEMS.register("amulet_ghost_full",
+            () -> new com.example.examplemod.item.FilledAmuletItem(new Item.Properties().stacksTo(1), false, AMULET_GHOST.get()));
     public static final DeferredItem<Item> AMULET_PEGASUS = ITEMS.registerSimpleItem("amulet_pegasus", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> AMULET_PEGASUS_FULL = ITEMS.registerSimpleItem("amulet_pegasus_full", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> AMULET_PEGASUS_FULL = ITEMS.register("amulet_pegasus_full",
+            () -> new com.example.examplemod.item.FilledAmuletItem(new Item.Properties().stacksTo(1), false, AMULET_PEGASUS.get()));
     public static final DeferredItem<Item> PET_AMULET = ITEMS.registerSimpleItem("pet_amulet", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> PET_AMULET_FULL = ITEMS.registerSimpleItem("pet_amulet_full", new Item.Properties().stacksTo(1));
-
+    public static final DeferredItem<Item> PET_AMULET_FULL = ITEMS.register("pet_amulet_full",
+            () -> new com.example.examplemod.item.FilledAmuletItem(new Item.Properties().stacksTo(1), false, PET_AMULET.get()));
     // ---- Ancient Silver ----
     public static final DeferredItem<ArmorItem> ANCIENT_SILVER_HELMET = ITEMS.register("ancient_silver_helmet",
             () -> new ArmorItem(ModArmorMaterials.SILVER, ArmorItem.Type.HELMET, new Item.Properties().durability(77)));
