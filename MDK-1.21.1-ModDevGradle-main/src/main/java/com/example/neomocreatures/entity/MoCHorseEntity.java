@@ -73,6 +73,8 @@ public class MoCHorseEntity extends AbstractHorse {
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_BUCKING_TICKS =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TAME_HOLD_TICKS =
+            SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SYNCED_AGE =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_GRAZE_TICKS =
@@ -271,6 +273,11 @@ public class MoCHorseEntity extends AbstractHorse {
     private static final double JUMP_4_5_BLOCKS = 0.8791D;
     private static final double JUMP_5_5_BLOCKS = 0.9790D;
 
+    /** Velocidad "andando solo" (sin jinete) para los caballos especiales:
+     *  la misma que un caballo normal tier 4. Zorse, donkey/mule/zonkey,
+     *  zebra y horse (todos los tiers) no se tocan. */
+    private static final double SPECIAL_UNMOUNTED_SPEED = 0.2594D;
+
     private static int coatTier(Coat coat) {
         return switch (coat) {
             case WHITE, CREAMY, BROWN, DARKBROWN, BLACK -> 1;
@@ -323,6 +330,17 @@ public class MoCHorseEntity extends AbstractHorse {
         }
     }
 
+    /** Bathorse, Nightmare, Unicorn, Pegasus, Dark Pegasus, Fairy y Ghost/
+     *  Ghost Winged (incluye sus versiones undead, ya que undead no cambia
+     *  la especie). Zorse, donkey/mule/zonkey, zebra y horse (cualquier
+     *  tier, incluido undead horse) quedan fuera a propósito. */
+    private boolean isSlowedWhenUnridden() {
+        return switch (getSpecies()) {
+            case BATHORSE, NIGHTMARE, UNICORN, PEGASUS, DARK_PEGASUS, FAIRY_HORSE, GHOST, GHOST_WINGED -> true;
+            default -> false;
+        };
+    }
+
     @Override
     protected void randomizeAttributes(RandomSource random) {
     }
@@ -344,6 +362,7 @@ public class MoCHorseEntity extends AbstractHorse {
         builder.define(DATA_COAT, UNSET);
         builder.define(DATA_MOUTH_TICKS, 0);
         builder.define(DATA_BUCKING_TICKS, 0);
+        builder.define(DATA_TAME_HOLD_TICKS, 0);
         builder.define(DATA_SYNCED_AGE, 0);
         builder.define(DATA_GRAZE_TICKS, GRAZE_DURATION_TICKS);
         builder.define(DATA_UNICORN_CHARGE_TICKS, 0);
@@ -709,6 +728,24 @@ public class MoCHorseEntity extends AbstractHorse {
     public boolean isBucking() {
         return this.entityData.get(DATA_BUCKING_TICKS) > 0;
     }
+
+    /** Duración (en ticks) que se deja montar al jugador antes de tirarlo
+     *  en un intento de doma fallido, para dar tiempo a que se sienta como
+     *  si el caballo "aguantara" un poco antes de encabritarse. */
+    private static final int TAME_HOLD_DURATION_TICKS = 40; // 2 segundos
+
+    /** True durante el breve lapso en el que el jugador ya está montado
+     *  tras un intento de doma que va a fallar, pero todavía no se le ha
+     *  tirado ni ha empezado la animación de encabritado. Mientras dure,
+     *  no se debe permitir que nadie más intente montar al caballo. */
+    public boolean isTameHolding() {
+        return this.entityData.get(DATA_TAME_HOLD_TICKS) > 0;
+    }
+
+    /** Marca, del lado servidor únicamente, si el hold en curso terminará
+     *  en un intento de doma fallido (tirar al jugador + encabritarse) en
+     *  vez de simplemente expirar sin hacer nada. */
+    private boolean pendingFailedTameThrow = false;
 
     public int getGrazeTicks() {
         return this.entityData.get(DATA_GRAZE_TICKS);
@@ -1132,22 +1169,31 @@ public class MoCHorseEntity extends AbstractHorse {
 
         if (!this.isTamed()) {
             // Doma gradual por temperamento (la mecánica clásica de vanilla):
-            // cada intento de montar con la mano vacía es un "intento de
-            // doma" real que sube el temper (campo nativo de AbstractHorse,
-            // ya se guarda solo en el NBT); si llega al máximo se doma
-            // exactamente igual que con la manzana (applyOwnership -> pantalla
-            // de nombre). Si falla, o si el jugador tiene algo en la mano, o
-            // si es una especie con alas: el caballo se encabrita y suena
-            // "mad" igual, pero SIN subir el temper. Un caballo salvaje nunca
-            // se puede llegar a montar, en ningún caso; solo se hace
-            // rideable una vez domado. La comida de doma (manzana) ya se
-            // maneja más arriba y sigue funcionando igual.
+            // con la mano vacía el jugador SÍ se monta al caballo. Ahí mismo
+            // se resuelve el intento: sube el temper (campo nativo de
+            // AbstractHorse, ya se guarda solo en el NBT); si llega al
+            // máximo se doma exactamente igual que con la manzana
+            // (applyOwnership -> pantalla de nombre) y el jugador se queda
+            // montado. Si falla, se lo desmonta automáticamente, recibe un
+            // poco de daño y el caballo se encabrita y suena "mad". Mientras
+            // dure esa animación (isBucking()) no se puede volver a montar.
+            // Con un item en la mano, o en una especie con alas: el caballo
+            // reacciona igual (encabritado + sonido) pero nunca se monta y
+            // no sube el temper. La comida de doma (manzana) ya se maneja
+            // más arriba y sigue funcionando igual.
             if (this.isBaby()) {
                 return super.mobInteract(player, hand);
             }
+            if (this.isBucking() || this.isTameHolding()) {
+                // Todavía encabritado por un intento anterior, o ya está
+                // montado y a punto de ser tirado (hold de temper en
+                // curso): ignorar el clic sin repetir sonido/animación
+                // hasta que termine.
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
             if (!this.level().isClientSide) {
                 if (stack.isEmpty() && !isWingedSpecies()) {
-                    tryRidingTameAttempt(player);
+                    attemptRidingTame(player);
                 } else {
                     buckWithoutTemperGain(player);
                 }
@@ -1414,23 +1460,49 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     /**
-     * Un intento de montar un caballo salvaje con la mano vacía. Sube el
-     * temper vanilla (AbstractHorse ya lo guarda en el NBT) y, si con eso
-     * llega al máximo, se doma como con la manzana. Si no, se encabrita y
-     * tira al jugador. Solo se llama en el servidor.
+     * Un intento de montar un caballo salvaje con la mano vacía: el jugador
+     * se monta y ahí mismo se resuelve el intento. Sube el temper vanilla
+     * (AbstractHorse ya lo guarda en el NBT); si con eso llega al máximo se
+     * doma como con la manzana y el jugador se queda montado. Si no, se lo
+     * desmonta, recibe un poco de daño y el caballo se encabrita. Solo se
+     * llama en el servidor.
      */
-    private void tryRidingTameAttempt(Player player) {
+    private void attemptRidingTame(Player player) {
+        player.startRiding(this);
         int gained = 5 + this.random.nextInt(20);
         int newTemper = this.modifyTemper(gained);
         if (newTemper >= this.getMaxTemper()) {
             this.applyOwnership(player);
             this.level().broadcastEntityEvent(this, (byte) 7);
         } else {
-            this.makeMad();
-            this.openMouth();
-            this.entityData.set(DATA_BUCKING_TICKS, 20);
+            // El intento falló, pero en vez de tirar al jugador al
+            // instante lo dejamos montado un rato (TAME_HOLD_DURATION_TICKS)
+            // para que se sienta como si el caballo aguantara un poco.
+            // El tirón real + la animación de encabritado se resuelven en
+            // tick() cuando el hold llega a 0 (ver resolveFailedTameAttempt).
+            this.pendingFailedTameThrow = true;
+            this.entityData.set(DATA_TAME_HOLD_TICKS, TAME_HOLD_DURATION_TICKS);
+        }
+    }
+
+    /**
+     * Resuelve un intento de doma fallido cuyo "hold" ya terminó: tira al
+     * jugador (si todavía sigue montado), le hace un poco de daño, empuja
+     * y arranca la animación de encabritado. Si el jugador ya se había
+     * bajado por su cuenta durante el hold, simplemente se salta el daño y
+     * el empujón pero igual se dispara la animación. Solo se llama en el
+     * servidor, desde tick().
+     */
+    private void resolveFailedTameAttempt() {
+        Entity passenger = this.getFirstPassenger();
+        if (passenger instanceof Player player) {
+            player.stopRiding();
+            player.hurt(this.damageSources().mobAttack(this), 1.0F);
             player.knockback(0.6D, this.getX() - player.getX(), this.getZ() - player.getZ());
         }
+        this.makeMad();
+        this.openMouth();
+        this.entityData.set(DATA_BUCKING_TICKS, 20);
     }
 
     /**
@@ -1626,8 +1698,26 @@ public class MoCHorseEntity extends AbstractHorse {
             if (this.entityData.get(DATA_BUCKING_TICKS) > 0) {
                 this.entityData.set(DATA_BUCKING_TICKS, this.entityData.get(DATA_BUCKING_TICKS) - 1);
             }
+            if (this.entityData.get(DATA_TAME_HOLD_TICKS) > 0) {
+                int holdTicks = this.entityData.get(DATA_TAME_HOLD_TICKS) - 1;
+                this.entityData.set(DATA_TAME_HOLD_TICKS, holdTicks);
+                if (holdTicks <= 0 && this.pendingFailedTameThrow) {
+                    this.pendingFailedTameThrow = false;
+                    this.resolveFailedTameAttempt();
+                }
+            }
             if (this.fallImmuneTicks > 0) {
                 this.fallImmuneTicks--;
+            }
+            if (this.isSlowedWhenUnridden()) {
+                net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (speedAttr != null) {
+                    if (!this.isVehicle() && speedAttr.getBaseValue() != SPECIAL_UNMOUNTED_SPEED) {
+                        speedAttr.setBaseValue(SPECIAL_UNMOUNTED_SPEED);
+                    } else if (this.isVehicle() && speedAttr.getBaseValue() == SPECIAL_UNMOUNTED_SPEED) {
+                        applyMoCAttributes();
+                    }
+                }
             }
             this.entityData.set(DATA_SYNCED_AGE, this.getAge());
 
