@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "L L",
+    " G "
+  ],
+  "key": {
+    "L": { "item": "minecraft:leather" },
+    "G": { "item": "minecraft:gold_ingot" }
+  },
+  "result": { "id": "neomocreatures:medallion", "count": 1 }
+}

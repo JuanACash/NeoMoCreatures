@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "X X",
+        "XXX",
+        "XXX"
+    ],
+    "key": {
+        "X": {
+        "item": "neomocreatures:chitin"
+        }
+    },
+    "result": {
+        "id": "neomocreatures:scorp_plate_dirt",
+        "count": 1
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XSX",
+        "XSX",
+        " S "
+    ],
+    "key": {
+        "X": {
+        "item": "neomocreatures:shark_teeth"
+        },
+        "S": {
+        "item": "minecraft:stick"
+        }
+    },
+    "result": {
+        "id": "neomocreatures:shark_sword",
+        "count": 1
+    }
+}

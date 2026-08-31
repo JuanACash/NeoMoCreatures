@@ -1,7 +1,0 @@
-{
-  "type": "minecraft:crafting_shapeless",
-  "category": "building",
-  "group": "planks",
-  "ingredients": [ { "item": "examplemod:log_ogre_lair" } ],
-  "result": { "count": 4, "id": "examplemod:wood_planks_ogre_lair" }
-}

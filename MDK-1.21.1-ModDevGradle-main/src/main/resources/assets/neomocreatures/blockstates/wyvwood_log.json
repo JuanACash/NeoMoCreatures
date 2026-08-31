@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=y": { "model": "neomocreatures:block/wyvwood_log" },
+    "axis=z": { "model": "neomocreatures:block/wyvwood_log", "x": 90 },
+    "axis=x": { "model": "neomocreatures:block/wyvwood_log", "x": 90, "y": 90 }
+  }
+}

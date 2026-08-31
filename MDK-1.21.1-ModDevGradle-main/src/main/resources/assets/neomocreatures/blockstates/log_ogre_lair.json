@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=y": { "model": "neomocreatures:block/log_ogre_lair" },
+    "axis=z": { "model": "neomocreatures:block/log_ogre_lair", "x": 90 },
+    "axis=x": { "model": "neomocreatures:block/log_ogre_lair", "x": 90, "y": 90 }
+  }
+}

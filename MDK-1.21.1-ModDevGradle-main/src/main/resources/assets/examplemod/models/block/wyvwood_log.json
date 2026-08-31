@@ -1,7 +1,0 @@
-{
-  "parent": "block/cube_column",
-  "textures": {
-    "end": "examplemod:block/log_top_wyvwood",
-    "side": "examplemod:block/log_side_wyvwood"
-  }
-}

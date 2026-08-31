@@ -1,8 +1,8 @@
 {
   "values": [
-    "examplemod:wyvwood_log",
-    "examplemod:wyvwood_planks",
-    "examplemod:log_ogre_lair",
-    "examplemod:wood_planks_ogre_lair"
+    "neomocreatures:wyvwood_log",
+    "neomocreatures:wyvwood_planks",
+    "neomocreatures:log_ogre_lair",
+    "neomocreatures:wood_planks_ogre_lair"
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "M  ",
+    "MS ",
+    "MMM"
+  ],
+  "key": {
+    "M": { "tag": "minecraft:planks" },
+    "S": { "item": "minecraft:lead" }
+  },
+  "result": { "id": "neomocreatures:tusks_wood", "count": 1 }
+}

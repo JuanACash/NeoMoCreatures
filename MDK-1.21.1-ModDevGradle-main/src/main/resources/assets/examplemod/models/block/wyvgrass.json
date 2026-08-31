@@ -1,8 +1,0 @@
-{
-  "parent": "block/cube_bottom_top",
-  "textures": {
-    "bottom": "examplemod:block/dirt_wyvern",
-    "top": "examplemod:block/grass_top_wyvern",
-    "side": "examplemod:block/grass_side_wyvern"
-  }
-}

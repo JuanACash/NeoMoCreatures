@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "X X",
+        "X X"
+    ],
+    "key": {
+        "X": {
+        "item": "neomocreatures:chitin_frost"
+        }
+    },
+    "result": {
+        "id": "neomocreatures:scorp_boots_frost",
+        "count": 1
+    }
+}

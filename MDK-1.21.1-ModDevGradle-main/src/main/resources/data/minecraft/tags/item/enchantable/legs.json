@@ -1,9 +1,9 @@
 {
   "replace": false,
   "values": [
-    "examplemod:scorp_plate_cave", "examplemod:scorp_plate_dirt", "examplemod:scorp_plate_nether",
-    "examplemod:scorp_plate_frost", "examplemod:scorp_plate_undead",
-    "examplemod:ancient_silver_chestplate",
-    "examplemod:fur_chest", "examplemod:reptile_plate", "examplemod:hide_chest"
+    "neomocreatures:scorp_plate_cave", "neomocreatures:scorp_plate_dirt", "neomocreatures:scorp_plate_nether",
+    "neomocreatures:scorp_plate_frost", "neomocreatures:scorp_plate_undead",
+    "neomocreatures:ancient_silver_chestplate",
+    "neomocreatures:fur_chest", "neomocreatures:reptile_plate", "neomocreatures:hide_chest"
   ]
 }

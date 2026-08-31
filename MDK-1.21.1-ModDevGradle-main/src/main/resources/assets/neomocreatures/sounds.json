@@ -1,0 +1,60 @@
+{
+  "moc_horse.grunt": {
+    "sounds": ["neomocreatures:moc_horse/horsegrunt1", "neomocreatures:moc_horse/horsegrunt2", "neomocreatures:moc_horse/horsegrunt3"]
+  },
+  "moc_horse.hurt": {
+    "sounds": ["neomocreatures:moc_horse/horsehurt1", "neomocreatures:moc_horse/horsehurt2"]
+  },
+  "moc_horse.death": {
+    "sounds": ["neomocreatures:moc_horse/horsedying"]
+  },
+  "moc_horse.eating": {
+    "sounds": ["neomocreatures:moc_horse/eating"]
+  },
+  "moc_horse.donkey_grunt": {
+    "sounds": ["neomocreatures:moc_horse/donkeygrunt1", "neomocreatures:moc_horse/donkeygrunt2"]
+  },
+  "moc_horse.donkey_hurt": {
+    "sounds": ["neomocreatures:moc_horse/donkeyhurt"]
+  },
+  "moc_horse.donkey_death": {
+    "sounds": ["neomocreatures:moc_horse/donkeydying"]
+  },
+  "moc_horse.zebra_grunt": {
+    "sounds": ["neomocreatures:moc_horse/zebragrunt1", "neomocreatures:moc_horse/zebragrunt2"]
+  },
+  "moc_horse.zebra_hurt": {
+    "sounds": ["neomocreatures:moc_horse/zebrahurt"]
+  },
+  "moc_horse.drinking":   { "sounds": ["neomocreatures:moc_horse/drinking"] },
+  "moc_horse.transform":  { "sounds": ["neomocreatures:moc_horse/transform"] },
+  "moc_horse.wing_flap":  { "sounds": ["neomocreatures:moc_horse/wing_flap"] },
+  "moc_horse.armor_put":  { "sounds": ["neomocreatures:moc_horse/armor_put"] },
+  "moc_horse.armor_off":  { "sounds": ["neomocreatures:moc_horse/armor_off"] },
+  "moc_horse_mob.grunt1": { "sounds": ["neomocreatures:moc_horse_mob/horsegruntundead1"] },
+  "moc_horse_mob.grunt2": { "sounds": ["neomocreatures:moc_horse_mob/horsegruntundead2"] },
+  "moc_horse_mob.hurt": { "sounds": ["neomocreatures:moc_horse_mob/horsehurtundead"] },
+  "moc_horse_mob.death": { "sounds": ["neomocreatures:moc_horse_mob/horsedyingundead"] },
+  "moc_horse_mob.aggressive": { "sounds": ["neomocreatures:moc_horse_mob/horsemad"] },
+  "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
+  "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
+  "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },
+  "item.horse_dying_undead": { "sounds": ["neomocreatures:moc_horse/horse_dying_undead"] },
+  "item.horse_grunt_ghost1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_ghost1"] },
+  "item.horse_grunt_ghost2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_ghost2"] },
+  "item.horse_grunt_ghost3": { "sounds": ["neomocreatures:moc_horse/horse_grunt_ghost3"] },
+  "item.horse_hurt_ghost": { "sounds": ["neomocreatures:moc_horse/horse_hurt_ghost"] },
+  "item.horse_dying_ghost": { "sounds": ["neomocreatures:moc_horse/horse_dying_ghost"] },
+  "item.horse_mad_ghost": { "sounds": ["neomocreatures:horse_mad_ghost"] },
+"moc_horse.amulet_appear": { "sounds": ["neomocreatures:moc_horse/appear"] },
+"moc_horse.amulet_appear_magic": { "sounds": ["neomocreatures:moc_horse/appear_magic"] },
+"moc_horse.amulet_vanish": { "sounds": ["neomocreatures:moc_horse/vanish"] },
+  "item.whip": {
+    "sounds": ["neomocreatures:items/whip"]
+  },
+  "item.horse_mad_undead": { "sounds": ["neomocreatures:moc_horse/horse_mad_undead"] },
+  "records.shuffling": {
+    "sounds": ["neomocreatures:records/shuffling"],
+    "subtitle": "record.neomocreatures.shuffling"
+  }
+}

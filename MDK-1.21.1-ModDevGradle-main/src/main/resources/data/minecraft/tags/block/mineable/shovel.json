@@ -1,8 +1,8 @@
 {
   "replace": false,
   "values": [
-    "examplemod:wyvdirt",
-    "examplemod:wyvgrass",
-    "examplemod:silver_sand"
+    "neomocreatures:wyvdirt",
+    "neomocreatures:wyvgrass",
+    "neomocreatures:silver_sand"
   ]
 }

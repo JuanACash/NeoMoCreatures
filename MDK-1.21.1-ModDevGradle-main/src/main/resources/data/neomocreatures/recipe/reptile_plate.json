@@ -1,0 +1,12 @@
+{
+    "type":"minecraft:crafting_shaped",
+    "pattern":[
+        "X X",
+        "XXX",
+        "XXX"
+    ],
+    "key":{
+        "X":{"item":"neomocreatures:reptile_hide"}
+    },
+    "result":{"id":"neomocreatures:reptile_plate","count":1}
+}

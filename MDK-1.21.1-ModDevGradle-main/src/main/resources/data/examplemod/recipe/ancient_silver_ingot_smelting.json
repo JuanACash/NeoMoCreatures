@@ -1,7 +1,0 @@
-{
-  "type": "minecraft:smelting",
-  "ingredient": { "item": "examplemod:ancient_silver_scrap" },
-  "result": { "id": "examplemod:ancient_silver_ingot", "count": 1 },
-  "experience": 0.35,
-  "cookingtime": 200
-}

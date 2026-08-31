@@ -1,16 +1,16 @@
 {
   "replace": false,
   "values": [
-    "examplemod:silver_sword",
-    "examplemod:sai",
-    "examplemod:bo",
-    "examplemod:katana",
-    "examplemod:nunchaku",
-    "examplemod:shark_sword",
-    "examplemod:scorp_sword_cave",
-    "examplemod:scorp_sword_dirt",
-    "examplemod:scorp_sword_nether",
-    "examplemod:scorp_sword_frost",
-    "examplemod:scorp_sword_undead"
+    "neomocreatures:silver_sword",
+    "neomocreatures:sai",
+    "neomocreatures:bo",
+    "neomocreatures:katana",
+    "neomocreatures:nunchaku",
+    "neomocreatures:shark_sword",
+    "neomocreatures:scorp_sword_cave",
+    "neomocreatures:scorp_sword_dirt",
+    "neomocreatures:scorp_sword_nether",
+    "neomocreatures:scorp_sword_frost",
+    "neomocreatures:scorp_sword_undead"
   ]
 }

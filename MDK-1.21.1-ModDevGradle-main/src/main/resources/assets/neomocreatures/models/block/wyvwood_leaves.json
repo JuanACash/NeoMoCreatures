@@ -1,0 +1,6 @@
+{
+  "parent": "block/leaves",
+  "textures": {
+    "all": "neomocreatures:block/leaves_wyvwood"
+  }
+}

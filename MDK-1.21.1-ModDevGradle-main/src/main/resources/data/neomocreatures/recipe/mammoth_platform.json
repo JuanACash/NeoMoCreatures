@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LPL",
+    "DDD",
+    "LPL"
+  ],
+  "key": {
+    "L": { "tag": "minecraft:logs" },
+    "D": { "item": "minecraft:lead" },
+    "P": { "tag": "minecraft:planks" }
+  },
+  "result": { "id": "neomocreatures:mammoth_platform", "count": 1 }
+}

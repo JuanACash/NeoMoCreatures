@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PYL",
+    "RMR",
+    "BWB"
+  ],
+  "key": {
+    "W": { "item": "minecraft:yellow_wool" },
+    "B": { "item": "minecraft:blue_wool" },
+    "R": { "item": "minecraft:red_wool" },
+    "P": { "item": "minecraft:pink_dye"},
+    "Y": { "item": "minecraft:yellow_dye"},
+    "L": { "item": "minecraft:lime_dye"},
+    "M": { "item": "neomocreatures:medallion" }
+  },
+  "result": { "id": "neomocreatures:elephant_garment", "count": 1 }
+}

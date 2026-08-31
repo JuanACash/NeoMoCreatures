@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " W ",
+    "CHC",
+    " W "
+  ],
+  "key": {
+    "W": { "item": "minecraft:white_wool" },
+    "C": { "item": "minecraft:chest" },
+    "H": { "item": "neomocreatures:hide" }
+  },
+  "result": { "id": "neomocreatures:elephant_chest", "count": 1 }
+}

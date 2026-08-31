@@ -1,8 +1,8 @@
 {
   "values": [
-    "examplemod:wyvern_diamond_ore",
-    "examplemod:wyvern_emerald_ore",
-    "examplemod:wyvern_gold_ore",
-    "examplemod:wyvern_ancient_ore"
+    "neomocreatures:wyvern_diamond_ore",
+    "neomocreatures:wyvern_emerald_ore",
+    "neomocreatures:wyvern_gold_ore",
+    "neomocreatures:wyvern_ancient_ore"
   ]
 }

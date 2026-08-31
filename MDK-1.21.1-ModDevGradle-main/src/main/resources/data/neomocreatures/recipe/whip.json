@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CLC",
+    "L L",
+    "C I"
+  ],
+  "key": {
+    "C": { "item": "neomocreatures:big_cat_claw" },
+    "L": { "item": "minecraft:leather" },
+    "I": { "item": "minecraft:iron_ingot" }
+  },
+  "result": { "id": "neomocreatures:whip", "count": 1 }
+}

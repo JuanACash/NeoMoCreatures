@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:venison_raw" },
+  "result": { "id": "neomocreatures:venison_cooked", "count": 1 },
+  "experience": 0.35,
+  "cookingtime": 200
+}

@@ -1,0 +1,15 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "#"
+    ],
+    "key": {
+        "#": {
+            "item": "neomocreatures:ancient_silver_ingot"
+        }
+    },
+    "result": {
+        "id": "neomocreatures:ancient_silver_nugget",
+        "count": 9
+    }
+}

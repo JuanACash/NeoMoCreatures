@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " A ",
+    " B ",
+    " C "
+  ],
+  "key": {
+    "A": { "item": "neomocreatures:essence_of_undead" },
+    "B": { "item": "neomocreatures:essence_of_fire" },
+    "C": { "item": "neomocreatures:essence_of_darkness" }
+  },
+  "result": { "id": "neomocreatures:essence_of_light", "count": 1 }
+}

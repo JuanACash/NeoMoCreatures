@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "XXX",
+    "X X"
+  ],
+  "key": {
+    "X": { "item": "neomocreatures:reptile_hide" }
+  },
+  "result": { "id": "neomocreatures:reptile_helmet", "count": 1 }
+}

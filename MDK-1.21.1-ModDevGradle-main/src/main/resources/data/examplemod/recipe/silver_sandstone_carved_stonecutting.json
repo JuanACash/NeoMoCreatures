@@ -1,5 +1,0 @@
-{
-  "type": "minecraft:stonecutting",
-  "ingredient": { "item": "examplemod:silver_sandstone" },
-  "result": { "id": "examplemod:silver_sandstone_carved", "count": 1 }
-}

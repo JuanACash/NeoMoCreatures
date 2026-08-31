@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_bottom_top",
+  "textures": {
+    "bottom": "neomocreatures:block/dirt_ogre_lair",
+    "top": "neomocreatures:block/grass_top_ogre_lair",
+    "side": "neomocreatures:block/grass_side_ogre_lair"
+  }
+}

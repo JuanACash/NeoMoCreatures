@@ -1,7 +1,0 @@
-{
-  "variants": {
-    "axis=y": { "model": "examplemod:block/log_ogre_lair" },
-    "axis=z": { "model": "examplemod:block/log_ogre_lair", "x": 90 },
-    "axis=x": { "model": "examplemod:block/log_ogre_lair", "x": 90, "y": 90 }
-  }
-}

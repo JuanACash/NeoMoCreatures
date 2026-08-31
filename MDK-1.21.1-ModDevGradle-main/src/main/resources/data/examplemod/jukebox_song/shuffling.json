@@ -1,8 +1,0 @@
-{
-  "sound_event": "examplemod:records.shuffling",
-  "description": {
-    "translate": "Shuffling"
-  },
-  "length_in_seconds": 66.5,
-  "comparator_output": 15
-}

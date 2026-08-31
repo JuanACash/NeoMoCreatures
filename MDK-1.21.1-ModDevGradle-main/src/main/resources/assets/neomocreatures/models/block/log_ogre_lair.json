@@ -1,0 +1,4 @@
+{
+  "parent": "block/cube_column",
+  "textures": { "end": "neomocreatures:block/log_top_ogre_lair", "side": "neomocreatures:block/log_side_ogre_lair" }
+}

@@ -1,0 +1,12 @@
+{
+    "type":"minecraft:crafting_shaped",
+    "pattern":[
+        "X X",
+        "XXX",
+        "XXX"
+    ],
+    "key":{
+        "X":{"item":"neomocreatures:fur"}
+    },
+    "result":{"id":"neomocreatures:fur_chest","count":1}
+}

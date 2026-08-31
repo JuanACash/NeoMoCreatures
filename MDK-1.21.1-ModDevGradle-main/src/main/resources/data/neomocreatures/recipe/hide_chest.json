@@ -1,0 +1,17 @@
+{
+    "type":"minecraft:crafting_shaped",
+    "pattern":[
+        "X X",
+        "XXX",
+        "XXX"
+    ],
+    "key":{
+        "X":{
+            "item":"neomocreatures:hide"
+        }
+    },
+    "result":{
+        "id":"neomocreatures:hide_chest",
+        "count":1
+    }
+}

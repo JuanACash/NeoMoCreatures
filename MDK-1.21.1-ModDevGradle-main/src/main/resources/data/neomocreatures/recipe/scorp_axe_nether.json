@@ -1,0 +1,19 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "XS",
+        "SS"
+    ],
+    "key": {
+        "X": {
+        "item": "minecraft:diamond_axe"
+        },
+        "S": {
+        "item": "neomocreatures:scorp_sting_nether"
+        }
+    },
+    "result": {
+        "id": "neomocreatures:scorp_axe_nether",
+        "count": 1
+    }
+}

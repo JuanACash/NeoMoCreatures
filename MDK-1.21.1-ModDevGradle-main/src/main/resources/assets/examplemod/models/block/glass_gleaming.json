@@ -1,5 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "render_type": "minecraft:translucent",
-  "textures": { "all": "examplemod:block/glass_gleaming" }
-}

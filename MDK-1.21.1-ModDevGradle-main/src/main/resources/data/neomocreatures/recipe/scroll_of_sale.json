@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PF"
+  ],
+  "key": {
+    "P": { "item": "minecraft:paper" },
+    "F": { "item": "minecraft:feather" }
+
+  },
+  "result": { "id": "neomocreatures:scroll_of_sale", "count": 1 }
+}
