@@ -29,6 +29,7 @@ import net.minecraft.util.Mth;
 public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> {
 
     private final ModelPart root;
+    private final ModelPart body;
     private final ModelPart head;
     private final ModelPart neck;
     private final ModelPart upperMouth;
@@ -87,6 +88,7 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
 
     public MoCHorsePlaceholderModel(ModelPart root) {
         this.root = root;
+        this.body = root.getChild("body");
         this.head = root.getChild("head");
         this.neck = root.getChild("neck");
         this.upperMouth = root.getChild("upper_mouth");
@@ -448,6 +450,11 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         float f1 = limbSwingAmount;
 
         boolean dancing = entity.getSpecies() == Species.ZEBRA && entity.isDancing();
+        // isBucking() es un flag propio del mod (DATA_BUCKING_TICKS), no el
+        // isStanding() genérico de vanilla: ese también se activa al cargar
+        // el salto montado, y no queremos la pose de encabritado ahí, solo
+        // cuando falla un intento de doma por montura.
+        boolean rearing = entity.isBucking();
 
         float rLegXRot = Mth.cos(f * 0.6662F + (float) Math.PI) * 0.8F * f1;
         float lLegXRot = Mth.cos(f * 0.6662F) * 0.8F * f1;
@@ -466,18 +473,56 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
             if (lLegXRot < lLegXRot2) lLegXRotC = lLegXRot + 0.2618F;
         }
 
-        setLegAngle(this.leg1Upper, this.leg1Lower, this.leg1Hoof, lLegXRot, lLegXRotC);
-        setLegAngle(this.leg2Upper, this.leg2Lower, this.leg2Hoof, rLegXRot, rLegXRotC);
-        setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, rLegXRot, rLegXRotB);
-        setLegAngle(this.leg4Upper, this.leg4Lower, this.leg4Hoof, lLegXRot, lLegXRotB);
-        if (dancing) {
-                float danceRight = Mth.cos(ageInTicks * 0.4F);
-                if (danceRight > 0.1F) danceRight = 0.3F;
-                float danceLeft = Mth.cos(ageInTicks * 0.4F + (float) Math.PI);
-                if (danceLeft > 0.1F) danceLeft = 0.3F;
-                this.leg3Upper.xRot = danceRight;
-                this.leg4Upper.xRot = danceLeft;
-                }
+        if (rearing) {
+                // Patas delanteras (leg3/leg4): el pivote sube y se adelanta para que,
+                // al levantarse, la pata completa quede a la altura del pecho en vez
+                // de girar sobre el hueco donde estaba plantada.
+                this.leg3Upper.y = -2F;
+                this.leg3Upper.z = -2F;
+                this.leg4Upper.y = -2F;
+                this.leg4Upper.z = -2F;
+
+                float frontRightUpper = -1.0471976F + Mth.cos(ageInTicks * 0.4F + (float) Math.PI); // -60° ± vaivén
+                float frontLeftUpper = -1.0471976F + Mth.cos(ageInTicks * 0.4F);
+                float frontLower = 0.7853982F; // 45°, rodilla delantera doblada
+                float rearBrace = 0.2617994F; // 15°, patas traseras plantadas y abiertas
+
+                setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, frontRightUpper, frontLower);
+                setLegAngle(this.leg4Upper, this.leg4Lower, this.leg4Hoof, frontLeftUpper, frontLower);
+                setLegAngle(this.leg1Upper, this.leg1Lower, this.leg1Hoof, -rearBrace, -rearBrace);
+                setLegAngle(this.leg2Upper, this.leg2Lower, this.leg2Hoof, rearBrace, rearBrace);
+        } else {
+                this.leg3Upper.y = 9F;
+                this.leg3Upper.z = -8F;
+                this.leg4Upper.y = 9F;
+                this.leg4Upper.z = -8F;
+
+                setLegAngle(this.leg1Upper, this.leg1Lower, this.leg1Hoof, lLegXRot, lLegXRotC);
+                setLegAngle(this.leg2Upper, this.leg2Lower, this.leg2Hoof, rLegXRot, rLegXRotC);
+                setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, rLegXRot, rLegXRotB);
+                setLegAngle(this.leg4Upper, this.leg4Lower, this.leg4Hoof, lLegXRot, lLegXRotB);
+                if (dancing) {
+                        float danceRight = Mth.cos(ageInTicks * 0.4F);
+                        if (danceRight > 0.1F) danceRight = 0.3F;
+                        float danceLeft = Mth.cos(ageInTicks * 0.4F + (float) Math.PI);
+                        if (danceLeft > 0.1F) danceLeft = 0.3F;
+                        this.leg3Upper.xRot = danceRight;
+                        this.leg4Upper.xRot = danceLeft;
+                        }
+        }
+
+        // Cuerpo y cola siguen la inclinación del encabritado; fuera de rearing
+        // vuelven a su posición neutra (estos ModelPart no se reconstruyen cada
+        // frame, así que hay que restaurarlos explícitamente en el else).
+        this.body.xRot = rearing ? -0.7853982F : 0F; // -45°
+        float tailPivotY = rearing ? 9F : 3F;
+        float tailPivotZ = rearing ? 18F : 14F;
+        this.tailA.y = tailPivotY;
+        this.tailA.z = tailPivotZ;
+        this.tailB.y = tailPivotY;
+        this.tailB.z = tailPivotZ;
+        this.tailC.y = tailPivotY;
+        this.tailC.z = tailPivotZ;
 
 
         float tailSway = (grazing || limbSwingAmount > 0.05F) ? Mth.cos(ageInTicks * 0.3F) * 0.15F : 0.0F;
@@ -511,6 +556,15 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
 
             headXRot = restAngle + (grazeAngle - restAngle) * chargeAmount;
             headY = restY + (grazeY - restY) * chargeAmount;
+        }
+
+        if (rearing) {
+            // Cabeza echada hacia atrás, por encima de la línea de pecho, como
+            // en el encabritado de vanilla. Tiene prioridad sobre el pastoreo
+            // o la carga de unicornio porque es una reacción involuntaria.
+            headXRot = 0.2617994F; // 15°
+            headY = -6F;
+            headZ = -1F;
         }
 
         this.head.xRot = headXRot;

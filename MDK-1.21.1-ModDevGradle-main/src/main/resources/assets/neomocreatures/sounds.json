@@ -45,10 +45,11 @@
   "item.horse_grunt_ghost3": { "sounds": ["neomocreatures:moc_horse/horse_grunt_ghost3"] },
   "item.horse_hurt_ghost": { "sounds": ["neomocreatures:moc_horse/horse_hurt_ghost"] },
   "item.horse_dying_ghost": { "sounds": ["neomocreatures:moc_horse/horse_dying_ghost"] },
-  "item.horse_mad_ghost": { "sounds": ["neomocreatures:horse_mad_ghost"] },
-"moc_horse.amulet_appear": { "sounds": ["neomocreatures:moc_horse/appear"] },
-"moc_horse.amulet_appear_magic": { "sounds": ["neomocreatures:moc_horse/appear_magic"] },
-"moc_horse.amulet_vanish": { "sounds": ["neomocreatures:moc_horse/vanish"] },
+  "item.horse_mad_ghost": { "sounds": ["neomocreatures:moc_horse/horse_mad_ghost"] },
+  "item.horse_mad": { "sounds": ["neomocreatures:moc_horse/horse_mad"] },
+  "moc_horse.amulet_appear": { "sounds": ["neomocreatures:moc_horse/appear"] },
+  "moc_horse.amulet_appear_magic": { "sounds": ["neomocreatures:moc_horse/appear_magic"] },
+  "moc_horse.amulet_vanish": { "sounds": ["neomocreatures:moc_horse/vanish"] },
   "item.whip": {
     "sounds": ["neomocreatures:items/whip"]
   },

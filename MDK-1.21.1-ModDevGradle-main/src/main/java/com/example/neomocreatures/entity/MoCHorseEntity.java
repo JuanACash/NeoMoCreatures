@@ -71,6 +71,8 @@ public class MoCHorseEntity extends AbstractHorse {
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_BUCKING_TICKS =
+            SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SYNCED_AGE =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_GRAZE_TICKS =
@@ -122,7 +124,6 @@ public class MoCHorseEntity extends AbstractHorse {
 
     private int undeadDecayTicks = 0;
 
-    //Immunity of a horse that jumps over 4 blocks
     private int fallImmuneTicks = 0;
 
     private static final int UNSET = -1;
@@ -244,6 +245,17 @@ public class MoCHorseEntity extends AbstractHorse {
                 .add(Attributes.JUMP_STRENGTH, 0.7D);
     }
 
+    public static boolean isExemptZebraRider(net.minecraft.world.entity.player.Player player) {
+        if (!(player.getVehicle() instanceof MoCHorseEntity mount)) {
+            return false;
+        }
+        Species species = mount.getSpecies();
+        if (species == Species.ZEBRA || species == Species.ZORSE) {
+            return true;
+        }
+        return species == Species.HORSE && coatTier(mount.getCoat()) == 4;
+    }
+
     // ---------------------------------------------------------------
     // Per-species/tier stats (salud, velocidad, salto). Los valores de
     // salto vienen de simular la física real de salto de un caballo
@@ -318,10 +330,11 @@ public class MoCHorseEntity extends AbstractHorse {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.5D));
-        this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 6.0F));
-        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new ZebraFleeGoal(this));
+        this.goalSelector.addGoal(2, new PanicGoal(this, 1.5D));
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -330,6 +343,7 @@ public class MoCHorseEntity extends AbstractHorse {
         builder.define(DATA_SPECIES, UNSET);
         builder.define(DATA_COAT, UNSET);
         builder.define(DATA_MOUTH_TICKS, 0);
+        builder.define(DATA_BUCKING_TICKS, 0);
         builder.define(DATA_SYNCED_AGE, 0);
         builder.define(DATA_GRAZE_TICKS, GRAZE_DURATION_TICKS);
         builder.define(DATA_UNICORN_CHARGE_TICKS, 0);
@@ -689,6 +703,13 @@ public class MoCHorseEntity extends AbstractHorse {
         return this.entityData.get(DATA_MOUTH_TICKS);
     }
 
+    /** True mientras dura la pose de encabritado por el bucking de temper
+     *  (a diferencia de entity.isStanding() de vanilla, que también se activa
+     *  al cargar el salto montado; esta es exclusiva de la doma fallida). */
+    public boolean isBucking() {
+        return this.entityData.get(DATA_BUCKING_TICKS) > 0;
+    }
+
     public int getGrazeTicks() {
         return this.entityData.get(DATA_GRAZE_TICKS);
     }
@@ -743,26 +764,35 @@ public class MoCHorseEntity extends AbstractHorse {
     private static final net.minecraft.resources.ResourceLocation PEGASUS_SPEED_MODIFIER_ID =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "pegasus_speed_bonus");
 
-    private void applyPegasusSpeedBonus() {
-        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr =
-                this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-        if (speedAttr != null && speedAttr.getModifier(PEGASUS_SPEED_MODIFIER_ID) == null) {
-            speedAttr.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                    PEGASUS_SPEED_MODIFIER_ID, 0.075D,
-                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
-        }
-    }
-
     private static final net.minecraft.resources.ResourceLocation DARK_PEGASUS_SPEED_MODIFIER_ID =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "dark_pegasus_speed_bonus");
 
-    private void applyDarkPegasusSpeedBonus() {
-        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr =
-                this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-        if (speedAttr != null && speedAttr.getModifier(DARK_PEGASUS_SPEED_MODIFIER_ID) == null) {
-            speedAttr.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                    DARK_PEGASUS_SPEED_MODIFIER_ID, 0.04D,
-                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+    private boolean fleeing = false;
+
+    private static final net.minecraft.resources.ResourceLocation ZEBRA_FLEE_SPEED_MODIFIER_ID =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "zebra_flee_speed");
+
+    public boolean isFleeing() {
+        return this.fleeing;
+    }
+
+    public void setFleeing(boolean fleeing) {
+        if (this.fleeing == fleeing) {
+            return;
+        }
+        this.fleeing = fleeing;
+        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speedAttr == null) {
+            return;
+        }
+        if (fleeing) {
+            if (speedAttr.getModifier(ZEBRA_FLEE_SPEED_MODIFIER_ID) == null) {
+                speedAttr.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        ZEBRA_FLEE_SPEED_MODIFIER_ID, 0.5D,
+                        net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            }
+        } else {
+            speedAttr.removeModifier(ZEBRA_FLEE_SPEED_MODIFIER_ID);
         }
     }
 
@@ -860,6 +890,25 @@ public class MoCHorseEntity extends AbstractHorse {
             case DONKEY, MULE, ZONKY -> ModSounds.DONKEY_DEATH.get();
             default -> ModSounds.HORSE_DEATH.get();
         };
+    }
+
+    /**
+     * Sonido que vanilla reproduce (via makeMad()) cuando un jugador monta
+     * un caballo no tameado y este lo tira al suelo — la forma alternativa
+     * de tameo, junto a la manzana/comida. makeMad() ya viene heredado de
+     * AbstractHorse y ya hace todo lo demás (expulsar al jinete, subir el
+     * "temper" y encabritarse con setStanding(true)); aquí solo elegimos
+     * qué sonido "mad" le corresponde a cada variante.
+     */
+    @Override
+    protected SoundEvent getAngrySound() {
+        if (isUndead()) {
+            return ModSounds.HORSE_MAD_UNDEAD.get();
+        }
+        if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
+            return ModSounds.HORSE_GHOST_MAD.get();
+        }
+        return ModSounds.HORSE_MOB_AGGRESSIVE.get();
     }
 
     /**
@@ -1082,7 +1131,28 @@ public class MoCHorseEntity extends AbstractHorse {
         }
 
         if (!this.isTamed()) {
-            return InteractionResult.PASS;
+            // Doma gradual por temperamento (la mecánica clásica de vanilla):
+            // cada intento de montar con la mano vacía es un "intento de
+            // doma" real que sube el temper (campo nativo de AbstractHorse,
+            // ya se guarda solo en el NBT); si llega al máximo se doma
+            // exactamente igual que con la manzana (applyOwnership -> pantalla
+            // de nombre). Si falla, o si el jugador tiene algo en la mano, o
+            // si es una especie con alas: el caballo se encabrita y suena
+            // "mad" igual, pero SIN subir el temper. Un caballo salvaje nunca
+            // se puede llegar a montar, en ningún caso; solo se hace
+            // rideable una vez domado. La comida de doma (manzana) ya se
+            // maneja más arriba y sigue funcionando igual.
+            if (this.isBaby()) {
+                return super.mobInteract(player, hand);
+            }
+            if (!this.level().isClientSide) {
+                if (stack.isEmpty() && !isWingedSpecies()) {
+                    tryRidingTameAttempt(player);
+                } else {
+                    buckWithoutTemperGain(player);
+                }
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
         //ESSENCE OF DARKNESS: ZORSE -> BATHORSE
@@ -1328,10 +1398,56 @@ public class MoCHorseEntity extends AbstractHorse {
         this.setAge(newAge);
     }
 
+    /** Especies con alas: la animación de encabritado no las contempla (las alas
+     *  no siguen la inclinación del cuerpo), así que quedan fuera de la doma
+     *  por montura y solo se doman con comida, como antes de esta feature. */
+    private boolean isWingedSpecies() {
+        return getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
+                || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE
+                || getSpecies() == Species.GHOST_WINGED;
+    }
+
     private void applyOwnership(Player player) {
         this.setTamed(true);
         this.setOwnerUUID(player.getUUID());
         com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+    }
+
+    /**
+     * Un intento de montar un caballo salvaje con la mano vacía. Sube el
+     * temper vanilla (AbstractHorse ya lo guarda en el NBT) y, si con eso
+     * llega al máximo, se doma como con la manzana. Si no, se encabrita y
+     * tira al jugador. Solo se llama en el servidor.
+     */
+    private void tryRidingTameAttempt(Player player) {
+        int gained = 5 + this.random.nextInt(20);
+        int newTemper = this.modifyTemper(gained);
+        if (newTemper >= this.getMaxTemper()) {
+            this.applyOwnership(player);
+            this.level().broadcastEntityEvent(this, (byte) 7);
+        } else {
+            this.makeMad();
+            this.openMouth();
+            this.entityData.set(DATA_BUCKING_TICKS, 20);
+            player.knockback(0.6D, this.getX() - player.getX(), this.getZ() - player.getZ());
+        }
+    }
+
+    /**
+     * Reacción de un caballo salvaje cuando se le interactúa con un item en
+     * la mano, o es una especie con alas: suena "mad" y empuja al jugador
+     * igual que un intento de doma fallido, pero NO cuenta como intento
+     * real, así que no toca el temper. La pose de encabritado (rearing) solo
+     * se activa si NO es una especie con alas, porque esa animación no las
+     * contempla. Solo se llama en el servidor.
+     */
+    private void buckWithoutTemperGain(Player player) {
+        this.makeMad();
+        this.openMouth();
+        if (!isWingedSpecies()) {
+            this.entityData.set(DATA_BUCKING_TICKS, 20);
+        }
+        player.knockback(0.6D, this.getX() - player.getX(), this.getZ() - player.getZ());
     }
 
     private boolean isTamingFood(ItemStack stack) {
@@ -1507,6 +1623,9 @@ public class MoCHorseEntity extends AbstractHorse {
             if (this.getMouthTicks() > 0) {
                 this.entityData.set(DATA_MOUTH_TICKS, this.getMouthTicks() - 1);
             }
+            if (this.entityData.get(DATA_BUCKING_TICKS) > 0) {
+                this.entityData.set(DATA_BUCKING_TICKS, this.entityData.get(DATA_BUCKING_TICKS) - 1);
+            }
             if (this.fallImmuneTicks > 0) {
                 this.fallImmuneTicks--;
             }
@@ -1517,8 +1636,12 @@ public class MoCHorseEntity extends AbstractHorse {
             }
 
             if (this.getGrazeTicks() > 0) {
-                this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
-            } else if (!this.isBaby() && !this.isVehicle() && this.random.nextInt(1000) == 0) { //How common is grazing
+                if (isFleeing()) {
+                    this.entityData.set(DATA_GRAZE_TICKS, 0);
+                } else {
+                    this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
+                }
+            } else if (!this.isBaby() && !this.isVehicle() && !isFleeing() && this.random.nextInt(1000) == 0) { //How common is grazing
                 this.entityData.set(DATA_GRAZE_TICKS, 100);
             }
 
