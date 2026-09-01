@@ -1,6 +1,6 @@
 package com.example.neomocreatures.init;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.block.OgreLairGrassBlock;
 import com.example.neomocreatures.block.OgreLairTallGrassBlock;
 import com.example.neomocreatures.block.WyvGrassBlock;
@@ -37,7 +37,7 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 
 public class ModBlocks {
 
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(ExampleMod.MODID);
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(NeoMoCreatures.MODID);
 
     // ==== Piedra / cobble / mossy (dureza y resistencia tomadas del repo original) ====
     public static final DeferredBlock<Block> WYVSTONE = BLOCKS.registerSimpleBlock("wyvstone",

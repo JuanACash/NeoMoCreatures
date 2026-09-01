@@ -1,6 +1,6 @@
 package com.example.neomocreatures.network;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 public record OpenNamingScreenPayload(int entityId) implements CustomPacketPayload {
 
     public static final Type<OpenNamingScreenPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "open_naming_screen"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "open_naming_screen"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenNamingScreenPayload> STREAM_CODEC =
             StreamCodec.composite(

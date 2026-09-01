@@ -23,16 +23,15 @@ import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacerType;
 
 /**
- * Tronco tipo baobab: cilindro grueso (disco relleno) que se INCLINA
- * progresivamente mientras crece, con ramas saliendo en ángulos aleatorios
- * de 360° desde la zona superior del tronco, y "picos" extra de hojas en
- * el borde de la copa. Inspirado en el algoritmo de LOTRWorldGenBaobab
- * (LOTR Mod, 1.7.10), portado a la API de TrunkPlacer de 1.21.1.
+ * Baobab-style trunk: a thick cylinder (filled disc) that LEANS
+ * progressively as it grows, with branches shooting out at random
+ * 360° angles from the trunk's upper section, and extra foliage
+ * "spikes" on the canopy's edge. 
  *
- * Los campos custom van agrupados en sub-records (LeanSettings,
- * BranchSettings, TopSpikeSettings) porque RecordCodecBuilder.mapCodec
- * solo soporta hasta 8 campos combinados por .and(), y trunkPlacerParts
- * ya ocupa 3 de esos 8.
+ * Custom fields are grouped into sub-records (LeanSettings,
+ * BranchSettings, TopSpikeSettings) because RecordCodecBuilder.mapCodec
+ * only supports up to 8 fields combined via .and(), and
+ * trunkPlacerParts already takes up 3 of those 8.
  */
 public class WyvwoodTrunkPlacer extends TrunkPlacer {
 
@@ -99,7 +98,7 @@ public class WyvwoodTrunkPlacer extends TrunkPlacer {
         int xSign = random.nextBoolean() ? 1 : -1;
         int zSign = random.nextBoolean() ? 1 : -1;
 
-        // Tierra debajo del disco base (altura 0, sin inclinación todavía).
+        // Dirt below the base disc (height 0, no lean yet).
         for (int dx = -trunkRadius; dx <= trunkRadius; dx++) {
             for (int dz = -trunkRadius; dz <= trunkRadius; dz++) {
                 if (dx * dx + dz * dz <= trunkRadius * trunkRadius) {
@@ -108,7 +107,7 @@ public class WyvwoodTrunkPlacer extends TrunkPlacer {
             }
         }
 
-        // Tronco: disco relleno que se desplaza (inclina) cada "interval" bloques.
+        // Trunk: filled disc that shifts (leans) every "interval" blocks.
         for (int y = 0; y < freeTreeHeight; y++) {
             int[] center = centerAt(y, intervalVal, xSign, zSign);
             for (int dx = -trunkRadius; dx <= trunkRadius; dx++) {
@@ -123,11 +122,11 @@ public class WyvwoodTrunkPlacer extends TrunkPlacer {
         int topY = freeTreeHeight - 1;
         int[] topCenter = centerAt(topY, intervalVal, xSign, zSign);
 
-        // Copa principal (alimenta el foliage_placer del JSON, ej. dark_oak_foliage_placer).
+        // Main canopy (feeds the JSON's foliage_placer, e.g. dark_oak_foliage_placer).
         attachments.add(new FoliagePlacer.FoliageAttachment(
                 pos.offset(topCenter[0], freeTreeHeight, topCenter[1]), trunkRadius - 1, true));
 
-        // Ramas en ángulos aleatorios de 360°, saliendo de la zona superior del tronco.
+        // Branches at random 360° angles, shooting out from the trunk's upper section.
         int zoneStart = Math.max(0, freeTreeHeight - branches.zoneHeight());
         int totalBranches = branches.count().sample(random);
         for (int i = 0; i < totalBranches; i++) {
@@ -144,7 +143,7 @@ public class WyvwoodTrunkPlacer extends TrunkPlacer {
             attachments.add(new FoliagePlacer.FoliageAttachment(end.above(), 0, false));
         }
 
-        // Picos extra en el borde de la copa (textura irregular, como el baobab real).
+        // Extra spikes on the canopy's edge (irregular texture, like a real baobab).
         for (int dx = -trunkRadius; dx <= trunkRadius; dx++) {
             for (int dz = -trunkRadius; dz <= trunkRadius; dz++) {
                 int distSq = dx * dx + dz * dz;

@@ -20,7 +20,7 @@ public class ModArmorMaterials {
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
             DeferredRegister.create(
                     Registries.ARMOR_MATERIAL,
-                    com.example.neomocreatures.ExampleMod.MODID
+                    com.example.neomocreatures.NeoMoCreatures.MODID
             );
 
     private static final Map<ArmorItem.Type, Integer> DIAMOND_DEFENSE = Map.of(
@@ -47,7 +47,7 @@ public class ModArmorMaterials {
     private static ArmorMaterial.Layer layer(String name) {
         return new ArmorMaterial.Layer(
                 ResourceLocation.fromNamespaceAndPath(
-                        com.example.neomocreatures.ExampleMod.MODID,
+                        com.example.neomocreatures.NeoMoCreatures.MODID,
                         name
                 )
         );

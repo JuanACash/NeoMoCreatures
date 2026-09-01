@@ -1,12 +1,12 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
+import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModEntities;
-import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,7 +15,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -97,7 +96,11 @@ public class FilledAmuletItem extends Item {
             horse.setOwnerUUID(tag.getUUID("OwnerUUID"));
         }
         horse.setHealth((float) tag.getFloat("Health"));
-        horse.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+                if (tag.contains("Age")) {
+            horse.setAge(tag.getInt("Age"));
+        } else {
+            horse.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
         if (tag.contains("Coat")) {
             horse.setCoat(com.example.neomocreatures.breeding.MoCHorseGenetics.Coat.valueOf(tag.getString("Coat")));
         }

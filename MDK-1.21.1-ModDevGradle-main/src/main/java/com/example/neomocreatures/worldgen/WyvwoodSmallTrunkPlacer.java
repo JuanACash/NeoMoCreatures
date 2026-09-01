@@ -22,12 +22,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
- * Tronco tipo dragonblood/mirk oak "grande" CON una copa central sobre el
- * tronco (como el mirk oak normal) ADEMÁS de los racimos en cada rama —
- * mezcla de ambos estilos: el tronco queda tapado por el domo central,
- * y las ramas alrededor añaden volumen extra.
- *
- * Coloca las hojas directamente (no delega a un FoliagePlacer).
+ * Places the leaves directly (doesn't delegate to a FoliagePlacer).
  */
 public class WyvwoodSmallTrunkPlacer extends TrunkPlacer {
 
@@ -93,7 +88,7 @@ public class WyvwoodSmallTrunkPlacer extends TrunkPlacer {
                                                               TreeConfiguration config) {
         setDirtAt(level, blockSetter, random, pos.below(), config);
 
-        // Tronco (cilindro de radio trunk_radius).
+        // Trunk (cylinder with radius trunk_radius).
         for (int y = 0; y < freeTreeHeight; y++) {
             for (int dx = -trunkRadius; dx <= trunkRadius; dx++) {
                 for (int dz = -trunkRadius; dz <= trunkRadius; dz++) {
@@ -104,7 +99,7 @@ public class WyvwoodSmallTrunkPlacer extends TrunkPlacer {
             }
         }
 
-        // Ramas en ángulos aleatorios, cada una con su propio domo de hojas al final.
+        // Branches at random angles, each with its own leaf dome at the end.
         int totalBranches = branches.count().sample(random);
         for (int i = 0; i < totalBranches; i++) {
             double angle = random.nextDouble() * Math.PI * 2.0;
@@ -119,10 +114,10 @@ public class WyvwoodSmallTrunkPlacer extends TrunkPlacer {
             placeCanopyDome(level, blockSetter, random, config, end, branchCanopy);
         }
 
-        // Domo central grande sobre la punta del tronco (tapa el tronco, estilo mirk oak normal).
+        // Large central dome over the trunk's tip.
         placeCanopyDome(level, blockSetter, random, config, pos.above(freeTreeHeight), mainCanopy);
 
-        // Raíces que serpentean hacia abajo y hacia los lados.
+        // Roots that snake downward and to the sides.
         int rootCount = roots.count().sample(random);
         for (int i = 0; i < rootCount; i++) {
             boolean alongX = random.nextBoolean();

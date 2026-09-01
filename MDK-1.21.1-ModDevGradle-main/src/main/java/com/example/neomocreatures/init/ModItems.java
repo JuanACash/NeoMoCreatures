@@ -1,6 +1,6 @@
 package com.example.neomocreatures.init;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.item.ScorpionSwordItem;
 import com.example.neomocreatures.item.WildHorseSpawnEggItem;
 
@@ -23,7 +23,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModItems {
 
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ExampleMod.MODID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(NeoMoCreatures.MODID);
 
     public static final DeferredItem<Item> WILD_HORSE_SPAWN_EGG = ITEMS.register("wild_horse_spawn_egg",
             () -> new WildHorseSpawnEggItem(ModEntities.MOC_HORSE, new Item.Properties()));
@@ -391,7 +391,7 @@ public class ModItems {
             .attributes(net.minecraft.world.item.component.ItemAttributeModifiers.builder()
                 .add(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR,
                      new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                         net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "horse_armor_crystal"),
+                         net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "horse_armor_crystal"),
                          19.0D,
                          net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE),
                      net.minecraft.world.entity.EquipmentSlotGroup.BODY)
@@ -442,7 +442,7 @@ public class ModItems {
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());
     public static final DeferredItem<Item> PET_FOOD = ITEMS.registerSimpleItem("pet_food", new Item.Properties());
-    public static final ResourceKey<JukeboxSong> SHUFFLING_SONG = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "shuffling"));
+    public static final ResourceKey<JukeboxSong> SHUFFLING_SONG = ResourceKey.create(Registries.JUKEBOX_SONG, ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "shuffling"));
     public static final DeferredItem<Item> RECORD_SHUFFLE = ITEMS.registerSimpleItem("record_shuffle", new Item.Properties().stacksTo(1).rarity(Rarity.RARE).jukeboxPlayable(SHUFFLING_SONG));
     public static final DeferredItem<Item> ROPE = ITEMS.registerSimpleItem("rope", new Item.Properties());
     public static final DeferredItem<Item> SCROLL_OF_FREEDOM = ITEMS.register("scroll_of_freedom",

@@ -261,10 +261,10 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
 
                 float wingRot = flying
                         ? Mth.cos(ageInTicks * 0.3F + (float) Math.PI) * 1.2F
-                        : 60F / 57.29578F; // plegada — mismo valor que usaba el original para Todo (rotación Y posición)
+                        : 60F / 57.29578F; // folded — same value the original used for All (Y rotation position)
 
-                // Rotación Z (bisagra del aleteo) — mismo ángulo absoluto en las 3
-                // piezas, tal cual el original (sin anidar, es un modelo plano).
+                // Z rotation (flap hinge) — same absolute angle across all 3
+                // pieces, just like the original (no nesting, it's a flat model).
                 this.wingInnerL.zRot = wingRot;
                 this.wingMidL.zRot = wingRot;
                 this.wingOuterL.zRot = wingRot;
@@ -272,7 +272,7 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
                 this.wingMidR.zRot = -wingRot;
                 this.wingOuterR.zRot = -wingRot;
 
-                // Rotación Y — solo la punta exterior la cambia.
+                // Y rotation — only the outer tip changes it.
                 if (flying) {
                         this.wingOuterL.yRot = -0.3228859F + wingRot / 2F;
                         this.wingOuterR.yRot = 0.3228859F - wingRot / 2F;
@@ -281,9 +281,9 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
                         this.wingOuterR.yRot = 90F / 57.29578F;
                 }
 
-                // Posición — esto es lo que faltaba: la punta exterior se recalcula
-                // con seno/coseno para seguir pegada a las otras dos piezas mientras
-                // el ala gira, en vez de quedarse fija en su punto de fábrica.
+                // Position — this is what was missing: the outer tip gets recalculated
+                // with sine/cosine to stay attached to the other two pieces while the
+                // wing rotates, instead of staying fixed at its default point.
                 this.wingInnerL.x = 5F; this.wingInnerL.y = 3F; this.wingInnerL.z = -6F;
                 this.wingMidL.x = 5F; this.wingMidL.y = 3F; this.wingMidL.z = -6F;
                 this.wingOuterL.x = 5F + Mth.cos(wingRot) * 12F;

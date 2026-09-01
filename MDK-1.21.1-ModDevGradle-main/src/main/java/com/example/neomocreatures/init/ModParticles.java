@@ -1,6 +1,6 @@
 package com.example.neomocreatures.init;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 
 import net.minecraft.core.particles.ParticleType;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class ModParticles {
 
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES =
-            DeferredRegister.create(Registries.PARTICLE_TYPE, ExampleMod.MODID);
+            DeferredRegister.create(Registries.PARTICLE_TYPE, NeoMoCreatures.MODID);
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> UNDEAD_DECAY =
             PARTICLE_TYPES.register("undead_decay", () -> new SimpleParticleType(false));

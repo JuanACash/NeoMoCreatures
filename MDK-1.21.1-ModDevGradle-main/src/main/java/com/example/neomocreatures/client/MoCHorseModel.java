@@ -26,7 +26,7 @@ import net.minecraft.util.Mth;
  * original), replacing an earlier two-bone experiment that wasn't based on
  * a verified reference.
  */
-public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> {
+public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
 
     private final ModelPart root;
     private final ModelPart body;
@@ -86,7 +86,7 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
     private final ModelPart headSaddle;
     
 
-    public MoCHorsePlaceholderModel(ModelPart root) {
+    public MoCHorseModel(ModelPart root) {
         this.root = root;
         this.body = root.getChild("body");
         this.head = root.getChild("head");
@@ -248,12 +248,12 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
                 CubeListBuilder.create().texOffs(0, 68).addBox(-25F, 0F, -14F, 26, 0, 30),
                 PartPose.offsetAndRotation(-4.5F, 4F, -2F, 0F, 0F, 0.7853982F));
 
-        // Variante para horsefairywhite, horsefairypink y horsefairyblue:
-        // el ala normal (dy=0) genera automaticamente DOS caras superpuestas en el
-        // mismo plano exacto (la de "arriba" y la de "abajo" del cubo), cada una con
-        // un dibujo de ala ligeramente distinto -> eso es lo que parpadeaba/se veia
-        // duplicado. Aqui restringimos el cubo a una sola cara visible (DOWN), asi
-        // solo se dibuja un ala consistente y no hay nada con lo que pueda hacer z-fight.
+        // Variant for horsefairywhite, horsefairypink, and horsefairyblue:
+        // the normal wing (dy=0) automatically generates TWO overlapping faces
+        // on the exact same plane (the cube's "top" and "bottom"), each with a
+        // slightly different wing texture -> that's what was flickering/looking
+        // duplicated. Here we restrict the cube to a single visible face (DOWN),
+        // so only one consistent wing gets drawn and there's nothing left to z-fight.
         root.addOrReplaceChild("wing_butterfly_wide_l",
                 CubeListBuilder.create()
                         .texOffs(0, 98).addBox(-1F, 0F, -14F, 26, 0, 30,
@@ -332,14 +332,14 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         boolean normalWingsVisible = this.wingButterflyL.visible;
         boolean wideWingsVisible = this.wingButterflyWideL.visible;
 
-        // primer pase: todo el modelo, sin las alas mariposa
+        // first pass: the whole model, without the butterfly wings
         this.wingButterflyL.visible = false;
         this.wingButterflyR.visible = false;
         this.wingButterflyWideL.visible = false;
         this.wingButterflyWideR.visible = false;
         this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
 
-        // segundo pase: solo las alas mariposa, con el color reforzado
+        // second pass: only the butterfly wings, with reinforced color
         this.wingButterflyL.visible = normalWingsVisible;
         this.wingButterflyR.visible = normalWingsVisible;
         this.wingButterflyWideL.visible = wideWingsVisible;
@@ -366,8 +366,8 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         boolean isFairy = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.FAIRY_HORSE;
         boolean isGhostWinged = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED;
 
-        // horsefairywhite, horsefairypink y horsefairyblue usan el ala "wide"
-        // (una sola cara, sin duplicado delantero/trasero) para evitar el parpadeo.
+        // horsefairywhite, horsefairypink, and horsefairyblue use the "wide"
+        // wing (a single face, no front/back duplicate) to avoid flickering.
         boolean useWideWings = isFairy && (
                 entity.getFairyColor() == com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor.WHITE
                         || entity.getFairyColor() == com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor.PINK
@@ -383,10 +383,8 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         float wingRot;
 
         if (flyingNow) {
-                // en vuelo: aletea, tanto fairy como ghost alado
                 wingRot = Mth.cos(ageInTicks * 0.3F) * 0.55F;
         } else if (isFairy) {
-                // fairy en tierra: quieto salvo aleteo ocasional
                 int flapTicks = entity.getWingFlapTicks();
                 if (flapTicks > 0) {
                 int elapsed = MoCHorseEntity.WING_FLAP_DURATION_TICKS - flapTicks;
@@ -398,7 +396,6 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
                 wingRot = 0F;
                 }
         } else {
-                // ghost alado en tierra: quieto, siempre extendido
                 wingRot = 0F;
         }
 
@@ -450,10 +447,10 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         float f1 = limbSwingAmount;
 
         boolean dancing = entity.getSpecies() == Species.ZEBRA && entity.isDancing();
-        // isBucking() es un flag propio del mod (DATA_BUCKING_TICKS), no el
-        // isStanding() genérico de vanilla: ese también se activa al cargar
-        // el salto montado, y no queremos la pose de encabritado ahí, solo
-        // cuando falla un intento de doma por montura.
+        // isBucking() is a mod-specific flag (DATA_BUCKING_TICKS), not
+        // vanilla's generic isStanding(): that one also triggers while
+        // charging a mounted jump, and we don't want the rearing pose there —
+        // only when a mount-based taming attempt fails.
         boolean rearing = entity.isBucking();
 
         float rLegXRot = Mth.cos(f * 0.6662F + (float) Math.PI) * 0.8F * f1;
@@ -474,18 +471,18 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         }
 
         if (rearing) {
-                // Patas delanteras (leg3/leg4): el pivote sube y se adelanta para que,
-                // al levantarse, la pata completa quede a la altura del pecho en vez
-                // de girar sobre el hueco donde estaba plantada.
+                // Front legs (leg3/leg4): the pivot moves up and forward so that,
+                // when raised, the whole leg ends up at chest height instead of
+                // rotating around the spot where it was planted.
                 this.leg3Upper.y = -2F;
                 this.leg3Upper.z = -2F;
                 this.leg4Upper.y = -2F;
                 this.leg4Upper.z = -2F;
 
-                float frontRightUpper = -1.0471976F + Mth.cos(ageInTicks * 0.4F + (float) Math.PI); // -60° ± vaivén
+                float frontRightUpper = -1.0471976F + Mth.cos(ageInTicks * 0.4F + (float) Math.PI);
                 float frontLeftUpper = -1.0471976F + Mth.cos(ageInTicks * 0.4F);
-                float frontLower = 0.7853982F; // 45°, rodilla delantera doblada
-                float rearBrace = 0.2617994F; // 15°, patas traseras plantadas y abiertas
+                float frontLower = 0.7853982F;
+                float rearBrace = 0.2617994F;
 
                 setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, frontRightUpper, frontLower);
                 setLegAngle(this.leg4Upper, this.leg4Lower, this.leg4Hoof, frontLeftUpper, frontLower);
@@ -511,10 +508,10 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
                         }
         }
 
-        // Cuerpo y cola siguen la inclinación del encabritado; fuera de rearing
-        // vuelven a su posición neutra (estos ModelPart no se reconstruyen cada
-        // frame, así que hay que restaurarlos explícitamente en el else).
-        this.body.xRot = rearing ? -0.7853982F : 0F; // -45°
+        // Body and tail follow the rearing tilt; outside of rearing they go
+        // back to their neutral position (these ModelParts aren't rebuilt
+        // every frame, so they have to be restored explicitly in the else).
+        this.body.xRot = rearing ? -0.7853982F : 0F;
         float tailPivotY = rearing ? 9F : 3F;
         float tailPivotZ = rearing ? 18F : 14F;
         this.tailA.y = tailPivotY;
@@ -542,11 +539,12 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         float headY = restY + (grazeY - restY) * biteAmount;
         float headZ = -10F;
 
-        // --- Animación de la habilidad del unicornio (independiente del grazing) ---
-        // Solo baja/sube la cabeza a la misma posición que el grazing, pero sin la
-        // animación de boca (esa la controla DATA_MOUTH_TICKS aparte, y aquí nunca se
-        // toca). Dura exactamente lo que dura la habilidad (UNICORN_CHARGE_DURATION_TICKS)
-        // y luego vuelve a la posición normal.
+        // --- Unicorn ability animation (independent from grazing) ---
+        // Just lowers/raises the head to the same position as grazing, but
+        // without the mouth animation (that's controlled separately by
+        // DATA_MOUTH_TICKS, and is never touched here). Lasts exactly as long
+        // as the ability (UNICORN_CHARGE_DURATION_TICKS) and then returns to
+        // the normal position.
         int chargeTicks = entity.getUnicornChargeTicks();
         if (chargeTicks > 0) {
             int elapsed = MoCHorseEntity.UNICORN_CHARGE_DURATION_TICKS - chargeTicks;
@@ -559,10 +557,10 @@ public class MoCHorsePlaceholderModel extends HierarchicalModel<MoCHorseEntity> 
         }
 
         if (rearing) {
-            // Cabeza echada hacia atrás, por encima de la línea de pecho, como
-            // en el encabritado de vanilla. Tiene prioridad sobre el pastoreo
-            // o la carga de unicornio porque es una reacción involuntaria.
-            headXRot = 0.2617994F; // 15°
+                // Head thrown back, above the chest line, like in vanilla's rearing.
+                // Takes priority over grazing or the unicorn charge because it's an
+                // involuntary reaction.
+            headXRot = 0.2617994F;
             headY = -6F;
             headZ = -1F;
         }

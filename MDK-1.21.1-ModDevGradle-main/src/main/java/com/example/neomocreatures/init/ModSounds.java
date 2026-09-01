@@ -1,6 +1,6 @@
 package com.example.neomocreatures.init;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -11,7 +11,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModSounds {
 
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
-            DeferredRegister.create(Registries.SOUND_EVENT, ExampleMod.MODID);
+            DeferredRegister.create(Registries.SOUND_EVENT, NeoMoCreatures.MODID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> HORSE_GRUNT = register("moc_horse.grunt");
     public static final DeferredHolder<SoundEvent, SoundEvent> HORSE_HURT = register("moc_horse.hurt");
@@ -51,7 +51,7 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RECORD_SHUFFLING = register("records.shuffling");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, name);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));
     }
 }

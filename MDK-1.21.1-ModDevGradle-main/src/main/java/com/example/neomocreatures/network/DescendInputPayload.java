@@ -1,6 +1,6 @@
 package com.example.neomocreatures.network;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 public record DescendInputPayload(boolean pressed) implements CustomPacketPayload {
 
     public static final Type<DescendInputPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "descend_input"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "descend_input"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DescendInputPayload> STREAM_CODEC =
             StreamCodec.composite(

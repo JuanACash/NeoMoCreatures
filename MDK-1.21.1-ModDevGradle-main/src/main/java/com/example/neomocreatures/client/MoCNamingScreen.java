@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.network.SetPetNamePayload;
 import com.mojang.blaze3d.systems.RenderSystem;
 
@@ -22,7 +22,7 @@ public class MoCNamingScreen extends Screen {
 
     private int previousBlur;
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "textures/gui/mocname.png");
+            ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/gui/mocname.png");
     private static final int TEX_WIDTH = 256;
     private static final int TEX_HEIGHT = 181;
 

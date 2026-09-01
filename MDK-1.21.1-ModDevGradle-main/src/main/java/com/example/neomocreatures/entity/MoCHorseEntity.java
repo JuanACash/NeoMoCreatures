@@ -107,13 +107,13 @@ public class MoCHorseEntity extends AbstractHorse {
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
 
 
-    public static final int AMULET_VANISH_DURATION_TICKS = 140; // 7 segundos
+    public static final int AMULET_VANISH_DURATION_TICKS = 140;
     private net.minecraft.world.item.Item pendingAmuletTemplate = null;
     private java.util.UUID pendingAmuletOwner = null;
 
-    public static final int VANISH_DURATION_TICKS = 100; // 5 segundos, igual que el original
+    public static final int VANISH_DURATION_TICKS = 100;
 
-    private static final int UNDEAD_TRANSFORM_DURATION_TICKS = 100; // 5 segundos, igual que zorse->bathorse
+    private static final int UNDEAD_TRANSFORM_DURATION_TICKS = 100;
     public static final int UNDEAD_NONE = 0;
     public static final int UNDEAD_STAGE_0 = 1;
     public static final int UNDEAD_STAGE_1 = 2;
@@ -136,29 +136,28 @@ public class MoCHorseEntity extends AbstractHorse {
 
     private static final int MOUTH_OPEN_TICKS = 30;
 
-    public static final int WING_FLAP_DURATION_TICKS = 20; // 1 segundo
+    public static final int WING_FLAP_DURATION_TICKS = 20;
 
-    private static final int TRANSFORM_DURATION_TICKS = 100; // 5 segundos
+    private static final int TRANSFORM_DURATION_TICKS = 100;
 
     private static final float RIDER_FORWARD = -0.15F;
     private static final float RIDER_HEIGHT = 0.7F;
 
-        // ==== Constantes portadas 1:1 del mod original (MoCEntityAnimal) ====
-    private static final double FLYER_THRUST = 0.3D;     // empuje vertical por tick mientras subes/bajas
-    private static final float  FLYER_FRICTION = 0.91F;  // fricción horizontal por tick
-    private static final double FLYER_FALL_SPEED = 0.6D; // amortiguación vertical (actúa como "velocidad terminal")
-    private static final double FLYER_GRAVITY_PULL = 0.055D; // tirón constante hacia abajo cada tick
-    private static final double PEGASUS_THRUST_BONUS = 0.05D;   // empuje extra al subir/bajar
-    private static final float  PEGASUS_FRICTION = 0.93F;       // menos friccion = mas velocidad horizontal
+    private static final double FLYER_THRUST = 0.3D;     // vertical thrust per tick while ascending/descending
+    private static final float  FLYER_FRICTION = 0.91F;  // horizontal friction per tick
+    private static final double FLYER_FALL_SPEED = 0.6D; // vertical damping (acts as "terminal velocity")
+    private static final double FLYER_GRAVITY_PULL = 0.055D; // constant downward pull each tick
+    private static final double PEGASUS_THRUST_BONUS = 0.05D;   // extra thrust when ascending/descending
+    private static final float  PEGASUS_FRICTION = 0.93F;       // less friction = more horizontal speed
     private static final double DARK_PEGASUS_THRUST_BONUS = 0.025D;
     private static final float  DARK_PEGASUS_FRICTION = 0.92F;
 
 
     private int gestationProgress = 0;
 
-    private static final int WING_FLAP_PERIOD_TICKS = 21; // debe coincidir con el 0.3F del modelo (2π/0.3 ≈ 20.94)
+    private static final int WING_FLAP_PERIOD_TICKS = 21; // must match the model's 0.3F (2π/0.3 ≈ 20.94)
 
-    private static final int BUTTERFLY_WING_FLAP_PERIOD_TICKS = 21; // debe coincidir con el 0.45F del modelo (2π/0.45 ≈ 13.96)
+    private static final int BUTTERFLY_WING_FLAP_PERIOD_TICKS = 21; // must match the model's 0.45F (2π/0.45 ≈ 13.96)
 
     private int groundedStreak = 0;
     private int butterflyGroundedStreak = 0;
@@ -259,12 +258,12 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     // ---------------------------------------------------------------
-    // Per-species/tier stats (salud, velocidad, salto). Los valores de
-    // salto vienen de simular la física real de salto de un caballo
-    // (gravedad 0.08 bloques/tick², drag 0.98) para llegar a la altura
-    // exacta en bloques que se pidió, ya que jump_strength no es lineal
-    // con la altura. Undead/Skeleton no se tocan aparte: al no cambiar
-    // getSpecies(), heredan automáticamente las stats de su contraparte.
+    // Per-species/tier stats (health, speed, jump). The jump values come
+    // from simulating a horse's real jump physics (gravity 0.08
+    // blocks/tick², drag 0.98) to hit the exact requested height in
+    // blocks, since jump_strength isn't linear with height. Undead/
+    // Skeleton aren't handled separately: since they don't change
+    // getSpecies(), they automatically inherit their counterpart's stats.
     // ---------------------------------------------------------------
     private static final double JUMP_1_5_BLOCKS = 0.4965D;
     private static final double JUMP_2_BLOCKS = 0.5750D;
@@ -273,9 +272,9 @@ public class MoCHorseEntity extends AbstractHorse {
     private static final double JUMP_4_5_BLOCKS = 0.8791D;
     private static final double JUMP_5_5_BLOCKS = 0.9790D;
 
-    /** Velocidad "andando solo" (sin jinete) para los caballos especiales:
-     *  la misma que un caballo normal tier 4. Zorse, donkey/mule/zonkey,
-     *  zebra y horse (todos los tiers) no se tocan. */
+    /** "Walking alone" speed (no rider) for the special horses: the same
+     *  as a normal tier-4 horse. Zorse, donkey/mule/zonkey, zebra, and
+     *  horse (all tiers) are left untouched. */
     private static final double SPECIAL_UNMOUNTED_SPEED = 0.2594D;
 
     private static int coatTier(Coat coat) {
@@ -299,12 +298,9 @@ public class MoCHorseEntity extends AbstractHorse {
             case ZORSE -> { health = 24D; speed = 0.2594D; jump = JUMP_4_BLOCKS; }
             case BATHORSE, NIGHTMARE -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
             case UNICORN -> { health = 28D; speed = 0.4D; jump = JUMP_5_5_BLOCKS; }
-            // Pegasus/Dark Pegasus: sin dato de salto propio, se asume igual a "especiales".
             case PEGASUS -> { health = 28D; speed = 0.37D; jump = JUMP_4_5_BLOCKS; }
             case DARK_PEGASUS -> { health = 28D; speed = 0.34D; jump = JUMP_4_5_BLOCKS; }
-            // Fairy: mismo salto asumido que especiales; velocidad igual al unicornio (pedido explícito).
             case FAIRY_HORSE -> { health = 30D; speed = 0.4D; jump = JUMP_4_5_BLOCKS; }
-            // Ghost/Ghost winged/Horse bug: no estaban en la lista, se dejan como "especiales" por default.
             case GHOST, GHOST_WINGED, HORSE_BUG -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
             case HORSE -> {
                 switch (coatTier(getCoat())) {
@@ -323,17 +319,17 @@ public class MoCHorseEntity extends AbstractHorse {
         net.minecraft.world.entity.ai.attributes.AttributeInstance jumpAttr = this.getAttribute(Attributes.JUMP_STRENGTH);
         if (jumpAttr != null) jumpAttr.setBaseValue(jump);
 
-        // Nunca cura de gratis (carga/transformación no debe subir la vida actual),
-        // solo evita que quede por encima del nuevo máximo.
+        // Never heals for free (loading/transforming shouldn't raise current
+        // health) — it only prevents it from exceeding the new max.
         if (this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
     }
 
     /** Bathorse, Nightmare, Unicorn, Pegasus, Dark Pegasus, Fairy y Ghost/
-     *  Ghost Winged (incluye sus versiones undead, ya que undead no cambia
-     *  la especie). Zorse, donkey/mule/zonkey, zebra y horse (cualquier
-     *  tier, incluido undead horse) quedan fuera a propósito. */
+    *  Ghost Winged (includes their undead versions, since undead doesn't
+    *  change species). Zorse, donkey/mule/zonkey, zebra, and horse (any
+    *  tier, including undead horse) are deliberately left out. */
     private boolean isSlowedWhenUnridden() {
         return switch (getSpecies()) {
             case BATHORSE, NIGHTMARE, UNICORN, PEGASUS, DARK_PEGASUS, FAIRY_HORSE, GHOST, GHOST_WINGED -> true;
@@ -411,10 +407,10 @@ public class MoCHorseEntity extends AbstractHorse {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
 
-        // Vanilla solo restaura el slot de silla si el item es literalmente
+        // Vanilla only restores the saddle slot if the item is literally
         // minecraft:saddle (AbstractHorse#readAdditionalSaveData lo revisa
-        // con itemstack.is(Items.SADDLE)), asi que nuestra silla propia
-        // queda descartada — la reponemos aqui manualmente.
+        // (checked via itemstack.is(Items.SADDLE)), so our own saddle item
+        // gets discarded — we put it back manually here.
         if (this.inventory.getItem(0).isEmpty() && tag.contains("SaddleItem", 10)) {
             ItemStack saddle = ItemStack.parse(this.registryAccess(), tag.getCompound("SaddleItem")).orElse(ItemStack.EMPTY);
             if (!saddle.isEmpty() && this.isSaddleable()) {
@@ -516,8 +512,7 @@ public class MoCHorseEntity extends AbstractHorse {
         return this.entityData.get(DATA_VANISH_TICKS);
     }
 
-    /** 0 = recién nacido el fairy horse, 1 = totalmente opaco, VANISH_DURATION_TICKS = totalmente invisible. */
-    public float getVanishAlpha() {
+/** 0 = fairy horse just born, 1 = fully opaque, VANISH_DURATION_TICKS = fully invisible. */    public float getVanishAlpha() {
         int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
         return 1.0F - Math.min(1.0F, this.getVanishTicks() / (float) duration);
     }
@@ -530,12 +525,6 @@ public class MoCHorseEntity extends AbstractHorse {
 
     /** Especie que puede ser capturada por cada tipo de amuleto (vacío). */
     private boolean matchesAmulet(ItemStack amulet) {
-        if (amulet.is(ModItems.AMULET_BONE.get())) return isUndead();
-        if (amulet.is(ModItems.AMULET_FAIRY.get())) return getSpecies() == Species.FAIRY_HORSE;
-        if (amulet.is(ModItems.AMULET_PEGASUS.get())) {
-            return (getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS) && !isUndead();
-        }
-        if (amulet.is(ModItems.AMULET_GHOST.get())) return getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
         if (amulet.is(ModItems.PET_AMULET.get())) {
             boolean excluded = isUndead() // cubre tambien skeleton, ya que isSkeletonStage() implica isUndead()
                     || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS
@@ -543,6 +532,17 @@ public class MoCHorseEntity extends AbstractHorse {
                     || getSpecies() == Species.FAIRY_HORSE;
             return !excluded;
         }
+        // Los amuletos de plantilla (bone/fairy/pegasus/ghost) no aplican a
+        // potros; solo el amuleto de mascota puede capturar uno.
+        if (this.isBaby()) {
+            return false;
+        }
+        if (amulet.is(ModItems.AMULET_BONE.get())) return isUndead();
+        if (amulet.is(ModItems.AMULET_FAIRY.get())) return getSpecies() == Species.FAIRY_HORSE;
+        if (amulet.is(ModItems.AMULET_PEGASUS.get())) {
+            return (getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS) && !isUndead();
+        }
+        if (amulet.is(ModItems.AMULET_GHOST.get())) return getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
         return false;
     }
 
@@ -555,7 +555,6 @@ public class MoCHorseEntity extends AbstractHorse {
         return null;
     }
 
-    /** Snapshot completo del caballo — stats generales, pensado para que a futuro cada stage guarde lo suyo. */
     private CompoundTag buildAmuletTag(java.util.UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("Species", getSpecies().name());
@@ -565,6 +564,7 @@ public class MoCHorseEntity extends AbstractHorse {
         tag.putDouble("MovementSpeed", this.getAttributeValue(Attributes.MOVEMENT_SPEED));
         tag.putDouble("JumpStrength", this.getAttributeValue(Attributes.JUMP_STRENGTH));
         tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
         tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
         if (owner != null) {
             tag.putUUID("OwnerUUID", owner);
@@ -580,7 +580,6 @@ public class MoCHorseEntity extends AbstractHorse {
         return tag;
     }
 
-    /** Escribe el tag en el ítem lleno y lo suelta en el suelo — nunca al inventario. */
     private void finishCapture(net.minecraft.world.item.Item filledItem, CompoundTag tag, boolean preserveEquipment) {
         if (preserveEquipment) {
             ItemStack saddle = this.inventory.getItem(0);
@@ -609,7 +608,7 @@ public class MoCHorseEntity extends AbstractHorse {
         ItemStack result = new ItemStack(filledItem);
         result.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
                 net.minecraft.world.item.component.CustomData.of(tag));
-        this.spawnAtLocation(result); // siempre al suelo, donde estaba el caballo
+        this.spawnAtLocation(result);
         this.discard();
     }
 
@@ -634,7 +633,7 @@ public class MoCHorseEntity extends AbstractHorse {
         ItemStack filled = new ItemStack(ModItems.PET_AMULET_FULL.get());
         filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
                 net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled); // se transforma en la mano, no cae al suelo
+        player.setItemInHand(hand, filled);
         this.discard();
     }
 
@@ -722,29 +721,29 @@ public class MoCHorseEntity extends AbstractHorse {
         return this.entityData.get(DATA_MOUTH_TICKS);
     }
 
-    /** True mientras dura la pose de encabritado por el bucking de temper
-     *  (a diferencia de entity.isStanding() de vanilla, que también se activa
-     *  al cargar el salto montado; esta es exclusiva de la doma fallida). */
+    /** True while the rearing pose from temper bucking lasts (unlike
+     *  vanilla's entity.isStanding(), which also triggers while charging
+     *  a mounted jump; this one is exclusive to a failed taming attempt). */
     public boolean isBucking() {
         return this.entityData.get(DATA_BUCKING_TICKS) > 0;
     }
 
-    /** Duración (en ticks) que se deja montar al jugador antes de tirarlo
-     *  en un intento de doma fallido, para dar tiempo a que se sienta como
-     *  si el caballo "aguantara" un poco antes de encabritarse. */
-    private static final int TAME_HOLD_DURATION_TICKS = 40; // 2 segundos
+    /** Duration (in ticks) the player is allowed to stay mounted before
+     *  being thrown off on a failed taming attempt, to give the feeling
+     *  that the horse "holds on" a bit before it starts bucking. */
+    private static final int TAME_HOLD_DURATION_TICKS = 40;
 
-    /** True durante el breve lapso en el que el jugador ya está montado
-     *  tras un intento de doma que va a fallar, pero todavía no se le ha
-     *  tirado ni ha empezado la animación de encabritado. Mientras dure,
-     *  no se debe permitir que nadie más intente montar al caballo. */
+    /** True during the brief window where the player is already mounted
+     *  after a taming attempt that's going to fail, but hasn't been
+     *  thrown off yet and the rearing animation hasn't started. While
+     *  this lasts, no one else should be allowed to try mounting the horse. */
     public boolean isTameHolding() {
         return this.entityData.get(DATA_TAME_HOLD_TICKS) > 0;
     }
 
-    /** Marca, del lado servidor únicamente, si el hold en curso terminará
-     *  en un intento de doma fallido (tirar al jugador + encabritarse) en
-     *  vez de simplemente expirar sin hacer nada. */
+    /** Server-side-only flag for whether the current hold will end in a
+     *  failed taming attempt (throwing the player off + rearing) instead
+     *  of just expiring without doing anything. */
     private boolean pendingFailedTameThrow = false;
 
     public int getGrazeTicks() {
@@ -792,22 +791,16 @@ public class MoCHorseEntity extends AbstractHorse {
         ghost.setSpecies(wasFlyer ? Species.GHOST_WINGED : Species.GHOST);
         ghost.setTamed(true);
         ghost.setOwnerUUID(this.getOwnerUUID());
-        ghost.setAge(0); // adulto
+        ghost.setAge(0);
         this.level().addFreshEntity(ghost);
         ghost.playSound(ModSounds.HORSE_GHOST_GRUNT1.get(), 1.0F, 1.0F);
         com.example.neomocreatures.util.NamingHelper.promptRename(ghost, this.getOwnerUUID());
     }
 
-    private static final net.minecraft.resources.ResourceLocation PEGASUS_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "pegasus_speed_bonus");
-
-    private static final net.minecraft.resources.ResourceLocation DARK_PEGASUS_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "dark_pegasus_speed_bonus");
-
     private boolean fleeing = false;
 
     private static final net.minecraft.resources.ResourceLocation ZEBRA_FLEE_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, "zebra_flee_speed");
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, "zebra_flee_speed");
 
     public boolean isFleeing() {
         return this.fleeing;
@@ -930,12 +923,12 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     /**
-     * Sonido que vanilla reproduce (via makeMad()) cuando un jugador monta
-     * un caballo no tameado y este lo tira al suelo — la forma alternativa
-     * de tameo, junto a la manzana/comida. makeMad() ya viene heredado de
-     * AbstractHorse y ya hace todo lo demás (expulsar al jinete, subir el
-     * "temper" y encabritarse con setStanding(true)); aquí solo elegimos
-     * qué sonido "mad" le corresponde a cada variante.
+     * Sound vanilla plays (via makeMad()) when a player mounts an untamed
+     * horse and it throws them off — the alternative taming path, next to
+     * food/apples. makeMad() is already inherited from AbstractHorse and
+     * already does everything else (throwing off the rider, raising
+     * "temper", and rearing with setStanding(true)); here we just pick
+     * which "mad" sound fits each variant.
      */
     @Override
     protected SoundEvent getAngrySound() {
@@ -981,25 +974,57 @@ public class MoCHorseEntity extends AbstractHorse {
             openChestMenu(player);
             return;
         }
-        // Sin cofre: nada de menú de silla/armadura de vanilla — en su lugar,
-        // le pedimos al cliente que abra el inventario normal del jugador.
+        // No chest: none of vanilla's saddle/armor menu — instead, we ask
+        // the client to open the player's regular inventory.
         if (player instanceof ServerPlayer serverPlayer) {
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
                     new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
         }
     }
 
-    @Override
-    public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
+    /**
+    * Consumes the item in the player's hand (except in creative mode),
+    * plays the eating sound, and opens the horse's mouth. Every food
+    * interaction in mobInteract() below used to start with these same
+    * 5 copied lines; now they just call this method and apply their
+    * specific effect (grow, heal, love, tame...).
+    */
+    private void consumeFoodItem(Player player, ItemStack stack) {
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
+        this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+        openMouth();
+    }
+    
+    /**
+    * The pumpkin only works to put the "normal" species (horse/zebra/
+    * donkey) into heat. Special species (bathorse, dark pegasus,
+    * nightmare, unicorn, pegasus, fairy horse) have their own essence
+    * item for that; sterile hybrids don't breed; and an undead horse
+    * doesn't go into heat either until it's cured.
+    */
+    private boolean canUsePumpkinForLove() {
+        if (isSterileHybrid() || isUndead()) {
+            return false;
+        }
+        return switch (getSpecies()) {
+            case BATHORSE, DARK_PEGASUS, NIGHTMARE, UNICORN, PEGASUS, FAIRY_HORSE -> false;
+            default -> true;
+        };
+    }
 
+    /**
+    * First group of mobInteract() interactions: everything related to
+    * feeding it (growing a foal, making it fall in love, healing,
+    * taming), plus the side effect of stopping the dance if it's
+    * touched. Returns the result if some item matched, or null if
+    * mobInteract() should keep checking the rest of the interactions.
+    */
+    private InteractionResult tryFeedingInteractions(Player player, ItemStack stack) {
         if (this.isBaby() && stack.is(ModItems.SUGAR_LUMP.get())) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                openMouth();
+                consumeFoodItem(player, stack);
                 growFromSugar(SUGAR_LUMP_GROWTH_FRACTION);
                 ((ServerLevel) this.level()).sendParticles(
                         ParticleTypes.HAPPY_VILLAGER,
@@ -1013,13 +1038,9 @@ public class MoCHorseEntity extends AbstractHorse {
             this.getNavigation().stop();
         }
 
-        if (this.isTamed() && !this.isBaby() && stack.is(Items.PUMPKIN)) {
+        if (this.isTamed() && !this.isBaby() && stack.is(Items.PUMPKIN) && canUsePumpkinForLove()) {
             if (!this.level().isClientSide && this.canFallInLove()) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                openMouth();
+                consumeFoodItem(player, stack);
                 this.setInLove(player);
             }
             return InteractionResult.SUCCESS;
@@ -1027,11 +1048,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
         if (this.isTamed() && stack.is(ModItems.HAYSTACK.get())) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                openMouth();
+                consumeFoodItem(player, stack);
                 this.setHealth(this.getMaxHealth());
             }
             return InteractionResult.SUCCESS;
@@ -1039,19 +1056,25 @@ public class MoCHorseEntity extends AbstractHorse {
 
         if (!this.isTamed() && !this.isBaby() && isTamingFood(stack)) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                openMouth();
+                consumeFoodItem(player, stack);
                 this.applyOwnership(player);
                 this.level().broadcastEntityEvent(this, (byte) 7);
             }
             return InteractionResult.SUCCESS;
         }
-        
+
+        return null;
+    }
+
+    /**
+    * Second group of interactions: equipping armor (or ignoring the
+    * click if it's already wearing some) and equipping the saddle. Same
+    * as tryFeedingInteractions(), returns the result if something
+    * matched, or null if mobInteract() should keep checking the rest.
+    */
+    private InteractionResult tryEquipmentInteractions(ItemStack stack) {
         if (this.isTamed() && !this.isBaby() && acceptsArmorItem(stack) && !this.getItemBySlot(EquipmentSlot.BODY).isEmpty()) {
-            return InteractionResult.PASS; // ya tiene armadura puesta, no hacer nada más
+            return InteractionResult.PASS;
         }
 
         if (this.isTamed() && !this.isBaby() && (wantsHorseArmor() || wantsCrystalArmor())
@@ -1069,8 +1092,17 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
 
-        if (this.isTamed() && !this.isBaby() && !isVanishing() && matchesAmulet(stack)) {
+    /**
+    * Third group: capturing it with the amulet, or otherwise mounting it
+    * (giving priority first to whatever the held item wants to do, so
+    * we don't have to keep adding exclusions by hand every time a new
+    * item with its own interactLivingEntity gets created).
+    */
+    private InteractionResult tryAmuletOrRideInteraction(Player player, InteractionHand hand, ItemStack stack) {
+        if (this.isTamed() && !isVanishing() && matchesAmulet(stack)) {
             if (!this.level().isClientSide) {
                 if (stack.is(ModItems.PET_AMULET.get())) {
                     capturePetInstant(player, hand);
@@ -1083,9 +1115,10 @@ public class MoCHorseEntity extends AbstractHorse {
         }
         if (this.isTamed() && this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()
                 && !isHorseArmorItem(stack) && !isEssenceItem(stack) && !isVanishing()) {
-            // Antes de montar, dale prioridad a lo que el item en mano quiera hacer
-            // (scrolls, futuros items con su propio interactLivingEntity). Así no hay
-            // que ir agregando exclusiones a mano cada vez que se crea un item nuevo.
+            // Before mounting, give priority to whatever the held item wants to
+            // do (scrolls, future items with their own interactLivingEntity). That
+            // way we don't have to keep adding exclusions by hand every time a
+            // new item is created.
             if (!stack.isEmpty()) {
                 InteractionResult itemResult = stack.interactLivingEntity(player, this, hand);
                 if (itemResult.consumesAction()) {
@@ -1098,6 +1131,14 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
+
+    /**
+    * Fourth group: shears to remove armor/saddle, and dyeing a fairy
+    * horse with its permanent color.
+    */
+    private InteractionResult tryUnequipOrDyeInteraction(Player player, ItemStack stack) {
         if (this.isTamed() && stack.is(Items.SHEARS) && !this.getItemBySlot(EquipmentSlot.BODY).isEmpty()) {
             if (!this.level().isClientSide) {
                 ItemStack armor = this.getItemBySlot(EquipmentSlot.BODY);
@@ -1131,6 +1172,17 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
+
+    /**
+    * Fifth group: renaming with a book (and adopting if it has no
+    * owner), fitting a chest, and opening the chest while sneaking
+    * (standing on the ground — the E key is used for that while
+    * mounted, since right-click never reaches the entity you're
+    * riding).
+    */
+    private InteractionResult tryNamingOrChestInteraction(Player player, ItemStack stack) {
         // A book lets the owner rename an already-tamed animal at any time.
         // An owner-less tamed horse (Scroll of Sale / Reset Owner) can be
         // renamed by anyone, which makes the renamer its new owner.
@@ -1167,40 +1219,73 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.isTamed()) {
-            // Doma gradual por temperamento (la mecánica clásica de vanilla):
-            // con la mano vacía el jugador SÍ se monta al caballo. Ahí mismo
-            // se resuelve el intento: sube el temper (campo nativo de
-            // AbstractHorse, ya se guarda solo en el NBT); si llega al
-            // máximo se doma exactamente igual que con la manzana
-            // (applyOwnership -> pantalla de nombre) y el jugador se queda
-            // montado. Si falla, se lo desmonta automáticamente, recibe un
-            // poco de daño y el caballo se encabrita y suena "mad". Mientras
-            // dure esa animación (isBucking()) no se puede volver a montar.
-            // Con un item en la mano, o en una especie con alas: el caballo
-            // reacciona igual (encabritado + sonido) pero nunca se monta y
-            // no sube el temper. La comida de doma (manzana) ya se maneja
-            // más arriba y sigue funcionando igual.
-            if (this.isBaby()) {
-                return super.mobInteract(player, hand);
-            }
-            if (this.isBucking() || this.isTameHolding()) {
-                // Todavía encabritado por un intento anterior, o ya está
-                // montado y a punto de ser tirado (hold de temper en
-                // curso): ignorar el clic sin repetir sonido/animación
-                // hasta que termine.
-                return InteractionResult.sidedSuccess(this.level().isClientSide);
-            }
-            if (!this.level().isClientSide) {
-                if (stack.isEmpty() && !isWingedSpecies()) {
-                    attemptRidingTame(player);
-                } else {
-                    buckWithoutTemperGain(player);
-                }
-            }
+        return null;
+    }
+
+    /**
+    * Gradual temper-based taming (vanilla's classic mechanic): with an
+    * empty hand the player DOES mount the horse. The attempt is
+    * resolved right then: temper goes up (a native AbstractHorse field,
+    * already saved to NBT on its own); if it hits max it tames exactly
+    * like with an apple (applyOwnership -> naming screen) and the player
+    * stays mounted. If it fails, they get automatically dismounted, take
+    * a bit of damage, and the horse rears and plays "mad". While that
+    * animation lasts (isBucking()) it can't be mounted again. With an
+    * item in hand, or on a winged species: the horse reacts the same
+    * (rearing + sound) but never gets mounted and temper doesn't go up.
+    * Taming food (apple) is already handled above, in
+    * tryFeedingInteractions(), and keeps working the same way. Only
+    * called when the horse is NOT tamed; always returns a result (unlike
+    * the previous groups, it never "falls through").
+    */
+    private InteractionResult tryRidingTameAttempt(Player player, ItemStack stack, InteractionHand hand) {
+        if (this.isBaby()) {
+            return super.mobInteract(player, hand);
+        }
+        if (this.isBucking() || this.isTameHolding()) {
+            // Still rearing from a previous attempt, or already mounted and
+            // about to be thrown off (temper hold in progress): ignore the
+            // click without repeating the sound/animation until it's done.
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
+        if (!this.level().isClientSide) {
+            if (stack.isEmpty() && !isWingedSpecies()) {
+                attemptRidingTame(player);
+            } else {
+                buckWithoutTemperGain(player);
+            }
+        }
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
+    }
 
+    /**
+     * Foals are not tamed through temperament (a wild foal cannot be ridden).
+     * Instead, an apple tames them instantly, just like a wild adult horse
+     * with isTamingFood() — but WITHOUT making them grow, since growth is
+     * exclusively handled by growFromSugar(), and isFood() already blocks
+     * the vanilla food shortcut. Any other item, or an empty hand, delegates
+     * to the normal vanilla foal behavior (with no risk of growth for the
+     * same reason).
+     */
+    private InteractionResult tryBabyTamingInteraction(Player player, ItemStack stack, InteractionHand hand) {
+        if (isTamingFood(stack)) {
+            if (!this.level().isClientSide) {
+                consumeFoodItem(player, stack);
+                this.applyOwnership(player);
+                this.level().broadcastEntityEvent(this, (byte) 7);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
+    }
+
+    /**
+    * Essence of Darkness: transforms zorse -> bathorse and pegasus ->
+    * dark pegasus (with height/mounted restrictions in the latter case
+    * while transforming), and also heals or triggers love mode on an
+    * already-transformed bathorse/dark pegasus.
+    */
+    private InteractionResult tryEssenceOfDarknessInteraction(Player player, ItemStack stack) {
         //ESSENCE OF DARKNESS: ZORSE -> BATHORSE
         if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())) {
             if (getSpecies() == Species.ZORSE && !isTransforming()) {
@@ -1258,6 +1343,14 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
+
+    /**
+    * Essence of Fire: transforms zorse -> nightmare, and heals or
+    * triggers love mode on an already-transformed nightmare.
+    */
+    private InteractionResult tryEssenceOfFireInteraction(Player player, ItemStack stack) {
         //ESSENCE OF FIRE: ZORSE -> NIGHTMARE
         if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_FIRE.get())) {
             if (getSpecies() == Species.ZORSE && !isTransforming()) {
@@ -1281,8 +1374,17 @@ public class MoCHorseEntity extends AbstractHorse {
                 return InteractionResult.SUCCESS;
             }
         }
-        
 
+        return null;
+    }
+
+    /**
+    * Essence of Undead: converts horse/zorse/unicorn, or
+    * bathorse/pegasus/dark_pegasus, into their undead version (as long
+    * as it's not blocked by Essence of Light); if it's already undead,
+    * it instead resets the stage to 0 and heals.
+    */
+    private InteractionResult tryEssenceOfUndeadInteraction(Player player, ItemStack stack) {
         //ESSENCE OF UNDEAD: HORSE/ZORSE -> UNDEAD HORSE
         if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
                 && (getSpecies() == Species.HORSE || getSpecies() == Species.ZORSE || getSpecies() == Species.UNICORN)
@@ -1323,6 +1425,16 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
+
+    /**
+    * Essence of Light: permanently locks the current undead stage
+    * pegasus (with the same height/mounted restrictions as Essence of
+    * Darkness), and heals or triggers love mode on already-transformed
+    * unicorn/pegasus/fairy horse.
+    */
+    private InteractionResult tryEssenceOfLightInteraction(Player player, ItemStack stack) {
         //ESSENCE OF LIGHT: Permanent Undead Stage
         if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
                 && isUndead() && !isUndeadTransforming()) {
@@ -1406,6 +1518,69 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
+        return null;
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        InteractionResult feedResult = tryFeedingInteractions(player, stack);
+        if (feedResult != null) {
+            return feedResult;
+        }
+        
+        InteractionResult equipResult = tryEquipmentInteractions(stack);
+        if (equipResult != null) {
+            return equipResult;
+        }
+
+
+        InteractionResult amuletOrRideResult = tryAmuletOrRideInteraction(player, hand, stack);
+        if (amuletOrRideResult != null) {
+            return amuletOrRideResult;
+        }
+
+        InteractionResult unequipOrDyeResult = tryUnequipOrDyeInteraction(player, stack);
+        if (unequipOrDyeResult != null) {
+            return unequipOrDyeResult;
+        }
+
+        InteractionResult namingOrChestResult = tryNamingOrChestInteraction(player, stack);
+        if (namingOrChestResult != null) {
+            return namingOrChestResult;
+        }
+
+        // Baby taming
+        if (!this.isTamed() && this.isBaby()) {
+            return tryBabyTamingInteraction(player, stack, hand);
+        }
+
+        if (!this.isTamed()) {
+            return tryRidingTameAttempt(player, stack, hand);
+        }
+
+        InteractionResult darknessResult = tryEssenceOfDarknessInteraction(player, stack);
+        if (darknessResult != null) {
+            return darknessResult;
+        }
+
+        InteractionResult fireResult = tryEssenceOfFireInteraction(player, stack);
+        if (fireResult != null) {
+            return fireResult;
+        }
+        
+
+        InteractionResult undeadResult = tryEssenceOfUndeadInteraction(player, stack);
+        if (undeadResult != null) {
+            return undeadResult;
+        }
+
+        InteractionResult lightResult = tryEssenceOfLightInteraction(player, stack);
+        if (lightResult != null) {
+            return lightResult;
+        }
+
         if (this.isTamed() && !this.isBaby() && getSpecies() == Species.NIGHTMARE && stack.is(Items.REDSTONE)) {
             if (!this.level().isClientSide) {
                 if (!player.getAbilities().instabuild) {
@@ -1444,9 +1619,9 @@ public class MoCHorseEntity extends AbstractHorse {
         this.setAge(newAge);
     }
 
-    /** Especies con alas: la animación de encabritado no las contempla (las alas
-     *  no siguen la inclinación del cuerpo), así que quedan fuera de la doma
-     *  por montura y solo se doman con comida, como antes de esta feature. */
+    /** Winged species: the rearing animation doesn't account for them (the
+     *  wings don't follow the body's tilt), so they're left out of mount-
+     *  based taming and can only be tamed with food, as before this feature. */
     private boolean isWingedSpecies() {
         return getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
                 || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE
@@ -1460,13 +1635,13 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     /**
-     * Un intento de montar un caballo salvaje con la mano vacía: el jugador
-     * se monta y ahí mismo se resuelve el intento. Sube el temper vanilla
-     * (AbstractHorse ya lo guarda en el NBT); si con eso llega al máximo se
-     * doma como con la manzana y el jugador se queda montado. Si no, se lo
-     * desmonta, recibe un poco de daño y el caballo se encabrita. Solo se
-     * llama en el servidor.
-     */
+    * An attempt to mount a wild horse with an empty hand: the player
+    * mounts and the attempt is resolved right there. Vanilla temper goes
+    * up (AbstractHorse already saves it in NBT); if that reaches max it
+    * tames like with an apple and the player stays mounted. Otherwise,
+    * they get dismounted, take a bit of damage, and the horse rears.
+    * Only called on the server.
+    */
     private void attemptRidingTame(Player player) {
         player.startRiding(this);
         int gained = 5 + this.random.nextInt(20);
@@ -1475,24 +1650,24 @@ public class MoCHorseEntity extends AbstractHorse {
             this.applyOwnership(player);
             this.level().broadcastEntityEvent(this, (byte) 7);
         } else {
-            // El intento falló, pero en vez de tirar al jugador al
-            // instante lo dejamos montado un rato (TAME_HOLD_DURATION_TICKS)
-            // para que se sienta como si el caballo aguantara un poco.
-            // El tirón real + la animación de encabritado se resuelven en
-            // tick() cuando el hold llega a 0 (ver resolveFailedTameAttempt).
+            // The attempt failed, but instead of throwing the player off right
+            // away we keep them mounted for a while (TAME_HOLD_DURATION_TICKS)
+            // so it feels like the horse holds on for a bit. The actual throw-off
+            // + rearing animation are resolved in tick() when the hold reaches 0
+            // (see resolveFailedTameAttempt).
             this.pendingFailedTameThrow = true;
             this.entityData.set(DATA_TAME_HOLD_TICKS, TAME_HOLD_DURATION_TICKS);
         }
     }
 
     /**
-     * Resuelve un intento de doma fallido cuyo "hold" ya terminó: tira al
-     * jugador (si todavía sigue montado), le hace un poco de daño, empuja
-     * y arranca la animación de encabritado. Si el jugador ya se había
-     * bajado por su cuenta durante el hold, simplemente se salta el daño y
-     * el empujón pero igual se dispara la animación. Solo se llama en el
-     * servidor, desde tick().
-     */
+    * Resolves a failed taming attempt whose "hold" has already ended:
+    * throws the player off (if still mounted), deals a bit of damage,
+    * applies a push, and starts the rearing animation. If the player
+    * had already dismounted on their own during the hold, it just skips
+    * the damage and push but still triggers the animation. Only called
+    * on the server, from tick().
+    */
     private void resolveFailedTameAttempt() {
         Entity passenger = this.getFirstPassenger();
         if (passenger instanceof Player player) {
@@ -1506,13 +1681,13 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     /**
-     * Reacción de un caballo salvaje cuando se le interactúa con un item en
-     * la mano, o es una especie con alas: suena "mad" y empuja al jugador
-     * igual que un intento de doma fallido, pero NO cuenta como intento
-     * real, así que no toca el temper. La pose de encabritado (rearing) solo
-     * se activa si NO es una especie con alas, porque esa animación no las
-     * contempla. Solo se llama en el servidor.
-     */
+    * A wild horse's reaction when interacted with while holding an item,
+    * or on a winged species: plays the "mad" sound and pushes the player
+    * the same as a failed taming attempt, but it does NOT count as a
+    * real attempt, so it doesn't touch temper. The rearing pose only
+    * triggers if it's NOT a winged species, since that animation doesn't
+    * account for them. Only called on the server.
+    */
     private void buckWithoutTemperGain(Player player) {
         this.makeMad();
         this.openMouth();
@@ -1524,6 +1699,18 @@ public class MoCHorseEntity extends AbstractHorse {
 
     private boolean isTamingFood(ItemStack stack) {
         return stack.is(Items.APPLE);
+    }
+
+    /**
+     * Foal growth in this mod is exclusively handled via sugar cubes
+     * (growFromSugar), not through generic food. Without this override,
+     * Minecraft uses its own default "food" criteria (which includes
+     * apples) and allows a foal to grow when fed an apple without going
+     * through our logic — which is why we block it entirely here.
+     */
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return false;
     }
 
     public boolean isFlyingNow() {
@@ -1592,8 +1779,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
     public void startUnicornCharge() {
         this.unicornChargeTicks = UNICORN_CHARGE_DURATION_TICKS;
-        this.entityData.set(DATA_UNICORN_CHARGE_TICKS, UNICORN_CHARGE_DURATION_TICKS); // cuenta sincronizada, propia,
-        // que no se pisa con el reseteo de DATA_GRAZE_TICKS cuando el unicornio va montado
+        this.entityData.set(DATA_UNICORN_CHARGE_TICKS, UNICORN_CHARGE_DURATION_TICKS);
         this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 60, 2, false, true));
     }
@@ -1681,6 +1867,304 @@ public class MoCHorseEntity extends AbstractHorse {
         return ModEntities.MOC_HORSE.get().create(level);
     }
 
+    /**
+    * All the horse's timed transformations (species change, fairy color
+    * change, amulet fade-out, and undead transformation) followed the
+    * same pattern: countdown, sound at 60 ticks, final effect on
+    * reaching 0. tick() used to call them one after another inline; now
+    * they live together here so tick() reads at a glance.
+    */
+    private void tickTransformationTimers() {
+        if (isTransforming()) {
+            int ticks = getTransformTicks() - 1;
+            this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
+            if (ticks == 60) {
+                this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            }
+            if (ticks <= 0) {
+                setSpecies(getTransformTarget());
+                this.entityData.set(DATA_TRANSFORM_TARGET, UNSET);
+                dropArmorIfIncompatible();
+                this.setHealth((float) this.getMaxHealth());
+            }
+        }
+
+        if (isColorTransforming()) {
+            int ticks = getColorTransformTicks() - 1;
+            this.entityData.set(DATA_COLOR_TRANSFORM_TICKS, ticks);
+            if (ticks == 60) {
+                this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            }
+            if (ticks <= 0) {
+                setFairyColor(getColorTransformTarget());
+                this.entityData.set(DATA_COLOR_TRANSFORM_TARGET, UNSET);
+            }
+        }
+        if (isVanishing()) {
+            int ticks = getVanishTicks() + 1;
+            int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
+            if (ticks > duration) {
+                if (this.pendingAmuletTemplate != null) {
+                    completeAmuletCapture();
+                } else {
+                    this.dropSaddleAndArmor();
+                    this.discard();
+                }
+            } else {
+                this.entityData.set(DATA_VANISH_TICKS, ticks);
+            }
+        }
+
+        if (isUndeadTransforming()) {
+            int ticks = getUndeadTransformTicks() - 1;
+            this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, ticks);
+            if (ticks == 60) {
+                this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            }
+            if (ticks <= 0) {
+                if (getSpecies() == Species.BATHORSE || getSpecies() == Species.DARK_PEGASUS) {
+                    setSpecies(Species.PEGASUS);
+                }
+                setUndeadStage(UNDEAD_STAGE_0);
+                undeadDecayTicks = 0;
+                dropArmorIfIncompatible();
+                this.setHealth((float) this.getMaxHealth());
+            }
+        }
+    }
+
+    /**
+    * Per-tick counters with no relation to each other beyond all being
+    * "subtract 1 and apply the effect when it hits 0/a special state":
+    * open mouth, rearing, failed-taming hold (with its resolution), fall
+    * immunity, and the speed adjustment while dismounted. Also syncs the
+    * visible age to the client.
+    */
+    private void tickCountdownTimers() {
+        if (this.getMouthTicks() > 0) {
+            this.entityData.set(DATA_MOUTH_TICKS, this.getMouthTicks() - 1);
+        }
+        if (this.entityData.get(DATA_BUCKING_TICKS) > 0) {
+            this.entityData.set(DATA_BUCKING_TICKS, this.entityData.get(DATA_BUCKING_TICKS) - 1);
+        }
+        if (this.entityData.get(DATA_TAME_HOLD_TICKS) > 0) {
+            int holdTicks = this.entityData.get(DATA_TAME_HOLD_TICKS) - 1;
+            this.entityData.set(DATA_TAME_HOLD_TICKS, holdTicks);
+            if (holdTicks <= 0 && this.pendingFailedTameThrow) {
+                this.pendingFailedTameThrow = false;
+                this.resolveFailedTameAttempt();
+            }
+        }
+        if (this.fallImmuneTicks > 0) {
+            this.fallImmuneTicks--;
+        }
+        if (this.isSlowedWhenUnridden()) {
+            net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) {
+                if (!this.isVehicle() && speedAttr.getBaseValue() != SPECIAL_UNMOUNTED_SPEED) {
+                    speedAttr.setBaseValue(SPECIAL_UNMOUNTED_SPEED);
+                } else if (this.isVehicle() && speedAttr.getBaseValue() == SPECIAL_UNMOUNTED_SPEED) {
+                    applyMoCAttributes();
+                }
+            }
+        }
+        this.entityData.set(DATA_SYNCED_AGE, this.getAge());
+    }
+    
+    /**
+     * "Grazing" state: resets if it gets mounted or is fleeing, decreases
+     * normally, and starts randomly (1 in 1000 per tick) while it's
+     * tamed, an adult, on the ground, and not fleeing.
+     */
+    private void tickGrazing() {
+        if (this.isVehicle() && this.getGrazeTicks() > 0) {
+            this.entityData.set(DATA_GRAZE_TICKS, 0);
+        }
+
+        if (this.getGrazeTicks() > 0) {
+            if (isFleeing()) {
+                this.entityData.set(DATA_GRAZE_TICKS, 0);
+            } else {
+                this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
+            }
+        } else if (!this.isBaby() && !this.isVehicle() && !isFleeing() && this.random.nextInt(1000) == 0) { //How common is grazing
+            this.entityData.set(DATA_GRAZE_TICKS, 100);
+        }
+    }
+
+     /**
+     * Synced wing-flap flag for the fairy horse (different from the
+     * pegasus/bathorse flap sound, which lives in tickWingFlapSounds()):
+     * counts down while active, and triggers randomly (1 in 150) while
+     * on the ground.
+     */
+    private void tickFairyWingFlapFlag() {
+        if (getSpecies() == Species.FAIRY_HORSE) {
+            if (this.getWingFlapTicks() > 0) {
+                this.entityData.set(DATA_WING_FLAP_TICKS, this.getWingFlapTicks() - 1);
+            } else if (this.onGround() && this.random.nextInt(150) == 0) {
+                this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
+            }
+        }
+    }
+
+    /**
+     * Slow, random passive regeneration (1 in 300 per tick) while the
+     * horse is alive and not at max health.
+     */
+    private void tickPassiveRegen() {
+        if (this.random.nextInt(300) == 0 && this.getHealth() > 0F && this.getHealth() < this.getMaxHealth()) {
+            this.heal(1.0F);
+        }
+    }
+
+     /**
+     * Zebra dance when a shuffle disc plays nearby: starts randomly while
+     * it's playing, stops if the disc stops, and halts navigation while
+     * dancing.
+     */
+    private void tickZebraDancing() {
+        if (getSpecies() == Species.ZEBRA && this.isTamed() && !this.isBaby()) {
+            if (shuffleCounter == 0 && this.random.nextInt(50) == 0 && isNearPlayingShuffleRecord()) {
+                shuffleCounter = 1;
+                setDancing(true);
+            }
+            if (shuffleCounter > 0) {
+                shuffleCounter++;
+                if (!isNearPlayingShuffleRecord()) {
+                    shuffleCounter = 0;
+                    setDancing(false);
+                }
+            }
+            if (isDancing()) {
+                this.getNavigation().stop();
+            }
+        }
+    }
+
+    /**
+    * Periodic wing-flap sound for tamed flyers that aren't transforming:
+    * bathorse/pegasus/dark pegasus on one side, and fairy horse/ghost
+    * winged on the other (each group with its own period and its own
+    * "grounded streak" to stop the sound if they've been on the ground
+    */
+    private void tickWingFlapSounds() {
+        if ((getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS)
+                && this.isTamed() && !isTransforming()) {
+            groundedStreak = this.onGround() ? groundedStreak + 1 : 0;
+            boolean flappingEligible = groundedStreak < WING_FLAP_GROUND_GRACE;
+
+            if (flappingEligible && this.tickCount % WING_FLAP_PERIOD_TICKS == 0) {
+                this.playSound(ModSounds.HORSE_WING_FLAP.get(), 1.0F, 1.0F);
+            }
+        } else {
+            groundedStreak = 0;
+        }
+
+        if ((getSpecies() == Species.FAIRY_HORSE || getSpecies() == Species.GHOST_WINGED)
+                && this.isTamed() && !isTransforming()) {
+            butterflyGroundedStreak = this.onGround() ? butterflyGroundedStreak + 1 : 0;
+            boolean butterflyFlappingEligible = butterflyGroundedStreak < WING_FLAP_GROUND_GRACE;
+
+            if (butterflyFlappingEligible && this.tickCount % BUTTERFLY_WING_FLAP_PERIOD_TICKS == 0) {
+                this.playSound(ModSounds.HORSE_WING_FLAP.get(), 1.0F, 1.0F);
+            }
+        } else {
+            butterflyGroundedStreak = 0;
+        }
+    }
+
+    /**
+     * Nightmare's behavior while fleeing (triggered by redstone dust):
+     * random fire effect and forced straight-line movement along its
+     * flee yaw, until the counter runs out.
+     */
+    private void tickNightmareBehavior() {
+        if (getSpecies() == Species.NIGHTMARE && getNightmareTicks() > 0) {
+            if (this.random.nextInt(2) == 0) {
+                nightmareFireEffect();
+            }
+            if (!this.isVehicle()) {
+                float yaw = this.nightmareFleeYaw * ((float) Math.PI / 180F);
+                double speed = 0.4D;
+                this.setDeltaMovement(-Math.sin(yaw) * speed, this.getDeltaMovement().y, Math.cos(yaw) * speed);
+                this.setYRot(this.nightmareFleeYaw);
+                this.setYHeadRot(this.nightmareFleeYaw);
+            }
+            setNightmareTicks(getNightmareTicks() - 1);
+        }
+    }
+
+    /**
+     * Progressive advance of the undead stage (not to be confused with
+     * tickTransformationTimers(), which handles the initial/final undead
+     * transformation): while it's undead, isn't a skeleton yet, and isn't
+     * locked, it counts up to the stage duration and advances by one.
+     */
+    private void tickUndeadDecayProgress() {
+        if (isUndead() && !isSkeletonStage() && !isUndeadLocked()) {
+            undeadDecayTicks++;
+            if (undeadDecayTicks >= UNDEAD_STAGE_DURATION_TICKS) {
+                undeadDecayTicks = 0;
+                setUndeadStage(getUndeadStage() + 1);
+            }
+        }
+    }
+
+     /**
+     * All the purely cosmetic particles that are only computed on the
+     * client: dance notes, the fade-out spiral, undead decay motes, and
+     * nightmare embers.
+     */
+    private void tickClientSideParticles() {
+        if (isDancing() && this.random.nextInt(4) == 0) {
+            double dx = this.random.nextGaussian() * 0.5D;
+            double dy = this.random.nextGaussian() * -0.1D;
+            double dz = this.random.nextGaussian() * 0.02D;
+            this.level().addParticle(ParticleTypes.NOTE,
+                    this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
+                    this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
+                    this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
+                    dx, dy, dz);
+        }
+
+        if (isVanishing()) {
+            int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
+            float progress = this.getVanishTicks() / (float) duration;
+            double maxRadius = this.getBbWidth() * 1.3D;
+            double radius = maxRadius * Math.pow(1.0D - progress, 2.0D);
+            double spinSpeed = 0.5D + progress * 2.5D;
+
+            int points = 8;
+            double baseAngle = this.getVanishTicks() * spinSpeed;
+            for (int i = 0; i < points; i++) {
+                double angle = baseAngle + (2 * Math.PI * i / points);
+                double px = this.getX() + Math.cos(angle) * radius;
+                double pz = this.getZ() + Math.sin(angle) * radius;
+                double py = this.getY() + 0.1D;
+                this.level().addParticle(ModParticles.VANISH_FX.get(), px, py, pz, 0.0D, 0.01D, 0.0D);
+            }
+        }
+        if (isUndead() && !isSkeletonStage() && !isUndeadLocked() && this.random.nextInt(8) == 0) {
+            this.level().addParticle(ModParticles.UNDEAD_DECAY.get(),
+                    this.getX() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
+                    this.getY() + this.random.nextDouble() * this.getBbHeight(),
+                    this.getZ() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
+                    0.0D, 0.0D, 0.0D);
+        }
+
+        if (getSpecies() == Species.NIGHTMARE && this.random.nextInt(50) == 0) {
+            double vx = this.random.nextGaussian() * 0.02D;
+            double vy = this.random.nextGaussian() * 0.02D;
+            double vz = this.random.nextGaussian() * 0.02D;
+            this.level().addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
+                    this.getX() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
+                    this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
+                    this.getZ() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
+                    vx, vy, vz);
+        }
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -1692,238 +2176,34 @@ public class MoCHorseEntity extends AbstractHorse {
                 this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
             }
 
-            if (this.getMouthTicks() > 0) {
-                this.entityData.set(DATA_MOUTH_TICKS, this.getMouthTicks() - 1);
-            }
-            if (this.entityData.get(DATA_BUCKING_TICKS) > 0) {
-                this.entityData.set(DATA_BUCKING_TICKS, this.entityData.get(DATA_BUCKING_TICKS) - 1);
-            }
-            if (this.entityData.get(DATA_TAME_HOLD_TICKS) > 0) {
-                int holdTicks = this.entityData.get(DATA_TAME_HOLD_TICKS) - 1;
-                this.entityData.set(DATA_TAME_HOLD_TICKS, holdTicks);
-                if (holdTicks <= 0 && this.pendingFailedTameThrow) {
-                    this.pendingFailedTameThrow = false;
-                    this.resolveFailedTameAttempt();
-                }
-            }
-            if (this.fallImmuneTicks > 0) {
-                this.fallImmuneTicks--;
-            }
-            if (this.isSlowedWhenUnridden()) {
-                net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-                if (speedAttr != null) {
-                    if (!this.isVehicle() && speedAttr.getBaseValue() != SPECIAL_UNMOUNTED_SPEED) {
-                        speedAttr.setBaseValue(SPECIAL_UNMOUNTED_SPEED);
-                    } else if (this.isVehicle() && speedAttr.getBaseValue() == SPECIAL_UNMOUNTED_SPEED) {
-                        applyMoCAttributes();
-                    }
-                }
-            }
-            this.entityData.set(DATA_SYNCED_AGE, this.getAge());
+            tickCountdownTimers();
 
-            if (this.isVehicle() && this.getGrazeTicks() > 0) {
-                this.entityData.set(DATA_GRAZE_TICKS, 0);
-            }
+            tickGrazing();
 
-            if (this.getGrazeTicks() > 0) {
-                if (isFleeing()) {
-                    this.entityData.set(DATA_GRAZE_TICKS, 0);
-                } else {
-                    this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
-                }
-            } else if (!this.isBaby() && !this.isVehicle() && !isFleeing() && this.random.nextInt(1000) == 0) { //How common is grazing
-                this.entityData.set(DATA_GRAZE_TICKS, 100);
-            }
+            tickFairyWingFlapFlag();
 
-            if (getSpecies() == Species.FAIRY_HORSE) {
-                if (this.getWingFlapTicks() > 0) {
-                    this.entityData.set(DATA_WING_FLAP_TICKS, this.getWingFlapTicks() - 1);
-                } else if (this.onGround() && this.random.nextInt(150) == 0) {
-                    this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
-                }
-            }            
+            tickPassiveRegen();
 
-            if (this.random.nextInt(300) == 0 && this.getHealth() > 0F && this.getHealth() < this.getMaxHealth()) {
-                this.heal(1.0F);
-            }
+            tickTransformationTimers();
 
-            if (isTransforming()) {
-                int ticks = getTransformTicks() - 1;
-                this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
-                if (ticks == 60) {
-                    this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
-                }
-                if (ticks <= 0) {
-                    setSpecies(getTransformTarget());
-                    this.entityData.set(DATA_TRANSFORM_TARGET, UNSET);
-                    dropArmorIfIncompatible();
-                    this.setHealth((float) this.getMaxHealth());
-                }
-            }
+            tickZebraDancing();
 
-            if (isColorTransforming()) {
-                int ticks = getColorTransformTicks() - 1;
-                this.entityData.set(DATA_COLOR_TRANSFORM_TICKS, ticks);
-                if (ticks == 60) {
-                    this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
-                }
-                if (ticks <= 0) {
-                    setFairyColor(getColorTransformTarget());
-                    this.entityData.set(DATA_COLOR_TRANSFORM_TARGET, UNSET);
-                }
-            }
-            if (isVanishing()) {
-                int ticks = getVanishTicks() + 1;
-                int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
-                if (ticks > duration) {
-                    if (this.pendingAmuletTemplate != null) {
-                        completeAmuletCapture(); // ya hace discard() internamente
-                    } else {
-                        this.dropSaddleAndArmor();
-                        this.discard();
-                    }
-                } else {
-                    this.entityData.set(DATA_VANISH_TICKS, ticks);
-                }
-            }
-
-            if (isUndeadTransforming()) {
-                int ticks = getUndeadTransformTicks() - 1;
-                this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, ticks);
-                if (ticks == 60) {
-                    this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
-                }
-                if (ticks <= 0) {
-                    if (getSpecies() == Species.BATHORSE || getSpecies() == Species.DARK_PEGASUS) {
-                        setSpecies(Species.PEGASUS);
-                    }
-                    setUndeadStage(UNDEAD_STAGE_0);
-                    undeadDecayTicks = 0;
-                    dropArmorIfIncompatible();
-                    this.setHealth((float) this.getMaxHealth());
-                }
-            }
-
-            if (getSpecies() == Species.ZEBRA && this.isTamed() && !this.isBaby()) {
-                if (shuffleCounter == 0 && this.random.nextInt(50) == 0 && isNearPlayingShuffleRecord()) {
-                    shuffleCounter = 1;
-                    setDancing(true);
-                }
-                if (shuffleCounter > 0) {
-                    shuffleCounter++;
-                    if (!isNearPlayingShuffleRecord()) {
-                        shuffleCounter = 0;
-                        setDancing(false);
-                    }
-                }
-                if (isDancing()) {
-                    this.getNavigation().stop();
-                }
-            }
-
-            if ((getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS)
-                    && this.isTamed() && !isTransforming()) {
-                groundedStreak = this.onGround() ? groundedStreak + 1 : 0;
-                boolean flappingEligible = groundedStreak < WING_FLAP_GROUND_GRACE;
-
-                if (flappingEligible && this.tickCount % WING_FLAP_PERIOD_TICKS == 0) {
-                    this.playSound(ModSounds.HORSE_WING_FLAP.get(), 1.0F, 1.0F);
-                }
-            } else {
-                groundedStreak = 0;
-            }
-
-            if ((getSpecies() == Species.FAIRY_HORSE || getSpecies() == Species.GHOST_WINGED)
-                    && this.isTamed() && !isTransforming()) {
-                butterflyGroundedStreak = this.onGround() ? butterflyGroundedStreak + 1 : 0;
-                boolean butterflyFlappingEligible = butterflyGroundedStreak < WING_FLAP_GROUND_GRACE;
-
-                if (butterflyFlappingEligible && this.tickCount % BUTTERFLY_WING_FLAP_PERIOD_TICKS == 0) {
-                    this.playSound(ModSounds.HORSE_WING_FLAP.get(), 1.0F, 1.0F);
-                }
-            } else {
-                butterflyGroundedStreak = 0;
-            }
+            tickWingFlapSounds();
 
             if ((getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) && unicornChargeTicks > 0) {
                 unicornChargeTick();
             }
 
-            if (getSpecies() == Species.NIGHTMARE && getNightmareTicks() > 0) {
-                if (this.random.nextInt(2) == 0) {
-                    nightmareFireEffect();
-                }
-                if (!this.isVehicle()) {
-                    // Corre en linea recta (activado por redstone dust)
-                    float yaw = this.nightmareFleeYaw * ((float) Math.PI / 180F);
-                    double speed = 0.4D;
-                    this.setDeltaMovement(-Math.sin(yaw) * speed, this.getDeltaMovement().y, Math.cos(yaw) * speed);
-                    this.setYRot(this.nightmareFleeYaw);
-                    this.setYHeadRot(this.nightmareFleeYaw);
-                }
-                setNightmareTicks(getNightmareTicks() - 1);
-            }
+            tickNightmareBehavior();
 
-            if (isUndead() && !isSkeletonStage() && !isUndeadLocked()) {
-                undeadDecayTicks++;
-                if (undeadDecayTicks >= UNDEAD_STAGE_DURATION_TICKS) {
-                    undeadDecayTicks = 0;
-                    setUndeadStage(getUndeadStage() + 1);
-                }
-            }
+            tickUndeadDecayProgress();
 
             if ((getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE)
                     && this.isVehicle() && !this.onGround()) {
                 unicornJumpTrail();
             }
         } else {
-            // lado cliente
-            if (isDancing() && this.random.nextInt(4) == 0) {
-                double dx = this.random.nextGaussian() * 0.5D;
-                double dy = this.random.nextGaussian() * -0.1D;
-                double dz = this.random.nextGaussian() * 0.02D;
-                this.level().addParticle(ParticleTypes.NOTE,
-                        this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
-                        this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
-                        this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
-                        dx, dy, dz);
-            }
-
-            if (isVanishing()) {
-                int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
-                float progress = this.getVanishTicks() / (float) duration; // 0 al empezar, 1 al terminar
-                double maxRadius = this.getBbWidth() * 1.3D;
-                double radius = maxRadius * Math.pow(1.0D - progress, 2.0D); // se cierra, cada vez mas rapido
-                double spinSpeed = 0.5D + progress * 2.5D; // rota cada vez mas rapido tambien
-
-                int points = 8;
-                double baseAngle = this.getVanishTicks() * spinSpeed;
-                for (int i = 0; i < points; i++) {
-                    double angle = baseAngle + (2 * Math.PI * i / points);
-                    double px = this.getX() + Math.cos(angle) * radius;
-                    double pz = this.getZ() + Math.sin(angle) * radius;
-                    double py = this.getY() + 0.1D;
-                    this.level().addParticle(ModParticles.VANISH_FX.get(), px, py, pz, 0.0D, 0.01D, 0.0D);
-                }
-            }
-            // dentro del bloque else (cliente) que ya tienes para el baile de la zebra:
-            if (isUndead() && !isSkeletonStage() && !isUndeadLocked() && this.random.nextInt(8) == 0) {                this.level().addParticle(ModParticles.UNDEAD_DECAY.get(),
-                        this.getX() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
-                        this.getY() + this.random.nextDouble() * this.getBbHeight(),
-                        this.getZ() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
-                        0.0D, 0.0D, 0.0D);
-            }
-
-            if (getSpecies() == Species.NIGHTMARE && this.random.nextInt(50) == 0) {
-                double vx = this.random.nextGaussian() * 0.02D;
-                double vy = this.random.nextGaussian() * 0.02D;
-                double vz = this.random.nextGaussian() * 0.02D;
-                this.level().addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
-                        this.getX() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
-                        this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
-                        this.getZ() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
-                        vx, vy, vz);
-            }
+            tickClientSideParticles();
         }
 
         if (this.level().isClientSide || !this.isTamed() || this.isBaby() || isSterileHybrid()) {
@@ -2007,7 +2287,6 @@ public class MoCHorseEntity extends AbstractHorse {
         this.level().addFreshEntity(foal);
 
         if (isFairyBreeding) {
-            // Unicorn+Pegasus o Fairy+Fairy: ambos padres desaparecen, soltando silla/armadura antes.
             this.startVanish();
             mate.startVanish();
         } else {
@@ -2062,6 +2341,13 @@ public class MoCHorseEntity extends AbstractHorse {
             this.spawnAtLocation(this.getItemBySlot(EquipmentSlot.BODY));
             this.setItemSlot(EquipmentSlot.BODY, ItemStack.EMPTY);
         }
+        dropChestAndSaddleContents();
+
+        dropCombatLoot(recentlyHitByPlayer);
+    }
+
+    /** Drops the chest (if it has one) with all its contents, and the saddle. */
+    private void dropChestAndSaddleContents() {
         if (hasChest()) {
             this.spawnAtLocation(Items.CHEST);
             for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
@@ -2077,57 +2363,66 @@ public class MoCHorseEntity extends AbstractHorse {
             this.spawnAtLocation(saddle);
             this.inventory.setItem(0, ItemStack.EMPTY);
         }
+    }
 
+    /**
+    * Loot that only drops if it was killed by a player (or a wolf): base
+    * materials (leather/bone/rotten flesh depending on species and
+    * stage) plus special drops by chance (unicorn horn, ghast tear,
+    * undead/fire/darkness hearts).
+    */
+    private void dropCombatLoot(boolean recentlyHitByPlayer) {
         boolean killedByPlayerOrWolf = recentlyHitByPlayer || this.getLastHurtByMob() instanceof Wolf;
-        if (killedByPlayerOrWolf) {
-            LivingEntity killer = this.getLastHurtByMob();
-            int lootingLevel = 0;
-            if (killer != null) {
-                Holder<Enchantment> looting = killer.level().registryAccess()
-                        .lookupOrThrow(Registries.ENCHANTMENT)
-                        .getOrThrow(Enchantments.LOOTING);
-                lootingLevel = EnchantmentHelper.getEnchantmentLevel(looting, killer);
-            }
+        if (!killedByPlayerOrWolf) {
+            return;
+        }
 
-            boolean isGhostSpecies = getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
-            if (!isUndead() && !isGhostSpecies) {
-                int leatherCount = this.random.nextInt(3 + lootingLevel); // 0-2 base, +1 al tope por nivel de Looting
-                for (int i = 0; i < leatherCount; i++) {
-                    this.spawnAtLocation(Items.LEATHER);
-                }
-            }
+        LivingEntity killer = this.getLastHurtByMob();
+        int lootingLevel = 0;
+        if (killer != null) {
+            Holder<Enchantment> looting = killer.level().registryAccess()
+                    .lookupOrThrow(Registries.ENCHANTMENT)
+                    .getOrThrow(Enchantments.LOOTING);
+            lootingLevel = EnchantmentHelper.getEnchantmentLevel(looting, killer);
+        }
 
-            if (isSkeletonStage()) {
-                int boneCount = this.random.nextInt(3 + lootingLevel);
-                for (int i = 0; i < boneCount; i++) {
-                    this.spawnAtLocation(Items.BONE);
-                }
-            } else if (isUndead()) {
-                int fleshCount = this.random.nextInt(3 + lootingLevel);
-                for (int i = 0; i < fleshCount; i++) {
-                    this.spawnAtLocation(Items.ROTTEN_FLESH);
-                }
+        boolean isGhostSpecies = getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
+        if (!isUndead() && !isGhostSpecies) {
+            int leatherCount = this.random.nextInt(3 + lootingLevel);
+            for (int i = 0; i < leatherCount; i++) {
+                this.spawnAtLocation(Items.LEATHER);
             }
+        }
 
-            if (getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) {
-                dropChanceItems(ModItems.UNICORN_HORN.get(), 0.25F);
+        if (isSkeletonStage()) {
+            int boneCount = this.random.nextInt(3 + lootingLevel);
+            for (int i = 0; i < boneCount; i++) {
+                this.spawnAtLocation(Items.BONE);
             }
-            if (isGhostSpecies) {
-                dropChanceItems(Items.GHAST_TEAR, 0.25F);
+        } else if (isUndead()) {
+            int fleshCount = this.random.nextInt(3 + lootingLevel);
+            for (int i = 0; i < fleshCount; i++) {
+                this.spawnAtLocation(Items.ROTTEN_FLESH);
             }
-            if (isUndead()) {
-                dropChanceItems(ModItems.HEART_OF_UNDEAD.get(), 0.25F);
-            }
-            if (getSpecies() == Species.NIGHTMARE) {
-                dropChanceItems(ModItems.HEART_OF_FIRE.get(), 0.25F);
-            }
-            if (getSpecies() == Species.BATHORSE) {
-                dropChanceItems(ModItems.HEART_OF_DARKNESS.get(), 0.25F);
-            }
+        }
+
+        if (getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) {
+            dropChanceItems(ModItems.UNICORN_HORN.get(), 0.25F);
+        }
+        if (isGhostSpecies) {
+            dropChanceItems(Items.GHAST_TEAR, 0.25F);
+        }
+        if (isUndead()) {
+            dropChanceItems(ModItems.HEART_OF_UNDEAD.get(), 0.25F);
+        }
+        if (getSpecies() == Species.NIGHTMARE) {
+            dropChanceItems(ModItems.HEART_OF_FIRE.get(), 0.25F);
+        }
+        if (getSpecies() == Species.BATHORSE) {
+            dropChanceItems(ModItems.HEART_OF_DARKNESS.get(), 0.25F);
         }
     }
 
-    /** Suelta entre 0 y 2 unidades del ítem, tirando el dado por separado para cada una. */
     private void dropChanceItems(net.minecraft.world.item.Item item, float chancePerRoll) {
         for (int i = 0; i < 2; i++) {
             if (this.random.nextFloat() < chancePerRoll) {
@@ -2172,17 +2467,81 @@ public class MoCHorseEntity extends AbstractHorse {
         super.lavaHurt();
     }
 
+     /**
+     * Movement while actually flying/gliding (in the air, mounted or
+     * not): friction depending on species, and two falling modes —
+     * floating in water/lava with no gravity pull, or falling with
+     * normal flyer gravity.
+     */
+    private void applyFlightMovement(net.minecraft.world.phys.Vec3 travelVector) {
+        float friction = switch (getSpecies()) {
+            case PEGASUS -> isUndead() ? FLYER_FRICTION : PEGASUS_FRICTION;
+            case DARK_PEGASUS -> DARK_PEGASUS_FRICTION;
+            case FAIRY_HORSE -> PEGASUS_FRICTION;
+            default -> FLYER_FRICTION;
+        };
+
+        boolean floatingInWater = this.isInWater() && !isSkeletonStage();
+        boolean floatingInLava = getSpecies() == Species.DARK_PEGASUS && this.isInLava() && !isSkeletonStage();
+
+        this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+        this.moveRelative(friction / 10F, travelVector);
+
+        if (floatingInWater || floatingInLava) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(friction, FLYER_FALL_SPEED, friction));
+            double fluidHeight = floatingInLava
+                    ? this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA)
+                    : this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && fluidHeight >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+                    && controllingRider.isShiftKeyDown()) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
+            }
+        } else {
+            this.setDeltaMovement(this.getDeltaMovement()
+                    .multiply(friction, FLYER_FALL_SPEED, friction)
+                    .subtract(0.0D, FLYER_GRAVITY_PULL, 0.0D));
+        }
+    }
+
+    /**
+     * Floating while standing in water (any species) or lava (nightmare
+     * only) while mounted and not a skeleton: prevents it from sinking
+     * suddenly and lets a sneaking rider push it down on purpose.
+     */
+    private void applyGroundedFluidBuoyancy() {
+        if (this.isInWater() && this.isVehicle() && !isSkeletonStage()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+                    && controllingRider.isShiftKeyDown()) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
+            }
+        }
+
+        if (getSpecies() == Species.NIGHTMARE && this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+                    && controllingRider.isShiftKeyDown()) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
+            }
+        }
+    }
+
     @Override
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
-        // Puede usar física de vuelo/planeo con o sin jinete —
-        // esto es lo que hace que planee hasta el suelo al desmontar en el aire.
         boolean isBatFlyer = (getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
                 || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE || getSpecies() == Species.GHOST_WINGED)
                 && this.isTamed() && !isTransforming();
-        // Solo el jinete puede controlar el ascenso/descenso activo.
         boolean canControlFlight = isBatFlyer && this.isVehicle();
 
-        // Usa la física de vuelo mientras esté en el aire, esté montado o no.
         boolean flyingMount = isFlyingNow();
 
         boolean ascend = this.ascendHeld;
@@ -2215,61 +2574,11 @@ public class MoCHorseEntity extends AbstractHorse {
         this.setNoGravity(flyingMount);
 
         if (flyingMount) {
-            float friction = switch (getSpecies()) {
-                case PEGASUS -> isUndead() ? FLYER_FRICTION : PEGASUS_FRICTION;
-                case DARK_PEGASUS -> DARK_PEGASUS_FRICTION;
-                case FAIRY_HORSE -> PEGASUS_FRICTION;
-                default -> FLYER_FRICTION;
-            };
-
-            boolean floatingInWater = this.isInWater() && !isSkeletonStage();
-            boolean floatingInLava = getSpecies() == Species.DARK_PEGASUS && this.isInLava() && !isSkeletonStage();
-
-            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
-            this.moveRelative(friction / 10F, travelVector);
-
-            if (floatingInWater || floatingInLava) {
-                // Sigue volando/planeando, pero sin hundirse: nada de tiron de gravedad.
-                this.setDeltaMovement(this.getDeltaMovement().multiply(friction, FLYER_FALL_SPEED, friction));
-                double fluidHeight = floatingInLava
-                        ? this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA)
-                        : this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
-                if (this.getDeltaMovement().y < 0 && !this.onGround() && fluidHeight >= 0.5) {
-                    this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-                }
-                if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
-                        && controllingRider.isShiftKeyDown()) {
-                    this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-                }
-            } else {
-                this.setDeltaMovement(this.getDeltaMovement()
-                        .multiply(friction, FLYER_FALL_SPEED, friction)
-                        .subtract(0.0D, FLYER_GRAVITY_PULL, 0.0D));
-            }
+            applyFlightMovement(travelVector);
             return;
         }
 
-        if (this.isInWater() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
-            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
-                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-            }
-            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
-                    && controllingRider.isShiftKeyDown()) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-            }
-        }
-
-        if (getSpecies() == Species.NIGHTMARE && this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
-            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
-                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-            }
-            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
-                    && controllingRider.isShiftKeyDown()) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-            }
-        }
+        applyGroundedFluidBuoyancy();
 
         if ((getSpecies() == Species.UNICORN || getSpecies() == Species.GHOST) && this.getDeltaMovement().y < -0.1D && !this.onGround()) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
@@ -2306,7 +2615,7 @@ public class MoCHorseEntity extends AbstractHorse {
         double y = this.getY() + RIDER_HEIGHT;
 
         if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
-            y += 0.3D; // mismo valor que el offset visual en MoCHorseRenderer
+            y += 0.3D;
         }
 
         moveFunction.accept(passenger, x, y, z);

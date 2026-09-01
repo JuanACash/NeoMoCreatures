@@ -2,7 +2,7 @@ package com.example.neomocreatures.block;
 
 import java.util.Optional;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -13,11 +13,11 @@ public class WyvwoodTreeGrower {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> WYVWOOD_TREE = ResourceKey.create(
             net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-            ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "wyvwood_tree"));
+            ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "wyvwood_tree"));
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> WYVWOOD_MEGA_TREE = ResourceKey.create(
             net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
-            ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "wyvwood_mega_tree"));
+            ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "wyvwood_mega_tree"));
 
     public static final TreeGrower WYVWOOD = new TreeGrower(
             "wyvwood",

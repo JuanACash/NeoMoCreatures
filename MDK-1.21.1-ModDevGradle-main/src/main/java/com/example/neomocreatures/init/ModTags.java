@@ -8,7 +8,7 @@ import net.minecraft.world.item.Item;
 public class ModTags {
 
     private static TagKey<Item> tag(String name) {
-        return ItemTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.ExampleMod.MODID, name));
+        return ItemTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
     }
 
     public static final TagKey<Item> REPAIRS_SCORP_CAVE = tag("repairs_scorp_cave_armor");

@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -12,13 +12,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorsePlaceholderModel> {
+public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel> {
 
     public static final ModelLayerLocation MOC_HORSE_LAYER =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "moc_horse"), "main");
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_horse"), "main");
 
     public MoCHorseRenderer(EntityRendererProvider.Context context) {
-        super(context, new MoCHorsePlaceholderModel(context.bakeLayer(MOC_HORSE_LAYER)), 0.75F);
+        super(context, new MoCHorseModel(context.bakeLayer(MOC_HORSE_LAYER)), 0.75F);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorsePlaceh
                     case PEGASUS, DARK_PEGASUS -> "horseundeadpegasus01";
                     default -> "horseundead01";
                 };
-                return ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "textures/entity/moc_horse/" + flickerFile + ".png");
+                return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + flickerFile + ".png");
             }
             return textureFor(entity.getSpecies(), entity);
         }
@@ -113,7 +113,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorsePlaceh
                 int frame = 1 + (entity.tickCount / 20) % frameCount;
                 fileName = prefix + stage + frame;
             }
-            return ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
         }
         if (entity.isTransforming()) {
             int ticksLeft = entity.getTransformTicks();
@@ -128,7 +128,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorsePlaceh
             boolean showTarget = (entity.tickCount / interval) % 2 == 0;
             var targetColor = entity.getColorTransformTarget();
             String fileName = "horsefairy" + (showTarget ? targetColor.name().toLowerCase() : entity.getFairyColor().name().toLowerCase());
-            return ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
         }
         return textureFor(entity.getSpecies(), entity);
     }
@@ -155,7 +155,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorsePlaceh
             case HORSE -> "horse" + entity.getCoat().name().toLowerCase() + armorSuffix(entity);
         };
         return ResourceLocation.fromNamespaceAndPath(
-                ExampleMod.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+                NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
     }
     private static String armorSuffix(MoCHorseEntity entity) {
         ItemStack armorItem = entity.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.BODY);

@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorseMobModel> {
 
     public static final ModelLayerLocation MOC_HORSE_MOB_LAYER =
-            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "moc_horse_mob"), "main");
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_horse_mob"), "main");
 
     public MoCHorseMobRenderer(EntityRendererProvider.Context context) {
         super(context, new MoCHorseMobModel(context.bakeLayer(MOC_HORSE_MOB_LAYER)), 0.75F);
@@ -33,6 +33,6 @@ public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorse
             }
         };
         return ResourceLocation.fromNamespaceAndPath(
-                ExampleMod.MODID, "textures/entity/moc_horse_mob/" + fileName + ".png");
+                NeoMoCreatures.MODID, "textures/entity/moc_horse_mob/" + fileName + ".png");
     }
 }

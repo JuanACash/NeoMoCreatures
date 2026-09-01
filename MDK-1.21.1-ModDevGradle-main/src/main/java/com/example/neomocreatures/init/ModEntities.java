@@ -1,6 +1,6 @@
 package com.example.neomocreatures.init;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 
@@ -20,7 +20,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(Registries.ENTITY_TYPE, ExampleMod.MODID);
+            DeferredRegister.create(Registries.ENTITY_TYPE, NeoMoCreatures.MODID);
 
     // NOTE on MobCategory: this is the exact bug found in BigDan's NeoForge
     // port of Mo' Creatures (the Wyvern was registered as MobCategory.AMBIENT,

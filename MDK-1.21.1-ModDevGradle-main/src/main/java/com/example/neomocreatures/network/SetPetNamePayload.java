@@ -1,6 +1,6 @@
 package com.example.neomocreatures.network;
 
-import com.example.neomocreatures.ExampleMod;
+import com.example.neomocreatures.NeoMoCreatures;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 public record SetPetNamePayload(int entityId, String name) implements CustomPacketPayload {
 
     public static final Type<SetPetNamePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(ExampleMod.MODID, "set_pet_name"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "set_pet_name"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetPetNamePayload> STREAM_CODEC =
             StreamCodec.composite(
