@@ -30,9 +30,9 @@ public class ScrollOfResetOwnerItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // Solo quita el dueño; sigue tameado, con nombre y equipo intactos.
-        // El original resta 1 de un contador de mascotas del dueño guardado en su
-        // sistema de mapData (no portado), así que aquí no hay nada que restar.
+        // Only removes the owner; it stays tamed, with name and equipment intact.
+        // The original decrements a pet counter kept on the owner's mapData
+        // system (not ported here), so there's nothing to decrement in this version.
         if (target instanceof TamableAnimal tamable) {
             tamable.setOwnerUUID(null);
         } else if (target instanceof AbstractHorse horse) {

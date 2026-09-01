@@ -34,7 +34,7 @@ public class NeoMoCreatures {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    // Creative tab con todos los items de Mo'Creatures ya implementados
+    // Creative tab with all of Mo'Creatures' items already implemented
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MOC_CREATURES_TAB = CREATIVE_MODE_TABS.register("moc_creatures_tab", () -> CreativeModeTab.builder()
         .title(Component.translatable("itemGroup.neomocreatures"))
         .withTabsBefore(CreativeModeTabs.COMBAT)
@@ -69,7 +69,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SILVER_SANDSTONE_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_CARVED_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_SMOOTH_ITEM.get());
-                    // ==== Piezas sueltas ====
+                    // ==== Loose pieces ====
                     output.accept(ModItems.ORE_FIRESTONE_ITEM.get());
                     output.accept(ModItems.FIRESTONE_CHUNK.get());
                     output.accept(ModItems.GLASS_GLEAMING_ITEM.get());
@@ -229,7 +229,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SHARK_SWORD.get());
                     output.accept(ModItems.SHARK_AXE.get());
 
-                    // Spawn eggs al final, solo de los mobs ya implementados
+                    // Spawn eggs
                     output.accept(ModItems.WILD_HORSE_SPAWN_EGG.get());
                     output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
 

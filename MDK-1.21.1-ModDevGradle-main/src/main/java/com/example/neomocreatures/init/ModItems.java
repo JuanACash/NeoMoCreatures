@@ -38,7 +38,6 @@ public class ModItems {
     public static final DeferredItem<Item> ESSENCE_OF_DARKNESS = ITEMS.registerSimpleItem("essence_of_darkness", new Item.Properties());
     public static final DeferredItem<Item> ESSENCE_OF_LIGHT = ITEMS.registerSimpleItem("essence_of_light", new Item.Properties());
 
-    // ==== Items importados de mocreatures_texture_items.zip (placeholders, sin funcion aun) ====
     // ---- Amulets ----
     public static final DeferredItem<Item> AMULET_BONE = ITEMS.registerSimpleItem("amulet_bone", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> AMULET_BONE_FULL = ITEMS.register("amulet_bone_full",
@@ -117,7 +116,7 @@ public class ModItems {
             new Item.Properties().stacksTo(1)
                 .attributes(net.minecraft.world.item.AxeItem.createAttributes(net.minecraft.world.item.Tiers.DIAMOND, 5.0F, -3.0F))
                 .durability(net.minecraft.world.item.Tiers.DIAMOND.getUses()),
-            4)); // 4s de fuego, mismo valor usado en la Nether Scorpion Sword
+            4));
 
     public static final DeferredItem<Item> SCORP_AXE_FROST = ITEMS.register("scorp_axe_frost",
         () -> new com.example.neomocreatures.item.ScorpionAxeItem(net.minecraft.world.item.Tiers.DIAMOND,
@@ -370,7 +369,7 @@ public class ModItems {
                     net.minecraft.world.effect.MobEffects.HUNGER, 600, 0), 0.3F)
             .build()).stacksTo(64));
 
-    // Al comer, devuelve el bowl vacío — mismo mecanismo que mushroom stew de vanilla.
+    // When eaten, returns the empty bowl — same mechanism as vanilla's mushroom stew.
     public static final DeferredItem<Item> TURTLE_SOUP = ITEMS.register("turtle_soup",
     () -> new com.example.neomocreatures.item.BowlFoodItem(new Item.Properties()
         .food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).build())
@@ -494,7 +493,7 @@ public class ModItems {
     public static final DeferredItem<BlockItem> SILVER_SANDSTONE_CARVED_ITEM = ITEMS.registerSimpleBlockItem("silver_sandstone_carved", ModBlocks.SILVER_SANDSTONE_CARVED);
     public static final DeferredItem<BlockItem> SILVER_SANDSTONE_SMOOTH_ITEM = ITEMS.registerSimpleBlockItem("silver_sandstone_smooth", ModBlocks.SILVER_SANDSTONE_SMOOTH);
 
-    // ==== Piezas sueltas — BlockItems ====
+    // ==== Loose pieces — BlockItems ====
     public static final DeferredItem<BlockItem> ORE_FIRESTONE_ITEM = ITEMS.registerSimpleBlockItem("ore_firestone", ModBlocks.ORE_FIRESTONE);
     public static final DeferredItem<BlockItem> GLASS_GLEAMING_ITEM = ITEMS.registerSimpleBlockItem("glass_gleaming", ModBlocks.GLASS_GLEAMING);
     public static final DeferredItem<BlockItem> BLOCK_WYVERN_NEST_ITEM = ITEMS.registerSimpleBlockItem("block_wyvern_nest", ModBlocks.BLOCK_WYVERN_NEST);

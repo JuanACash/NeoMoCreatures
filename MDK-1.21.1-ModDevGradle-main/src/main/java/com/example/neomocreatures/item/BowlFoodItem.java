@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
-/** Comida que, al comerse, devuelve un bowl vacío — mismo comportamiento que el Mushroom Stew de vanilla. */
+/** Food that, when eaten, returns an empty bowl — same behavior as vanilla's Mushroom Stew. */
 public class BowlFoodItem extends Item {
 
     public BowlFoodItem(Properties properties) {

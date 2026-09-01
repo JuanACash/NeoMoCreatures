@@ -35,7 +35,6 @@ public class StarParticle extends TextureSheetParticle {
         private final SpriteSet sprites;
         private final float r, g, b;
 
-        // Constructor original: dorado por defecto (el que usa el unicornio)
         public Provider(SpriteSet sprites) {
             this(sprites, 1.0F, 0.9F, 0.4F);
         }

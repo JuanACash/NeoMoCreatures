@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Igual que WyvGrassBlock, pero reconoce DIRT_OGRE_LAIR en vez de WYVDIRT.
+ * Same as WyvGrassBlock, but recognizes DIRT_OGRE_LAIR instead of WYVDIRT.
  */
 public class OgreLairGrassBlock extends Block {
 
@@ -20,14 +20,12 @@ public class OgreLairGrassBlock extends Block {
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        // Si esta tapado por un bloque solido, se revierte a tierra (igual que vanilla).
         BlockPos above = pos.above();
         if (level.getBlockState(above).isSolidRender(level, above)) {
             level.setBlockAndUpdate(pos, ModBlocks.DIRT_OGRE_LAIR.get().defaultBlockState());
             return;
         }
 
-        // Intenta esparcirse a un DIRT_OGRE_LAIR vecino con suficiente luz encima.
         if (random.nextInt(4) != 0) {
             return;
         }

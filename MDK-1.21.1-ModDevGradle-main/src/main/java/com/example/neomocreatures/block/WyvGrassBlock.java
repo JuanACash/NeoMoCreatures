@@ -10,9 +10,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Reimplementacion simplificada del comportamiento de GrassBlock de vanilla,
- * pero reconociendo WYVDIRT en vez de Blocks.DIRT (que esta hardcodeado en
- * la clase vanilla y no se puede extender de forma limpia para un dirt custom).
+ * Simplified reimplementation of vanilla's GrassBlock behavior, but
+ * recognizing WYVDIRT instead of Blocks.DIRT (which is hardcoded in
+ * the vanilla class and can't be cleanly extended for a custom dirt).
  */
 public class WyvGrassBlock extends Block {
 
@@ -22,14 +22,12 @@ public class WyvGrassBlock extends Block {
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        // Si esta tapado por un bloque solido, se revierte a tierra (igual que vanilla).
         BlockPos above = pos.above();
         if (level.getBlockState(above).isSolidRender(level, above)) {
             level.setBlockAndUpdate(pos, ModBlocks.WYVDIRT.get().defaultBlockState());
             return;
         }
 
-        // Intenta esparcirse a un WYVDIRT vecino con suficiente luz encima.
         if (random.nextInt(4) != 0) {
             return;
         }

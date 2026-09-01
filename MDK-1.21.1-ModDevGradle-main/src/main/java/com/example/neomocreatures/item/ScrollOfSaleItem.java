@@ -31,9 +31,10 @@ public class ScrollOfSaleItem extends Item {
         }
 
         // Queda sin dueño: el próximo jugador que lo renombre (con un libro)
-        // pasa a ser el nuevo dueño — ver el hook de "adoptar" en ModNetworking
-        // y MoCHorseEntity#mobInteract. En singleplayer no tiene mucho uso,
-        // que es exactamente el comportamiento de la wiki.
+        // Ends up ownerless: the next player who renames it (with a book)
+        // becomes the new owner — see the "adopt" hook in ModNetworking
+        // and MoCHorseEntity#mobInteract. Doesn't have much use in
+        // singleplayer.
         if (target instanceof TamableAnimal tamable) {
             tamable.setOwnerUUID(null);
         } else if (target instanceof AbstractHorse horse) {

@@ -8,8 +8,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Igual que MoCBlockNest del mod original: reduce el daño de caída
- * (como un HayBlock/nido mullido).
+ * Reduces fall damage (like a HayBlock/fluffy nest).
  */
 public class WyvernNestBlock extends Block {
 

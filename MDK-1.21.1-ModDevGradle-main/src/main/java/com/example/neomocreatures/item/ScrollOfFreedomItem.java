@@ -20,8 +20,6 @@ public class ScrollOfFreedomItem extends Item {
 
     @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-        // Genérico contra TamableAnimal/AbstractHorse, igual que PetAmuletItem,
-        // para que funcione con cualquier mob tameable futuro sin tocar este archivo.
         boolean isMoCTameable = target instanceof AbstractHorse || target instanceof TamableAnimal;
         if (!isMoCTameable || !(target instanceof OwnableEntity ownable)) {
             return InteractionResult.PASS;
@@ -34,12 +32,12 @@ public class ScrollOfFreedomItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // Suelta silla/armadura/cofre antes de liberarlo
+        // Drops saddle/armor/chest before freeing it
         if (target instanceof MoCHorseEntity horse) {
             horse.dropSaddleAndArmor();
             horse.dropChestAndContents();
         }
-        // (futuras entidades con su propio equipo: añadir su drop aquí)
+        // (future entities with their own equipment: add their drop here)
 
         if (target instanceof TamableAnimal tamable) {
             tamable.setOwnerUUID(null);

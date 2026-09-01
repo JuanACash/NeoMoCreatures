@@ -20,11 +20,10 @@ public class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> UNDEAD_DECAY =
             PARTICLE_TYPES.register("undead_decay", () -> new SimpleParticleType(false));
 
-    // Estela dorada del unicornio (sin cambios)
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX =
             PARTICLE_TYPES.register("star_fx", () -> new SimpleParticleType(false));
 
-    // Una estrella por color de fairy horse
+    // One star per fairy horse color
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_WHITE =
             PARTICLE_TYPES.register("star_fx_white", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_ORANGE =

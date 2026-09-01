@@ -142,7 +142,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
             case ZORSE -> "horsezorse" + armorSuffix(entity);
             case BATHORSE -> "horsebat" + crystalSuffix(entity);
             case NIGHTMARE -> {
-                int frame = 1 + (entity.tickCount / 5) % 5; // 1-5, igual que en MoCHorseMobRenderer
+                int frame = 1 + (entity.tickCount / 5) % 5;
                 yield "horsenightmare" + frame;
             }
             case UNICORN -> "horseunicorn" + crystalSuffix(entity);

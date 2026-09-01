@@ -41,8 +41,8 @@ public class FullBrightVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer setNormal(float x, float y, float z) {
-        // forzamos siempre la normal "de arriba" (shade = 1.0), sin importar
-        // qué cara sea en realidad; esto no mueve nada, solo cambia el brillo
+        // we always force the "top" normal (shade = 1.0), regardless of
+        // which face it actually is; this doesn't move anything.
         delegate.setNormal(0F, 1F, 0F);
         return this;
     }

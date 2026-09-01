@@ -11,8 +11,8 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 /**
- * Mientras un jugador va montado en un Nightmare, no debe quemarse
- * ni tomar daño por fuego/lava (el Nightmare protege a su jinete).
+ * While a player is mounted on a Nightmare, they shouldn't catch fire
+ * or take fire/lava damage (the Nightmare protects its rider).
  */
 public class NightmareRiderFireImmunityHandler {
 

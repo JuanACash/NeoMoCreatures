@@ -39,7 +39,7 @@ public class ModBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(NeoMoCreatures.MODID);
 
-    // ==== Piedra / cobble / mossy (dureza y resistencia tomadas del repo original) ====
+    // ==== Stone / cobble / mossy ====
     public static final DeferredBlock<Block> WYVSTONE = BLOCKS.registerSimpleBlock("wyvstone",
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(1.5F, 10.0F).requiresCorrectToolForDrops());
@@ -64,7 +64,7 @@ public class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(1.5F, 10.0F).requiresCorrectToolForDrops());
 
-    // ==== Tierra ====
+    // ==== Dirt ====
     public static final DeferredBlock<Block> WYVDIRT = BLOCKS.registerSimpleBlock("wyvdirt",
             BlockBehaviour.Properties.of().mapColor(MapColor.DIRT).sound(SoundType.GRAVEL).strength(0.6F));
 
@@ -83,7 +83,7 @@ public class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.PLANT).sound(SoundType.GRASS)
                     .noCollission().randomTicks().instabreak().pushReaction(PushReaction.DESTROY));
 
-    // ==== Madera ====
+    // ==== Wood ====
     public static final DeferredBlock<Block> WYVWOOD_LOG = BLOCKS.registerBlock("wyvwood_log",
             props -> new RotatedPillarBlock(props),
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).sound(SoundType.WOOD)
@@ -100,7 +100,7 @@ public class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).sound(SoundType.WOOD)
                     .strength(2.0F, 5.0F).ignitedByLava());
 
-    // ==== Menas (dan XP al minarse, como vanilla) ====
+    // ==== Ores (drop XP when mined, like vanilla) ====
     public static final DeferredBlock<net.minecraft.world.level.block.DropExperienceBlock> WYVERN_DIAMOND_ORE = BLOCKS.registerBlock("wyvern_diamond_ore",
             props -> new net.minecraft.world.level.block.DropExperienceBlock(net.minecraft.util.valueproviders.UniformInt.of(4, 8), props),
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
@@ -116,7 +116,7 @@ public class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(1.5F, 5.0F).requiresCorrectToolForDrops());
 
-    // Oro y hierro no dan XP directo al minar (igual que sus equivalentes vanilla)
+    // Gold and iron don't give direct XP when mined (same as their vanilla equivalents)
     public static final DeferredBlock<Block> WYVERN_GOLD_ORE = BLOCKS.registerSimpleBlock("wyvern_gold_ore",
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(3.0F, 5.0F).requiresCorrectToolForDrops());
@@ -194,7 +194,7 @@ public class ModBlocks {
                 .strength(1.2F, 1.2F))
         );
 
-    // ==== Piezas sueltas ====
+    // ==== Loose pieces ====
     public static final DeferredBlock<Block> ORE_FIRESTONE = BLOCKS.registerSimpleBlock("ore_firestone",
             BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_ORANGE).sound(SoundType.GLASS)
                     .strength(3.0F, 3.0F).lightLevel(state -> 7).requiresCorrectToolForDrops());

@@ -8,10 +8,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 
-/** Espada base de diamante que aplica un efecto de estado, o prende fuego, al golpear. */
+/** Diamond-tier base sword that applies a status effect, or sets fire, on hit. */
 public class ScorpionSwordItem extends SwordItem {
 
-    private final Supplier<MobEffectInstance> effect; // null si esta variante usa fuego en vez de efecto
+    private final Supplier<MobEffectInstance> effect;
     private final int fireSeconds;
 
     public ScorpionSwordItem(Tier tier, Properties properties, Supplier<MobEffectInstance> effect) {

@@ -19,7 +19,7 @@ public class AlphaVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer setColor(int r, int g, int b, int a) {
-        delegate.setColor(r, g, b, this.alpha); // aquí se fuerza el alfa, por vértice
+        delegate.setColor(r, g, b, this.alpha);
         return this;
     }
 

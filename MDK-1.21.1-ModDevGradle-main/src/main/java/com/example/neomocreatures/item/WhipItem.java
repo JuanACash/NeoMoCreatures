@@ -17,13 +17,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Adaptado de MoCItemWhip (original): clic derecho sobre un bloque del suelo
- * (con aire arriba). En el original afecta en área a varias mascotas (gatos,
- * wyverns, elefantes, escorpiones, avestruces) con distintos efectos
- * (sentarse, atacar, sprint). Como todavia solo tenemos MoCHorseEntity,
- * portamos unicamente la rama de "caballo montado" (sprintCounter en el
- * original -> boost de Speed temporal aqui). Las ramas de sitting/nightmare
- * no se portan porque esos estados no existen todavia en nuestra entidad.
+ * Rright-click on a ground block
+ * (with air above). In the original it affects several pets in an area
+ * (cats, wyverns, elephants, scorpions, ostriches) with different
+ * effects (sitting, attacking, sprinting). Since we only have
+ * MoCHorseEntity so far, we only ported the "mounted horse" branch
+ * (sprintCounter in the original -> temporary Speed boost here).
  */
 public class WhipItem extends Item {
 

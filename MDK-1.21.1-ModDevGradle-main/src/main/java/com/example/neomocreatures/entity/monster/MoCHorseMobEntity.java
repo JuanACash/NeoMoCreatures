@@ -264,9 +264,9 @@ public class MoCHorseMobEntity extends Monster {
                 lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
             }
 
-        // Base 0-2, Looting sube el máximo (igual que vanilla: +1 al tope por nivel).
+        // Base 0-2, Looting raises the max (same as vanilla: +1 to the cap per level).
         int commonDropCount = this.random.nextInt(3 + lootingLevel);
-        // Base 25% (1 de 4), Looting reduce el denominador para que sea más probable, con piso de 1 (100%).
+        // Base 25% (1 in 4), Looting reduces the denominator to make it more likely, floored at 1 (100%).
         int rareChanceDenominator = Math.max(1, 4 - lootingLevel);
         boolean heartDrops = this.random.nextInt(rareChanceDenominator) == 0;
         int heartCount = heartDrops ? 1 + this.random.nextInt(2) : 0;

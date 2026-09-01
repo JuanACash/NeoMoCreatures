@@ -23,7 +23,6 @@ public class PetAmuletItem extends Item {
 
     @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
-        // Solo funciona en algo tameado por ESTE jugador (caballos del mod o TamableAnimal, presente o futuro)
         boolean isMoCTameable = target instanceof AbstractHorse || target instanceof TamableAnimal;
         if (!isMoCTameable || !(target instanceof OwnableEntity ownable)) {
             return InteractionResult.PASS;
@@ -36,13 +35,11 @@ public class PetAmuletItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // Quita todo lo que traiga puesto, sin importar el tipo de entidad
+        // Removes everything it's wearing, regardless of entity type
         if (target instanceof MoCHorseEntity horse) {
             horse.dropSaddleAndArmor();
             horse.dropChestAndContents();
         }
-        // (cuando lleguen entidades nuevas como el wyvern, si tienen su propio equipo,
-        //  se les puede añadir aquí su propio "dropAllEquipment()")
 
         CompoundTag tag = new CompoundTag();
         tag.putString("EntityType", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(target.getType()).toString());

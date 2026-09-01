@@ -223,7 +223,6 @@ public final class MoCHorseGenetics {
         if (a == Species.NIGHTMARE || b == Species.NIGHTMARE) {
             return a == Species.NIGHTMARE && b == Species.NIGHTMARE;
         }
-        // --- caso mixto ANTES de las exclusividades ---
         if ((a == Species.UNICORN && b == Species.PEGASUS) || (a == Species.PEGASUS && b == Species.UNICORN)) {
             return true;
         }

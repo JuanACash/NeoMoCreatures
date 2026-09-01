@@ -51,7 +51,7 @@ public class NeoMoCreaturesClient {
         NeoMoCreatures.LOGGER.info("HELLO FROM CLIENT SETUP");
         NeoMoCreatures.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
 
-        // Wyvern block set: render como "cutout" (transparencia real) en vez de solido
+        // Wyvern block set: render as "cutout" 
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WYVWOOD_SAPLING.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.TALL_WYVGRASS.get(), RenderType.cutout());
