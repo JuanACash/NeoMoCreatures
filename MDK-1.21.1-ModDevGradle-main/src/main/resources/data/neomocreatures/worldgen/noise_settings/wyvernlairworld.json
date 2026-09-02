@@ -7,12 +7,25 @@
     "Name": "minecraft:air"
   },
   "disable_mob_generation": false,
+  "has_lava_pools": false,
+  "has_fluid": false,
   "legacy_random_source": false,
+  "structures_disabled": true,
   "noise": {
     "height": 384,
     "min_y": -64,
     "size_horizontal": 2,
-    "size_vertical": 2
+    "size_vertical": 2,
+    "bottom_slide": {
+      "target": 0,
+      "size": 0,
+      "offset": 0
+    },
+    "top_slide": {
+      "target": 0,
+      "size": 0,
+      "offset": 0
+    }
   },
   "noise_router": {
     "barrier": 0,
@@ -60,10 +73,7 @@
                         "argument1": 23.4375,
                         "argument2": {
                           "type": "minecraft:add",
-                          "argument1": {
-                            "type": "minecraft:end_islands",
-                            "scale": 2.0
-                          },
+                          "argument1": { "type": "neomocreatures:wyvern_island_shape", "radius": 300.0, "edge_fade": 60.0, "amplitude": 60.0 },
                           "argument2": {
                             "type": "minecraft:old_blended_noise",
                             "smear_scale_multiplier": 4.0,
@@ -121,8 +131,10 @@
                   "argument2": {
                     "type": "minecraft:cache_2d",
                     "argument": {
-                      "type": "minecraft:end_islands",
-                      "scale": 2.0
+                      "type": "neomocreatures:wyvern_island_shape",
+                      "radius": 300.0,
+                      "edge_fade": 60.0,
+                      "amplitude": 60.0
                     }
                   }
                 }

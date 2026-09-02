@@ -46,7 +46,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public class StaffPortalItem extends Item {
 
-    private static final BlockPos ARRIVAL_POS = new BlockPos(2084, 64, 2011);
+    private static final int ARRIVAL_X = 0;
+    private static final int ARRIVAL_Z = 0;
 
     private static final String TAG_RETURN_DIMENSION = "ReturnDimension";
     private static final String TAG_RETURN_X = "ReturnX";
@@ -116,10 +117,13 @@ public class StaffPortalItem extends Item {
             return;
         }
 
-        storeReturnPoint(stack, currentLevel.dimension(), player.blockPosition());
-        WyvernPortalPlatform.generateIfMissing(destination, ARRIVAL_POS);
+                storeReturnPoint(stack, currentLevel.dimension(), player.blockPosition());
 
-        Vec3 targetPos = Vec3.atBottomCenterOf(ARRIVAL_POS.above());
+        int surfaceY = destination.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, ARRIVAL_X, ARRIVAL_Z);
+        BlockPos arrivalPos = new BlockPos(ARRIVAL_X, surfaceY, ARRIVAL_Z);
+        WyvernPortalPlatform.generateIfMissing(destination, arrivalPos);
+
+        Vec3 targetPos = Vec3.atBottomCenterOf(arrivalPos.above());
         player.changeDimension(new DimensionTransition(destination, targetPos, Vec3.ZERO,
                 player.getYRot(), player.getXRot(), DimensionTransition.PLACE_PORTAL_TICKET));
 

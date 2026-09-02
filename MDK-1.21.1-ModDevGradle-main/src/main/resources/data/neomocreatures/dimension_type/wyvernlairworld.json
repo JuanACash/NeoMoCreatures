@@ -19,5 +19,5 @@
     "max_inclusive": 11
   },
   "monster_spawn_block_light_limit": 0,
-  "effects": "minecraft:overworld"
+  "effects": "minecraft:the_end"
 }

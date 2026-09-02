@@ -257,6 +257,8 @@ public class NeoMoCreatures {
         ModTrunkPlacerTypes.TRUNK_PLACER_TYPES.register(modEventBus);
         com.example.neomocreatures.init.ModParticles.PARTICLE_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        com.example.neomocreatures.init.ModFeatures.FEATURES.register(modEventBus);
+        com.example.neomocreatures.init.ModDensityFunctions.DENSITY_FUNCTION_TYPES.register(modEventBus);
     }
 
     private void registerEntitiesAndSounds(IEventBus modEventBus) {
