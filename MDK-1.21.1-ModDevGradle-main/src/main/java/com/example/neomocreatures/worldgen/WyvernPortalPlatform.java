@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import com.example.neomocreatures.init.ModBlocks;
 
 /**
  * Builds the small quartz arrival platform that marks the fixed entry point
@@ -39,7 +40,22 @@ public final class WyvernPortalPlatform {
         if (!level.isEmptyBlock(arrivalPos)) {
             return;
         }
+        carveBase(level, arrivalPos);
         generate(level, arrivalPos);
+    }
+
+    private static void carveBase(ServerLevel level, BlockPos arrivalPos) {
+        BlockState fill = ModBlocks.WYVSTONE.get().defaultBlockState();
+        for (int dx = -5; dx <= 5; dx++) {
+            for (int dz = -5; dz <= 5; dz++) {
+                for (int dy = -10; dy < 0; dy++) {
+                    level.setBlock(arrivalPos.offset(dx, dy, dz), fill, UPDATE_FLAGS);
+                }
+                for (int dy = 1; dy <= 8; dy++) {
+                    level.setBlock(arrivalPos.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
+                }
+            }
+        }
     }
 
     private static void generate(ServerLevel level, BlockPos arrivalPos) {
