@@ -231,6 +231,7 @@
   "item.neomocreatures.staff3": "Staff III",
   "item.neomocreatures.staff_portal": "Portal Staff",
   "item.neomocreatures.staff_teleport": "Teleport Staff",
+  "item.neomocreatures.staff_portal.illegal_enchant": "Detected illegal enchantment(s) on the Portal Staff. The item has been removed from your inventory.",
   "item.neomocreatures.sugar_lump": "Sugar Lump",
   "item.neomocreatures.wool_ball": "Wool Ball",
   "entity.neomocreatures.moc_horse": "WildHorse",

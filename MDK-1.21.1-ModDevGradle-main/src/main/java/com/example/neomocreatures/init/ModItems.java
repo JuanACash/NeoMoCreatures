@@ -453,7 +453,8 @@ public class ModItems {
     public static final DeferredItem<Item> STAFF = ITEMS.registerSimpleItem("staff", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> STAFF2 = ITEMS.registerSimpleItem("staff2", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> STAFF3 = ITEMS.registerSimpleItem("staff3", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> STAFF_PORTAL = ITEMS.registerSimpleItem("staff_portal", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> STAFF_PORTAL = ITEMS.register("staff_portal",
+            () -> new com.example.neomocreatures.item.StaffPortalItem(new Item.Properties().stacksTo(1).durability(3)));
     public static final DeferredItem<Item> STAFF_TELEPORT = ITEMS.registerSimpleItem("staff_teleport", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> SUGAR_LUMP = ITEMS.registerSimpleItem("sugar_lump", new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.6F).build()).stacksTo(32));
     public static final DeferredItem<Item> WOOL_BALL = ITEMS.registerSimpleItem("wool_ball", new Item.Properties());
