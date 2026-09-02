@@ -71,9 +71,7 @@ public class WyvernIslandFeature extends Feature<NoneFeatureConfiguration> {
                     .setRandom(random)
                     .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK)
                     .setIgnoreEntities(false)
-                    .setKnownShape(false)
-                    .setKeepLiquids(false);
-
+                    .setKnownShape(false);
             template.placeInWorld((ServerLevelAccessor) context.level(), spawnPos, spawnPos, placementSettings, random, 2);
         }
 

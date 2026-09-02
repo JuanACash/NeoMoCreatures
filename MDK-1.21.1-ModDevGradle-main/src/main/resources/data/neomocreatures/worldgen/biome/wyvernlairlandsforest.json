@@ -33,5 +33,23 @@
   },
   "spawn_costs": {},
   "carvers": {},
-  "features": []
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "neomocreatures:firestone_cluster"
+    ],
+    [
+      "neomocreatures:wyvwood_trees_forest"
+    ],
+    [],
+    [
+      "neomocreatures:patch_tall_wyvgrass",
+      "neomocreatures:patch_mushrooms"
+    ],
+    []
+  ]
 }

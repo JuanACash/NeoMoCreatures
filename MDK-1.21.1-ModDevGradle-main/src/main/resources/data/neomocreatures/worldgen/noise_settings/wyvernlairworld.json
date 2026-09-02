@@ -73,7 +73,7 @@
                         "argument1": 23.4375,
                         "argument2": {
                           "type": "minecraft:add",
-                          "argument1": { "type":"minecraft:end_islans", "scale":2.0},
+                          "argument1": { "type":"minecraft:end_islands", "scale":2.0},
                           "argument2": {
                             "type": "minecraft:old_blended_noise",
                             "smear_scale_multiplier": 4.0,
@@ -131,10 +131,8 @@
                   "argument2": {
                     "type": "minecraft:cache_2d",
                     "argument": {
-                      "type": "neomocreatures:wyvern_island_shape",
-                      "radius": 300.0,
-                      "edge_fade": 60.0,
-                      "amplitude": 60.0
+                      "type": "minecraft:end_islands",
+                      "scale": 2.0
                     }
                   }
                 }

@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#neomocreatures:is_wyvern_lair",
+  "features": [
+    "neomocreatures:wyvern_nest"
+  ],
+  "step": "vegetal_decoration"
+}

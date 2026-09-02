@@ -1,0 +1,13 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#neomocreatures:is_wyvern_lair",
+  "features": [
+    "neomocreatures:wyvern_iron_ore",
+    "neomocreatures:wyvern_gold_ore",
+    "neomocreatures:wyvern_lapis_ore",
+    "neomocreatures:wyvern_emerald_ore",
+    "neomocreatures:wyvern_diamond_ore",
+    "neomocreatures:wyvern_ancient_ore"
+  ],
+  "step": "underground_ores"
+}
