@@ -34,15 +34,14 @@ public final class WyvernPortalPlatform {
 
     private static final int FOOTPRINT_HALF = 5;
     private static final int SEARCH_STEP = 4;
-private static final int MAX_SEARCH_RADIUS = 60; // en anillos de 4 bloques (~240 bloques)
+    private static final int MAX_SEARCH_RADIUS = 60;
 
-    /** Busca en espiral la columna sólida más cercana a (centerX, centerZ). */
     public static BlockPos findSolidGround(ServerLevel level, int centerX, int centerZ) {
         for (int radius = 0; radius <= MAX_SEARCH_RADIUS; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
-                        continue; // solo probar el borde del anillo actual
+                        continue;
                     }
                     BlockPos found = tryColumn(level, centerX + dx * SEARCH_STEP, centerZ + dz * SEARCH_STEP);
                     if (found != null) {
@@ -51,7 +50,7 @@ private static final int MAX_SEARCH_RADIUS = 60; // en anillos de 4 bloques (~24
                 }
             }
         }
-        return new BlockPos(centerX, 80, centerZ); // fallback si no se encontró nada
+        return new BlockPos(centerX, 80, centerZ);
     }
 
     private static BlockPos tryColumn(ServerLevel level, int x, int z) {
