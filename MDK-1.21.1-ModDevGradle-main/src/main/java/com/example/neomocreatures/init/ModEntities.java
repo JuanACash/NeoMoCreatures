@@ -2,6 +2,7 @@ package com.example.neomocreatures.init;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 
 import net.minecraft.core.registries.Registries;
@@ -46,10 +47,34 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_horse_mob"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN =
+            ENTITY_TYPES.register("wyvern", () -> EntityType.Builder
+                    .of(MoCWyvernEntity::new, MobCategory.CREATURE)
+                    .sized(1.45F, 1.55F)
+                    .clientTrackingRange(10)
+                    .build("wyvern"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_TIER2 =
+            ENTITY_TYPES.register("wyvern_tier2", () -> EntityType.Builder
+                    .of(MoCWyvernEntity::new, MobCategory.CREATURE)
+                    .sized(3.8F, 4.5F)
+                    .clientTrackingRange(10)
+                    .build("wyvern_tier2"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_MOTHER =
+            ENTITY_TYPES.register("wyvern_mother", () -> EntityType.Builder
+                    .of(MoCWyvernEntity::new, MobCategory.CREATURE)
+                    .sized(4.2F, 5.0F)
+                    .clientTrackingRange(10)
+                    .build("wyvern_mother"));
+
     public static void registerAttributes(IEventBus modEventBus) {
         modEventBus.addListener((EntityAttributeCreationEvent event) -> {
                 event.put(MOC_HORSE.get(), MoCHorseEntity.createAttributes().build());
                 event.put(MOC_HORSE_MOB.get(), MoCHorseMobEntity.createAttributes().build());
+                event.put(WYVERN.get(), MoCWyvernEntity.createAttributes().build());
+                event.put(WYVERN_TIER2.get(), MoCWyvernEntity.createTier2Attributes().build());
+                event.put(WYVERN_MOTHER.get(), MoCWyvernEntity.createMotherAttributes().build());
         });
         }
         

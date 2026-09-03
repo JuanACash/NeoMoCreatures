@@ -4,7 +4,18 @@
     {
       "bonus_rolls": 0.0,
       "conditions": [ { "condition": "minecraft:survives_explosion" } ],
-      "entries": [ { "type": "minecraft:item", "name": "neomocreatures:tall_wyvgrass" } ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "condition": "minecraft:match_tool",
+              "predicate": { "items": [ "minecraft:shears" ] }
+            }
+          ],
+          "name": "neomocreatures:tall_wyvgrass"
+        }
+      ],
       "rolls": 1.0
     }
   ]
