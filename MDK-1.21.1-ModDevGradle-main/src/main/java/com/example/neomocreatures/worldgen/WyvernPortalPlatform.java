@@ -1,12 +1,13 @@
 package com.example.neomocreatures.worldgen;
 
+import com.example.neomocreatures.init.ModBlocks;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import com.example.neomocreatures.init.ModBlocks;
 
 /**
  * Builds the small quartz arrival platform that marks the fixed entry point
@@ -30,6 +31,58 @@ public final class WyvernPortalPlatform {
     private WyvernPortalPlatform() {
     }
 
+
+    private static final int FOOTPRINT_HALF = 5;
+    private static final int SEARCH_STEP = 4;
+private static final int MAX_SEARCH_RADIUS = 60; // en anillos de 4 bloques (~240 bloques)
+
+    /** Busca en espiral la columna sólida más cercana a (centerX, centerZ). */
+    public static BlockPos findSolidGround(ServerLevel level, int centerX, int centerZ) {
+        for (int radius = 0; radius <= MAX_SEARCH_RADIUS; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue; // solo probar el borde del anillo actual
+                    }
+                    BlockPos found = tryColumn(level, centerX + dx * SEARCH_STEP, centerZ + dz * SEARCH_STEP);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+            }
+        }
+        return new BlockPos(centerX, 80, centerZ); // fallback si no se encontró nada
+    }
+
+    private static BlockPos tryColumn(ServerLevel level, int x, int z) {
+        int minY = level.getMinBuildHeight();
+        int maxY = level.getMaxBuildHeight();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, 0, z);
+        for (int y = maxY - 1; y > minY; y--) {
+            cursor.setY(y);
+            if (isTerrain(level.getBlockState(cursor)) && hasSolidTerrainBelow(level, x, y, z)) {
+                return new BlockPos(x, y + 1, z);
+            }
+        }
+        return null;
+    }
+
+    private static boolean isTerrain(BlockState state) {
+        return state.is(ModBlocks.WYVGRASS.get())
+            || state.is(ModBlocks.WYVDIRT.get())
+            || state.is(ModBlocks.WYVSTONE.get());
+    }
+
+    private static boolean hasSolidTerrainBelow(ServerLevel level, int x, int y, int z) {
+        BlockPos.MutableBlockPos check = new BlockPos.MutableBlockPos(x, y, z);
+        for (int i = 0; i < 3; i++) {
+            if (!isTerrain(level.getBlockState(check))) {
+                return false;
+            }
+            check.move(0, -1, 0);
+        }
+        return true;
+    }
     /**
      * Generates the platform below {@code arrivalPos} unless it has already been built.
      *
@@ -40,19 +93,31 @@ public final class WyvernPortalPlatform {
         if (!level.isEmptyBlock(arrivalPos)) {
             return;
         }
+        terraformFootprint(level, arrivalPos);
         carveBase(level, arrivalPos);
         generate(level, arrivalPos);
     }
 
     private static void carveBase(ServerLevel level, BlockPos arrivalPos) {
-        BlockState fill = ModBlocks.WYVSTONE.get().defaultBlockState();
         for (int dx = -5; dx <= 5; dx++) {
             for (int dz = -5; dz <= 5; dz++) {
-                for (int dy = -10; dy < 0; dy++) {
-                    level.setBlock(arrivalPos.offset(dx, dy, dz), fill, UPDATE_FLAGS);
-                }
                 for (int dy = 1; dy <= 8; dy++) {
                     level.setBlock(arrivalPos.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
+                }
+            }
+        }
+    }
+
+    private static final int TERRAFORM_HALF = 3;
+
+    private static void terraformFootprint(ServerLevel level, BlockPos arrivalPos) {
+        BlockState ground = ModBlocks.WYVGRASS.get().defaultBlockState();
+        for (int dx = -TERRAFORM_HALF; dx <= TERRAFORM_HALF; dx++) {
+            for (int dz = -TERRAFORM_HALF; dz <= TERRAFORM_HALF; dz++) {
+                BlockPos base = arrivalPos.offset(dx, -1, dz);
+                level.setBlock(base, ground, UPDATE_FLAGS);
+                for (int dy = 0; dy <= 8; dy++) {
+                    level.setBlock(base.above(1 + dy), Blocks.AIR.defaultBlockState(), UPDATE_FLAGS);
                 }
             }
         }

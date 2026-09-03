@@ -26,6 +26,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 
@@ -46,7 +47,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public class StaffPortalItem extends Item {
 
-    private static final BlockPos ARRIVAL_POS = new BlockPos(0, 80, 0);
+    private static final int ARRIVAL_X = 0;
+    private static final int ARRIVAL_Z = 0;
 
     private static final String TAG_RETURN_DIMENSION = "ReturnDimension";
     private static final String TAG_RETURN_X = "ReturnX";
@@ -117,13 +119,23 @@ public class StaffPortalItem extends Item {
         }
 
         storeReturnPoint(stack, currentLevel.dimension(), player.blockPosition());
-        WyvernPortalPlatform.generateIfMissing(destination, ARRIVAL_POS);
+        BlockPos arrivalPos = resolveArrivalPos(destination);
+        WyvernPortalPlatform.generateIfMissing(destination, arrivalPos);
 
-        Vec3 targetPos = Vec3.atBottomCenterOf(ARRIVAL_POS.above());
+        Vec3 targetPos = Vec3.atBottomCenterOf(arrivalPos.above());
         player.changeDimension(new DimensionTransition(destination, targetPos, Vec3.ZERO,
                 player.getYRot(), player.getXRot(), DimensionTransition.PLACE_PORTAL_TICKET));
 
         stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+    }
+
+    private static BlockPos cachedArrivalPos = null;
+
+    private BlockPos resolveArrivalPos(ServerLevel destination) {
+        if (cachedArrivalPos == null) {
+            cachedArrivalPos = WyvernPortalPlatform.findSolidGround(destination, ARRIVAL_X, ARRIVAL_Z);
+        }
+        return cachedArrivalPos;
     }
 
     private void teleportBackHome(ServerPlayer player, ItemStack stack) {
