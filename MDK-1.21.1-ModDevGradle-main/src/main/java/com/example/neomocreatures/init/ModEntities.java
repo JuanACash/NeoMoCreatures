@@ -57,14 +57,14 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_TIER2 =
             ENTITY_TYPES.register("wyvern_tier2", () -> EntityType.Builder
                     .of(MoCWyvernEntity::new, MobCategory.CREATURE)
-                    .sized(3.8F, 4.5F)
+                    .sized(1.8F, 2.0F)
                     .clientTrackingRange(10)
                     .build("wyvern_tier2"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_MOTHER =
             ENTITY_TYPES.register("wyvern_mother", () -> EntityType.Builder
                     .of(MoCWyvernEntity::new, MobCategory.CREATURE)
-                    .sized(4.2F, 5.0F)
+                    .sized(2.2F, 2.35F)
                     .clientTrackingRange(10)
                     .build("wyvern_mother"));
 

@@ -575,28 +575,36 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.tail4.yRot = amplitude * Mth.sin(w * t - k * 3);
         this.tail5.yRot = amplitude * Mth.sin(w * t - k * 4);
 
-        // ---- wings (cruising / idle flap) ----
-        float wingSpread = Mth.cos(limbSwing * 0.5F) * 0.1F;
+        // ---- wings: glide pose while airborne, folded while grounded, plus a
+        // single down-stroke pulse (using MoCWyvernEntity's synced wing-flap
+        // burst) instead of a constant, unmoving spread like before.
+        boolean flying = entity.getIsFlying();
+        int flapTicks = entity.getWingFlapTicks();
+        final float FLAP_BURST_TICKS = 10F; // must match MoCWyvernEntity.WING_FLAP_DURATION_TICKS
+        float flapProgress = flapTicks > 0 ? (FLAP_BURST_TICKS - flapTicks) / FLAP_BURST_TICKS : 0F;
+        float flapStroke = flapTicks > 0 ? Mth.sin(flapProgress * (float) Math.PI) * (50F / R) : 0F;
+        float restAngle = 30F / R;
+        float glideAngle = 45F / R;
+        float baseSpread = flying ? glideAngle : restAngle;
 
-        this.leftlowarm.zRot = 0F;
-        this.leftfing1a.zRot = 0F;
-        this.leftfing2a.zRot = 0F;
-        this.rightlowarm.zRot = 0F;
-        this.rightfing1a.zRot = 0F;
-        this.rightfing2a.zRot = 0F;
-
-        this.leftuparm.zRot = 30F / R;
+        this.leftuparm.zRot = baseSpread - flapStroke;
         this.leftuparm.yRot = -60F / R;
         this.leftlowarm.yRot = 105F / R;
+        this.leftlowarm.zRot = -flapStroke * 0.6F;
         this.leftfing1a.yRot = -20F / R;
+        this.leftfing1a.zRot = -flapStroke * 0.4F;
         this.leftfing2a.yRot = -26F / R;
+        this.leftfing2a.zRot = -flapStroke * 0.4F;
         this.leftfing3a.yRot = -32F / R;
 
         this.rightuparm.yRot = 60F / R;
-        this.rightuparm.zRot = -30F / R;
+        this.rightuparm.zRot = -baseSpread + flapStroke;
         this.rightlowarm.yRot = -105F / R;
+        this.rightlowarm.zRot = flapStroke * 0.6F;
         this.rightfing1a.yRot = 16F / R;
+        this.rightfing1a.zRot = flapStroke * 0.4F;
         this.rightfing2a.yRot = 26F / R;
+        this.rightfing2a.zRot = flapStroke * 0.4F;
         this.rightfing3a.yRot = 32F / R;
 
         // ---- legs (walking gait) ----
@@ -621,7 +629,15 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.righttoe3.xRot = rLegXRot;
 
         // ---- jaw / ears ----
-        this.jaw.xRot = -10F / R;
+        // Opens for the duration of a bite (see MoCWyvernEntity.getBiteTicks()),
+        // otherwise sits at its near-closed resting angle.
+        int biteTicks = entity.getBiteTicks();
+        final float BITE_BURST_TICKS = 6F; // must match MoCWyvernEntity.BITE_DURATION_TICKS
+        float biteProgress = biteTicks > 0 ? (BITE_BURST_TICKS - biteTicks) / BITE_BURST_TICKS : 0F;
+        float jawOpen = biteTicks > 0 ? Mth.sin(biteProgress * (float) Math.PI) * (35F / R) : 0F;
+
+        this.jaw.xRot = -10F / R - jawOpen;
+        this.beak.xRot = -jawOpen * 0.5F;
         this.leftearskin.yRot = 0F;
         this.rightearskin.yRot = 0F;
     }

@@ -232,6 +232,7 @@ public class NeoMoCreatures {
                     // Spawn eggs
                     output.accept(ModItems.WILD_HORSE_SPAWN_EGG.get());
                     output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
+                    output.accept(ModItems.WYVERN_SPAWN_EGG.get());
 
                 }).build());
 

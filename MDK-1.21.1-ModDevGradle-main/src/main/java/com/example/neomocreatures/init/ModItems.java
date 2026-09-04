@@ -30,6 +30,13 @@ public class ModItems {
 
     public static final DeferredItem<Item> MOC_HORSE_MOB_SPAWN_EGG = ITEMS.register("moc_horse_mob_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_HORSE_MOB, 0x1A1A2E, 0x5B2C6F, new Item.Properties()));
+
+        // One egg, three possible outcomes (tier 1 / tier 2 / natural mother) —
+    // see WyvernSpawnEggItem for the weights.
+    public static final DeferredItem<Item> WYVERN_SPAWN_EGG = ITEMS.register("wyvern_spawn_egg",
+        () -> new com.example.neomocreatures.item.WyvernSpawnEggItem(new Item.Properties()));
+
+        
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_DARKNESS = ITEMS.registerSimpleItem("heart_of_darkness", new Item.Properties());

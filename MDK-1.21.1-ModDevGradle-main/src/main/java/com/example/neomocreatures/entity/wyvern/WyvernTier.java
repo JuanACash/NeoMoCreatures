@@ -2,9 +2,9 @@ package com.example.neomocreatures.entity.wyvern;
 
 public enum WyvernTier {
 
-    TIER_1(1.0F, 1.45F, 1.55F, 40.0D, 10.0D),
-    TIER_2(2.6F, 3.8F, 4.5F, 60.0D, 11.0D),
-    MOTHER(3.0F, 4.2F, 5.0F, 80.0D, 12.0D);
+    TIER_1(1.0F, 1.45F, 1.55F, 40.0D, 3.0D),
+    TIER_2(1.3F, 1.8F, 2.0F, 60.0D, 10.0D),
+    MOTHER(1.5F, 2.2F, 2.35F, 80.0D, 17.0D);
 
     private static final WyvernTier[] VALUES = values();
 

@@ -50,6 +50,12 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> WHIP = register("item.whip");
     public static final DeferredHolder<SoundEvent, SoundEvent> RECORD_SHUFFLING = register("records.shuffling");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> WYVERN_GRUNT = register("moc_wyvern.grunt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WYVERN_HURT = register("moc_wyvern.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WYVERN_DEATH = register("moc_wyvern.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WYVERN_WING_FLAP = register("moc_wyvern.wing_flap");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WYVERN_POISON = register("moc_wyvern.poison");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

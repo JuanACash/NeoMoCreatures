@@ -6,12 +6,14 @@ import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
 import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -50,6 +52,14 @@ public class MoCWyvernEntity extends TamableAnimal {
     private static final int POISON_DURATION_TICKS = 200;
     /** Wiki: instantly removed if it drifts below Y=10 inside the Wyvern Lair. */
     private static final int LAIR_DESPAWN_Y = 10;
+    /** How long the visible flap burst / wing-flap sound lasts. */
+    private static final int WING_FLAP_DURATION_TICKS = 10;
+    /** Must match the model's wing-flap frequency (0.35F in MoCWyvernModel: 2π/0.35 ≈ 18). */
+    private static final int WING_FLAP_PERIOD_TICKS = 18;
+    /** Ticks the jaw stays open after a successful bite. */
+    private static final int BITE_DURATION_TICKS = 6;
+    /** Stops the flap sound/animation shortly after landing, same grace idea as MoCHorseEntity. */
+    private static final int WING_FLAP_GROUND_GRACE = 5;
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
@@ -59,10 +69,14 @@ public class MoCWyvernEntity extends TamableAnimal {
     // currently airborne (gliding/hovering) instead of walking.
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    // Synced so the client-side model can actually see these and animate —
+    // the old non-synced wingFlapCounter never reached the renderer.
+    private static final EntityDataAccessor<Integer> DATA_WING_FLAP_TICKS =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_BITE_TICKS =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
 
-    // Local (non-synced) counter that drives the wing-flap sound, same idea as
-    // wingFlapCounter in the original MoCEntityWyvern.
-    private int wingFlapCounter;
+    private int groundedStreak;
 
     public MoCWyvernEntity(EntityType<? extends MoCWyvernEntity> type, Level level) {
         super(type, level);
@@ -75,7 +89,11 @@ public class MoCWyvernEntity extends TamableAnimal {
             tier = WyvernTier.TIER_1;
         }
         setTier(tier);
-        setVariant(tier == WyvernTier.MOTHER ? WyvernVariant.randomMother(this.random) : WyvernVariant.randomWild(this.random));
+        // Only the plain "wyvern_mother" texture can come from natural spawn
+        // or the spawn egg — the undead/light/dark/corrupt mother textures
+        // are reserved for a special, non-natural way of getting them later
+        // (see WyvernVariant.randomMother(), currently unused for that reason).
+        setVariant(tier == WyvernTier.MOTHER ? WyvernVariant.MOTHER : WyvernVariant.randomWild(this.random));
     }
 
     /**
@@ -104,10 +122,10 @@ public class MoCWyvernEntity extends TamableAnimal {
 
     public static AttributeSupplier.Builder createTier2Attributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 80.0D)
+                .add(Attributes.MAX_HEALTH, 60.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.23D)
                 .add(Attributes.FLYING_SPEED, 0.14D)
-                .add(Attributes.ATTACK_DAMAGE, 17.0D)
+                .add(Attributes.ATTACK_DAMAGE, 10.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
@@ -146,12 +164,39 @@ public class MoCWyvernEntity extends TamableAnimal {
         this.setNoGravity(flying);
     }
 
+    /** Ticks left in the current visible wing-flap burst (0 = idle glide pose). */
+    public int getWingFlapTicks() {
+        return this.entityData.get(DATA_WING_FLAP_TICKS);
+    }
+
+    /** Ticks left with the jaw held open from a bite (0 = closed). */
+    public int getBiteTicks() {
+        return this.entityData.get(DATA_BITE_TICKS);
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ModSounds.WYVERN_GRUNT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSounds.WYVERN_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ModSounds.WYVERN_DEATH.get();
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_VARIANT, WyvernVariant.SUN.getId());
         builder.define(DATA_TIER, WyvernTier.TIER_1.getId());
         builder.define(DATA_FLYING, false);
+        builder.define(DATA_WING_FLAP_TICKS, 0);
+        builder.define(DATA_BITE_TICKS, 0);
     }
 
     @Override
@@ -246,6 +291,10 @@ public class MoCWyvernEntity extends TamableAnimal {
     }
 
     private void poisonTarget(Entity target) {
+        this.entityData.set(DATA_BITE_TICKS, BITE_DURATION_TICKS);
+        if (!this.level().isClientSide) {
+            this.playSound(ModSounds.WYVERN_POISON.get(), 1.0F, 1.0F);
+        }
         if (target instanceof LivingEntity living) {
             living.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, 0));
         }
@@ -281,12 +330,7 @@ public class MoCWyvernEntity extends TamableAnimal {
 
     @Override
     public void aiStep() {
-        if (this.wingFlapCounter > 0 && ++this.wingFlapCounter > 20) {
-            this.wingFlapCounter = 0;
-        }
-        if (this.wingFlapCounter == 5 && !this.level().isClientSide) {
-            // TODO: play the wyvern's wing-flap sound event here once it's registered.
-        }
+        tickWingFlap();
 
         if (!this.level().isClientSide) {
             // Wiki: instantly removed if it drifts below Y=10 in the Wyvern Lair.
@@ -340,25 +384,43 @@ public class MoCWyvernEntity extends TamableAnimal {
                                 0.3D + (this.random.nextDouble() * 0.3D), 0.0D));
                     }
                 }
-
-                if (this.random.nextInt(20) == 0) {
-                    wingFlap();
-                }
             }
         }
 
         super.aiStep();
     }
 
-    public void wingFlap() {
-        if (this.wingFlapCounter == 0) {
-            this.wingFlapCounter = 1;
+    /**
+     * Periodic wing-flap while airborne: plays the flap sound and starts the
+     * visible flap-burst pose (read by MoCWyvernModel via getWingFlapTicks())
+     * on a fixed period timed to the model's flap cycle, same idea as the
+     * pegasus/bathorse flap in MoCHorseEntity#tickWingFlapSounds(). Grace
+     * period avoids a flap firing right as it's touching down.
+     */
+    private void tickWingFlap() {
+        if (!this.level().isClientSide) {
+            if (getIsFlying()) {
+                groundedStreak = this.onGround() ? groundedStreak + 1 : 0;
+                if (groundedStreak < WING_FLAP_GROUND_GRACE && this.tickCount % WING_FLAP_PERIOD_TICKS == 0) {
+                    this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
+                    this.playSound(ModSounds.WYVERN_WING_FLAP.get(), 1.0F, 0.9F + this.random.nextFloat() * 0.2F);
+                }
+            } else {
+                groundedStreak = 0;
+            }
+
+            if (this.getWingFlapTicks() > 0) {
+                this.entityData.set(DATA_WING_FLAP_TICKS, this.getWingFlapTicks() - 1);
+            }
+            if (this.getBiteTicks() > 0) {
+                this.entityData.set(DATA_BITE_TICKS, this.getBiteTicks() - 1);
+            }
         }
     }
 
     @Override
     public void jumpFromGround() {
-        wingFlap();
+        this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
         super.jumpFromGround();
     }
 
