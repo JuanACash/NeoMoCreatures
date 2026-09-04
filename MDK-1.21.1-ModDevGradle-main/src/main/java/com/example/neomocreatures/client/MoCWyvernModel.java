@@ -13,24 +13,12 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
-/**
- * 1:1 port of drzhark.mocreatures.client.model.MoCModelWyvern (Techne / ModelRenderer)
- * to the modern HierarchicalModel / PartDefinition format.
- *
- * NOTE: this only ports the "base" wyvern body — the parts that are always shown
- * (armor is 0, isSaddled/isChested false). The original model also has iron/gold/
- * diamond helmet+armor parts, a saddle, storage chest, mouth rod and control ropes,
- * all of which are conditionally hidden (showModel = false) unless the wyvern is
- * ridden/equipped. If you need those too, say so and I'll add them the same way.
- */
 public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
-    // Minecraft's radian-per-degree constant, same value the original Techne model used.
     private static final float R = 57.29578F;
 
     private final ModelPart root;
 
-    // tail
     private final ModelPart back1;
     private final ModelPart tail;
     private final ModelPart tail1;
@@ -39,12 +27,10 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     private final ModelPart tail4;
     private final ModelPart tail5;
 
-    // chest / neck plates (standalone, root-level, like the original)
     private final ModelPart chest;
     private final ModelPart neckplate3;
     private final ModelPart neck3;
 
-    // head assembly
     private final ModelPart mainHead;
     private final ModelPart neck2;
     private final ModelPart neckplate2;
@@ -68,12 +54,10 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     private final ModelPart leftspine2;
     private final ModelPart leftspine3;
 
-    // torso / shoulders
     private final ModelPart torso;
     private final ModelPart rightshoulder;
     private final ModelPart leftshoulder;
 
-    // left wing
     private final ModelPart leftWing;
     private final ModelPart leftuparm;
     private final ModelPart leftlowarm;
@@ -87,7 +71,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     private final ModelPart leftwingflap2;
     private final ModelPart leftwingflap3;
 
-    // right wing
     private final ModelPart rightWing;
     private final ModelPart rightuparm;
     private final ModelPart rightlowarm;
@@ -101,7 +84,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     private final ModelPart rightwingflap2;
     private final ModelPart rightwingflap3;
 
-    // left leg
     private final ModelPart leftupleg;
     private final ModelPart leftmidleg;
     private final ModelPart leftlowleg;
@@ -113,7 +95,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     private final ModelPart leftclaw2;
     private final ModelPart leftclaw3;
 
-    // right leg
     private final ModelPart rightupleg;
     private final ModelPart rightmidleg;
     private final ModelPart rightlowleg;
@@ -220,7 +201,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
 
-        // ---- tail ----
         root.addOrReplaceChild("back1",
                 CubeListBuilder.create().texOffs(92, 0).addBox(-3F, -2F, -12F, 6, 2, 12),
                 PartPose.offset(0F, 0F, 0F));
@@ -260,7 +240,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(0, 80).addBox(-0.5F, 0F, 0F, 1, 3, 7),
                 PartPose.offset(0F, 1F, 6F));
 
-        // ---- chest / neck plates (root level) ----
         root.addOrReplaceChild("chest",
                 CubeListBuilder.create().texOffs(44, 0).addBox(-4.5F, 2.7F, -13F, 9, 10, 4),
                 PartPose.offsetAndRotation(0F, 0F, 0F, -0.2602503F, 0F, 0F));
@@ -273,7 +252,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(100, 113).addBox(-3F, 0F, -2F, 6, 7, 8),
                 PartPose.offsetAndRotation(0F, 0F, -12F, -0.669215F, 0F, 0F));
 
-        // ---- head assembly ----
         PartDefinition mainHead = root.addOrReplaceChild("main_head", CubeListBuilder.create(),
                 PartPose.offset(0F, 3F, -15F));
 
@@ -357,7 +335,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(68, 141).addBox(-0.5F, -1F, 0F, 1, 2, 8),
                 PartPose.offsetAndRotation(0F, 2F, 0F, -15F / R, 0F, 0F));
 
-        // ---- torso / shoulders ----
         root.addOrReplaceChild("torso",
                 CubeListBuilder.create().texOffs(0, 0).addBox(-5F, 0F, -12F, 10, 10, 12),
                 PartPose.offset(0F, 0F, 0F));
@@ -370,7 +347,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(24, 83).addBox(2F, 1F, -12.5F, 4, 5, 5),
                 PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
 
-        // ---- left wing ----
         PartDefinition leftWing = root.addOrReplaceChild("left_wing", CubeListBuilder.create(),
                 PartPose.offset(4F, 1F, -11F));
 
@@ -412,7 +388,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(0, 153).addBox(-17.5F, 1F, 1.1F, 18, 24, 0),
                 PartPose.offset(0F, 0F, 0F));
 
-        // ---- right wing ----
         PartDefinition rightWing = root.addOrReplaceChild("right_wing", CubeListBuilder.create(),
                 PartPose.offset(-4F, 1F, -11F));
 
@@ -454,7 +429,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(0, 177).addBox(-0.5F, 1F, 1.1F, 18, 24, 0),
                 PartPose.offset(0F, 0F, 0F));
 
-        // ---- left leg ----
         PartDefinition leftupleg = root.addOrReplaceChild("leftupleg",
                 CubeListBuilder.create().texOffs(0, 111).addBox(-2F, -3F, -3F, 4, 10, 7),
                 PartPose.offsetAndRotation(5F, 6F, -5F, -25F / R, 0F, 0F));
@@ -491,7 +465,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(100, 26).addBox(-0.5F, 0F, -0.5F, 1, 2, 1),
                 PartPose.offsetAndRotation(-0.5F, -0.5F, -2.5F, -25F / R, 0F, 0F));
 
-        // ---- right leg ----
         PartDefinition rightupleg = root.addOrReplaceChild("rightupleg",
                 CubeListBuilder.create().texOffs(0, 111).addBox(-2F, -3F, -3F, 4, 10, 7),
                 PartPose.offsetAndRotation(-5F, 6F, -5F, -25F / R, 0F, 0F));
@@ -528,9 +501,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(100, 26).addBox(-0.5F, 0F, -0.5F, 1, 2, 1),
                 PartPose.offsetAndRotation(-0.5F, -0.5F, -2.5F, -25F / R, 0F, 0F));
 
-        // Original Techne model declared textureWidth=128, textureHeight=256 — keep this
-        // even though the shipped PNGs are 256x512 (2x/"HD" textures); the UV mapping
-        // above is baked for the 128x256 grid and scales fine onto the larger PNG.
         return LayerDefinition.create(mesh, 128, 256);
     }
 
@@ -545,7 +515,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
         netHeadYaw = Mth.clamp(netHeadYaw, -60F, 60F);
 
-        // ---- head / neck ----
         this.neck2.xRot = -66F / R + (headPitch / 3F / R);
         this.neck1.xRot = 30F / R + (headPitch * 2F / 3F / R);
         this.head.xRot = 45F / R;
@@ -556,14 +525,12 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.head.yRot = 0F;
         this.head.zRot = 0F;
 
-        // ---- tail base curve ----
         this.tail1.xRot = -19F / R;
         this.tail2.xRot = -16F / R;
         this.tail3.xRot = 7F / R;
         this.tail4.xRot = 11F / R;
         this.tail5.xRot = 8F / R;
 
-        // ---- tail side-to-side wave ----
         float t = limbSwing / 2F;
         float amplitude = 0.15F;
         float w = 0.9F;
@@ -575,13 +542,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.tail4.yRot = amplitude * Mth.sin(w * t - k * 3);
         this.tail5.yRot = amplitude * Mth.sin(w * t - k * 4);
 
-        // ---- wings + legs: gated by onAir (physically airborne OR AI "flying"
-        // flag), exactly like the original's onAir/flapwings logic — except
-        // "flapping" is now driven by actual vertical motion (isGliding()),
-        // not a random counter: it flaps continuously while airborne unless
-        // it's genuinely falling (gliding), matching how it should always
-        // look like it's flying, and only glide with wings held out while
-        // actually descending.
         boolean onAir = entity.isAirborne();
         boolean gliding = entity.isGliding();
         boolean flapping = onAir && !gliding;
@@ -594,10 +554,6 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
         if (onAir) {
             float speedMov = limbSwingAmount * 0.5F;
-            // Bird-like tucked leg: the thigh (upleg) stays close to
-            // vertical/straight against the body, and the trail-back happens
-            // from the knee down (mid/lower leg + foot), not by swinging the
-            // whole leg back from the hip.
             float kneeBend = 0.6108652F;
             float shinBend = 0.34906584F;
 
@@ -672,9 +628,15 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
             this.righttoe3.xRot = rLegXRot;
         }
 
-        // ---- jaw / ears ----
-        // Same shape as the original's openMouth: a full open-close sine over
-        // MoCWyvernEntity's 1..30 mouthCounter, driven by getBiteTicks().
+        if (entity.isOrderedToSit()) {
+            this.leftupleg.xRot = 0.7853981F + lLegXRot;
+            this.rightupleg.xRot = 0.7853981F + rLegXRot;
+            this.leftmidleg.xRot = 0.5235988F;
+            this.rightmidleg.xRot = 0.5235988F;
+            this.neck2.xRot = -0.62831855F + headPitch * 0.33333334F / R;
+            this.neck1.xRot = 0.5235988F + headPitch * 0.6666667F / R;
+        }
+
         int mouthCounter = entity.getBiteTicks();
         if (mouthCounter != 0) {
             float mouthMov = Mth.cos((mouthCounter - 15) * 0.11F) * 0.8F;

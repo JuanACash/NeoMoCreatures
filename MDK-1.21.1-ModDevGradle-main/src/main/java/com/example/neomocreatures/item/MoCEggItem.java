@@ -92,6 +92,7 @@ public class MoCEggItem extends Item {
         }
         egg.setHatchEntityId(hatchEntityId);
         egg.setHatchVariant(variantId);
+        egg.setSourceItemId(BuiltInRegistries.ITEM.getKey(this));
         egg.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
         serverLevel.addFreshEntity(egg);
 

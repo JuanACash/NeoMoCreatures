@@ -15,6 +15,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -28,6 +29,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -59,6 +61,11 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     private static final int WING_FLAP_BURST_TICKS = 20;
     /** Original's mouthCounter: runs 1→30 then resets to 0 while the bite/mouth animation plays. */
     private static final int MOUTH_BURST_TICKS = 30;
+    /** Every hatched baby starts at this same absolute size, whatever tier it'll grow into. */
+    private static final float BABY_SCALE = 0.4F;
+    /** Wiki: tier 2 and mother take longer to grow than a common wyvern. */
+    private static final int TIER_1_GROWTH_TICKS = 24000;
+    private static final int SLOW_GROWTH_TICKS = 48000;
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
@@ -114,6 +121,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 // Unrecognized variant name — keep the one already picked.
             }
         }
+        // Wiki: mother/tier2 take longer (~2 MC days) to grow up than a
+        // common wyvern (~1 MC day) — overrides the generic -24000 the egg
+        // already set for every AgeableMob.
+        int growthTicks = getTier() == WyvernTier.TIER_1 ? TIER_1_GROWTH_TICKS : SLOW_GROWTH_TICKS;
+        this.setAge(-growthTicks);
+        tickGrowth();
+
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);
@@ -137,22 +151,31 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     }
 
     // Wiki stats: 40 HP / 3 attack (tier 1) up to 80 HP / 17 attack (tier 2 and mother).
+    // Attributes.SCALE is ALWAYS 1.0 for a grown adult of any tier — the tier
+    // size difference already lives entirely in each EntityType's own
+    // .sized() hitbox (1.45→1.8→2.2→4.2). Multiplying by a tier-specific
+    // SCALE value on top of that double-applies the size difference (that's
+    // what made mother/tier2 render/hitbox oversized). SCALE only ever drops
+    // below 1.0 temporarily, while a hatched baby is still growing — see
+    // tickGrowth().
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.FLYING_SPEED, 0.15D)
                 .add(Attributes.ATTACK_DAMAGE, 3.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.SCALE, 1.0D);
     }
 
     public static AttributeSupplier.Builder createTier2Attributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 80.0D)
+                .add(Attributes.MAX_HEALTH, 60.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.23D)
                 .add(Attributes.FLYING_SPEED, 0.14D)
-                .add(Attributes.ATTACK_DAMAGE, 17.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+                .add(Attributes.ATTACK_DAMAGE, 10.0D)
+                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.SCALE, 1.0D);
     }
 
     public static AttributeSupplier.Builder createMotherAttributes() {
@@ -161,7 +184,19 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 .add(Attributes.MOVEMENT_SPEED, 0.22D)
                 .add(Attributes.FLYING_SPEED, 0.13D)
                 .add(Attributes.ATTACK_DAMAGE, 17.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.SCALE, 1.0D);
+    }
+
+    /** Only ever used by WYVERN_MOTHER_TAMED — same stats as the wild mother, just bigger. */
+    public static AttributeSupplier.Builder createMotherTamedAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 80.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.22D)
+                .add(Attributes.FLYING_SPEED, 0.13D)
+                .add(Attributes.ATTACK_DAMAGE, 17.0D)
+                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.SCALE, 1.0D);
     }
 
     public WyvernVariant getVariant() {
@@ -233,6 +268,9 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     /** Original calls openMouth() from here too — not just on a successful bite. */
     @Override
     protected SoundEvent getAmbientSound() {
+        if (this.isOrderedToSit()) {
+            return null;
+        }
         startMouthAnimation();
         return ModSounds.WYVERN_GRUNT.get();
     }
@@ -359,12 +397,32 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
      * shot from far away needs this to be immediate/reliable: as soon as it
      * takes damage from a player (arrow or otherwise), target them and take
      * off right away instead of waiting on the random per-tick flying rolls.
+     * Wiki: a tamed wyvern never attacks its owner, and it may just fly off
+     * (rather than fight back) if hurt by something that isn't a player —
+     * e.g. skeleton arrows.
      */
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean wasHurt = super.hurt(source, amount);
-        if (wasHurt && !this.level().isClientSide && source.getEntity() instanceof Player player) {
+        if (!wasHurt || this.level().isClientSide) {
+            return wasHurt;
+        }
+
+        Entity attacker = source.getEntity();
+        if (this.isTame() && attacker != null && attacker.equals(this.getOwner())) {
+            // Friendly fire from the owner never turns into retaliation.
+            this.setLastHurtByMob(null);
+            this.setTarget(null);
+            return wasHurt;
+        }
+
+        if (attacker instanceof Player player) {
             this.setTarget(player);
+            setIsFlying(true);
+        } else if (this.isTame()) {
+            // Not a player (arrow from a skeleton, etc.) — a tame wyvern
+            // just flees instead of fighting back.
+            this.setTarget(null);
             setIsFlying(true);
         }
         return wasHurt;
@@ -374,22 +432,60 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     public boolean isFood(ItemStack stack) {
         // Naturally-spawned wyverns can't be tamed by feeding — in the original mod
         // the only way to get a tame wyvern is hatching a player-placed egg.
-        // Revisit this once the egg item/entity exists; a hatched wyvern can just
-        // call this.tame(player) directly instead of going through isFood/mobInteract.
+        // (Healing an already-tamed wyvern with raw rat/turkey is handled
+        // separately in mobInteract() below, so this staying false doesn't
+        // block that — it only blocks the wild-taming-by-food path.)
         return false;
     }
 
+    private boolean isHealingFood(ItemStack stack) {
+        return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get());
+    }
+
     /**
-     * Wild wyverns aren't tameable (see isFood() above). Once one is tamed
-     * (hatched from an egg), sneak-right-click toggles sitting.
+     * Wild wyverns aren't tameable (see isFood() above). Once tamed: sneak +
+     * right-click toggles sitting, and raw rat/raw turkey heals it (wiki).
      */
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (this.isTame() && this.isOwnedBy(player) && !this.level().isClientSide && player.isSecondaryUseActive()) {
-            this.setOrderedToSit(!this.isOrderedToSit());
-            this.setTarget(null);
-            this.getNavigation().stop();
-            return InteractionResult.SUCCESS;
+        if (this.isTame() && this.isOwnedBy(player)) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (stack.is(net.minecraft.world.item.Items.BOOK)) {
+                if (!this.level().isClientSide) {
+                    com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+                if (!this.level().isClientSide) {
+                    this.setOrderedToSit(!this.isOrderedToSit());
+                    this.setTarget(null);
+                    this.getNavigation().stop();
+                    this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                            0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
+                    if (!player.getAbilities().instabuild) {
+                        stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+                if (!this.level().isClientSide) {
+                    this.heal(4.0F);
+                    if (!player.getAbilities().instabuild) {
+                        stack.shrink(1);
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.level().isClientSide && player.isSecondaryUseActive()) {
+                this.setOrderedToSit(!this.isOrderedToSit());
+                this.setTarget(null);
+                this.getNavigation().stop();
+                return InteractionResult.SUCCESS;
+            }
         }
 
         return super.mobInteract(player, hand);
@@ -461,6 +557,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     @Override
     public void aiStep() {
         tickWingFlap();
+        tickGrowth();
 
         if (!this.level().isClientSide) {
             // Original's onLivingUpdate(): dampens any fall to a slow glide
@@ -579,6 +676,74 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     }
 
     /**
+     * Continuous baby-to-adult growth (like horses), instead of vanilla's
+     * default instant baby/adult size switch. Every hatchling starts at the
+     * same absolute BABY_SCALE regardless of tier, and grows toward its own
+     * tier's adult scale over its (tier-dependent) growth duration.
+     */
+    /**
+     * Continuous baby-to-adult growth (like horses), instead of vanilla's
+     * default instant baby/adult size switch. The adult target is ALWAYS
+     * 1.0 (see createXAttributes() above for why) — WyvernTier's renderScale
+     * is only used here, as a ratio, to figure out what fraction of THIS
+     * tier's full size counts as "the same absolute hatchling size" every
+     * tier starts at (a tier with 3x the adult size needs a proportionally
+     * smaller starting fraction to look the same size at birth).
+     */
+    /**
+     * Hitbox-only growth curve: Attributes.SCALE never exceeds 1.0, so it
+     * only ever SHRINKS a baby relative to its EntityType's own (already
+     * tier-correct) declared hitbox — it never multiplies that hitbox
+     * upward. Visual rendering uses getVisualScale() below instead, which is
+     * a separate, independent calculation (see MoCWyvernRenderer) — mixing
+     * the two into one shared multiplier is what caused the hitbox to get
+     * multiplied twice (tier's own big .sized() AND a tier-sized attribute
+     * on top of it) and rendered mother/tier2 comically oversized.
+     */
+        private void tickGrowth() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
+        if (scaleAttr == null) {
+            return;
+        }
+
+        float newScale;
+        if (!this.isBaby()) {
+            newScale = 1.0F;
+        } else {
+            int growthTicks = getTier() == WyvernTier.TIER_1 ? TIER_1_GROWTH_TICKS : SLOW_GROWTH_TICKS;
+            float progress = Mth.clamp((this.getAge() + growthTicks) / (float) growthTicks, 0.0F, 1.0F);
+            float babyFraction = BABY_SCALE / getTier().getRenderScale();
+            newScale = Mth.lerp(progress, babyFraction, 1.0F);
+        }
+
+        if (scaleAttr.getBaseValue() != newScale) {
+            scaleAttr.setBaseValue(newScale);
+            this.refreshDimensions();
+        }
+    }
+
+    /**
+     * Visual size multiplier for MoCWyvernRenderer — same growth curve, but
+     * computed independently of Attributes.SCALE (kept ≤1.0 above): this one
+     * DOES reach tier.getRenderScale() at full growth (1.3/1.5/3.0), since
+     * the visual model doesn't already have a bigger size baked in the way
+     * the hitbox does.
+     */
+    public float getVisualScale() {
+        float adultScale = getTier().getRenderScale();
+        if (!this.isBaby()) {
+            return adultScale;
+        }
+        int growthTicks = getTier() == WyvernTier.TIER_1 ? TIER_1_GROWTH_TICKS : SLOW_GROWTH_TICKS;
+        float progress = Mth.clamp((this.getAge() + growthTicks) / (float) growthTicks, 0.0F, 1.0F);
+        float babyScale = BABY_SCALE / adultScale;
+        return Mth.lerp(progress, babyScale, adultScale);
+    }
+
+    /**
      * Same shape as the original's onLivingUpdate(): wingFlapCounter counts
      * 1→20 then resets to 0 (playing the flap sound at 5), and mouthCounter
      * counts 1→30 then resets. Both are read directly by MoCWyvernModel.
@@ -613,7 +778,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
     @Override
     public void jumpFromGround() {
-        wingFlap();
+        // Only flap for a real airborne launch — a mundane ground hop while
+        // pathfinding around an obstacle (which also calls this) shouldn't
+        // make it visibly flap its wings.
+        if (getIsFlying()) {
+            wingFlap();
+        }
         super.jumpFromGround();
     }
 

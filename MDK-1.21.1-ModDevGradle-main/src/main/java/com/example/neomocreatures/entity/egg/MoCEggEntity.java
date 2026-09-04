@@ -3,13 +3,16 @@ package com.example.neomocreatures.entity.egg;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.ModItems;
 
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -17,7 +20,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 
 /**
  * 1:1-in-spirit port of drzhark.mocreatures.entity.item.MoCEntityEgg, minus
@@ -31,20 +37,35 @@ import net.minecraft.world.level.Level;
  *
  * Per design: every egg is the same size regardless of what's inside (no
  * per-species getSize() scaling like the original had for ostrich eggs).
+ *
+ * Wiki behaviour: never moves under its own power, but can be pushed by
+ * mobs/players/pistons (not affected by knockback specifically); can be
+ * killed like a mob (puffs white smoke on death); and can be picked back up
+ * like a dropped item by simply walking into it, as long as it hasn't
+ * already hatched.
  */
 public class MoCEggEntity extends Mob {
 
     /** Ticks (in ~1-in-20-chance increments) before the egg hatches. */
     private static final int HATCH_THRESHOLD = 30;
-    /** At this many increments, nearby players get a "something's hatching" message. */
+    /** At this many increments, nearby players get a "keep watch!" message. */
     private static final int NOTIFY_AT = 5;
     /** If left unwatched this many increments, the egg gives up and despawns. */
     private static final int DESPAWN_UNWATCHED_THRESHOLD = 500;
     private static final double WATCH_RADIUS = 24.0D;
+    /** Wiki: stray more than ~9 blocks away and the hatched baby comes out wild. */
+    private static final double TAME_RADIUS = 9.0D;
+    /** Block-light level of a torch (14) and above counts as "near a torch". */
+    private static final int MIN_LIGHT_TO_HATCH = 14;
+    /** Wiki-inspired: can't be picked back up in the first few seconds after being placed. */
+    private static final int PICKUP_DELAY_TICKS = 60;
 
     private ResourceLocation hatchEntityId;
     @Nullable
     private String hatchVariant;
+    /** Which item to hand back if this egg gets picked back up (see playerTouch()). */
+    @Nullable
+    private ResourceLocation sourceItemId;
 
     private int hatchTicks;
     private int unwatchedTicks;
@@ -73,12 +94,18 @@ public class MoCEggEntity extends Mob {
         this.hatchVariant = hatchVariant;
     }
 
+    public void setSourceItemId(@Nullable ResourceLocation sourceItemId) {
+        this.sourceItemId = sourceItemId;
+    }
+
+    /** Wiki: not affected by knockback (but still pushable by mobs/players/pistons). */
+    @Override
+    public void knockback(double strength, double x, double z) {
+    }
+
     @Override
     public void tick() {
         super.tick();
-        // Keeps it from drifting off with currents/collisions — it only ever
-        // moves vertically (e.g. water bobbing, if an aquatic branch is added).
-        this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
 
         if (this.level().isClientSide) {
             return;
@@ -94,12 +121,16 @@ public class MoCEggEntity extends Mob {
         }
 
         if (this.random.nextInt(20) == 0) {
-            this.hatchTicks++;
-            if (this.hatchTicks == NOTIFY_AT) {
-                notifyNearbyPlayer();
-            }
-            if (this.hatchTicks >= HATCH_THRESHOLD) {
-                hatch();
+            // Needs a nearby light source (a torch, glowstone, etc. — block
+            // light specifically, not sunlight) to progress toward hatching.
+            if (this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH) {
+                this.hatchTicks++;
+                if (this.hatchTicks == NOTIFY_AT) {
+                    notifyNearbyPlayer();
+                }
+                if (this.hatchTicks >= HATCH_THRESHOLD) {
+                    hatch();
+                }
             }
         }
     }
@@ -126,13 +157,37 @@ public class MoCEggEntity extends Mob {
             }
             serverLevel.addFreshEntity(spawned);
 
-            Player tamer = this.level().getNearestPlayer(this, WATCH_RADIUS);
+            // Wiki: stray too far (9+ blocks) and the hatch comes out wild.
+            Player tamer = this.level().getNearestPlayer(this, TAME_RADIUS);
             if (spawned instanceof EggHatchable hatchable) {
                 hatchable.onHatchedFromEgg(tamer, this.hatchVariant);
             }
         }
 
         this.playSound(SoundEvents.CHICKEN_EGG, 0.4F, ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+        this.discard();
+    }
+
+    /** Wiki: "You can pick up an egg like a dropped item by simply walking over it." */
+    @Override
+    public void playerTouch(Player player) {
+        if (this.level().isClientSide || this.tickCount < PICKUP_DELAY_TICKS) {
+            return;
+        }
+
+        ResourceLocation itemId = this.sourceItemId != null
+                ? this.sourceItemId
+                : BuiltInRegistries.ITEM.getKey(ModItems.MOC_EGG.get());
+        Item item = BuiltInRegistries.ITEM.get(itemId);
+        ItemStack stack = new ItemStack(item);
+
+        if (player.getInventory().add(stack)) {
+            this.playSound(SoundEvents.ITEM_PICKUP, 0.2F,
+                    ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+            player.take(this, 1);
+        } else {
+            return;
+        }
         this.discard();
     }
 
@@ -143,6 +198,9 @@ public class MoCEggEntity extends Mob {
         if (this.hatchVariant != null) {
             tag.putString("HatchVariant", this.hatchVariant);
         }
+        if (this.sourceItemId != null) {
+            tag.putString("SourceItem", this.sourceItemId.toString());
+        }
     }
 
     @Override
@@ -152,10 +210,21 @@ public class MoCEggEntity extends Mob {
             this.hatchEntityId = ResourceLocation.parse(tag.getString("HatchEntityType"));
         }
         this.hatchVariant = tag.contains("HatchVariant", 8) ? tag.getString("HatchVariant") : null;
+        this.sourceItemId = tag.contains("SourceItem", 8) ? ResourceLocation.parse(tag.getString("SourceItem")) : null;
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         return false;
+    }
+
+    /** Wiki: "emit a puff of white smoke after death." */
+    @Override
+    protected void tickDeath() {
+        if (this.deathTime == 0 && this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 0.3D, this.getZ(),
+                    8, 0.2D, 0.2D, 0.2D, 0.02D);
+        }
+        super.tickDeath();
     }
 }

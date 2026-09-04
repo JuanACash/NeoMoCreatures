@@ -230,7 +230,7 @@
   "item.neomocreatures.mother_wyvern_egg": "Mother Wyvern Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
-  "msg.neomocreatures.egg_hatching": "Something is hatching at %s, %s, %s...",
+  "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",
   "item.neomocreatures.mystic_pear": "Mystic Pear",
   "item.neomocreatures.nether_cannon": "Nether Cannon",
   "item.neomocreatures.pet_food": "Pet Food",

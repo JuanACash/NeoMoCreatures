@@ -1,6 +1,7 @@
 package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;
@@ -17,12 +18,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Rright-click on a ground block
- * (with air above). In the original it affects several pets in an area
- * (cats, wyverns, elephants, scorpions, ostriches) with different
- * effects (sitting, attacking, sprinting). Since we only have
- * MoCHorseEntity so far, we only ported the "mounted horse" branch
- * (sprintCounter in the original -> temporary Speed boost here).
+ * Right-click on a ground block (with air above). In the original it affects
+ * several pets in an area (cats, wyverns, elephants, scorpions, ostriches)
+ * with different effects (sitting, attacking, sprinting). So far we've ported
+ * the "mounted horse" branch (sprintCounter in the original -> temporary
+ * Speed boost here) and the "tamed wyvern" branch (sit + stay put).
  */
 public class WhipItem extends Item {
 
@@ -69,6 +69,15 @@ public class WhipItem extends Item {
                     } else {
                         horse.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, SPEED_DURATION_TICKS, SPEED_AMPLIFIER, false, true));
                     }
+                }
+            }
+
+            // Wiki: a whip makes tamed wyverns sit and stay put (prevents
+            // flying off/getting lost) — doesn't require being ridden.
+            for (MoCWyvernEntity wyvern : level.getEntitiesOfClass(MoCWyvernEntity.class, player.getBoundingBox().inflate(RADIUS))) {
+                if (wyvern.isTame()) {
+                    wyvern.setOrderedToSit(true);
+                    wyvern.setTarget(null);
                 }
             }
 

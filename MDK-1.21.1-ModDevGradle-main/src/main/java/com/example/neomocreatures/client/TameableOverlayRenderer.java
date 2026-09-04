@@ -23,6 +23,8 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 public final class TameableOverlayRenderer {
 
     private static final double SHOW_DISTANCE_SQR = 64.0D; // 8 blocks, same as the name tag
+    /** Exposed so a renderer's nameplate check can match this exact range. */
+    public static final double NAME_AND_HEALTH_SHOW_DISTANCE_SQR = SHOW_DISTANCE_SQR;
     private static final int BAR_WIDTH = 40;
     private static final int BAR_HEIGHT = 4;
 

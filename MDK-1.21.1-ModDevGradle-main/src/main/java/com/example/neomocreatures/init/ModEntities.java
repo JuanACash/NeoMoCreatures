@@ -48,13 +48,10 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_horse_mob"));
 
-    // Three EntityTypes for the three WyvernTier size classes (hitbox size
-    // can't vary per-instance within one EntityType — see WyvernTier for the
-    // matching render-scale numbers). Wild wyverns spawn as WYVERN or
-    // WYVERN_TIER2; WYVERN_MOTHER is the biggest, queen-of-the-nest variant.
-    // NOTE: WYVERN_MOTHER's hitbox here is her current/untamed size. A tamed
-    // mother growing even bigger is a separate future mechanic (not this
-    // EntityType) — see the TODO in WyvernTier.
+    // Three distinct hitbox sizes for the three WyvernTier size classes —
+    // these are the actual final adult sizes (hitbox does NOT get multiplied
+    // again by Attributes.SCALE at adulthood, see MoCWyvernEntity#tickGrowth()
+    // — SCALE only ever goes UP TO 1.0, shrinking the baby, never past it).
     public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN =
             ENTITY_TYPES.register("wyvern", () -> EntityType.Builder
                     .of(MoCWyvernEntity::new, MobCategory.CREATURE)
@@ -76,12 +73,15 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .build("wyvern_mother"));
 
-    // Only ever reached by hatching a mother wyvern egg — same stats as the
-    // wild mother, just the bigger size we set aside for that earlier.
+    // Only ever reached by hatching a mother wyvern egg — bigger than the
+    // wild mother (2.2x2.35) but smaller than before (4.2x5.0). This value
+    // MUST match WyvernTier.MOTHER_TAMED's hitboxWidth/hitboxHeight, or the
+    // math in getVisualScale()/tickGrowth() (which assumes this size is the
+    // real final hitbox) stops matching what's actually registered here.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_MOTHER_TAMED =
             ENTITY_TYPES.register("wyvern_mother_tamed", () -> EntityType.Builder
                     .of(MoCWyvernEntity::new, MobCategory.CREATURE)
-                    .sized(4.2F, 5.0F)
+                    .sized(2.9F, 3.1F)
                     .clientTrackingRange(10)
                     .build("wyvern_mother_tamed"));
 
@@ -90,7 +90,7 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
             ENTITY_TYPES.register("moc_egg", () -> EntityType.Builder
                     .of(MoCEggEntity::new, MobCategory.MISC)
-                    .sized(0.4F, 0.4F)
+                    .sized(0.1F, 0.1F)
                     .clientTrackingRange(6)
                     .build("moc_egg"));
 
@@ -101,7 +101,7 @@ public class ModEntities {
                 event.put(WYVERN.get(), MoCWyvernEntity.createAttributes().build());
                 event.put(WYVERN_TIER2.get(), MoCWyvernEntity.createTier2Attributes().build());
                 event.put(WYVERN_MOTHER.get(), MoCWyvernEntity.createMotherAttributes().build());
-                event.put(WYVERN_MOTHER_TAMED.get(), MoCWyvernEntity.createMotherAttributes().build());
+                event.put(WYVERN_MOTHER_TAMED.get(), MoCWyvernEntity.createMotherTamedAttributes().build());
                 event.put(MOC_EGG.get(), MoCEggEntity.createAttributes().build());
         });
         }
