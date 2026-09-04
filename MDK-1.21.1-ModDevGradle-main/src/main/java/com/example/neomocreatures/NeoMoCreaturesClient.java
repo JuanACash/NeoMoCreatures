@@ -4,6 +4,8 @@ import com.example.neomocreatures.client.MoCHorseMobModel;
 import com.example.neomocreatures.client.MoCHorseMobRenderer;
 import com.example.neomocreatures.client.MoCHorseModel;
 import com.example.neomocreatures.client.MoCHorseRenderer;
+import com.example.neomocreatures.client.MoCEggModel;
+import com.example.neomocreatures.client.MoCEggRenderer;
 import com.example.neomocreatures.client.MoCWyvernModel;
 import com.example.neomocreatures.client.MoCWyvernRenderer;
 import com.example.neomocreatures.init.ModBlocks;
@@ -39,6 +41,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCHorseRenderer.MOC_HORSE_LAYER, MoCHorseModel::createBodyLayer);
                 event.registerLayerDefinition(MoCHorseMobRenderer.MOC_HORSE_MOB_LAYER, MoCHorseMobModel::createBodyLayer);
                 event.registerLayerDefinition(MoCWyvernRenderer.MOC_WYVERN_LAYER, MoCWyvernModel::createBodyLayer);
+                event.registerLayerDefinition(MoCEggRenderer.MOC_EGG_LAYER, MoCEggModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -47,6 +50,8 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.WYVERN.get(), MoCWyvernRenderer::new);
                 event.registerEntityRenderer(ModEntities.WYVERN_TIER2.get(), MoCWyvernRenderer::new);
                 event.registerEntityRenderer(ModEntities.WYVERN_MOTHER.get(), MoCWyvernRenderer::new);
+                event.registerEntityRenderer(ModEntities.WYVERN_MOTHER_TAMED.get(), MoCWyvernRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_EGG.get(), MoCEggRenderer::new);
         });
                 
     }

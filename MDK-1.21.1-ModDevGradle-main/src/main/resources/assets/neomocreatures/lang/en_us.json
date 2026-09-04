@@ -65,7 +65,7 @@
 
   "item.neomocreatures.wild_horse_spawn_egg": "WildHorse Spawn Egg",
   "item.neomocreatures.moc_horse_mob_spawn_egg": "Horse Mob Spawn Egg",
-    "item.neomocreatures.wyvern_spawn_egg": "Wyvern Spawn Egg",
+  "item.neomocreatures.wyvern_spawn_egg": "Wyvern Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -219,6 +219,18 @@
   "item.neomocreatures.kitty_litter": "Kitty Litter",
   "item.neomocreatures.medallion": "Medallion",
   "item.neomocreatures.moc_egg": "Mystery Egg",
+  "item.neomocreatures.jungle_wyvern_egg": "Jungle Wyvern Egg",
+  "item.neomocreatures.swamp_wyvern_egg": "Swamp Wyvern Egg",
+  "item.neomocreatures.sand_wyvern_egg": "Sand Wyvern Egg",
+  "item.neomocreatures.sun_wyvern_egg": "Sun Wyvern Egg",
+  "item.neomocreatures.arctic_wyvern_egg": "Arctic Wyvern Egg",
+  "item.neomocreatures.cave_wyvern_egg": "Cave Wyvern Egg",
+  "item.neomocreatures.mountain_wyvern_egg": "Mountain Wyvern Egg",
+  "item.neomocreatures.sea_wyvern_egg": "Sea Wyvern Egg",
+  "item.neomocreatures.mother_wyvern_egg": "Mother Wyvern Egg",
+  "entity.neomocreatures.moc_egg": "Egg",
+
+  "msg.neomocreatures.egg_hatching": "Something is hatching at %s, %s, %s...",
   "item.neomocreatures.mystic_pear": "Mystic Pear",
   "item.neomocreatures.nether_cannon": "Nether Cannon",
   "item.neomocreatures.pet_food": "Pet Food",

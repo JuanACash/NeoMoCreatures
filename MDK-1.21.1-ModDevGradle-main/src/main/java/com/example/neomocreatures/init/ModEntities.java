@@ -3,6 +3,7 @@ package com.example.neomocreatures.init;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.egg.MoCEggEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 
 import net.minecraft.core.registries.Registries;
@@ -47,6 +48,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_horse_mob"));
 
+    // Three EntityTypes for the three WyvernTier size classes (hitbox size
+    // can't vary per-instance within one EntityType — see WyvernTier for the
+    // matching render-scale numbers). Wild wyverns spawn as WYVERN or
+    // WYVERN_TIER2; WYVERN_MOTHER is the biggest, queen-of-the-nest variant.
+    // NOTE: WYVERN_MOTHER's hitbox here is her current/untamed size. A tamed
+    // mother growing even bigger is a separate future mechanic (not this
+    // EntityType) — see the TODO in WyvernTier.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN =
             ENTITY_TYPES.register("wyvern", () -> EntityType.Builder
                     .of(MoCWyvernEntity::new, MobCategory.CREATURE)
@@ -68,6 +76,24 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .build("wyvern_mother"));
 
+    // Only ever reached by hatching a mother wyvern egg — same stats as the
+    // wild mother, just the bigger size we set aside for that earlier.
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> WYVERN_MOTHER_TAMED =
+            ENTITY_TYPES.register("wyvern_mother_tamed", () -> EntityType.Builder
+                    .of(MoCWyvernEntity::new, MobCategory.CREATURE)
+                    .sized(4.2F, 5.0F)
+                    .clientTrackingRange(10)
+                    .build("wyvern_mother_tamed"));
+
+    // Generic egg — sits still, hatches into whatever HatchEntityType it was
+    // set to (see MoCEggEntity). Same tiny size no matter what's inside.
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
+            ENTITY_TYPES.register("moc_egg", () -> EntityType.Builder
+                    .of(MoCEggEntity::new, MobCategory.MISC)
+                    .sized(0.4F, 0.4F)
+                    .clientTrackingRange(6)
+                    .build("moc_egg"));
+
     public static void registerAttributes(IEventBus modEventBus) {
         modEventBus.addListener((EntityAttributeCreationEvent event) -> {
                 event.put(MOC_HORSE.get(), MoCHorseEntity.createAttributes().build());
@@ -75,6 +101,8 @@ public class ModEntities {
                 event.put(WYVERN.get(), MoCWyvernEntity.createAttributes().build());
                 event.put(WYVERN_TIER2.get(), MoCWyvernEntity.createTier2Attributes().build());
                 event.put(WYVERN_MOTHER.get(), MoCWyvernEntity.createMotherAttributes().build());
+                event.put(WYVERN_MOTHER_TAMED.get(), MoCWyvernEntity.createMotherAttributes().build());
+                event.put(MOC_EGG.get(), MoCEggEntity.createAttributes().build());
         });
         }
         

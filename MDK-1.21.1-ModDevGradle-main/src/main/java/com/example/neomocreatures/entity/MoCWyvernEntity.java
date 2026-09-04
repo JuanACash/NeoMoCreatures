@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
 import com.example.neomocreatures.init.ModDimensions;
@@ -34,6 +35,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -42,9 +44,10 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCWyvernEntity extends TamableAnimal {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
     /** How close (in blocks) a player has to be before a wild wyvern goes hostile. Wiki: 12-16. */
     private static final double AGGRO_RADIUS = 14.0D;
@@ -52,14 +55,10 @@ public class MoCWyvernEntity extends TamableAnimal {
     private static final int POISON_DURATION_TICKS = 200;
     /** Wiki: instantly removed if it drifts below Y=10 inside the Wyvern Lair. */
     private static final int LAIR_DESPAWN_Y = 10;
-    /** How long the visible flap burst / wing-flap sound lasts. */
-    private static final int WING_FLAP_DURATION_TICKS = 10;
-    /** Must match the model's wing-flap frequency (0.35F in MoCWyvernModel: 2π/0.35 ≈ 18). */
-    private static final int WING_FLAP_PERIOD_TICKS = 18;
-    /** Ticks the jaw stays open after a successful bite. */
-    private static final int BITE_DURATION_TICKS = 6;
-    /** Stops the flap sound/animation shortly after landing, same grace idea as MoCHorseEntity. */
-    private static final int WING_FLAP_GROUND_GRACE = 5;
+    /** Original's wingFlapCounter: runs 1→20 then resets to 0 while a flap burst is active. */
+    private static final int WING_FLAP_BURST_TICKS = 20;
+    /** Original's mouthCounter: runs 1→30 then resets to 0 while the bite/mouth animation plays. */
+    private static final int MOUTH_BURST_TICKS = 30;
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
@@ -76,12 +75,12 @@ public class MoCWyvernEntity extends TamableAnimal {
     private static final EntityDataAccessor<Integer> DATA_BITE_TICKS =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
 
-    private int groundedStreak;
-
     public MoCWyvernEntity(EntityType<? extends MoCWyvernEntity> type, Level level) {
         super(type, level);
         WyvernTier tier;
-        if (type == ModEntities.WYVERN_MOTHER.get()) {
+        if (type == ModEntities.WYVERN_MOTHER_TAMED.get()) {
+            tier = WyvernTier.MOTHER_TAMED;
+        } else if (type == ModEntities.WYVERN_MOTHER.get()) {
             tier = WyvernTier.MOTHER;
         } else if (type == ModEntities.WYVERN_TIER2.get()) {
             tier = WyvernTier.TIER_2;
@@ -93,7 +92,34 @@ public class MoCWyvernEntity extends TamableAnimal {
         // or the spawn egg — the undead/light/dark/corrupt mother textures
         // are reserved for a special, non-natural way of getting them later
         // (see WyvernVariant.randomMother(), currently unused for that reason).
-        setVariant(tier == WyvernTier.MOTHER ? WyvernVariant.MOTHER : WyvernVariant.randomWild(this.random));
+        boolean isMotherTier = tier == WyvernTier.MOTHER || tier == WyvernTier.MOTHER_TAMED;
+        setVariant(isMotherTier ? WyvernVariant.MOTHER : WyvernVariant.randomWild(this.random));
+    }
+
+    /**
+     * Egg-hatched wyverns are always babies, tamed to whoever was standing
+     * nearby when it hatched (and prompted to name it, same as horses).
+     * Tier is already correct — the egg spawned this as the right EntityType
+     * for whichever tier it rolled — so this only needs to fix up the
+     * variant/texture and finish taming. variantId lets the egg preserve a
+     * specific look (e.g. "JUNGLE" or "MOTHER"); null/unrecognized just
+     * keeps whatever the constructor already picked.
+     */
+    @Override
+    public void onHatchedFromEgg(@Nullable Player tamer, @Nullable String variantId) {
+        if (variantId != null) {
+            try {
+                setVariant(WyvernVariant.valueOf(variantId));
+            } catch (IllegalArgumentException ignored) {
+                // Unrecognized variant name — keep the one already picked.
+            }
+        }
+        this.setHealth(this.getMaxHealth());
+        if (tamer != null) {
+            this.tame(tamer);
+            this.setOrderedToSit(false);
+            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+        }
     }
 
     /**
@@ -122,10 +148,10 @@ public class MoCWyvernEntity extends TamableAnimal {
 
     public static AttributeSupplier.Builder createTier2Attributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 60.0D)
+                .add(Attributes.MAX_HEALTH, 80.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.23D)
                 .add(Attributes.FLYING_SPEED, 0.14D)
-                .add(Attributes.ATTACK_DAMAGE, 10.0D)
+                .add(Attributes.ATTACK_DAMAGE, 17.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
@@ -164,23 +190,56 @@ public class MoCWyvernEntity extends TamableAnimal {
         this.setNoGravity(flying);
     }
 
-    /** Ticks left in the current visible wing-flap burst (0 = idle glide pose). */
+    /** Original's isOnAir(): physically airborne, regardless of the AI "flying" flag. */
+    public boolean isOnAir() {
+        return !this.onGround() && !this.isInWater() && !this.isInLava();
+    }
+
+    /**
+     * Whether flight/glide animation and behaviour should apply at all right
+     * now: physically not touching ground, and either genuinely airborne or
+     * still carrying the "flying" AI flag from just before landing. Without
+     * the onGround() check, isFlying could stay true for a moment after
+     * touching down and the wings would keep moving while stood on the ground.
+     */
+    public boolean isAirborne() {
+        return !this.onGround() && (isOnAir() || getIsFlying());
+    }
+
+    /**
+     * Wings-out, no-flap glide pose: only while actually falling (meaningful
+     * downward vertical speed). Any other time it's airborne — rising,
+     * hovering, cruising — it should be actively flapping, not just holding
+     * a fixed stretched pose.
+     */
+    public boolean isGliding() {
+        return isAirborne() && this.getDeltaMovement().y < -0.03D;
+    }
+
+    public boolean isAirborneFlapping() {
+        return isAirborne() && !isGliding();
+    }
+
+    /** Ticks left in the current wing-flap burst (1..20, 0 = idle glide pose). */
     public int getWingFlapTicks() {
         return this.entityData.get(DATA_WING_FLAP_TICKS);
     }
 
-    /** Ticks left with the jaw held open from a bite (0 = closed). */
+    /** Ticks left in the current mouth/bite animation (1..30, 0 = closed). */
     public int getBiteTicks() {
         return this.entityData.get(DATA_BITE_TICKS);
     }
 
+    /** Original calls openMouth() from here too — not just on a successful bite. */
     @Override
     protected SoundEvent getAmbientSound() {
+        startMouthAnimation();
         return ModSounds.WYVERN_GRUNT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
+        startMouthAnimation();
         return ModSounds.WYVERN_HURT.get();
     }
 
@@ -234,7 +293,15 @@ public class MoCWyvernEntity extends TamableAnimal {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        // Vanilla's WaterAvoidingRandomStrollGoal picks ground-level points
+        // regardless of navigation type — that's what kept this stuck near
+        // the ground despite FlyingPathNavigation. This picks 3D points at
+        // varying height (like a parrot) and only runs while actually flying.
+        this.goalSelector.addGoal(5, new WyvernFlyGoal(this, 1.3D));
+        // Reinstated ground wander, gated to the opposite condition, so it
+        // actually walks around (and animates its legs) while not flying —
+        // without this it just stood still whenever grounded.
+        this.goalSelector.addGoal(6, new WyvernGroundWanderGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
@@ -245,6 +312,62 @@ public class MoCWyvernEntity extends TamableAnimal {
         // doHurtTarget() below is what actually withholds the hit damage there.
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, (int) AGGRO_RADIUS,
                 true, false, target -> !this.isTame()));
+    }
+
+    /** WaterAvoidingRandomFlyingGoal gated to only wander while getIsFlying() is true. */
+    private static class WyvernFlyGoal extends WaterAvoidingRandomFlyingGoal {
+        private final MoCWyvernEntity wyvern;
+
+        WyvernFlyGoal(MoCWyvernEntity wyvern, double speedModifier) {
+            super(wyvern, speedModifier);
+            this.wyvern = wyvern;
+        }
+
+        @Override
+        public boolean canUse() {
+            return this.wyvern.getIsFlying() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.wyvern.getIsFlying() && super.canContinueToUse();
+        }
+    }
+
+    /** WaterAvoidingRandomStrollGoal gated to only wander while NOT flying. */
+    private static class WyvernGroundWanderGoal extends WaterAvoidingRandomStrollGoal {
+        private final MoCWyvernEntity wyvern;
+
+        WyvernGroundWanderGoal(MoCWyvernEntity wyvern, double speedModifier) {
+            super(wyvern, speedModifier);
+            this.wyvern = wyvern;
+        }
+
+        @Override
+        public boolean canUse() {
+            return !this.wyvern.getIsFlying() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !this.wyvern.getIsFlying() && super.canContinueToUse();
+        }
+    }
+
+    /**
+     * HurtByTargetGoal already retaliates against melee attackers, but a bow
+     * shot from far away needs this to be immediate/reliable: as soon as it
+     * takes damage from a player (arrow or otherwise), target them and take
+     * off right away instead of waiting on the random per-tick flying rolls.
+     */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean wasHurt = super.hurt(source, amount);
+        if (wasHurt && !this.level().isClientSide && source.getEntity() instanceof Player player) {
+            this.setTarget(player);
+            setIsFlying(true);
+        }
+        return wasHurt;
     }
 
     @Override
@@ -291,12 +414,19 @@ public class MoCWyvernEntity extends TamableAnimal {
     }
 
     private void poisonTarget(Entity target) {
-        this.entityData.set(DATA_BITE_TICKS, BITE_DURATION_TICKS);
+        startMouthAnimation();
         if (!this.level().isClientSide) {
             this.playSound(ModSounds.WYVERN_POISON.get(), 1.0F, 1.0F);
         }
         if (target instanceof LivingEntity living) {
             living.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, 0));
+        }
+    }
+
+    /** Original's mouthCounter gate: only (re)start if it's currently idle. */
+    private void startMouthAnimation() {
+        if (this.entityData.get(DATA_BITE_TICKS) == 0) {
+            this.entityData.set(DATA_BITE_TICKS, 1);
         }
     }
 
@@ -333,8 +463,18 @@ public class MoCWyvernEntity extends TamableAnimal {
         tickWingFlap();
 
         if (!this.level().isClientSide) {
+            // Original's onLivingUpdate(): dampens any fall to a slow glide
+            // whenever it's physically airborne, regardless of the isFlying
+            // AI flag — this is what makes it glide right after spawning in
+            // midair or whenever it drifts off the flying AI state entirely.
+            if (!getIsFlying() && isOnAir() && this.getDeltaMovement().y < 0.0D) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
+            }
+
             // Wiki: instantly removed if it drifts below Y=10 in the Wyvern Lair.
-            if (this.level().dimension() == ModDimensions.WYVERN_LAIR && this.getY() < LAIR_DESPAWN_Y) {
+            // Only applies to wild (non-tamed) wyverns.
+            if (!this.isTame() && this.level().dimension() == ModDimensions.WYVERN_LAIR
+                    && this.getY() < LAIR_DESPAWN_Y) {
                 this.discard();
                 return;
             }
@@ -345,12 +485,16 @@ public class MoCWyvernEntity extends TamableAnimal {
                 setIsFlying(true);
             }
 
-            // Wild wyverns randomly take off / land, same as the original's
-            // livingTick() random-chance toggle.
-            if (!this.isOrderedToSit() && !this.isTame() && this.random.nextInt(300) == 0) {
-                setIsFlying(!getIsFlying());
-                if (getIsFlying() && this.onGround()) {
-                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
+            // Wild wyverns take off a lot more readily than they land — aiming
+            // for roughly 60% of their time airborne vs. 40% grounded.
+            if (!this.isOrderedToSit() && !this.isTame()) {
+                if (!getIsFlying() && this.random.nextInt(100) == 0) {
+                    setIsFlying(true);
+                    if (this.onGround()) {
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
+                    }
+                } else if (getIsFlying() && this.random.nextInt(150) == 0) {
+                    setIsFlying(false);
                 }
             }
 
@@ -366,14 +510,58 @@ public class MoCWyvernEntity extends TamableAnimal {
             }
 
             if (getIsFlying()) {
-                // Gentle, capped descent so it doesn't float forever.
                 Vec3 motion = this.getDeltaMovement();
-                double newY = Math.max(motion.y - 0.03D, -0.5D);
+                double newY;
+                LivingEntity attackTarget = this.getTarget();
+
+                if (attackTarget != null) {
+                    // Chasing something to attack: head for its altitude
+                    // instead of the cruising band below — this is what was
+                    // keeping it stuck way above the player instead of
+                    // swooping down into melee range.
+                    double heightDiff = attackTarget.getY() - this.getY();
+                    if (heightDiff < -1.0D) {
+                        newY = Math.max(motion.y - 0.08D, -0.6D);
+                    } else if (heightDiff > 1.0D) {
+                        newY = Math.min(motion.y + 0.06D, 0.5D);
+                    } else {
+                        newY = motion.y * 0.8D;
+                    }
+                } else {
+                    // Actively climb toward a cruising altitude band above the
+                    // ground instead of just constantly decaying downward — that
+                    // constant decay is why it used to barely lift off at all.
+                    int groundY = this.level().getHeight(
+                            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                            this.getBlockX(), this.getBlockZ());
+                    double heightAboveGround = this.getY() - groundY;
+
+                    if (heightAboveGround < 10.0D) {
+                        newY = Math.min(motion.y + 0.06D, 0.5D);
+                    } else if (heightAboveGround > 48.0D) {
+                        newY = Math.max(motion.y - 0.05D, -0.5D);
+                    } else {
+                        // Cruising band: damp toward level flight instead of a
+                        // constant downward decay. The old constant -0.03/tick
+                        // sink meant it was almost always reading as "falling"
+                        // (gliding) during ordinary cruising, instead of mostly
+                        // flapping like actual flight — this keeps it level most
+                        // of the time so isGliding() only fires on a genuine dip.
+                        newY = motion.y * 0.8D;
+                        if (Math.abs(newY) < 0.01D) {
+                            newY = 0.0D;
+                        }
+                    }
+                }
                 this.setDeltaMovement(motion.x, newY, motion.z);
 
                 if (this.horizontalCollision) {
                     this.setDeltaMovement(this.getDeltaMovement().add(
                             this.random.nextGaussian() * 0.05D, 0.0D, this.random.nextGaussian() * 0.05D));
+                }
+
+                if (isAirborneFlapping()) {
+                    wingFlap();
                 }
 
                 // Idle hover: lift back up occasionally instead of dropping like a rock
@@ -391,36 +579,41 @@ public class MoCWyvernEntity extends TamableAnimal {
     }
 
     /**
-     * Periodic wing-flap while airborne: plays the flap sound and starts the
-     * visible flap-burst pose (read by MoCWyvernModel via getWingFlapTicks())
-     * on a fixed period timed to the model's flap cycle, same idea as the
-     * pegasus/bathorse flap in MoCHorseEntity#tickWingFlapSounds(). Grace
-     * period avoids a flap firing right as it's touching down.
+     * Same shape as the original's onLivingUpdate(): wingFlapCounter counts
+     * 1→20 then resets to 0 (playing the flap sound at 5), and mouthCounter
+     * counts 1→30 then resets. Both are read directly by MoCWyvernModel.
      */
     private void tickWingFlap() {
-        if (!this.level().isClientSide) {
-            if (getIsFlying()) {
-                groundedStreak = this.onGround() ? groundedStreak + 1 : 0;
-                if (groundedStreak < WING_FLAP_GROUND_GRACE && this.tickCount % WING_FLAP_PERIOD_TICKS == 0) {
-                    this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
-                    this.playSound(ModSounds.WYVERN_WING_FLAP.get(), 1.0F, 0.9F + this.random.nextFloat() * 0.2F);
-                }
-            } else {
-                groundedStreak = 0;
-            }
+        if (this.level().isClientSide) {
+            return;
+        }
 
-            if (this.getWingFlapTicks() > 0) {
-                this.entityData.set(DATA_WING_FLAP_TICKS, this.getWingFlapTicks() - 1);
-            }
-            if (this.getBiteTicks() > 0) {
-                this.entityData.set(DATA_BITE_TICKS, this.getBiteTicks() - 1);
-            }
+        int flapCounter = this.entityData.get(DATA_WING_FLAP_TICKS);
+        if (flapCounter > 0 && ++flapCounter > WING_FLAP_BURST_TICKS) {
+            flapCounter = 0;
+        }
+        this.entityData.set(DATA_WING_FLAP_TICKS, flapCounter);
+        if (flapCounter == 5) {
+            this.playSound(ModSounds.WYVERN_WING_FLAP.get(), 0.4F, 1.0F);
+        }
+
+        int mouthCounter = this.entityData.get(DATA_BITE_TICKS);
+        if (mouthCounter > 0 && ++mouthCounter > MOUTH_BURST_TICKS) {
+            mouthCounter = 0;
+        }
+        this.entityData.set(DATA_BITE_TICKS, mouthCounter);
+    }
+
+    /** Original's wingFlap(): (re)starts the burst only if it's currently idle. */
+    public void wingFlap() {
+        if (this.entityData.get(DATA_WING_FLAP_TICKS) == 0) {
+            this.entityData.set(DATA_WING_FLAP_TICKS, 1);
         }
     }
 
     @Override
     public void jumpFromGround() {
-        this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
+        wingFlap();
         super.jumpFromGround();
     }
 

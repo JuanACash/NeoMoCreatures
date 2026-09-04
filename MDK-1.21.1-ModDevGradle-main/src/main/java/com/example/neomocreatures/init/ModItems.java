@@ -31,12 +31,10 @@ public class ModItems {
     public static final DeferredItem<Item> MOC_HORSE_MOB_SPAWN_EGG = ITEMS.register("moc_horse_mob_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_HORSE_MOB, 0x1A1A2E, 0x5B2C6F, new Item.Properties()));
 
-        // One egg, three possible outcomes (tier 1 / tier 2 / natural mother) —
+    // One egg, three possible outcomes (tier 1 / tier 2 / natural mother) —
     // see WyvernSpawnEggItem for the weights.
     public static final DeferredItem<Item> WYVERN_SPAWN_EGG = ITEMS.register("wyvern_spawn_egg",
         () -> new com.example.neomocreatures.item.WyvernSpawnEggItem(new Item.Properties()));
-
-        
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_DARKNESS = ITEMS.registerSimpleItem("heart_of_darkness", new Item.Properties());
@@ -444,7 +442,51 @@ public class ModItems {
     public static final DeferredItem<Item> KITTY_BED_YELLOW = ITEMS.registerSimpleItem("kitty_bed_yellow", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> KITTY_LITTER = ITEMS.registerSimpleItem("kitty_litter", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> MEDALLION = ITEMS.registerSimpleItem("medallion", new Item.Properties());
-    public static final DeferredItem<Item> MOC_EGG = ITEMS.registerSimpleItem("moc_egg", new Item.Properties());
+    // Places a MoCEggEntity when used on a block — see MoCEggItem.
+    public static final DeferredItem<Item> MOC_EGG = ITEMS.register("moc_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties()));
+
+    // One egg per naturally-occurring wyvern variant (the 8 wild biome
+    // textures + the plain mother) — each only ever hatches its own species.
+    // The 8 wild ones have a 30% chance of hatching tier 2 instead of tier 1;
+    // the mother egg always hatches the bigger, tamed-only mother form.
+    public static final DeferredItem<Item> JUNGLE_WYVERN_EGG = ITEMS.register("jungle_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "JUNGLE")));
+    public static final DeferredItem<Item> SWAMP_WYVERN_EGG = ITEMS.register("swamp_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "SWAMP")));
+    public static final DeferredItem<Item> SAND_WYVERN_EGG = ITEMS.register("sand_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "SAND")));
+    public static final DeferredItem<Item> SUN_WYVERN_EGG = ITEMS.register("sun_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "SUN")));
+    public static final DeferredItem<Item> ARCTIC_WYVERN_EGG = ITEMS.register("arctic_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "ARCTIC")));
+    public static final DeferredItem<Item> CAVE_WYVERN_EGG = ITEMS.register("cave_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "CAVE")));
+    public static final DeferredItem<Item> MOUNTAIN_WYVERN_EGG = ITEMS.register("mountain_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "MOUNTAIN")));
+    public static final DeferredItem<Item> SEA_WYVERN_EGG = ITEMS.register("sea_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN, ModEntities.WYVERN_TIER2, 0.3D, "SEA")));
+    public static final DeferredItem<Item> MOTHER_WYVERN_EGG = ITEMS.register("mother_wyvern_egg",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.WYVERN_MOTHER_TAMED, null, 0.0D, "MOTHER")));
+
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());
     public static final DeferredItem<Item> PET_FOOD = ITEMS.registerSimpleItem("pet_food", new Item.Properties());

@@ -575,71 +575,117 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.tail4.yRot = amplitude * Mth.sin(w * t - k * 3);
         this.tail5.yRot = amplitude * Mth.sin(w * t - k * 4);
 
-        // ---- wings: glide pose while airborne, folded while grounded, plus a
-        // single down-stroke pulse (using MoCWyvernEntity's synced wing-flap
-        // burst) instead of a constant, unmoving spread like before.
-        boolean flying = entity.getIsFlying();
-        int flapTicks = entity.getWingFlapTicks();
-        final float FLAP_BURST_TICKS = 10F; // must match MoCWyvernEntity.WING_FLAP_DURATION_TICKS
-        float flapProgress = flapTicks > 0 ? (FLAP_BURST_TICKS - flapTicks) / FLAP_BURST_TICKS : 0F;
-        float flapStroke = flapTicks > 0 ? Mth.sin(flapProgress * (float) Math.PI) * (50F / R) : 0F;
-        float restAngle = 30F / R;
-        float glideAngle = 45F / R;
-        float baseSpread = flying ? glideAngle : restAngle;
-
-        this.leftuparm.zRot = baseSpread - flapStroke;
-        this.leftuparm.yRot = -60F / R;
-        this.leftlowarm.yRot = 105F / R;
-        this.leftlowarm.zRot = -flapStroke * 0.6F;
-        this.leftfing1a.yRot = -20F / R;
-        this.leftfing1a.zRot = -flapStroke * 0.4F;
-        this.leftfing2a.yRot = -26F / R;
-        this.leftfing2a.zRot = -flapStroke * 0.4F;
-        this.leftfing3a.yRot = -32F / R;
-
-        this.rightuparm.yRot = 60F / R;
-        this.rightuparm.zRot = -baseSpread + flapStroke;
-        this.rightlowarm.yRot = -105F / R;
-        this.rightlowarm.zRot = flapStroke * 0.6F;
-        this.rightfing1a.yRot = 16F / R;
-        this.rightfing1a.zRot = flapStroke * 0.4F;
-        this.rightfing2a.yRot = 26F / R;
-        this.rightfing2a.zRot = flapStroke * 0.4F;
-        this.rightfing3a.yRot = 32F / R;
-
-        // ---- legs (walking gait) ----
+        // ---- wings + legs: gated by onAir (physically airborne OR AI "flying"
+        // flag), exactly like the original's onAir/flapwings logic — except
+        // "flapping" is now driven by actual vertical motion (isGliding()),
+        // not a random counter: it flaps continuously while airborne unless
+        // it's genuinely falling (gliding), matching how it should always
+        // look like it's flying, and only glide with wings held out while
+        // actually descending.
+        boolean onAir = entity.isAirborne();
+        boolean gliding = entity.isGliding();
+        boolean flapping = onAir && !gliding;
         float rLegXRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 0.8F * limbSwingAmount;
         float lLegXRot = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
 
-        this.leftupleg.xRot = -25F / R + lLegXRot;
-        this.rightupleg.xRot = -25F / R + rLegXRot;
+        float wingSpread = flapping
+                ? Mth.cos(ageInTicks * 0.3F + (float) Math.PI) * 1.2F
+                : Mth.cos(limbSwing * 0.5F) * 0.1F;
 
-        this.leftmidleg.xRot = 0F;
-        this.leftlowleg.xRot = 0F;
-        this.leftfoot.xRot = 25F / R - lLegXRot;
-        this.lefttoe1.xRot = lLegXRot;
-        this.lefttoe2.xRot = lLegXRot;
-        this.lefttoe3.xRot = lLegXRot;
+        if (onAir) {
+            float speedMov = limbSwingAmount * 0.5F;
+            // Bird-like tucked leg: the thigh (upleg) stays close to
+            // vertical/straight against the body, and the trail-back happens
+            // from the knee down (mid/lower leg + foot), not by swinging the
+            // whole leg back from the hip.
+            float kneeBend = 0.6108652F;
+            float shinBend = 0.34906584F;
 
-        this.rightmidleg.xRot = 0F;
-        this.rightlowleg.xRot = 0F;
-        this.rightfoot.xRot = 25F / R - rLegXRot;
-        this.righttoe1.xRot = rLegXRot;
-        this.righttoe2.xRot = rLegXRot;
-        this.righttoe3.xRot = rLegXRot;
+            this.leftuparm.zRot = wingSpread * 2F / 3F;
+            this.rightuparm.zRot = -wingSpread * 2F / 3F;
+            this.leftlowarm.zRot = wingSpread * 0.1F;
+            this.leftfing1a.zRot = wingSpread;
+            this.leftfing2a.zRot = wingSpread * 0.8F;
+            this.rightlowarm.zRot = -wingSpread * 0.1F;
+            this.rightfing1a.zRot = -wingSpread;
+            this.rightfing2a.zRot = -wingSpread * 0.8F;
+
+            this.leftuparm.yRot = -0.17453292F - wingSpread / 2F;
+            this.leftlowarm.yRot = 0.2617994F + wingSpread / 2F;
+            this.leftfing1a.yRot = 1.2217305F;
+            this.leftfing2a.yRot = 0.61086524F;
+            this.leftfing3a.yRot = -0.08726646F;
+            this.rightuparm.yRot = 0.17453292F + wingSpread / 2F;
+            this.rightlowarm.yRot = -0.2617994F - wingSpread / 2F;
+            this.rightfing1a.yRot = -1.2217305F;
+            this.rightfing2a.yRot = -0.61086524F;
+            this.rightfing3a.yRot = 0.08726646F;
+
+            this.leftupleg.xRot = speedMov;
+            this.leftmidleg.xRot = kneeBend + speedMov;
+            this.leftlowleg.xRot = shinBend;
+            this.leftfoot.xRot = 0.43633232F;
+            this.lefttoe1.xRot = speedMov;
+            this.lefttoe2.xRot = speedMov;
+            this.lefttoe3.xRot = speedMov;
+            this.rightfoot.xRot = 0.43633232F;
+            this.rightupleg.xRot = speedMov;
+            this.rightmidleg.xRot = kneeBend + speedMov;
+            this.rightlowleg.xRot = shinBend;
+            this.righttoe1.xRot = speedMov;
+            this.righttoe2.xRot = speedMov;
+            this.righttoe3.xRot = speedMov;
+        } else {
+            this.leftlowarm.zRot = 0F;
+            this.leftfing1a.zRot = 0F;
+            this.leftfing2a.zRot = 0F;
+            this.rightlowarm.zRot = 0F;
+            this.rightfing1a.zRot = 0F;
+            this.rightfing2a.zRot = 0F;
+
+            this.leftuparm.zRot = 0.5235988F;
+            this.leftuparm.yRot = -1.0471976F + lLegXRot / 5F;
+            this.leftlowarm.yRot = 1.8325957F;
+            this.leftfing1a.yRot = -0.34906584F;
+            this.leftfing2a.yRot = -0.4537856F;
+            this.leftfing3a.yRot = -0.55850536F;
+            this.rightuparm.yRot = 1.0471976F - rLegXRot / 5F;
+            this.rightuparm.zRot = -0.5235988F;
+            this.rightlowarm.yRot = -1.8325957F;
+            this.rightfing1a.yRot = 0.27925268F;
+            this.rightfing2a.yRot = 0.4537856F;
+            this.rightfing3a.yRot = 0.55850536F;
+
+            this.leftupleg.xRot = -0.43633232F + lLegXRot;
+            this.rightupleg.xRot = -0.43633232F + rLegXRot;
+            this.leftmidleg.xRot = 0F;
+            this.leftlowleg.xRot = 0F;
+            this.leftfoot.xRot = 0.43633232F - lLegXRot;
+            this.lefttoe1.xRot = lLegXRot;
+            this.lefttoe2.xRot = lLegXRot;
+            this.lefttoe3.xRot = lLegXRot;
+            this.rightmidleg.xRot = 0F;
+            this.rightlowleg.xRot = 0F;
+            this.rightfoot.xRot = 0.43633232F - rLegXRot;
+            this.righttoe1.xRot = rLegXRot;
+            this.righttoe2.xRot = rLegXRot;
+            this.righttoe3.xRot = rLegXRot;
+        }
 
         // ---- jaw / ears ----
-        // Opens for the duration of a bite (see MoCWyvernEntity.getBiteTicks()),
-        // otherwise sits at its near-closed resting angle.
-        int biteTicks = entity.getBiteTicks();
-        final float BITE_BURST_TICKS = 6F; // must match MoCWyvernEntity.BITE_DURATION_TICKS
-        float biteProgress = biteTicks > 0 ? (BITE_BURST_TICKS - biteTicks) / BITE_BURST_TICKS : 0F;
-        float jawOpen = biteTicks > 0 ? Mth.sin(biteProgress * (float) Math.PI) * (35F / R) : 0F;
-
-        this.jaw.xRot = -10F / R - jawOpen;
-        this.beak.xRot = -jawOpen * 0.5F;
-        this.leftearskin.yRot = 0F;
-        this.rightearskin.yRot = 0F;
+        // Same shape as the original's openMouth: a full open-close sine over
+        // MoCWyvernEntity's 1..30 mouthCounter, driven by getBiteTicks().
+        int mouthCounter = entity.getBiteTicks();
+        if (mouthCounter != 0) {
+            float mouthMov = Mth.cos((mouthCounter - 15) * 0.11F) * 0.8F;
+            this.jaw.xRot = -0.17453292F + mouthMov;
+            this.leftearskin.yRot = mouthMov;
+            this.rightearskin.yRot = -mouthMov;
+        } else {
+            this.jaw.xRot = -0.17453292F;
+            this.leftearskin.yRot = 0F;
+            this.rightearskin.yRot = 0F;
+        }
     }
 
     @Override

@@ -76,6 +76,15 @@ public class NeoMoCreatures {
                     output.accept(ModItems.BLOCK_WYVERN_NEST_ITEM.get());
 
                     output.accept(ModItems.MOC_EGG.get());
+                    output.accept(ModItems.JUNGLE_WYVERN_EGG.get());
+                    output.accept(ModItems.SWAMP_WYVERN_EGG.get());
+                    output.accept(ModItems.SAND_WYVERN_EGG.get());
+                    output.accept(ModItems.SUN_WYVERN_EGG.get());
+                    output.accept(ModItems.ARCTIC_WYVERN_EGG.get());
+                    output.accept(ModItems.CAVE_WYVERN_EGG.get());
+                    output.accept(ModItems.MOUNTAIN_WYVERN_EGG.get());
+                    output.accept(ModItems.SEA_WYVERN_EGG.get());
+                    output.accept(ModItems.MOTHER_WYVERN_EGG.get());
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
                     output.accept(ModItems.SHARK_TEETH.get());
