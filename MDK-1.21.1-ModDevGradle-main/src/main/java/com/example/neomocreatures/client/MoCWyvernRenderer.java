@@ -24,7 +24,7 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
      * Visual size only — completely separate from the hitbox math in
      * MoCWyvernEntity#tickGrowth() (which is deliberately capped at 1.0 so
      * it never multiplies the EntityType's own already-tier-sized hitbox
-     * again). getVisualScale() is the one that actually reaches 1.3/1.5/3.0
+     * again). getVisualScale() is the one that actually reaches 1.3/1.5/2.0
      * for a grown tier 2/mother/mother-tamed.
      */
     @Override
@@ -42,9 +42,6 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
     @Override
     protected void renderNameTag(MoCWyvernEntity entity, Component displayName, PoseStack poseStack,
                                   MultiBufferSource buffer, int packedLight, float partialTick) {
-        // Match the health bar's own visibility range instead of vanilla's
-        // much farther default (~64 blocks) — was making the name visible
-        // from way farther away than the health bar next to it.
         if (this.entityRenderDispatcher.distanceToSqr(entity) > TameableOverlayRenderer.NAME_AND_HEALTH_SHOW_DISTANCE_SQR) {
             return;
         }

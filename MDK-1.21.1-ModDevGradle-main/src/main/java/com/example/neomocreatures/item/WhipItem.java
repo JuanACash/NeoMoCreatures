@@ -76,7 +76,7 @@ public class WhipItem extends Item {
             // flying off/getting lost) — doesn't require being ridden.
             for (MoCWyvernEntity wyvern : level.getEntitiesOfClass(MoCWyvernEntity.class, player.getBoundingBox().inflate(RADIUS))) {
                 if (wyvern.isTame()) {
-                    wyvern.setOrderedToSit(true);
+                    wyvern.setSitting(true);
                     wyvern.setTarget(null);
                 }
             }
