@@ -77,6 +77,18 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_BITE_TICKS =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DIVING =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    // Synced so BOTH the server AND the riding player's own client know
+    // whether ascend/descend are held — the client needs this because it's
+    // the rider's own client that simulates the mount's movement locally
+    // (same as vanilla horses), not just the server.
+    private static final EntityDataAccessor<Boolean> DATA_ASCEND_HELD =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
     // TamableAnimal#isOrderedToSit() was not reliably reaching the client in
     // testing (server confirmed true, client-side model/renderer checks
     // never saw it) — our own synced flag, same proven pattern as
@@ -235,6 +247,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         this.entityData.set(DATA_SITTING, sitting);
     }
 
+    public boolean isSaddled() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    public void setSaddled(boolean saddled) {
+        this.entityData.set(DATA_SADDLED, saddled);
+    }
+
     @Override
     protected SoundEvent getAmbientSound() {
         if (this.isSittingSynced()) {
@@ -264,6 +284,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         builder.define(DATA_WING_FLAP_TICKS, 0);
         builder.define(DATA_BITE_TICKS, 0);
         builder.define(DATA_SITTING, false);
+        builder.define(DATA_SADDLED, false);
+        builder.define(DATA_DIVING, false);
+        builder.define(DATA_ASCEND_HELD, false);
+        builder.define(DATA_DESCEND_HELD, false);
     }
 
     @Override
@@ -273,6 +297,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         tag.putString("WyvernTier", getTier().name());
         tag.putBoolean("WyvernFlying", getIsFlying());
         tag.putBoolean("WyvernSittingSynced", isSittingSynced());
+        tag.putBoolean("WyvernSaddled", isSaddled());
     }
 
     @Override
@@ -296,13 +321,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         if (tag.contains("WyvernSittingSynced")) {
             this.setSitting(tag.getBoolean("WyvernSittingSynced"));
         }
+        if (tag.contains("WyvernSaddled")) {
+            setSaddled(tag.getBoolean("WyvernSaddled"));
+        }
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
+        this.goalSelector.addGoal(2, new WyvernMeleeAttackGoal(this, 1.2D, false));
         this.goalSelector.addGoal(5, new WyvernFlyGoal(this, 1.3D));
         this.goalSelector.addGoal(6, new WyvernGroundWanderGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -310,7 +338,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, (int) AGGRO_RADIUS,
-                true, false, target -> !this.isTame()));
+                true, false, target -> !this.isTame() && !this.isVehicle()));
     }
 
     private static class WyvernFlyGoal extends WaterAvoidingRandomFlyingGoal {
@@ -323,12 +351,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
         @Override
         public boolean canUse() {
-            return this.wyvern.getIsFlying() && super.canUse();
+            return !this.wyvern.isVehicle() && this.wyvern.getIsFlying() && super.canUse();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return this.wyvern.getIsFlying() && super.canContinueToUse();
+            return !this.wyvern.isVehicle() && this.wyvern.getIsFlying() && super.canContinueToUse();
         }
     }
 
@@ -342,12 +370,33 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
         @Override
         public boolean canUse() {
-            return !this.wyvern.getIsFlying() && super.canUse();
+            return !this.wyvern.isVehicle() && !this.wyvern.getIsFlying() && super.canUse();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return !this.wyvern.getIsFlying() && super.canContinueToUse();
+            return !this.wyvern.isVehicle() && !this.wyvern.getIsFlying() && super.canContinueToUse();
+        }
+    }
+
+    // Same as the two goals above: a ridden wyvern must not have vanilla AI
+    // fighting the rider's own input for control of movement/targeting.
+    private static class WyvernMeleeAttackGoal extends MeleeAttackGoal {
+        private final MoCWyvernEntity wyvern;
+
+        WyvernMeleeAttackGoal(MoCWyvernEntity wyvern, double speedModifier, boolean followEvenIfNotSeen) {
+            super(wyvern, speedModifier, followEvenIfNotSeen);
+            this.wyvern = wyvern;
+        }
+
+        @Override
+        public boolean canUse() {
+            return !this.wyvern.isVehicle() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !this.wyvern.isVehicle() && super.canContinueToUse();
         }
     }
 
@@ -418,6 +467,25 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 }
                 return InteractionResult.SUCCESS;
             }
+            if (!this.isBaby() && !this.isSaddled()
+                    && (stack.is(net.minecraft.world.item.Items.SADDLE)
+                        || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+                if (!this.level().isClientSide) {
+                    this.setSaddled(true);
+                    this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                    if (!player.getAbilities().instabuild) {
+                        stack.shrink(1);
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+                if (!this.level().isClientSide) {
+                    this.setSitting(false);
+                    player.startRiding(this);
+                }
+                return InteractionResult.SUCCESS;
+            }
             if (!this.level().isClientSide && player.isSecondaryUseActive()) {
                 this.setSitting(!this.isSittingSynced());
                 this.setTarget(null);
@@ -463,9 +531,170 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         return false;
     }
 
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (this.isSaddled() && this.getFirstPassenger() instanceof Player player && this.hasPassenger(player)) {
+            return player;
+        }
+        return null;
+    }
+
+    public boolean canBeControlledByRider() {
+        return this.isSaddled() && this.getControllingPassenger() instanceof Player;
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (!this.level().isClientSide && passenger instanceof Player && getIsFlying() && !this.onGround()) {
+            // Dismounted mid-air — glide down via the damped-fall logic in
+            // aiStep() instead of holding altitude like wild-wyvern flight AI.
+            setIsFlying(false);
+        }
+    }
+
+    // Synced so the value is visible on whichever client needs it (the
+    // rider's own client simulates this mount's movement locally, just like
+    // a vanilla horse) — see DATA_ASCEND_HELD / DATA_DESCEND_HELD above.
+    public void setAscendHeld(boolean held) {
+        this.entityData.set(DATA_ASCEND_HELD, held);
+    }
+
+    public void setDescendHeld(boolean held) {
+        this.entityData.set(DATA_DESCEND_HELD, held);
+    }
+
+    private boolean isAscendHeld() {
+        return this.entityData.get(DATA_ASCEND_HELD);
+    }
+
+    private boolean isDescendHeld() {
+        return this.entityData.get(DATA_DESCEND_HELD);
+    }
+
+    /** Roughly on its back, just behind the shoulders/neck — tune these two if the seat looks off. */
+    private static final float RIDER_FORWARD = 0.2F;
+    private static final float RIDER_HEIGHT = 1.1F;
+    /** The linear getVisualScale() multiplier alone sits the player too low specifically on mother-tamed's much bigger back — tune this extra bump if still off. */
+    private static final float MOTHER_TAMED_RIDER_HEIGHT_BONUS = 0.6F;
+    private static final float MOTHER_TAMED_RIDER_FORWARD_BONUS = 0.3F;
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float forward = RIDER_FORWARD
+                + (getTier() == WyvernTier.MOTHER_TAMED ? MOTHER_TAMED_RIDER_FORWARD_BONUS : 0.0F);
+        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        double x = this.getX() - Math.sin(yaw) * forward;
+        double z = this.getZ() + Math.cos(yaw) * forward;
+        double y = this.getY() + RIDER_HEIGHT * getVisualScale()
+                + (getTier() == WyvernTier.MOTHER_TAMED ? MOTHER_TAMED_RIDER_HEIGHT_BONUS : 0.0F);
+        moveFunction.accept(passenger, x, y, z);
+    }
+
+    /**
+     * Called automatically by LivingEntity#travel() every tick there is a
+     * controlling Player passenger — this is what lets us steer the wyvern's
+     * facing from the rider's own look direction, same pattern as Camel /
+     * AbstractHorse in vanilla.
+     */
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        this.setYRot(player.getYRot());
+        this.yRotO = this.getYRot();
+        this.setXRot(player.getXRot() * 0.5F);
+        this.setRot(this.getYRot(), this.getXRot());
+        this.yBodyRot = this.getYRot();
+        this.yHeadRot = this.getYRot();
+
+        if (isAscendHeld()) {
+            setIsFlying(true);
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, RIDDEN_ASCEND_THRUST, 0.0D));
+        } else if (isDescendHeld()) {
+            setIsFlying(true);
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -RIDDEN_DESCEND_THRUST, 0.0D));
+        } else if (this.onGround()) {
+            setIsFlying(false);
+        } else {
+            // Nothing held while airborne — stay in "flying" mode so travel()'s
+            // damped descent applies, instead of switching to vanilla gravity
+            // mid-air (which is what was causing the fast drop).
+            setIsFlying(true);
+        }
+        // Only "diving" while it's actually a dive — held AND airborne —
+        // not a lingering animation state that outlives either condition.
+        setDiving(isDescendHeld() && isOnAir());
+    }
+
+    /**
+     * Called automatically by LivingEntity#travel() to build the input
+     * vector used for ground movement — x/z come straight from the rider's
+     * own raw input (player.xxa/zza), same as AbstractHorse reads it.
+     */
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        double vertical = isAscendHeld() ? 1.0D : (isDescendHeld() ? -1.0D : 0.0D);
+        return new Vec3(player.xxa, vertical, player.zza);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return getIsFlying()
+                ? (float) this.getAttributeValue(Attributes.FLYING_SPEED)
+                : (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    /**
+     * Wiki-parity with horses: floats instead of sinking while standing/
+     * swimming in water (not while actively flying, which has its own
+     * water-slowdown branch already).
+     */
+    private void applyWaterBuoyancy() {
+        if (this.isInWater() && !getIsFlying()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
+    // Same flight feel as the horse's fairy_horse/pegasus flight — only the
+    // in-air speed, not ground walk speed (that stays the wyvern's own
+    // MOVEMENT_SPEED attribute, applied normally by super.travel() below).
+    private static final float RIDDEN_FLYER_FRICTION = 0.93F;
+    private static final double RIDDEN_ASCEND_THRUST = 0.15D;
+    private static final double RIDDEN_DESCEND_THRUST = 0.3D;
+    private static final double RIDDEN_FLYER_FALL_SPEED = 0.6D;
+    private static final double RIDDEN_FLYER_GRAVITY_PULL = 0.02D;
+
+    private float flyerFriction() {
+        return 0.94F;
+    }
+
     @Override
     public void travel(Vec3 travelVector) {
-        if (getIsFlying() && !this.isPassenger()) {
+        // Ridden + flying needs its own no-gravity physics — the vanilla
+        // ridden-travel pipeline (fed by getRiddenInput/getRiddenSpeed
+        // above) only knows how to do normal grounded movement, so we take
+        // over here instead, but still run on whichever side the engine
+        // calls travel() on (client for the rider, server for homologation)
+        // — no manual isClientSide branching needed, same as vanilla horses.
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player && getIsFlying()) {
+            this.setNoGravity(true);
+            this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            this.setDeltaMovement(this.getDeltaMovement()
+                    .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)
+                    .subtract(0.0D, RIDDEN_FLYER_GRAVITY_PULL, 0.0D));
+            this.fallDistance = 0.0F;
+            return;
+        }
+
+        if (getIsFlying() && !this.isPassenger() && !this.isVehicle()) {
             if (this.isInWater()) {
                 this.moveRelative(0.02F, travelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
@@ -476,13 +705,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 this.setDeltaMovement(this.getDeltaMovement().scale(flyerFriction()));
             }
             this.fallDistance = 0.0F;
+        } else if (!this.isVehicle()) {
+            applyWaterBuoyancy();
+            super.travel(travelVector);
         } else {
+            // Ridden + grounded: let the vanilla ridden-travel pipeline
+            // (getRiddenInput/getRiddenSpeed/tickRidden above) drive this,
+            // same as AbstractHorse — just make sure buoyancy still applies.
+            applyWaterBuoyancy();
             super.travel(travelVector);
         }
-    }
-
-    private float flyerFriction() {
-        return 0.94F;
     }
 
     @Override
@@ -504,7 +736,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 return;
             }
 
-            if (this.getTarget() != null && this.getHealth() < this.getMaxHealth() / 2.0F) {
+            if (this.getTarget() != null && !this.isVehicle() && this.getHealth() < this.getMaxHealth() / 2.0F) {
                 this.setTarget(null);
                 setIsFlying(true);
             }
@@ -524,14 +756,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 setIsFlying(false);
             }
 
-            if (this.getTarget() != null && !this.isOrderedToSit() && this.random.nextInt(20) == 0) {
+            if (this.getTarget() != null && !this.isOrderedToSit() && !this.isVehicle() && this.random.nextInt(20) == 0) {
                 setIsFlying(true);
                 if (this.onGround()) {
                     this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
                 }
             }
 
-            if (getIsFlying()) {
+            if (getIsFlying() && !this.isVehicle()) {
                 Vec3 motion = this.getDeltaMovement();
                 double newY;
                 LivingEntity attackTarget = this.getTarget();
@@ -645,6 +877,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     public void wingFlap() {
         if (this.entityData.get(DATA_WING_FLAP_TICKS) == 0) {
             this.entityData.set(DATA_WING_FLAP_TICKS, 1);
+        }
+    }
+
+    public boolean isDiving() {
+        return this.entityData.get(DATA_DIVING);
+    }
+
+    private void setDiving(boolean diving) {
+        if (this.entityData.get(DATA_DIVING) != diving) {
+            this.entityData.set(DATA_DIVING, diving);
         }
     }
 

@@ -47,6 +47,11 @@ public class ModKeyMappings {
                     PacketDistributor.sendToServer(new com.example.neomocreatures.network.AscendInputPayload(ascendPressed));
                 }
             }
+
+            // WASD is NOT sent separately anymore — vanilla's own movement
+            // packet handling already feeds the rider's real forward/strafe
+            // into the mount's travel() call once it has a controlling
+            // passenger, same as it does for the horse.
         }
     }
 }

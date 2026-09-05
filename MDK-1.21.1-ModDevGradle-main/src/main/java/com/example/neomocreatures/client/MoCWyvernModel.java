@@ -78,6 +78,7 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
     // torso / shoulders
     private final ModelPart torso;
+    private final ModelPart saddle;
     private final ModelPart rightshoulder;
     private final ModelPart leftshoulder;
 
@@ -172,6 +173,7 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.leftspine3 = this.leftearskin.getChild("leftspine3");
 
         this.torso = root.getChild("torso");
+        this.saddle = root.getChild("saddle");
         this.rightshoulder = root.getChild("rightshoulder");
         this.leftshoulder = root.getChild("leftshoulder");
 
@@ -370,6 +372,13 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(0, 0).addBox(-5F, 0F, -12F, 10, 10, 12),
                 PartPose.offset(0F, 0F, 0F));
 
+        // Same texture atlas as the rest of the model — the saddle artwork
+        // is already baked into each variant's own PNG, just toggled
+        // visible/invisible (see setupAnim()), no separate layer/texture.
+        root.addOrReplaceChild("saddle",
+                CubeListBuilder.create().texOffs(38, 70).addBox(-3.5F, -2.5F, -8F, 7, 3, 10),
+                PartPose.offset(0F, 0F, 0F));
+
         root.addOrReplaceChild("rightshoulder",
                 CubeListBuilder.create().texOffs(42, 83).addBox(-6F, 1F, -12.5F, 4, 5, 5),
                 PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
@@ -551,6 +560,8 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     public void setupAnim(MoCWyvernEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
 
+        this.saddle.visible = entity.isSaddled();
+
         netHeadYaw = Mth.clamp(netHeadYaw, -60F, 60F);
 
         // ---- head / neck ----
@@ -595,6 +606,23 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         boolean flapping = onAir && !gliding;
         float rLegXRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 0.8F * limbSwingAmount;
         float lLegXRot = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+
+        // ---- ridden with a player: matches the original's isRidden block —
+        // the neck stops tracking the rider's look direction entirely
+        // (locked straight ahead), flying holds it level, grounded uses a
+        // fixed lowered brace instead of the free head-tracking pose above.
+        boolean ridden = entity.isVehicle() && entity.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player;
+        if (ridden) {
+            this.neck1.yRot = 0F;
+            this.neck2.yRot = 0F;
+            if (onAir) {
+                this.neck1.xRot = 0F;
+                this.neck2.xRot = 0F;
+            } else {
+                this.neck2.xRot = -1.1519173F + rLegXRot * 0.016666668F;
+                this.neck1.xRot = 0.5235988F + rLegXRot * 0.033333335F;
+            }
+        }
 
         float wingSpread = flapping
                 ? Mth.cos(ageInTicks * 0.3F + (float) Math.PI) * 1.2F
@@ -695,6 +723,29 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
             this.yOffset = 0.65F;
         } else {
             this.yOffset = 0.0F;
+        }
+
+        // ---- dive (rider hits descend/Z): exact match from the original's
+        // "diving" block — wings pulled in and twisted tight against the body.
+        if (entity.isDiving()) {
+            this.leftuparm.zRot = -0.6981317F;
+            this.rightuparm.zRot = 0.6981317F;
+            this.leftlowarm.zRot = 0F;
+            this.leftfing1a.zRot = 0F;
+            this.leftfing2a.zRot = 0F;
+            this.rightlowarm.zRot = 0F;
+            this.rightfing1a.zRot = 0F;
+            this.rightfing2a.zRot = 0F;
+            this.leftuparm.yRot = -0.87266463F;
+            this.leftlowarm.yRot = 0.5235988F;
+            this.leftfing1a.yRot = 0.87266463F;
+            this.leftfing2a.yRot = 0.5235988F;
+            this.leftfing3a.yRot = 0.17453292F;
+            this.rightuparm.yRot = 0.87266463F;
+            this.rightlowarm.yRot = -0.5235988F;
+            this.rightfing1a.yRot = -0.87266463F;
+            this.rightfing2a.yRot = -0.5235988F;
+            this.rightfing3a.yRot = -0.17453292F;
         }
 
         // ---- jaw / ears ----

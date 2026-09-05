@@ -67,6 +67,8 @@ public class ModNetworking {
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCHorseEntity horse) {
                     horse.setDescendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCWyvernEntity wyvern) {
+                    wyvern.setDescendHeld(payload.pressed());
                 }
             }));
 
@@ -76,6 +78,8 @@ public class ModNetworking {
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCHorseEntity horse) {
                     horse.setAscendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCWyvernEntity wyvern) {
+                    wyvern.setAscendHeld(payload.pressed());
                 }
             }));
     }
