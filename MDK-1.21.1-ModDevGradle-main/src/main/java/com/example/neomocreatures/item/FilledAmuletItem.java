@@ -45,6 +45,9 @@ public class FilledAmuletItem extends Item {
             String display = com.example.neomocreatures.breeding.MoCHorseGenetics.displayName(
                     com.example.neomocreatures.breeding.MoCHorseGenetics.Species.valueOf(tag.getString("Species")));
             tooltip.add(net.minecraft.network.chat.Component.literal(display).withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("WyvernVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.WYVERN.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -71,7 +74,14 @@ public class FilledAmuletItem extends Item {
             return net.minecraft.world.InteractionResultHolder.fail(stack);
         }
         BlockPos pos = player.blockPosition().relative(player.getDirection());
-        Entity spawned = tag.contains("Species") ? spawnHorse(level, tag, pos) : spawnGeneric(level, tag, pos);
+        Entity spawned;
+            if (tag.contains("Species")) {
+                spawned = spawnHorse(level, tag, pos);
+            } else if (tag.contains("WyvernVariant")) {
+                spawned = spawnWyvern(level, tag, pos);
+            } else {
+                spawned = spawnGeneric(level, tag, pos);
+            }
         if (spawned == null) {
             return net.minecraft.world.InteractionResultHolder.fail(stack);
         }
@@ -166,5 +176,33 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(entity);
         return entity;
+    }
+
+    private Entity spawnWyvern(Level level, CompoundTag tag, BlockPos pos) {
+        var tier = com.example.neomocreatures.entity.wyvern.WyvernTier.valueOf(tag.getString("WyvernTier"));
+        EntityType<com.example.neomocreatures.entity.MoCWyvernEntity> type = switch (tier) {
+            case MOTHER_TAMED -> ModEntities.WYVERN_MOTHER_TAMED.get();
+            case TIER_2 -> ModEntities.WYVERN_TIER2.get();
+            default -> ModEntities.WYVERN.get();
+        };
+        com.example.neomocreatures.entity.MoCWyvernEntity wyvern = type.create(level);
+        if (wyvern == null) return null;
+        wyvern.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        wyvern.setVariant(com.example.neomocreatures.entity.wyvern.WyvernVariant.valueOf(tag.getString("WyvernVariant")));
+        wyvern.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            wyvern.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        wyvern.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            wyvern.setAge(tag.getInt("Age"));
+        } else {
+            wyvern.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            wyvern.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(wyvern);
+        return wyvern;
     }
 }

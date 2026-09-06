@@ -86,6 +86,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SITTING =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_TRANSFORM_TARGET =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TRANSFORM_TICKS =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_GHOST =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+   
+   
+    private static final int TRANSFORM_DURATION_TICKS = 100;
+    private static final int TRANSFORM_SOUND_TICKS = 60;
 
     public MoCWyvernEntity(EntityType<? extends MoCWyvernEntity> type, Level level) {
         super(type, level);
@@ -182,6 +192,31 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
     public void setVariant(WyvernVariant variant) {
         this.entityData.set(DATA_VARIANT, variant.getId());
+    }
+
+    public boolean isGhost() {
+        return this.entityData.get(DATA_GHOST);
+    }
+
+    private void setGhost(boolean ghost) {
+        this.entityData.set(DATA_GHOST, ghost);
+    }
+
+    public boolean isTransforming() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS) > 0;
+    }
+
+    public int getTransformTicks() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS);
+    }
+
+    public WyvernVariant getTransformTarget() {
+        return WyvernVariant.byId(this.entityData.get(DATA_TRANSFORM_TARGET));
+    }
+
+    private void startTransform(WyvernVariant target) {
+        this.entityData.set(DATA_TRANSFORM_TARGET, target.getId());
+        this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
     }
 
     public WyvernTier getTier() {
@@ -315,7 +350,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         }
     }
 
-    private void dropChestAndContents() {
+    public void dropChestAndContents() {
         if (!hasChest()) {
             return;
         }
@@ -361,6 +396,9 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         builder.define(DATA_DIVING, false);
         builder.define(DATA_ASCEND_HELD, false);
         builder.define(DATA_DESCEND_HELD, false);
+        builder.define(DATA_TRANSFORM_TARGET, WyvernVariant.MOTHER.getId());
+        builder.define(DATA_TRANSFORM_TICKS, 0);
+        builder.define(DATA_GHOST, false);
     }
 
     @Override
@@ -370,6 +408,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         tag.putString("WyvernTier", getTier().name());
         tag.putBoolean("WyvernFlying", getIsFlying());
         tag.putBoolean("WyvernSittingSynced", isSittingSynced());
+        tag.putBoolean("WyvernGhost", isGhost());
         tag.putBoolean("WyvernSaddled", isSaddled());
         if (this.saddleItemId != null) {
             tag.putString("WyvernSaddleItem", this.saddleItemId.toString());
@@ -411,6 +450,9 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         }
         if (tag.contains("WyvernSittingSynced")) {
             this.setSitting(tag.getBoolean("WyvernSittingSynced"));
+        }
+        if (tag.contains("WyvernGhost")) {
+            setGhost(tag.getBoolean("WyvernGhost"));
         }
         if (tag.contains("WyvernSaddled")) {
             setSaddled(tag.getBoolean("WyvernSaddled"));
@@ -568,8 +610,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+            if (stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
                 if (!this.level().isClientSide) {
+                    capturePetInstant(player, hand);
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+                startMouthAnimation();
+                if (!this.level().isClientSide) {
+                    this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                     this.heal(4.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
@@ -577,6 +627,48 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 }
                 return InteractionResult.SUCCESS;
             }
+            
+            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_DARKNESS.get())
+                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
+                if (!this.level().isClientSide) {
+                    startTransform(WyvernVariant.MOTHER_DARK);
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_UNDEAD.get())
+                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
+                if (!this.level().isClientSide) {
+                    startTransform(WyvernVariant.MOTHER_UNDEAD);
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get())
+                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
+                if (!this.level().isClientSide) {
+                    startTransform(WyvernVariant.MOTHER_LIGHT);
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get())
+                    && !getVariant().isMother()) {
+                if (!this.level().isClientSide) {
+                    this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_FIRE.get())
+                    && getVariant().isMother()) {
+                if (!this.level().isClientSide) {
+                    this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MOTHER_WYVERN_EGG.get()));
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+
             if (!this.isBaby() && !this.isSaddled()
                     && (stack.is(net.minecraft.world.item.Items.SADDLE)
                         || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
@@ -703,8 +795,137 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     public void die(DamageSource source) {
         if (!this.level().isClientSide) {
             dropChestAndContents();
+            trySpawnGhost();
         }
         super.die(source);
+    }
+
+    private void trySpawnGhost() {
+        if (!this.isTame() || this.random.nextInt(4) != 0) {
+            return;
+        }
+        MoCWyvernEntity ghost = (MoCWyvernEntity) this.getType().create(this.level());
+        if (ghost == null) {
+            return;
+        }
+        ghost.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
+        ghost.setVariant(getVariant());
+        ghost.setGhost(true);
+        ghost.setTame(true, false);
+        ghost.setOwnerUUID(this.getOwnerUUID());
+        ghost.setAge(0);
+        this.level().addFreshEntity(ghost);
+        ghost.playSound(ModSounds.WYVERN_GRUNT.get(), 1.0F, 1.0F);
+        com.example.neomocreatures.util.NamingHelper.promptRename(ghost, this.getOwnerUUID());
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHitByPlayer) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
+        dropSaddleAndArmor();
+        dropCombatLoot(level, recentlyHitByPlayer);
+    }
+
+    /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
+    public void dropSaddleAndArmor() {
+        if (this.isSaddled()) {
+            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                    : net.minecraft.world.item.Items.SADDLE;
+            this.spawnAtLocation(new ItemStack(saddleItem));
+        }
+        if (this.getArmorTier() > 0) {
+            net.minecraft.world.item.Item armorItem = switch (this.getArmorTier()) {
+                case 1 -> net.minecraft.world.item.Items.IRON_HORSE_ARMOR;
+                case 2 -> net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR;
+                default -> net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR;
+            };
+            this.spawnAtLocation(new ItemStack(armorItem));
+        }
+    }
+
+    /** Mouth-open animation + horse's drinking sound, shared by all four essences. */
+    private void useEssence(Player player, ItemStack stack) {
+        startMouthAnimation();
+        if (!this.level().isClientSide && !player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
+        if (!this.level().isClientSide) {
+            this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+        }
+    }
+
+    /** Snapshot used to restore this wyvern later from a filled Pet Amulet. */
+    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("WyvernVariant", getVariant().name());
+        tag.putString("WyvernTier", getTier().name());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    /** Pet Amulet capture: instant, no vanish animation. Saddle/armor/chest drop on the ground, not saved. */
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropSaddleAndArmor();
+        dropChestAndContents();
+        CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
+    }
+
+    /**
+     * Experiencia y el huevo de la propia especie, solo si murió a manos de un
+     * jugador o un lobo domado. Fortuna solo sube la chance del huevo.
+     */
+    private void dropCombatLoot(ServerLevel level, boolean recentlyHitByPlayer) {
+        LivingEntity killer = this.getLastHurtByMob();
+        boolean killedByPlayerOrWolf = recentlyHitByPlayer
+                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
+        if (!killedByPlayerOrWolf) {
+            return;
+        }
+
+        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
+                level, this.getX(), this.getY(), this.getZ(), 5));
+
+        int lootingLevel = 0;
+        if (killer != null) {
+            net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> looting =
+                    killer.level().registryAccess()
+                            .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
+            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
+        }
+
+        float eggChance = 0.10F + lootingLevel * 0.03F;
+        if (this.random.nextFloat() < eggChance) {
+            this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
+        }
+    }
+
+    /** Cada variante solo dropea su propio huevo; todas las formas mother comparten el huevo de mother. */
+    private static net.minecraft.world.item.Item eggItemFor(WyvernVariant variant) {
+        return switch (variant) {
+            case JUNGLE -> com.example.neomocreatures.init.ModItems.JUNGLE_WYVERN_EGG.get();
+            case SWAMP -> com.example.neomocreatures.init.ModItems.SWAMP_WYVERN_EGG.get();
+            case SAND -> com.example.neomocreatures.init.ModItems.SAND_WYVERN_EGG.get();
+            case SUN -> com.example.neomocreatures.init.ModItems.SUN_WYVERN_EGG.get();
+            case ARCTIC -> com.example.neomocreatures.init.ModItems.ARCTIC_WYVERN_EGG.get();
+            case CAVE -> com.example.neomocreatures.init.ModItems.CAVE_WYVERN_EGG.get();
+            case MOUNTAIN -> com.example.neomocreatures.init.ModItems.MOUNTAIN_WYVERN_EGG.get();
+            case SEA -> com.example.neomocreatures.init.ModItems.SEA_WYVERN_EGG.get();
+            case MOTHER, MOTHER_UNDEAD, MOTHER_LIGHT, MOTHER_DARK, MOTHER_CORRUPT ->
+                    com.example.neomocreatures.init.ModItems.MOTHER_WYVERN_EGG.get();
+        };
     }
 
     @Nullable
@@ -864,6 +1085,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     public void aiStep() {
         tickWingFlap();
         tickGrowth();
+        tickEssenceTransform();
 
         if (!this.level().isClientSide) {
             if (!getIsFlying() && !this.isSittingSynced() && isOnAir() && this.getDeltaMovement().y < 0.0D) {
@@ -1012,6 +1234,21 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             mouthCounter = 0;
         }
         this.entityData.set(DATA_BITE_TICKS, mouthCounter);
+    }
+
+    /** Countdown for essence transformations: sound partway through, variant swap at the end. */
+    private void tickEssenceTransform() {
+        if (this.level().isClientSide || !isTransforming()) {
+            return;
+        }
+        int ticks = getTransformTicks() - 1;
+        this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
+        if (ticks == TRANSFORM_SOUND_TICKS) {
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+        }
+        if (ticks <= 0) {
+            setVariant(getTransformTarget());
+        }
     }
 
     public void wingFlap() {

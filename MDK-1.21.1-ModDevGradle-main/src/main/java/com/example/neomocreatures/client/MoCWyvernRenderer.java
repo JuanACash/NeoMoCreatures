@@ -35,8 +35,33 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
 
     @Override
     public ResourceLocation getTextureLocation(MoCWyvernEntity entity) {
+        var variant = entity.getVariant();
+        if (entity.isTransforming()) {
+            int ticksLeft = entity.getTransformTicks();
+            int interval = Math.max(1, ticksLeft / 8);
+            boolean showTarget = (entity.tickCount / interval) % 2 == 0;
+            variant = showTarget ? entity.getTransformTarget() : variant;
+        }
+        String textureName = entity.isGhost() ? variant.getGhostTextureName() : variant.getTextureName();
         return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/wyvern/" + entity.getVariant().getTextureName() + ".png");
+                "textures/entity/wyvern/" + textureName + ".png");
+    }
+
+    @Override
+    protected net.minecraft.client.renderer.RenderType getRenderType(MoCWyvernEntity entity, boolean bodyVisible, boolean translucent, boolean showOutline) {
+        return super.getRenderType(entity, bodyVisible, translucent || entity.isGhost(), showOutline);
+    }
+
+    @Override
+    public void render(MoCWyvernEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        if (!entity.isGhost()) {
+            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+            return;
+        }
+        int alphaInt = (int) (0.35F * 255F);
+        MultiBufferSource alphaBuffer = renderType ->
+                new com.example.neomocreatures.client.AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
+        super.render(entity, entityYaw, partialTicks, poseStack, alphaBuffer, packedLight);
     }
 
     @Override

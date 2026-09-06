@@ -103,6 +103,17 @@ public class MoCEggEntity extends Mob {
     public void knockback(double strength, double x, double z) {
     }
 
+    /**
+     * Mob#travel() (where gravity is applied) only runs when the entity is
+     * "controlled by local instance", which Mob computes as !isNoAi() — so a
+     * noAi mob like this egg would otherwise never fall. Forcing this back to
+     * true restores normal gravity while keeping goal-selector AI disabled.
+     */
+    @Override
+    public boolean isControlledByLocalInstance() {
+        return true;
+    }
+
     @Override
     public void tick() {
         super.tick();

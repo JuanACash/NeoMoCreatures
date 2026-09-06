@@ -276,6 +276,7 @@ public class NeoMoCreatures {
         ModSounds.SOUND_EVENTS.register(modEventBus);
         modEventBus.addListener(ModEntities::registerSpawnPlacements);
         modEventBus.addListener(ModEntities::registerHorseMobSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerWyvernSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

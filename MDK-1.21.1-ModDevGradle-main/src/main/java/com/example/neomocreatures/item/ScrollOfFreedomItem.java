@@ -1,6 +1,7 @@
 package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.MoCWyvernEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
 
 public class ScrollOfFreedomItem extends Item {
 
@@ -36,6 +38,9 @@ public class ScrollOfFreedomItem extends Item {
         if (target instanceof MoCHorseEntity horse) {
             horse.dropSaddleAndArmor();
             horse.dropChestAndContents();
+        } else if (target instanceof MoCWyvernEntity wyvern) {
+            wyvern.dropSaddleAndArmor();
+            wyvern.dropChestAndContents();
         }
         // (future entities with their own equipment: add their drop here)
 

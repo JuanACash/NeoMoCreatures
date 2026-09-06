@@ -144,5 +144,24 @@ public class ModEntities {
                 },
                 net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
+
+        public static void registerWyvernSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                // Wyverns fly, so no ground/light restrictions like the horse mob check —
+                // the only requirement is that the space itself isn't solid (tall grass,
+                // mushrooms, and other no-collision decoration are fine to spawn through).
+                // Which biomes actually roll a wyvern is controlled entirely by each
+                // Wyvern Lair biome's own spawners.creature list, not by anything here.
+                for (DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> wyvernType
+                        : java.util.List.of(WYVERN, WYVERN_TIER2, WYVERN_MOTHER)) {
+                        event.register(
+                                wyvernType.get(),
+                                SpawnPlacementTypes.NO_RESTRICTIONS,
+                                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                (type, level, reason, pos, random) ->
+                                        level.getBlockState(pos).getCollisionShape(level, pos).isEmpty(),
+                                RegisterSpawnPlacementsEvent.Operation.REPLACE
+                        );
+                }
+        }
     
 }

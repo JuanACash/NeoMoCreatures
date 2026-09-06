@@ -36,6 +36,15 @@ public enum WyvernVariant {
         return textureName;
     }
 
+    /**
+     * Texture for the ghost form: identical to the living texture for every
+     * variant except the plain (essence-less) mother, which shows the corrupt
+     * texture instead.
+     */
+    public String getGhostTextureName() {
+        return this == MOTHER ? "wyvern_mother_corrupt" : textureName;
+    }
+
     public boolean isMother() {
         return mother;
     }
