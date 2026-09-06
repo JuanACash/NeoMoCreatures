@@ -49,21 +49,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.HasCustomInventoryScreen {
 
-    /** How close (in blocks) a player has to be before a wild wyvern goes hostile. Wiki: 12-16. */
     private static final double AGGRO_RADIUS = 14.0D;
-    /** Wiki: 10 seconds of Poison on a successful hit. */
     private static final int POISON_DURATION_TICKS = 200;
-    /** Wiki: instantly removed if it drifts below Y=10 inside the Wyvern Lair. */
     private static final int LAIR_DESPAWN_Y = 10;
-    /** Original's wingFlapCounter: runs 1→20 then resets to 0 while a flap burst is active. */
     private static final int WING_FLAP_BURST_TICKS = 20;
-    /** Original's mouthCounter: runs 1→30 then resets to 0 while the bite/mouth animation plays. */
     private static final int MOUTH_BURST_TICKS = 30;
-    /** Every hatched baby starts at this same absolute size, whatever tier it'll grow into. */
     private static final float BABY_SCALE = 0.4F;
-    /** Wiki: tier 2 and mother take longer to grow than a common wyvern. */
     private static final int TIER_1_GROWTH_TICKS = 24000;
     private static final int SLOW_GROWTH_TICKS = 48000;
 
@@ -79,21 +72,18 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SADDLED =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
+    /** 0 = none, 1 = iron, 2 = gold, 3 = diamond — same three tiers as horse armor. */
+    private static final EntityDataAccessor<Integer> DATA_ARMOR_TIER =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
+    /** Works on every tier, unlike armor/saddle restrictions elsewhere. */
+    private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_DIVING =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
-    // Synced so BOTH the server AND the riding player's own client know
-    // whether ascend/descend are held — the client needs this because it's
-    // the rider's own client that simulates the mount's movement locally
-    // (same as vanilla horses), not just the server.
     private static final EntityDataAccessor<Boolean> DATA_ASCEND_HELD =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
-    // TamableAnimal#isOrderedToSit() was not reliably reaching the client in
-    // testing (server confirmed true, client-side model/renderer checks
-    // never saw it) — our own synced flag, same proven pattern as
-    // DATA_FLYING, so rendering can trust it regardless of whatever's going
-    // on with the vanilla one.
     private static final EntityDataAccessor<Boolean> DATA_SITTING =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.BOOLEAN);
 
@@ -142,11 +132,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         return navigation;
     }
 
-    // Wiki stats: 40 HP / 3 attack (tier 1) up to 80 HP / 17 attack (tier 2 and mother).
-    // Attributes.SCALE is ALWAYS 1.0 for a grown adult of any tier — the tier
-    // size difference already lives entirely in each EntityType's own
-    // .sized() hitbox. SCALE only ever drops below 1.0 temporarily, while a
-    // hatched baby is still growing — see tickGrowth().
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
@@ -154,7 +139,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 .add(Attributes.FLYING_SPEED, 0.15D)
                 .add(Attributes.ATTACK_DAMAGE, 3.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.ARMOR, 0.0D);
     }
 
     public static AttributeSupplier.Builder createTier2Attributes() {
@@ -164,7 +150,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 .add(Attributes.FLYING_SPEED, 0.14D)
                 .add(Attributes.ATTACK_DAMAGE, 10.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.ARMOR, 0.0D);
     }
 
     public static AttributeSupplier.Builder createMotherAttributes() {
@@ -174,7 +161,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 .add(Attributes.FLYING_SPEED, 0.13D)
                 .add(Attributes.ATTACK_DAMAGE, 17.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.ARMOR, 0.0D);
     }
 
     public static AttributeSupplier.Builder createMotherTamedAttributes() {
@@ -184,7 +172,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 .add(Attributes.FLYING_SPEED, 0.13D)
                 .add(Attributes.ATTACK_DAMAGE, 17.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.ARMOR, 0.0D);
     }
 
     public WyvernVariant getVariant() {
@@ -236,12 +225,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         return this.entityData.get(DATA_BITE_TICKS);
     }
 
-    /** Client-safe: use this (not isOrderedToSit()) for anything rendering-related. */
     public boolean isSittingSynced() {
         return this.entityData.get(DATA_SITTING);
     }
 
-    /** Sets BOTH the vanilla AI flag (server-side goal behavior) and our own synced one (rendering). */
     public void setSitting(boolean sitting) {
         this.setOrderedToSit(sitting);
         this.entityData.set(DATA_SITTING, sitting);
@@ -253,6 +240,90 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
     public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    /** 0 = none, 1 = iron, 2 = gold, 3 = diamond. */
+    public int getArmorTier() {
+        return this.entityData.get(DATA_ARMOR_TIER);
+    }
+
+    // Same armor point values as vanilla's own horse armor (Iron 5 / Gold 7 /
+    // Diamond 11) — wyvern armor is a literal horse armor item, so it should
+    // give literally the same defense.
+    private static final double[] ARMOR_TIER_POINTS = {0.0D, 5.0D, 7.0D, 11.0D};
+    private static final net.minecraft.resources.ResourceLocation ARMOR_MODIFIER_ID =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    com.example.neomocreatures.NeoMoCreatures.MODID, "wyvern_armor");
+
+    public void setArmorTier(int tier) {
+        this.entityData.set(DATA_ARMOR_TIER, tier);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance armorAttr = this.getAttribute(Attributes.ARMOR);
+        if (armorAttr == null) {
+            return;
+        }
+        armorAttr.removeModifier(ARMOR_MODIFIER_ID);
+        if (tier > 0) {
+            armorAttr.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    ARMOR_MODIFIER_ID, ARMOR_TIER_POINTS[tier],
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+        }
+    }
+
+    // 18 slots (2 rows), every tier can carry one, shears can never remove it.
+    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
+    /** Which exact item to give back when the saddle is removed with shears — vanilla Saddle vs our HORSE_SADDLE. */
+    @Nullable
+    private net.minecraft.resources.ResourceLocation saddleItemId;
+
+    public boolean hasChest() {
+        return this.entityData.get(DATA_HAS_CHEST);
+    }
+
+    private void setHasChest(boolean hasChest) {
+        this.entityData.set(DATA_HAS_CHEST, hasChest);
+    }
+
+    private void openChestMenu(Player player) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            net.minecraft.network.chat.Component title = this.hasCustomName()
+                    ? this.getDisplayName().copy().append(" Storage")
+                    : net.minecraft.network.chat.Component.literal("Wyvern Storage");
+            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
+                            net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    title));
+        }
+    }
+
+    /**
+     * Generic Entity hook vanilla already calls for the E-while-riding key on
+     * ANY mount (not just AbstractHorse) — no special wiring needed on our
+     * side beyond this override, same as tickRidden()/getRiddenInput() etc.
+     */
+    @Override
+    public void openCustomInventoryScreen(Player player) {
+        if (this.level().isClientSide || !this.isTame()) {
+            return;
+        }
+        if (hasChest()) {
+            openChestMenu(player);
+            return;
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        }
+    }
+
+    private void dropChestAndContents() {
+        if (!hasChest()) {
+            return;
+        }
+        this.spawnAtLocation(net.minecraft.world.item.Items.CHEST);
+        for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+            this.spawnAtLocation(chestInventory.getItem(slot));
+        }
+        setHasChest(false);
     }
 
     @Override
@@ -285,6 +356,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         builder.define(DATA_BITE_TICKS, 0);
         builder.define(DATA_SITTING, false);
         builder.define(DATA_SADDLED, false);
+        builder.define(DATA_ARMOR_TIER, 0);
+        builder.define(DATA_HAS_CHEST, false);
         builder.define(DATA_DIVING, false);
         builder.define(DATA_ASCEND_HELD, false);
         builder.define(DATA_DESCEND_HELD, false);
@@ -298,6 +371,24 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         tag.putBoolean("WyvernFlying", getIsFlying());
         tag.putBoolean("WyvernSittingSynced", isSittingSynced());
         tag.putBoolean("WyvernSaddled", isSaddled());
+        if (this.saddleItemId != null) {
+            tag.putString("WyvernSaddleItem", this.saddleItemId.toString());
+        }
+        tag.putInt("WyvernArmorTier", getArmorTier());
+        tag.putBoolean("WyvernHasChest", hasChest());
+        if (hasChest()) {
+            net.minecraft.nbt.ListTag chestItems = new net.minecraft.nbt.ListTag();
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack stack = chestInventory.getItem(slot);
+                if (!stack.isEmpty()) {
+                    CompoundTag itemTag = new CompoundTag();
+                    itemTag.putInt("Slot", slot);
+                    itemTag.put("Item", stack.save(this.registryAccess(), new CompoundTag()));
+                    chestItems.add(itemTag);
+                }
+            }
+            tag.put("WyvernChestItems", chestItems);
+        }
     }
 
     @Override
@@ -323,6 +414,27 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         }
         if (tag.contains("WyvernSaddled")) {
             setSaddled(tag.getBoolean("WyvernSaddled"));
+        }
+        if (tag.contains("WyvernSaddleItem", 8)) {
+            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("WyvernSaddleItem"));
+        }
+        if (tag.contains("WyvernArmorTier")) {
+            setArmorTier(tag.getInt("WyvernArmorTier"));
+        }
+        if (tag.getBoolean("WyvernHasChest")) {
+            setHasChest(true);
+        }
+        if (tag.contains("WyvernChestItems", 9)) {
+            net.minecraft.nbt.ListTag chestItems = tag.getList("WyvernChestItems", 10);
+            for (int i = 0; i < chestItems.size(); i++) {
+                CompoundTag itemTag = chestItems.getCompound(i);
+                int slot = itemTag.getInt("Slot");
+                ItemStack stack = ItemStack.parse(this.registryAccess(), itemTag.getCompound("Item"))
+                        .orElse(ItemStack.EMPTY);
+                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
+                    chestInventory.setItem(slot, stack);
+                }
+            }
         }
     }
 
@@ -379,8 +491,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         }
     }
 
-    // Same as the two goals above: a ridden wyvern must not have vanilla AI
-    // fighting the rider's own input for control of movement/targeting.
     private static class WyvernMeleeAttackGoal extends MeleeAttackGoal {
         private final MoCWyvernEntity wyvern;
 
@@ -472,10 +582,64 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                         || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
                 if (!this.level().isClientSide) {
                     this.setSaddled(true);
+                    this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
                     this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.isBaby() && this.getArmorTier() == 0
+                    && (stack.is(net.minecraft.world.item.Items.IRON_HORSE_ARMOR)
+                        || stack.is(net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR)
+                        || stack.is(net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR))) {
+                int newArmorTier = stack.is(net.minecraft.world.item.Items.IRON_HORSE_ARMOR) ? 1
+                        : stack.is(net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR) ? 2 : 3;
+                if (!this.level().isClientSide) {
+                    this.setArmorTier(newArmorTier);
+                    this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
+                    if (!player.getAbilities().instabuild) {
+                        stack.shrink(1);
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.isBaby() && !hasChest() && stack.is(net.minecraft.world.item.Items.CHEST)) {
+                if (!this.level().isClientSide) {
+                    setHasChest(true);
+                    this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                    if (!player.getAbilities().instabuild) {
+                        stack.shrink(1);
+                    }
+                }
+                return InteractionResult.SUCCESS;
+            }
+            // Shears: armor first, then saddle — same order as the horse.
+            // The chest is NOT removable by shears — no branch for it here.
+            if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && this.getArmorTier() > 0) {
+                if (!this.level().isClientSide) {
+                    net.minecraft.world.item.Item armorItem = switch (this.getArmorTier()) {
+                        case 1 -> net.minecraft.world.item.Items.IRON_HORSE_ARMOR;
+                        case 2 -> net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR;
+                        default -> net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR;
+                    };
+                    this.setArmorTier(0);
+                    this.spawnAtLocation(new ItemStack(armorItem));
+                    this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && this.isSaddled()) {
+                if (!this.level().isClientSide) {
+                    this.setSaddled(false);
+                    this.ejectPassengers();
+                    net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                            ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                            : net.minecraft.world.item.Items.SADDLE;
+                    this.saddleItemId = null;
+                    this.spawnAtLocation(new ItemStack(saddleItem));
+                    this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -484,6 +648,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                     this.setSitting(false);
                     player.startRiding(this);
                 }
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+                openChestMenu(player);
                 return InteractionResult.SUCCESS;
             }
             if (!this.level().isClientSide && player.isSecondaryUseActive()) {
@@ -531,6 +699,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         return false;
     }
 
+    @Override
+    public void die(DamageSource source) {
+        if (!this.level().isClientSide) {
+            dropChestAndContents();
+        }
+        super.die(source);
+    }
+
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
@@ -548,15 +724,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide && passenger instanceof Player && getIsFlying() && !this.onGround()) {
-            // Dismounted mid-air — glide down via the damped-fall logic in
-            // aiStep() instead of holding altitude like wild-wyvern flight AI.
             setIsFlying(false);
         }
     }
 
-    // Synced so the value is visible on whichever client needs it (the
-    // rider's own client simulates this mount's movement locally, just like
-    // a vanilla horse) — see DATA_ASCEND_HELD / DATA_DESCEND_HELD above.
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
@@ -573,10 +744,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         return this.entityData.get(DATA_DESCEND_HELD);
     }
 
-    /** Roughly on its back, just behind the shoulders/neck — tune these two if the seat looks off. */
     private static final float RIDER_FORWARD = 0.2F;
     private static final float RIDER_HEIGHT = 1.1F;
-    /** The linear getVisualScale() multiplier alone sits the player too low specifically on mother-tamed's much bigger back — tune this extra bump if still off. */
     private static final float MOTHER_TAMED_RIDER_HEIGHT_BONUS = 0.6F;
     private static final float MOTHER_TAMED_RIDER_FORWARD_BONUS = 0.3F;
 
@@ -595,12 +764,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         moveFunction.accept(passenger, x, y, z);
     }
 
-    /**
-     * Called automatically by LivingEntity#travel() every tick there is a
-     * controlling Player passenger — this is what lets us steer the wyvern's
-     * facing from the rider's own look direction, same pattern as Camel /
-     * AbstractHorse in vanilla.
-     */
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
@@ -620,21 +783,15 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         } else if (this.onGround()) {
             setIsFlying(false);
         } else {
-            // Nothing held while airborne — stay in "flying" mode so travel()'s
-            // damped descent applies, instead of switching to vanilla gravity
-            // mid-air (which is what was causing the fast drop).
             setIsFlying(true);
         }
-        // Only "diving" while it's actually a dive — held AND airborne —
-        // not a lingering animation state that outlives either condition.
         setDiving(isDescendHeld() && isOnAir());
+
+        if (!this.level().isClientSide && isAscendHeld() && isAirborneFlapping()) {
+            wingFlap();
+        }
     }
 
-    /**
-     * Called automatically by LivingEntity#travel() to build the input
-     * vector used for ground movement — x/z come straight from the rider's
-     * own raw input (player.xxa/zza), same as AbstractHorse reads it.
-     */
     @Override
     protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
         double vertical = isAscendHeld() ? 1.0D : (isDescendHeld() ? -1.0D : 0.0D);
@@ -648,11 +805,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 : (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
     }
 
-    /**
-     * Wiki-parity with horses: floats instead of sinking while standing/
-     * swimming in water (not while actively flying, which has its own
-     * water-slowdown branch already).
-     */
     private void applyWaterBuoyancy() {
         if (this.isInWater() && !getIsFlying()) {
             double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
@@ -662,9 +814,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         }
     }
 
-    // Same flight feel as the horse's fairy_horse/pegasus flight — only the
-    // in-air speed, not ground walk speed (that stays the wyvern's own
-    // MOVEMENT_SPEED attribute, applied normally by super.travel() below).
     private static final float RIDDEN_FLYER_FRICTION = 0.93F;
     private static final double RIDDEN_ASCEND_THRUST = 0.15D;
     private static final double RIDDEN_DESCEND_THRUST = 0.3D;
@@ -677,19 +826,19 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
 
     @Override
     public void travel(Vec3 travelVector) {
-        // Ridden + flying needs its own no-gravity physics — the vanilla
-        // ridden-travel pipeline (fed by getRiddenInput/getRiddenSpeed
-        // above) only knows how to do normal grounded movement, so we take
-        // over here instead, but still run on whichever side the engine
-        // calls travel() on (client for the rider, server for homologation)
-        // — no manual isClientSide branching needed, same as vanilla horses.
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player && getIsFlying()) {
             this.setNoGravity(true);
             this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
-            this.setDeltaMovement(this.getDeltaMovement()
+            Vec3 delta = this.getDeltaMovement()
                     .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)
-                    .subtract(0.0D, RIDDEN_FLYER_GRAVITY_PULL, 0.0D));
+                    .subtract(0.0D, RIDDEN_FLYER_GRAVITY_PULL, 0.0D);
+            // Even with descend/Z held, never push it below the water
+            // surface once it's touching water — floats instead of sinking.
+            if (this.isInWater() && delta.y < 0.0D) {
+                delta = delta.multiply(1.0D, 0.0D, 1.0D);
+            }
+            this.setDeltaMovement(delta);
             this.fallDistance = 0.0F;
             return;
         }
@@ -705,13 +854,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
                 this.setDeltaMovement(this.getDeltaMovement().scale(flyerFriction()));
             }
             this.fallDistance = 0.0F;
-        } else if (!this.isVehicle()) {
-            applyWaterBuoyancy();
-            super.travel(travelVector);
         } else {
-            // Ridden + grounded: let the vanilla ridden-travel pipeline
-            // (getRiddenInput/getRiddenSpeed/tickRidden above) drive this,
-            // same as AbstractHorse — just make sure buoyancy still applies.
             applyWaterBuoyancy();
             super.travel(travelVector);
         }
@@ -723,9 +866,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable {
         tickGrowth();
 
         if (!this.level().isClientSide) {
-            // Only glide-dampen a natural fall — while sitting, let gravity
-            // apply normally so it actually settles onto the ground instead
-            // of hovering in a near-permanent slow-motion glide.
             if (!getIsFlying() && !this.isSittingSynced() && isOnAir() && this.getDeltaMovement().y < 0.0D) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
             }

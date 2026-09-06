@@ -79,6 +79,36 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
     // torso / shoulders
     private final ModelPart torso;
     private final ModelPart saddle;
+    private final ModelPart storage;
+    // Armor — three full sets (iron/gold/diamond), each: helmet + 2 helmet
+    // horns + helmet snout + chest armor + 2 shoulder pads + 2 leg armor.
+    private final ModelPart ironHelmet;
+    private final ModelPart ironHelmetHorn1;
+    private final ModelPart ironHelmetHorn2;
+    private final ModelPart ironHelmetSnout;
+    private final ModelPart ironChestArmor;
+    private final ModelPart ironLeftShoulder;
+    private final ModelPart ironRightShoulder;
+    private final ModelPart ironLeftLegArmor;
+    private final ModelPart ironRightLegArmor;
+    private final ModelPart goldHelmet;
+    private final ModelPart goldHelmetHorn1;
+    private final ModelPart goldHelmetHorn2;
+    private final ModelPart goldHelmetSnout;
+    private final ModelPart goldChestArmor;
+    private final ModelPart goldLeftShoulder;
+    private final ModelPart goldRightShoulder;
+    private final ModelPart goldLeftLegArmor;
+    private final ModelPart goldRightLegArmor;
+    private final ModelPart diamondHelmet;
+    private final ModelPart diamondHelmetHorn1;
+    private final ModelPart diamondHelmetHorn2;
+    private final ModelPart diamondHelmetSnout;
+    private final ModelPart diamondChestArmor;
+    private final ModelPart diamondLeftShoulder;
+    private final ModelPart diamondRightShoulder;
+    private final ModelPart diamondLeftLegArmor;
+    private final ModelPart diamondRightLegArmor;
     private final ModelPart rightshoulder;
     private final ModelPart leftshoulder;
 
@@ -174,6 +204,28 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
         this.torso = root.getChild("torso");
         this.saddle = root.getChild("saddle");
+        this.storage = root.getChild("storage");
+        this.ironHelmet = this.head.getChild("iron_helmet");
+        this.ironHelmetSnout = this.snout.getChild("iron_helmet_snout");
+        this.ironHelmetHorn1 = this.leftspine1.getChild("iron_helmet_horn1");
+        this.ironHelmetHorn2 = this.rightspine1.getChild("iron_helmet_horn2");
+        this.ironChestArmor = root.getChild("iron_chest_armor");
+        this.ironLeftShoulder = root.getChild("iron_left_shoulder");
+        this.ironRightShoulder = root.getChild("iron_right_shoulder");
+        this.goldHelmet = this.head.getChild("gold_helmet");
+        this.goldHelmetSnout = this.snout.getChild("gold_helmet_snout");
+        this.goldHelmetHorn1 = this.leftspine1.getChild("gold_helmet_horn1");
+        this.goldHelmetHorn2 = this.rightspine1.getChild("gold_helmet_horn2");
+        this.goldChestArmor = root.getChild("gold_chest_armor");
+        this.goldLeftShoulder = root.getChild("gold_left_shoulder");
+        this.goldRightShoulder = root.getChild("gold_right_shoulder");
+        this.diamondHelmet = this.head.getChild("diamond_helmet");
+        this.diamondHelmetSnout = this.snout.getChild("diamond_helmet_snout");
+        this.diamondHelmetHorn1 = this.leftspine1.getChild("diamond_helmet_horn1");
+        this.diamondHelmetHorn2 = this.rightspine1.getChild("diamond_helmet_horn2");
+        this.diamondChestArmor = root.getChild("diamond_chest_armor");
+        this.diamondLeftShoulder = root.getChild("diamond_left_shoulder");
+        this.diamondRightShoulder = root.getChild("diamond_right_shoulder");
         this.rightshoulder = root.getChild("rightshoulder");
         this.leftshoulder = root.getChild("leftshoulder");
 
@@ -217,6 +269,12 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.rightupleg = root.getChild("rightupleg");
         this.rightmidleg = this.rightupleg.getChild("rightmidleg");
         this.rightlowleg = this.rightmidleg.getChild("rightlowleg");
+        this.ironLeftLegArmor = this.leftlowleg.getChild("iron_left_leg_armor");
+        this.ironRightLegArmor = this.rightlowleg.getChild("iron_right_leg_armor");
+        this.goldLeftLegArmor = this.leftlowleg.getChild("gold_left_leg_armor");
+        this.goldRightLegArmor = this.rightlowleg.getChild("gold_right_leg_armor");
+        this.diamondLeftLegArmor = this.leftlowleg.getChild("diamond_left_leg_armor");
+        this.diamondRightLegArmor = this.rightlowleg.getChild("diamond_right_leg_armor");
         this.rightfoot = this.rightlowleg.getChild("rightfoot");
         this.righttoe1 = this.rightfoot.getChild("righttoe1");
         this.righttoe2 = this.rightfoot.getChild("righttoe2");
@@ -347,7 +405,7 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(96, 201).addBox(0F, -4F, 0F, 0, 8, 8),
                 PartPose.offset(3F, -0.5F, 0F));
 
-        rightearskin.addOrReplaceChild("rightspine1",
+        PartDefinition rightspine1 = rightearskin.addOrReplaceChild("rightspine1",
                 CubeListBuilder.create().texOffs(50, 141).addBox(-0.5F, -1F, 0F, 1, 2, 8),
                 PartPose.offsetAndRotation(0F, -2F, 0F, 15F / R, 0F, 0F));
         rightearskin.addOrReplaceChild("rightspine2",
@@ -357,7 +415,7 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(50, 141).addBox(-0.5F, -1F, 0F, 1, 2, 8),
                 PartPose.offsetAndRotation(0F, 2F, 0F, -15F / R, 0F, 0F));
 
-        leftearskin.addOrReplaceChild("leftspine1",
+        PartDefinition leftspine1 = leftearskin.addOrReplaceChild("leftspine1",
                 CubeListBuilder.create().texOffs(68, 141).addBox(-0.5F, -1F, 0F, 1, 2, 8),
                 PartPose.offsetAndRotation(0F, -2F, 0F, 15F / R, 0F, 0F));
         leftearskin.addOrReplaceChild("leftspine2",
@@ -378,6 +436,80 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         root.addOrReplaceChild("saddle",
                 CubeListBuilder.create().texOffs(38, 70).addBox(-3.5F, -2.5F, -8F, 7, 3, 10),
                 PartPose.offset(0F, 0F, 0F));
+
+        // Every tier can carry this one — same texture atlas, toggled by
+        // hasChest() in setupAnim(), no separate texture needed.
+        root.addOrReplaceChild("storage",
+                CubeListBuilder.create().texOffs(28, 59).addBox(-5F, -4.5F, 1.5F, 10, 5, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2268928F, 0F, 0F));
+
+        // ---- armor (iron/gold/diamond) — same texture atlas, toggled
+        // visible/invisible per tier in setupAnim(), same idea as the saddle.
+        head.addOrReplaceChild("iron_helmet",
+                CubeListBuilder.create().texOffs(32, 128).addBox(-4F, -4F, -9F, 8, 4, 9),
+                PartPose.offset(0F, 0F, 0F));
+        snout.addOrReplaceChild("iron_helmet_snout",
+                CubeListBuilder.create().texOffs(0, 144).addBox(-2.5F, -2F, -7F, 5, 2, 7),
+                PartPose.offset(0F, 0F, -1F));
+        leftspine1.addOrReplaceChild("iron_helmet_horn1",
+                CubeListBuilder.create().texOffs(106, 139).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(-0.5F, 0F, 0.1F));
+        rightspine1.addOrReplaceChild("iron_helmet_horn2",
+                CubeListBuilder.create().texOffs(106, 128).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(0.5F, 0F, 0.1F));
+        root.addOrReplaceChild("iron_chest_armor",
+                CubeListBuilder.create().texOffs(0, 128).addBox(-5.5F, 2.2F, -13.5F, 11, 11, 5),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2602503F, 0F, 0F));
+        root.addOrReplaceChild("iron_left_shoulder",
+                CubeListBuilder.create().texOffs(26, 201).addBox(1.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
+        root.addOrReplaceChild("iron_right_shoulder",
+                CubeListBuilder.create().texOffs(74, 201).addBox(-6.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
+
+        head.addOrReplaceChild("gold_helmet",
+                CubeListBuilder.create().texOffs(94, 226).addBox(-4F, -4F, -9F, 8, 4, 9),
+                PartPose.offset(0F, 0F, 0F));
+        snout.addOrReplaceChild("gold_helmet_snout",
+                CubeListBuilder.create().texOffs(71, 235).addBox(-2.5F, -2F, -7F, 5, 2, 7),
+                PartPose.offset(0F, 0F, -1F));
+        leftspine1.addOrReplaceChild("gold_helmet_horn1",
+                CubeListBuilder.create().texOffs(106, 161).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(-0.5F, 0F, 0.1F));
+        rightspine1.addOrReplaceChild("gold_helmet_horn2",
+                CubeListBuilder.create().texOffs(106, 150).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(0.5F, 0F, 0.1F));
+        root.addOrReplaceChild("gold_chest_armor",
+                CubeListBuilder.create().texOffs(71, 219).addBox(-5.5F, 2.2F, -13.5F, 11, 11, 5),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2602503F, 0F, 0F));
+        root.addOrReplaceChild("gold_left_shoulder",
+                CubeListBuilder.create().texOffs(71, 244).addBox(1.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
+        root.addOrReplaceChild("gold_right_shoulder",
+                CubeListBuilder.create().texOffs(93, 244).addBox(-6.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
+
+        head.addOrReplaceChild("diamond_helmet",
+                CubeListBuilder.create().texOffs(23, 226).addBox(-4F, -4F, -9F, 8, 4, 9),
+                PartPose.offset(0F, 0F, 0F));
+        snout.addOrReplaceChild("diamond_helmet_snout",
+                CubeListBuilder.create().texOffs(0, 235).addBox(-2.5F, -2F, -7F, 5, 2, 7),
+                PartPose.offset(0F, 0F, -1F));
+        leftspine1.addOrReplaceChild("diamond_helmet_horn1",
+                CubeListBuilder.create().texOffs(49, 245).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(-0.5F, 0F, 0.1F));
+        rightspine1.addOrReplaceChild("diamond_helmet_horn2",
+                CubeListBuilder.create().texOffs(49, 234).addBox(-1.5F, -1.5F, 0F, 3, 3, 8),
+                PartPose.offset(0.5F, 0F, 0.1F));
+        root.addOrReplaceChild("diamond_chest_armor",
+                CubeListBuilder.create().texOffs(0, 219).addBox(-5.5F, 2.2F, -13.5F, 11, 11, 5),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2602503F, 0F, 0F));
+        root.addOrReplaceChild("diamond_left_shoulder",
+                CubeListBuilder.create().texOffs(0, 244).addBox(1.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
+        root.addOrReplaceChild("diamond_right_shoulder",
+                CubeListBuilder.create().texOffs(22, 244).addBox(-6.5F, 0.5F, -13F, 5, 6, 6),
+                PartPose.offsetAndRotation(0F, 0F, 0F, -0.2617994F, 0F, 0F));
 
         root.addOrReplaceChild("rightshoulder",
                 CubeListBuilder.create().texOffs(42, 83).addBox(-6F, 1F, -12.5F, 4, 5, 5),
@@ -521,6 +653,25 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 CubeListBuilder.create().texOffs(0, 91).addBox(-1.5F, 0F, -1.5F, 3, 8, 3),
                 PartPose.offset(0F, 2F, 3.5F));
 
+        leftlowleg.addOrReplaceChild("iron_left_leg_armor",
+                CubeListBuilder.create().texOffs(39, 97).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+        rightlowleg.addOrReplaceChild("iron_right_leg_armor",
+                CubeListBuilder.create().texOffs(39, 97).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+        leftlowleg.addOrReplaceChild("gold_left_leg_armor",
+                CubeListBuilder.create().texOffs(112, 181).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+        rightlowleg.addOrReplaceChild("gold_right_leg_armor",
+                CubeListBuilder.create().texOffs(112, 181).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+        leftlowleg.addOrReplaceChild("diamond_left_leg_armor",
+                CubeListBuilder.create().texOffs(43, 215).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+        rightlowleg.addOrReplaceChild("diamond_right_leg_armor",
+                CubeListBuilder.create().texOffs(43, 215).addBox(-2F, -2.5F, -2F, 4, 5, 4),
+                PartPose.offset(0F, 2.5F, 0F));
+
         PartDefinition rightfoot = rightlowleg.addOrReplaceChild("rightfoot",
                 CubeListBuilder.create().texOffs(44, 121).addBox(-2F, -1F, -3F, 4, 3, 4),
                 PartPose.offsetAndRotation(0F, 7F, 0.5F, 25F / R, 0F, 0F));
@@ -561,6 +712,36 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                            float ageInTicks, float netHeadYaw, float headPitch) {
 
         this.saddle.visible = entity.isSaddled();
+        this.storage.visible = entity.hasChest();
+
+        int armorTier = entity.getArmorTier();
+        this.ironHelmet.visible = armorTier == 1;
+        this.ironHelmetSnout.visible = armorTier == 1;
+        this.ironHelmetHorn1.visible = armorTier == 1;
+        this.ironHelmetHorn2.visible = armorTier == 1;
+        this.ironChestArmor.visible = armorTier == 1;
+        this.ironLeftShoulder.visible = armorTier == 1;
+        this.ironRightShoulder.visible = armorTier == 1;
+        this.ironLeftLegArmor.visible = armorTier == 1;
+        this.ironRightLegArmor.visible = armorTier == 1;
+        this.goldHelmet.visible = armorTier == 2;
+        this.goldHelmetSnout.visible = armorTier == 2;
+        this.goldHelmetHorn1.visible = armorTier == 2;
+        this.goldHelmetHorn2.visible = armorTier == 2;
+        this.goldChestArmor.visible = armorTier == 2;
+        this.goldLeftShoulder.visible = armorTier == 2;
+        this.goldRightShoulder.visible = armorTier == 2;
+        this.goldLeftLegArmor.visible = armorTier == 2;
+        this.goldRightLegArmor.visible = armorTier == 2;
+        this.diamondHelmet.visible = armorTier == 3;
+        this.diamondHelmetSnout.visible = armorTier == 3;
+        this.diamondHelmetHorn1.visible = armorTier == 3;
+        this.diamondHelmetHorn2.visible = armorTier == 3;
+        this.diamondChestArmor.visible = armorTier == 3;
+        this.diamondLeftShoulder.visible = armorTier == 3;
+        this.diamondRightShoulder.visible = armorTier == 3;
+        this.diamondLeftLegArmor.visible = armorTier == 3;
+        this.diamondRightLegArmor.visible = armorTier == 3;
 
         netHeadYaw = Mth.clamp(netHeadYaw, -60F, 60F);
 
