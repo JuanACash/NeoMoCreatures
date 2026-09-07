@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCBigCatEntity;
+import com.example.neomocreatures.entity.MoCManticoreEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -14,12 +14,14 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
 /**
- * 1:1 port of drzhark.mocreatures.client.model.MoCModelAbstractBigCat (Techne)
- * to HierarchicalModel. Step 3 adds the tamed collar/medallion on top of the
- * mane from step 2. Still no saddle/harness, storage chest, stinger tail, or
- * wings — those come in later steps.
+ * Shares the exact same body geometry as MoCBigCatModel (same shared Techne
+ * base file in the original — MoCModelAbstractBigCat), plus the mane/fangs
+ * (a manticore always has both, unlike the big cat's lion-only check), the
+ * scorpion stinger tail, front claws, and wings that fold on the ground and
+ * only extend/flap while airborne. No saddle/chest/collar yet — those come
+ * in a later step.
  */
-public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
+public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
 
     private static final float R = 57.29578F;
 
@@ -30,8 +32,6 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     private final ModelPart headBack;
     private final ModelPart head;
     private final ModelPart lowerJaw;
-    private final ModelPart leftEar;
-    private final ModelPart rightEar;
     private final ModelPart tailRoot;
     private final ModelPart tail2;
     private final ModelPart tail3;
@@ -47,27 +47,25 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     private final ModelPart rightHindUpperLeg;
     private final ModelPart rightHindLowerLeg;
     private final ModelPart rightHindFoot;
-    private final ModelPart mane;
-    private final ModelPart chinHair;
-    private final ModelPart leftChinBeard;
-    private final ModelPart rightChinBeard;
-    private final ModelPart foreheadHair;
-    private final ModelPart neckHair;
-    private final ModelPart collar;
-    private final ModelPart saddle;
-    private final ModelPart saddleFront;
-    private final ModelPart saddleBack;
-    private final ModelPart leftFootHarness;
-    private final ModelPart leftFootRing;
-    private final ModelPart rightFootHarness;
-    private final ModelPart rightFootRing;
-    private final ModelPart storageChest;
     private final ModelPart innerWing;
     private final ModelPart midWing;
     private final ModelPart outerWing;
     private final ModelPart innerWingR;
     private final ModelPart midWingR;
     private final ModelPart outerWingR;
+    private final ModelPart sTailRoot;
+    private final ModelPart sTail2;
+    private final ModelPart sTail3;
+    private final ModelPart sTail4;
+    private final ModelPart sTail5;
+    private final ModelPart mane;
+    private final ModelPart chinHair;
+    private final ModelPart leftChinBeard;
+    private final ModelPart rightChinBeard;
+    private final ModelPart foreheadHair;
+    private final ModelPart neckHair;
+    private final ModelPart leftFang;
+    private final ModelPart rightFang;
     private final ModelPart leftClaw1;
     private final ModelPart leftClaw2;
     private final ModelPart leftClaw3;
@@ -75,15 +73,13 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     private final ModelPart rightClaw2;
     private final ModelPart rightClaw3;
 
-    public MoCBigCatModel(ModelPart root) {
+    public MoCManticoreModel(ModelPart root) {
         this.root = root;
         this.chest = root.getChild("chest");
         this.neckBase = chest.getChild("neck_base");
         this.headBack = neckBase.getChild("head_back");
         this.head = headBack.getChild("head");
         this.lowerJaw = head.getChild("lower_jaw");
-        this.leftEar = head.getChild("left_ear");
-        this.rightEar = head.getChild("right_ear");
         this.abdomen = chest.getChild("abdomen");
         this.tailRoot = abdomen.getChild("tail_root");
         this.tail2 = tailRoot.getChild("tail_2");
@@ -100,27 +96,25 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         this.rightHindUpperLeg = abdomen.getChild("right_hind_upper_leg");
         this.rightHindLowerLeg = rightHindUpperLeg.getChild("right_ankle").getChild("right_hind_lower_leg");
         this.rightHindFoot = rightHindLowerLeg.getChild("right_hind_foot");
-        this.mane = head.getChild("mane");
-        this.chinHair = lowerJaw.getChild("chin_hair");
-        this.leftChinBeard = head.getChild("left_chin_beard");
-        this.rightChinBeard = head.getChild("right_chin_beard");
-        this.foreheadHair = head.getChild("forehead_hair");
-        this.neckHair = neckBase.getChild("neck_hair");
-        this.collar = neckBase.getChild("collar");
-        this.saddle = chest.getChild("saddle");
-        this.saddleFront = saddle.getChild("saddle_front");
-        this.saddleBack = saddle.getChild("saddle_back");
-        this.leftFootHarness = saddle.getChild("left_foot_harness");
-        this.leftFootRing = leftFootHarness.getChild("left_foot_ring");
-        this.rightFootHarness = saddle.getChild("right_foot_harness");
-        this.rightFootRing = rightFootHarness.getChild("right_foot_ring");
-        this.storageChest = abdomen.getChild("storage_chest");
         this.innerWing = root.getChild("inner_wing");
         this.midWing = root.getChild("mid_wing");
         this.outerWing = root.getChild("outer_wing");
         this.innerWingR = root.getChild("inner_wing_r");
         this.midWingR = root.getChild("mid_wing_r");
         this.outerWingR = root.getChild("outer_wing_r");
+        this.sTailRoot = root.getChild("s_tail_root");
+        this.sTail2 = root.getChild("s_tail_2");
+        this.sTail3 = root.getChild("s_tail_3");
+        this.sTail4 = root.getChild("s_tail_4");
+        this.sTail5 = root.getChild("s_tail_5");
+        this.mane = head.getChild("mane");
+        this.chinHair = lowerJaw.getChild("chin_hair");
+        this.leftChinBeard = head.getChild("left_chin_beard");
+        this.rightChinBeard = head.getChild("right_chin_beard");
+        this.foreheadHair = head.getChild("forehead_hair");
+        this.neckHair = neckBase.getChild("neck_hair");
+        this.leftFang = head.getChild("left_fang");
+        this.rightFang = head.getChild("right_fang");
         ModelPart leftFrontFoot = leftLowerLeg.getChild("left_front_foot");
         this.leftClaw1 = leftFrontFoot.getChild("left_claw_1");
         this.leftClaw2 = leftFrontFoot.getChild("left_claw_2");
@@ -150,10 +144,6 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         neckBase.addOrReplaceChild("neck_hair",
                 CubeListBuilder.create().texOffs(108, 17).addBox(-2F, -1F, -3F, 4, 2, 6),
                 PartPose.offsetAndRotation(0F, -0.5F, 3F, -10.6F / R, 0F, 0F));
-
-        neckBase.addOrReplaceChild("collar",
-                CubeListBuilder.create().texOffs(18, 0).addBox(-2.5F, 0F, 0F, 5, 4, 1),
-                PartPose.offsetAndRotation(0F, 6F, -2F, 20F / R, 0F, 0F));
 
         PartDefinition head = headBack.addOrReplaceChild("head",
                 CubeListBuilder.create().texOffs(32, 0).addBox(-3.5F, -3F, -2F, 7, 6, 4),
@@ -195,7 +185,6 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
                 CubeListBuilder.create().texOffs(54, 4).addBox(-1F, -1F, -0.5F, 2, 2, 1),
                 PartPose.offsetAndRotation(2.7F, -3.5F, 1F, 0F, 0F, 15F / R));
 
-        // Mane and related hair — only shown for maned adult lions (see setupAnim's hasMane check).
         head.addOrReplaceChild("mane",
                 CubeListBuilder.create().texOffs(94, 0).addBox(-5.5F, -5.5F, -3F, 11, 11, 6),
                 PartPose.offsetAndRotation(0F, 0.7F, 3.7F, -5F / R, 0F, 0F));
@@ -211,6 +200,14 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         head.addOrReplaceChild("forehead_hair",
                 CubeListBuilder.create().texOffs(88, 0).addBox(-1.5F, -1.5F, -1.5F, 3, 3, 3),
                 PartPose.offsetAndRotation(0F, -3.2F, 0F, 10F / R, 0F, 0F));
+
+        head.addOrReplaceChild("left_fang",
+                CubeListBuilder.create().texOffs(44, 10).addBox(-0.5F, -1.5F, -0.5F, 1, 3, 1),
+                PartPose.offsetAndRotation(1.2F, 2.8F, -3.4F, 15F / R, 0F, 0F));
+
+        head.addOrReplaceChild("right_fang",
+                CubeListBuilder.create().texOffs(48, 10).addBox(-0.5F, -1.5F, -0.5F, 1, 3, 1),
+                PartPose.offsetAndRotation(-1.2F, 2.8F, -3.4F, 15F / R, 0F, 0F));
 
         lowerJaw.addOrReplaceChild("chin_hair",
                 CubeListBuilder.create().texOffs(76, 7).addBox(-2.5F, 0F, -2F, 5, 6, 4),
@@ -306,36 +303,6 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
                 CubeListBuilder.create().texOffs(12, 91).addBox(-1.5F, 0F, -1.5F, 3, 2, 3),
                 PartPose.offsetAndRotation(0F, 2.6F, -0.8F, 27F / R, 0F, 0F));
 
-        PartDefinition saddle = chest.addOrReplaceChild("saddle",
-                CubeListBuilder.create().texOffs(79, 18).addBox(-4F, -1F, -3F, 8, 2, 6),
-                PartPose.offset(0F, 0.5F, -1F));
-
-        saddle.addOrReplaceChild("saddle_front",
-                CubeListBuilder.create().texOffs(101, 26).addBox(-2.5F, -1F, -1.5F, 5, 2, 3),
-                PartPose.offsetAndRotation(0F, -1.0F, -1.5F, -10.6F / R, 0F, 0F));
-
-        saddle.addOrReplaceChild("saddle_back",
-                CubeListBuilder.create().texOffs(77, 26).addBox(-4F, -2F, -2F, 8, 2, 4),
-                PartPose.offsetAndRotation(0F, 0.7F, 4F, 12.78F / R, 0F, 0F));
-
-        PartDefinition leftFootHarness = saddle.addOrReplaceChild("left_foot_harness",
-                CubeListBuilder.create().texOffs(81, 18).addBox(-0.5F, 0F, -0.5F, 1, 5, 1),
-                PartPose.offset(4F, 0F, 0.5F));
-        leftFootHarness.addOrReplaceChild("left_foot_ring",
-                CubeListBuilder.create().texOffs(107, 31).addBox(0F, 0F, 0F, 1, 2, 2),
-                PartPose.offset(-0.5F, 5F, -1F));
-
-        PartDefinition rightFootHarness = saddle.addOrReplaceChild("right_foot_harness",
-                CubeListBuilder.create().texOffs(101, 18).addBox(-0.5F, 0F, -0.5F, 1, 5, 1),
-                PartPose.offset(-4F, 0F, 0.5F));
-        rightFootHarness.addOrReplaceChild("right_foot_ring",
-                CubeListBuilder.create().texOffs(101, 31).addBox(0F, 0F, 0F, 1, 2, 2),
-                PartPose.offset(-0.5F, 5F, -1F));
-
-        abdomen.addOrReplaceChild("storage_chest",
-                CubeListBuilder.create().texOffs(32, 59).addBox(-5F, -2F, -2.5F, 10, 4, 5),
-                PartPose.offsetAndRotation(0F, -2F, 5.5F, -90F / R, 0F, 0F));
-
         root.addOrReplaceChild("inner_wing",
                 CubeListBuilder.create().texOffs(26, 115).addBox(0F, 0F, 0F, 7, 2, 11),
                 PartPose.offsetAndRotation(4F, 9F, -7F, 0F, -20F / R, 0F));
@@ -355,8 +322,23 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
                 CubeListBuilder.create().texOffs(62, 102).addBox(-22F, 0F, 0F, 22, 2, 11),
                 PartPose.offsetAndRotation(-16F, 9F, -7F, 0F, 18F / R, 0F));
 
+        root.addOrReplaceChild("s_tail_root",
+                CubeListBuilder.create().texOffs(104, 79).mirror().addBox(-3F, 4F, 5F, 6, 4, 6),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 0.5796765F, 0F, 0F));
+        root.addOrReplaceChild("s_tail_2",
+                CubeListBuilder.create().texOffs(106, 69).mirror().addBox(-2.5F, 7.5F, 7.3F, 5, 4, 6),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 0.9514626F, 0F, 0F));
+        root.addOrReplaceChild("s_tail_3",
+                CubeListBuilder.create().texOffs(108, 60).mirror().addBox(-2F, 13.5F, 3.3F, 4, 3, 6),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 1.660128F, 0F, 0F));
+        root.addOrReplaceChild("s_tail_4",
+                CubeListBuilder.create().texOffs(108, 51).mirror().addBox(-2F, 15.2F, -5.3F, 4, 3, 6),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 2.478058F, 0F, 0F));
+        root.addOrReplaceChild("s_tail_5",
+                CubeListBuilder.create().texOffs(108, 42).mirror().addBox(-2F, 12.9F, -9F, 4, 3, 6),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 3.035737F, 0F, 0F));
+
         return LayerDefinition.create(mesh, 128, 128);
-        
     }
 
     @Override
@@ -365,36 +347,20 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     }
 
     @Override
-    public void setupAnim(MoCBigCatEntity entity, float limbSwing, float limbSwingAmount,
+    public void setupAnim(MoCManticoreEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
         float rLegXRot = Mth.cos((limbSwing * 0.8F) + (float) Math.PI) * 0.8F * limbSwingAmount;
         float lLegXRot = Mth.cos(limbSwing * 0.8F) * 0.8F * limbSwingAmount;
-        float gallopRLegXRot = Mth.cos((limbSwing * 0.6F) + (float) Math.PI) * 0.8F * limbSwingAmount;
-        float gallopLLegXRot = Mth.cos(limbSwing * 0.6F) * 0.8F * limbSwingAmount;
-        boolean galloping = limbSwingAmount >= 0.97F;
-
-        if (galloping) {
-            // Both front legs move together, both hind legs move together —
-            // matches the original's galloping case exactly (unlike the diagonal
-            // walk gait below, where front/hind pairs are diagonally opposite).
-            rightUpperLeg.xRot = 15F / R + gallopRLegXRot;
-            leftUpperLeg.xRot = 15F / R + gallopRLegXRot;
-            rightHindUpperLeg.xRot = -25F / R + gallopLLegXRot;
-            leftHindUpperLeg.xRot = -25F / R + gallopLLegXRot;
-            abdomen.yRot = 0F;
-        } else {
-            rightUpperLeg.xRot = 15F / R + rLegXRot;
-            leftHindUpperLeg.xRot = -25F / R + rLegXRot;
-            leftUpperLeg.xRot = 15F / R + lLegXRot;
-            rightHindUpperLeg.xRot = -25F / R + lLegXRot;
-            abdomen.yRot = Mth.cos(limbSwing * 0.3F) * 0.25F * limbSwingAmount;
-        }
+        rightUpperLeg.xRot = 15F / R + rLegXRot;
+        leftHindUpperLeg.xRot = -25F / R + rLegXRot;
+        leftUpperLeg.xRot = 15F / R + lLegXRot;
+        rightHindUpperLeg.xRot = -25F / R + lLegXRot;
+        abdomen.yRot = Mth.cos(limbSwing * 0.3F) * 0.25F * limbSwingAmount;
         leftLowerLeg.xRot = -21.5F / R;
         rightLowerLeg.xRot = -21.5F / R;
         leftHindFoot.xRot = 27F / R;
         rightHindFoot.xRot = 27F / R;
 
-        // Idle tail sway, livelier swish while the counter is running.
         int tailTicks = entity.getTailTicks();
         float tailXRot = tailTicks != 0 ? Mth.cos(ageInTicks * 0.3F) * 0.15F : 0F;
         tailRoot.xRot = 87F / R + tailXRot;
@@ -404,11 +370,9 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         tailTip.xRot = 21F / R + tailXRot;
         tail2.yRot = tailTicks != 0 ? Mth.cos(ageInTicks * 0.3F) : 0F;
 
-        // Head tracking.
         headBack.xRot = 14F / R + headPitch / R;
         headBack.yRot = netHeadYaw / R;
 
-        // Mouth open/close for roaring, hurt, and eating.
         int mouthTicks = entity.getMouthTicks();
         float targetMouthAngle;
         if (mouthTicks == 0) {
@@ -422,110 +386,83 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         }
         lowerJaw.xRot = targetMouthAngle / R;
 
-        // Cubs never have a mane yet, even maned species — it comes in with adulthood.
-        boolean hasMane = entity.getVariant().hasMane() && !entity.isBaby();
-        mane.visible = hasMane;
-        chinHair.visible = hasMane;
-        leftChinBeard.visible = hasMane;
-        rightChinBeard.visible = hasMane;
-        foreheadHair.visible = hasMane;
-        neckHair.visible = hasMane;
-
-        collar.visible = entity.isTame();
-        saddle.visible = entity.isSaddled();
-        storageChest.visible = entity.hasChest();
-
-        // Sitting reclines the whole torso back and down — not just folded legs —
-        // matching the original exactly (Chest itself moves/rotates, not just its children).
-        boolean sitting = entity.isSittingSynced();
-        if (sitting) {
-        chest.y = 14F;
-        chest.xRot = -45F / R;
-        abdomen.xRot = -10F / R;
-        neckBase.xRot = 20F / R;
-        rightUpperLeg.xRot = 35F / R;
-        leftUpperLeg.xRot = 35F / R;
-        rightLowerLeg.xRot = 5F / R;
-        leftLowerLeg.xRot = 5F / R;
-        rightHindUpperLeg.y = 1F;
-        leftHindUpperLeg.y = 1F;
-        rightHindUpperLeg.xRot = -50F / R;
-        leftHindUpperLeg.xRot = -50F / R;
-        rightHindFoot.xRot = 90F / R;
-        leftHindFoot.xRot = 90F / R;
-        tailRoot.xRot = 100F / R;
-        tail2.xRot = 35F / R;
-        tail3.xRot = 10F / R;
-        collar.y = 7F;
-        collar.z = -4F;
+        boolean floating = !entity.onGround();
+        float wingRot;
+        if (floating) {
+            wingRot = Mth.cos((ageInTicks * 0.3F) + (float) Math.PI) * 1.2F;
+            outerWing.yRot = -0.3228859F + (wingRot / 2F);
+            outerWingR.yRot = 0.3228859F - (wingRot / 2F);
         } else {
-                chest.y = 8F;
-                chest.xRot = 0F;
-                abdomen.xRot = 0F;
-                neckBase.xRot = -14F / R;
-                rightHindUpperLeg.y = 3F;
-                leftHindUpperLeg.y = 3F;
-                collar.y = 6F;
-                collar.z = -2F;
+            wingRot = 60F / R;
+            outerWing.yRot = -90F / R;
+            outerWingR.yRot = 90F / R;
         }
 
-        // Ghosts float with their legs folded at all times — the exact same pose
-        // winged big cats use mid-flight in the original (RightUpperLeg/LeftUpperLeg
-        // 45°, hind legs 10°, both nudged further by movement speed).
-        boolean foldedLegs = entity.isGhost() || (entity.hasWings() && entity.getIsFlying());
-        if (foldedLegs && !sitting) {
-                float speedMov = limbSwingAmount * 0.5F;
-                rightUpperLeg.xRot = 45F / R + speedMov;
-                leftUpperLeg.xRot = 45F / R + speedMov;
-                rightHindUpperLeg.xRot = 10F / R + speedMov;
-                leftHindUpperLeg.xRot = 10F / R + speedMov;
+        innerWingR.y = innerWing.y;
+        innerWingR.z = innerWing.z;
+        outerWing.x = innerWing.x + (Mth.cos(wingRot) * 12F);
+        outerWingR.x = innerWingR.x - (Mth.cos(wingRot) * 12F);
+
+        midWing.y = innerWing.y;
+        midWingR.y = innerWing.y;
+        outerWing.y = innerWing.y + (Mth.sin(wingRot) * 12F);
+        outerWingR.y = innerWingR.y + (Mth.sin(wingRot) * 12F);
+
+        midWing.z = innerWing.z;
+        midWingR.z = innerWing.z;
+        outerWing.z = innerWing.z;
+        outerWingR.z = innerWing.z;
+
+        midWing.zRot = wingRot;
+        innerWing.zRot = wingRot;
+        outerWing.zRot = wingRot;
+        innerWingR.zRot = -wingRot;
+        midWingR.zRot = -wingRot;
+        outerWingR.zRot = -wingRot;
+
+        int stingTicks = entity.getStingTicks();
+        if (stingTicks == 0) {
+            sTailRoot.xRot = 33F / R;
+            sTailRoot.y = 8F;
+            sTailRoot.z = 0F;
+            sTail2.xRot = 54.5F / R;
+            sTail2.y = 8F;
+            sTail2.z = 0F;
+            sTail3.xRot = 95.1F / R;
+            sTail3.y = 8F;
+            sTail3.z = 0F;
+            sTail4.xRot = 141.8F / R;
+            sTail4.y = 8F;
+            sTail4.z = 0F;
+            sTail5.xRot = 173.9F / R;
+            sTail5.y = 8F;
+            sTail5.z = 0F;
+        } else {
+            sTailRoot.xRot = 95.2F / R;
+            sTailRoot.y = 14.5F;
+            sTailRoot.z = 2F;
+            sTail2.xRot = 128.5F / R;
+            sTail2.y = 15F;
+            sTail2.z = 4F;
+            sTail3.xRot = 169F / R;
+            sTail3.y = 14F;
+            sTail3.z = 3.8F;
+            sTail4.xRot = 177F / R;
+            sTail4.y = 13.5F;
+            sTail4.z = -8.5F;
+            sTail5.xRot = 180F / R;
+            sTail5.y = 11.5F;
+            sTail5.z = -17F;
         }
-        boolean winged = entity.hasWings();
-        innerWing.visible = winged;
-        midWing.visible = winged;
-        outerWing.visible = winged;
-        innerWingR.visible = winged;
-        midWingR.visible = winged;
-        outerWingR.visible = winged;
 
-        if (winged) {
-                boolean flying = entity.getIsFlying();
-                float wingRot;
-                if (flying) {
-                wingRot = entity.isAirborneFlapping()
-                        ? Mth.cos((ageInTicks * 0.3F) + (float) Math.PI) * 1.2F
-                        : 0.1F; // gliding: fully still, fully extended — no oscillation at all
-                outerWing.yRot = -0.3228859F + (wingRot / 2F);
-                outerWingR.yRot = 0.3228859F - (wingRot / 2F);
-                } else {
-                // Folded at rest — same fixed pose a pegasus/bathorse uses on the ground.
-                wingRot = 60F / R;
-                outerWing.yRot = -90F / R;
-                outerWingR.yRot = 90F / R;
-                }
-
-                innerWingR.y = innerWing.y;
-                innerWingR.z = innerWing.z;
-                outerWing.x = innerWing.x + (Mth.cos(wingRot) * 12F);
-                outerWingR.x = innerWingR.x - (Mth.cos(wingRot) * 12F);
-
-                midWing.y = innerWing.y;
-                midWingR.y = innerWing.y;
-                outerWing.y = innerWing.y + (Mth.sin(wingRot) * 12F);
-                outerWingR.y = innerWingR.y + (Mth.sin(wingRot) * 12F);
-
-                midWing.z = innerWing.z;
-                midWingR.z = innerWing.z;
-                outerWing.z = innerWing.z;
-                outerWingR.z = innerWing.z;
-
-                midWing.zRot = wingRot;
-                innerWing.zRot = wingRot;
-                outerWing.zRot = wingRot;
-                innerWingR.zRot = -wingRot;
-                midWingR.zRot = -wingRot;
-                outerWingR.zRot = -wingRot;
-        }
+        mane.visible = true;
+        chinHair.visible = true;
+        leftChinBeard.visible = true;
+        rightChinBeard.visible = true;
+        foreheadHair.visible = true;
+        neckHair.visible = true;
+        leftFang.visible = true;
+        rightFang.visible = true;
     }
 
     @Override

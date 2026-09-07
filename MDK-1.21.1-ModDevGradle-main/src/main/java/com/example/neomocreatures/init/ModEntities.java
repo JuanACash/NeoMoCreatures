@@ -7,6 +7,7 @@ import com.example.neomocreatures.entity.egg.MoCEggEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
+import com.example.neomocreatures.entity.MoCManticoreEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -102,6 +103,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_big_cat"));
 
+   public static final DeferredHolder<EntityType<?>, EntityType<MoCManticoreEntity>> MOC_MANTICORE =
+        ENTITY_TYPES.register("moc_manticore", () -> EntityType.Builder
+                .of(MoCManticoreEntity::new, MobCategory.MONSTER)
+                .sized(1.35F, 1.45F)
+                .clientTrackingRange(10)
+                .build("moc_manticore"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -122,6 +130,7 @@ public class ModEntities {
                 event.put(MOC_EGG.get(), MoCEggEntity.createAttributes().build());
                 event.put(MOC_ELEPHANT.get(), MoCElephantEntity.createAttributes().build());
                 event.put(MOC_BIG_CAT.get(), MoCBigCatEntity.createAttributes().build());
+                event.put(MOC_MANTICORE.get(), MoCManticoreEntity.createAttributes().build());
         });
         }
         
