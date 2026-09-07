@@ -48,6 +48,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("WyvernVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.WYVERN.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("ElephantVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_ELEPHANT.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -75,13 +78,15 @@ public class FilledAmuletItem extends Item {
         }
         BlockPos pos = player.blockPosition().relative(player.getDirection());
         Entity spawned;
-            if (tag.contains("Species")) {
-                spawned = spawnHorse(level, tag, pos);
-            } else if (tag.contains("WyvernVariant")) {
-                spawned = spawnWyvern(level, tag, pos);
-            } else {
-                spawned = spawnGeneric(level, tag, pos);
-            }
+        if (tag.contains("Species")) {
+            spawned = spawnHorse(level, tag, pos);
+        } else if (tag.contains("WyvernVariant")) {
+            spawned = spawnWyvern(level, tag, pos);
+        } else if (tag.contains("ElephantVariant")) {
+            spawned = spawnElephant(level, tag, pos);
+        } else {
+            spawned = spawnGeneric(level, tag, pos);
+        }
         if (spawned == null) {
             return net.minecraft.world.InteractionResultHolder.fail(stack);
         }
@@ -204,5 +209,28 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(wyvern);
         return wyvern;
+    }
+
+    private Entity spawnElephant(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCElephantEntity elephant =
+                ModEntities.MOC_ELEPHANT.get().create(level);
+        if (elephant == null) return null;
+        elephant.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        elephant.setVariant(com.example.neomocreatures.entity.elephant.ElephantVariant.valueOf(tag.getString("ElephantVariant")));
+        elephant.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            elephant.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        elephant.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            elephant.setAge(tag.getInt("Age"));
+        } else {
+            elephant.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            elephant.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(elephant);
+        return elephant;
     }
 }

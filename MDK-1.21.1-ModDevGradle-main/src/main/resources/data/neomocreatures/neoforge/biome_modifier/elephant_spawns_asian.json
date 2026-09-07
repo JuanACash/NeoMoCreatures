@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:sparse_jungle"],
+  "spawners": [
+    { "type": "neomocreatures:moc_elephant", "weight": 12, "minCount": 3, "maxCount": 3 }
+  ]
+}

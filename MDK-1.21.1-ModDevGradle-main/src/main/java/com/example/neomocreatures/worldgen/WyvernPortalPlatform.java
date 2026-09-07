@@ -89,7 +89,11 @@ public final class WyvernPortalPlatform {
      * @param arrivalPos the block the player is teleported onto
      */
     public static void generateIfMissing(ServerLevel level, BlockPos arrivalPos) {
-        if (!level.isEmptyBlock(arrivalPos)) {
+        // Check for the actual completion marker (the quartz block the platform
+        // itself places at arrivalPos) instead of "is this air" — a stray tall
+        // grass or mushroom decoration at that spot would make isEmptyBlock()
+        // false even before anything is built, silently skipping generation.
+        if (level.getBlockState(arrivalPos).is(Blocks.QUARTZ_BLOCK)) {
             return;
         }
         terraformFootprint(level, arrivalPos);

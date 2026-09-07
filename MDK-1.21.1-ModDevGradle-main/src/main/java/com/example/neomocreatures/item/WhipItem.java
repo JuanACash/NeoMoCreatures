@@ -2,6 +2,7 @@ package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;
@@ -78,6 +79,15 @@ public class WhipItem extends Item {
                 if (wyvern.isTame()) {
                     wyvern.setSitting(true);
                     wyvern.setTarget(null);
+                }
+            }
+
+            // Wiki: whipping a mounted, harnessed elephant/mammoth gives it a speed boost AND
+            // has it ram (push + hurt) anything in its way — both effects together, unlike the
+            // horse where unicorns get only the charge and everything else gets only speed.
+            for (MoCElephantEntity elephant : level.getEntitiesOfClass(MoCElephantEntity.class, player.getBoundingBox().inflate(RADIUS))) {
+                if (elephant.isTame() && elephant.hasHarness() && elephant.isVehicle()) {
+                    elephant.startWhipCharge();
                 }
             }
 

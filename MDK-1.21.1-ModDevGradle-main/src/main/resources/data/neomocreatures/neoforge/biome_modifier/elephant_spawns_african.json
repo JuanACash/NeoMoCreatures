@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:savanna_plateau", "minecraft:savanna"],
+  "spawners": [
+    { "type": "neomocreatures:moc_elephant", "weight": 12, "minCount": 3, "maxCount": 3 }
+  ]
+}

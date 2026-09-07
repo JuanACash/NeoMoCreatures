@@ -47,6 +47,22 @@
   "moc_wyvern.wing_flap": { "sounds": ["neomocreatures:moc_wyvern/wyvern_wing_flap"] },
   "moc_wyvern.poison": { "sounds": ["neomocreatures:moc_wyvern/wyvern_poison"] },
 
+  "moc_elephant.ambient": {
+                "sounds": [
+                  "neomocreatures:moc_elephant/elephant_grunt1",
+                  "neomocreatures:moc_elephant/elephant_grunt2",
+                  "neomocreatures:moc_elephant/elephant_grunt3",
+                  "neomocreatures:moc_elephant/elephant_grunt4",
+                  "neomocreatures:moc_elephant/elephant_grunt5",
+                  "neomocreatures:moc_elephant/elephant_grunt6",
+                  "neomocreatures:moc_elephant/elephant_grunt7",
+                  "neomocreatures:moc_elephant/elephant_grunt8"
+                ]
+              },
+  "moc_elephant.ambient_baby": { "sounds": ["neomocreatures:moc_elephant/elephant_calf1", "neomocreatures:moc_elephant/elephant_calf2"] },
+  "moc_elephant.hurt": { "sounds": ["neomocreatures:moc_elephant/elephant_hurt1", "neomocreatures:moc_elephant/elephant_hurt2"] },
+  "moc_elephant.death": { "sounds": ["neomocreatures:moc_elephant/elephant_dying"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

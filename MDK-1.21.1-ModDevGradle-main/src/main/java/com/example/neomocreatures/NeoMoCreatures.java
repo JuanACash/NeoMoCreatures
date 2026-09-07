@@ -242,6 +242,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.WILD_HORSE_SPAWN_EGG.get());
                     output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
                     output.accept(ModItems.WYVERN_SPAWN_EGG.get());
+                    output.accept(ModItems.MOC_ELEPHANT_SPAWN_EGG.get());
 
                 }).build());
 
@@ -277,6 +278,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerSpawnPlacements);
         modEventBus.addListener(ModEntities::registerHorseMobSpawnPlacements);
         modEventBus.addListener(ModEntities::registerWyvernSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerElephantSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

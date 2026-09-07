@@ -4,6 +4,7 @@ import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
+import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 
 import net.minecraft.core.registries.Registries;
@@ -85,6 +86,14 @@ public class ModEntities {
                     .clientTrackingRange(10)
                     .build("wyvern_mother_tamed"));
 
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCElephantEntity>> MOC_ELEPHANT =
+        ENTITY_TYPES.register("moc_elephant", () -> EntityType.Builder
+                .of(MoCElephantEntity::new, MobCategory.CREATURE)
+                .sized(1.1F, 3.0F)
+                .clientTrackingRange(10)
+                .build("moc_elephant"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -103,6 +112,7 @@ public class ModEntities {
                 event.put(WYVERN_MOTHER.get(), MoCWyvernEntity.createMotherAttributes().build());
                 event.put(WYVERN_MOTHER_TAMED.get(), MoCWyvernEntity.createMotherTamedAttributes().build());
                 event.put(MOC_EGG.get(), MoCEggEntity.createAttributes().build());
+                event.put(MOC_ELEPHANT.get(), MoCElephantEntity.createAttributes().build());
         });
         }
         
@@ -162,6 +172,26 @@ public class ModEntities {
                                 RegisterSpawnPlacementsEvent.Operation.REPLACE
                         );
                 }
+        }
+
+        public static void registerElephantSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_ELEPHANT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                if (!level.getBlockState(pos.below()).canOcclude()) {
+                                return false; // needs an actual opaque block underneath
+                                }
+                                // Large space above — tall grass, flowers, snow layers, etc. don't
+                                // count against this since they have no real collision shape.
+                                for (int y = 0; y < 3; y++) {
+                                if (!level.getBlockState(pos.above(y)).getCollisionShape(level, pos.above(y)).isEmpty()) {
+                                        return false;
+                                }
+                                }
+                                return level.getRawBrightness(pos, 0) >= 9;
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
     
 }

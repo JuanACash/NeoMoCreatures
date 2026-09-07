@@ -30,11 +30,11 @@ public class ModItems {
 
     public static final DeferredItem<Item> MOC_HORSE_MOB_SPAWN_EGG = ITEMS.register("moc_horse_mob_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_HORSE_MOB, 0x1A1A2E, 0x5B2C6F, new Item.Properties()));
-
-    // One egg, three possible outcomes (tier 1 / tier 2 / natural mother) —
-    // see WyvernSpawnEggItem for the weights.
     public static final DeferredItem<Item> WYVERN_SPAWN_EGG = ITEMS.register("wyvern_spawn_egg",
         () -> new com.example.neomocreatures.item.WyvernSpawnEggItem(new Item.Properties()));
+    public static final DeferredItem<Item> MOC_ELEPHANT_SPAWN_EGG = ITEMS.register("moc_elephant_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_ELEPHANT, 0x5C4A3A, 0xE8DCC8, new Item.Properties()));
+    
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_DARKNESS = ITEMS.registerSimpleItem("heart_of_darkness", new Item.Properties());
@@ -298,9 +298,9 @@ public class ModItems {
                 .stacksTo(1)
                 .attributes(SwordItem.createAttributes(Tiers.GOLD, 3, -2.4F))
                 .durability(Tiers.GOLD.getUses())));
-    public static final DeferredItem<Item> TUSKS_DIAMOND = ITEMS.registerSimpleItem("tusks_diamond", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> TUSKS_IRON = ITEMS.registerSimpleItem("tusks_iron", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> TUSKS_WOOD = ITEMS.registerSimpleItem("tusks_wood", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> TUSKS_DIAMOND = ITEMS.registerSimpleItem("tusks_diamond", new Item.Properties().stacksTo(1).durability(1562));
+    public static final DeferredItem<Item> TUSKS_IRON = ITEMS.registerSimpleItem("tusks_iron", new Item.Properties().stacksTo(1).durability(251));
+    public static final DeferredItem<Item> TUSKS_WOOD = ITEMS.registerSimpleItem("tusks_wood", new Item.Properties().stacksTo(1).durability(60));
 
     // ---- Foods ----
     public static final DeferredItem<Item> CRAB_COOKED = ITEMS.registerSimpleItem("crab_cooked",
