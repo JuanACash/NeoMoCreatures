@@ -69,6 +69,8 @@ public class ModNetworking {
                     horse.setDescendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCWyvernEntity wyvern) {
                     wyvern.setDescendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCBigCatEntity bigCat) {
+                    bigCat.setDescendHeld(payload.pressed());
                 }
             }));
 
@@ -80,6 +82,8 @@ public class ModNetworking {
                     horse.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCWyvernEntity wyvern) {
                     wyvern.setAscendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCBigCatEntity bigCat) {
+                    bigCat.setAscendHeld(payload.pressed());
                 }
             }));
     }

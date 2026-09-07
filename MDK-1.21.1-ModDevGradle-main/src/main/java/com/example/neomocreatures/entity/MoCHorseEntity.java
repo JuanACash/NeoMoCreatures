@@ -1724,6 +1724,11 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     @Override
+    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+        return !isSkeletonStage() && super.canDrownInFluidType(type);
+    }
+
+    @Override
     public boolean isInvertedHealAndHarm() {
         return isUndead();
     }

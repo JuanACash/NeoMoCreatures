@@ -63,6 +63,41 @@
   "moc_elephant.hurt": { "sounds": ["neomocreatures:moc_elephant/elephant_hurt1", "neomocreatures:moc_elephant/elephant_hurt2"] },
   "moc_elephant.death": { "sounds": ["neomocreatures:moc_elephant/elephant_dying"] },
 
+  "moc_big_cat.ambient": {
+    "sounds": [
+      "neomocreatures:moc_big_cat/lion_grunt1",
+      "neomocreatures:moc_big_cat/lion_grunt2",
+      "neomocreatures:moc_big_cat/lion_grunt3"
+    ]
+  },
+  "moc_big_cat.hurt": {
+    "sounds": [
+      "neomocreatures:moc_big_cat/lion_hurt1",
+      "neomocreatures:moc_big_cat/lion_hurt2",
+      "neomocreatures:moc_big_cat/lion_hurt3",
+      "neomocreatures:moc_big_cat/lion_hurt4"
+    ]
+  },
+  "moc_big_cat.ambient_baby": {
+    "sounds": [
+      "neomocreatures:moc_big_cat/cub_grunt1",
+      "neomocreatures:moc_big_cat/cub_grunt2",
+      "neomocreatures:moc_big_cat/cub_grunt3",
+      "neomocreatures:moc_big_cat/cub_grunt4",
+      "neomocreatures:moc_big_cat/cub_grunt5",
+      "neomocreatures:moc_big_cat/cub"
+    ]
+  },
+  "moc_big_cat.hurt_baby": {
+    "sounds": [
+      "neomocreatures:moc_big_cat/cub_hurt1",
+      "neomocreatures:moc_big_cat/cub_hurt2",
+      "neomocreatures:moc_big_cat/cub_hurt3"
+    ]
+  },
+  "moc_big_cat.death_baby": { "sounds": ["neomocreatures:moc_big_cat/cub_dying"] },
+  "moc_big_cat.death": { "sounds": ["neomocreatures:moc_big_cat/lion_death"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

@@ -3,6 +3,7 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
+import com.example.neomocreatures.entity.MoCBigCatEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -44,6 +45,8 @@ public class ScrollOfFreedomItem extends Item {
             wyvern.dropChestAndContents();
         } else if (target instanceof MoCElephantEntity elephant) {
             elephant.dropAllEquipment();
+        } else if (target instanceof MoCBigCatEntity bigCat) {
+            bigCat.dropAllEquipment();
         }
         // (future entities with their own equipment: add their drop here)
 

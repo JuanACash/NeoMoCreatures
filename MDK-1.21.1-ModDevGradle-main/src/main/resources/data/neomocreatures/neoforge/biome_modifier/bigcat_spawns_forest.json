@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:forest", "minecraft:birch_forest", "minecraft:windswept_forest",
+             "minecraft:old_growth_birch_forest"],
+  "spawners": [
+    { "type": "neomocreatures:moc_big_cat", "weight": 24, "minCount": 1, "maxCount": 4 }
+  ]
+}

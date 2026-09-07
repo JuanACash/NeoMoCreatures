@@ -243,6 +243,16 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
                     output.accept(ModItems.WYVERN_SPAWN_EGG.get());
                     output.accept(ModItems.MOC_ELEPHANT_SPAWN_EGG.get());
+                    output.accept(ModItems.LION_SPAWN_EGG.get());
+                    output.accept(ModItems.TIGER_SPAWN_EGG.get());
+                    output.accept(ModItems.LEOPARD_SPAWN_EGG.get());
+                    output.accept(ModItems.PANTHER_SPAWN_EGG.get());
+                    output.accept(ModItems.LIGER_SPAWN_EGG.get());
+                    output.accept(ModItems.LIARD_SPAWN_EGG.get());
+                    output.accept(ModItems.LEOGER_SPAWN_EGG.get());
+                    output.accept(ModItems.LITHER_SPAWN_EGG.get());
+                    output.accept(ModItems.PANTHARD_SPAWN_EGG.get());
+                    output.accept(ModItems.PANTHGER_SPAWN_EGG.get());
 
                 }).build());
 

@@ -34,6 +34,36 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.WyvernSpawnEggItem(new Item.Properties()));
     public static final DeferredItem<Item> MOC_ELEPHANT_SPAWN_EGG = ITEMS.register("moc_elephant_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_ELEPHANT, 0x5C4A3A, 0xE8DCC8, new Item.Properties()));
+    public static final DeferredItem<Item> LION_SPAWN_EGG = ITEMS.register("lion_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.SpawnFamily.LION, 0xC2A25C, 0x6B4A1F, new Item.Properties()));
+    public static final DeferredItem<Item> TIGER_SPAWN_EGG = ITEMS.register("tiger_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.SpawnFamily.TIGER, 0xE0771C, 0x1A1A1A, new Item.Properties()));
+    public static final DeferredItem<Item> LEOPARD_SPAWN_EGG = ITEMS.register("leopard_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.SpawnFamily.LEOPARD, 0xE8C88A, 0x3A2A1A, new Item.Properties()));
+    public static final DeferredItem<Item> PANTHER_SPAWN_EGG = ITEMS.register("panther_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.SpawnFamily.PANTHER, 0x1A1A1A, 0x2E2E2E, new Item.Properties()));
+    public static final DeferredItem<Item> LIGER_SPAWN_EGG = ITEMS.register("liger_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.LIGER, 0xC97B2E, 0x1A1A1A, new Item.Properties()));
+    public static final DeferredItem<Item> LIARD_SPAWN_EGG = ITEMS.register("liard_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.LIARD, 0xC2A25C, 0x3A2A1A, new Item.Properties()));
+    public static final DeferredItem<Item> LEOGER_SPAWN_EGG = ITEMS.register("leoger_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.LEOGER, 0xE0771C, 0x3A2A1A, new Item.Properties()));
+    public static final DeferredItem<Item> LITHER_SPAWN_EGG = ITEMS.register("lither_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.LITHER, 0xC2A25C, 0x1A1A1A, new Item.Properties()));
+    public static final DeferredItem<Item> PANTHARD_SPAWN_EGG = ITEMS.register("panthard_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.PANTHARD, 0x1A1A1A, 0xE8C88A, new Item.Properties()));
+    public static final DeferredItem<Item> PANTHGER_SPAWN_EGG = ITEMS.register("panthger_spawn_egg",
+        () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
+                com.example.neomocreatures.entity.bigcat.BigCatVariant.PANTHGER, 0x1A1A1A, 0xE0771C, new Item.Properties()));
     
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());

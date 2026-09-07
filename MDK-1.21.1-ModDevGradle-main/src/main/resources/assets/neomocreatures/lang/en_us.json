@@ -67,6 +67,16 @@
   "item.neomocreatures.moc_horse_mob_spawn_egg": "Horse Mob Spawn Egg",
   "item.neomocreatures.wyvern_spawn_egg": "Wyvern Spawn Egg",
   "item.neomocreatures.moc_elephant_spawn_egg": "Elephant Spawn Egg",
+  "item.neomocreatures.lion_spawn_egg": "Lion Spawn Egg",
+  "item.neomocreatures.tiger_spawn_egg": "Tiger Spawn Egg",
+  "item.neomocreatures.leopard_spawn_egg": "Leopard Spawn Egg",
+  "item.neomocreatures.panther_spawn_egg": "Panther Spawn Egg",
+  "item.neomocreatures.liger_spawn_egg": "Liger Spawn Egg",
+  "item.neomocreatures.liard_spawn_egg": "Liard Spawn Egg",
+  "item.neomocreatures.leoger_spawn_egg": "Leoger Spawn Egg",
+  "item.neomocreatures.lither_spawn_egg": "Lither Spawn Egg",
+  "item.neomocreatures.panthard_spawn_egg": "Panthard Spawn Egg",
+  "item.neomocreatures.panthger_spawn_egg": "Panthger Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -252,6 +262,7 @@
   "entity.neomocreatures.moc_horse_mob": "Horse Mob",
   "entity.neomocreatures.wyvern": "Wyvern",
   "entity.neomocreatures.moc_elephant": "Elephant",
+  "entity.neomocreatures.moc_big_cat": "Big Cat",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

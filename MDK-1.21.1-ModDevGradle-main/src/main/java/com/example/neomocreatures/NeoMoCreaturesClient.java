@@ -12,6 +12,8 @@ import com.example.neomocreatures.client.MoCElephantModel;
 import com.example.neomocreatures.client.MoCElephantRenderer;
 import com.example.neomocreatures.init.ModBlocks;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.client.MoCBigCatModel;
+import com.example.neomocreatures.client.MoCBigCatRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -45,6 +47,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCWyvernRenderer.MOC_WYVERN_LAYER, MoCWyvernModel::createBodyLayer);
                 event.registerLayerDefinition(MoCEggRenderer.MOC_EGG_LAYER, MoCEggModel::createBodyLayer);
                 event.registerLayerDefinition(MoCElephantRenderer.MOC_ELEPHANT_LAYER, MoCElephantModel::createBodyLayer);
+                event.registerLayerDefinition(MoCBigCatRenderer.MOC_BIG_CAT_LAYER, MoCBigCatModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -56,6 +59,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.WYVERN_MOTHER_TAMED.get(), MoCWyvernRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_EGG.get(), MoCEggRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_ELEPHANT.get(), MoCElephantRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BIG_CAT.get(), MoCBigCatRenderer::new);
         });
                 
     }

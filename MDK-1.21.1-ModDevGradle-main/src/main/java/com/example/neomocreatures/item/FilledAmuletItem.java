@@ -51,6 +51,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("ElephantVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_ELEPHANT.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("BigCatVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BIG_CAT.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -84,6 +87,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnWyvern(level, tag, pos);
         } else if (tag.contains("ElephantVariant")) {
             spawned = spawnElephant(level, tag, pos);
+        } else if (tag.contains("BigCatVariant")) {
+            spawned = spawnBigCat(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -232,5 +237,30 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(elephant);
         return elephant;
+    }
+
+    private Entity spawnBigCat(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCBigCatEntity bigCat = ModEntities.MOC_BIG_CAT.get().create(level);
+        if (bigCat == null) return null;
+        bigCat.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        bigCat.setVariant(com.example.neomocreatures.entity.bigcat.BigCatVariant.valueOf(tag.getString("BigCatVariant")));
+        bigCat.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            bigCat.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        bigCat.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            bigCat.setAge(tag.getInt("Age"));
+        } else {
+            bigCat.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.getBoolean("Wings")) {
+            bigCat.setWings(true);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            bigCat.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(bigCat);
+        return bigCat;
     }
 }

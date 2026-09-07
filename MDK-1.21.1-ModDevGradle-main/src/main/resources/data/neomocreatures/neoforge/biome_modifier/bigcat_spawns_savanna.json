@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna"],
+  "spawners": [
+    { "type": "neomocreatures:moc_big_cat", "weight": 12, "minCount": 1, "maxCount": 4 }
+  ]
+}

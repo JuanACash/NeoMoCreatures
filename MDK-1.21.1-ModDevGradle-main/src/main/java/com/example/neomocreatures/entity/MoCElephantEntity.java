@@ -1137,6 +1137,11 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
         }
     }
 
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        return !this.isBaby() && super.causeFallDamage(fallDistance, multiplier, source);
+    }
+
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {

@@ -112,6 +112,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         setTier(tier);
         boolean isMotherTier = tier == WyvernTier.MOTHER || tier == WyvernTier.MOTHER_TAMED;
         setVariant(isMotherTier ? WyvernVariant.MOTHER : WyvernVariant.randomWild(this.random));
+
+        // 50/50 ground or air at spawn — only actually lands if there's solid
+        // ground right below it; otherwise it just starts flying regardless.
+        if (!level.isClientSide) {
+            boolean wantsGround = this.random.nextBoolean();
+            boolean solidGroundBelow = level.getBlockState(this.blockPosition().below()).canOcclude();
+            setIsFlying(!(wantsGround && solidGroundBelow));
+        }
     }
 
     @Override
@@ -484,7 +492,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(2, new WyvernMeleeAttackGoal(this, 1.2D, false));
+        this.goalSelector.addGoal(2, new WyvernMeleeAttackGoal(this, 1.2D, true));
         this.goalSelector.addGoal(5, new WyvernFlyGoal(this, 1.3D));
         this.goalSelector.addGoal(6, new WyvernGroundWanderGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -492,7 +500,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, (int) AGGRO_RADIUS,
-                true, false, target -> !this.isTame() && !this.isVehicle()));
+                false, false, target -> !this.isTame() && !this.isVehicle()));
     }
 
     private static class WyvernFlyGoal extends WaterAvoidingRandomFlyingGoal {
@@ -1098,11 +1106,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 return;
             }
 
-            if (this.getTarget() != null && !this.isVehicle() && this.getHealth() < this.getMaxHealth() / 2.0F) {
-                this.setTarget(null);
-                setIsFlying(true);
-            }
-
             if (!this.isOrderedToSit() && !this.isTame()) {
                 if (!getIsFlying() && this.random.nextInt(100) == 0) {
                     setIsFlying(true);
@@ -1118,10 +1121,17 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 setIsFlying(false);
             }
 
-            if (this.getTarget() != null && !this.isOrderedToSit() && !this.isVehicle() && this.random.nextInt(20) == 0) {
-                setIsFlying(true);
-                if (this.onGround()) {
-                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
+            boolean solidGroundBelow = this.level().getBlockState(this.blockPosition().below()).canOcclude();
+            if (this.getTarget() != null && !this.isOrderedToSit() && !this.isVehicle()) {
+                if (!solidGroundBelow && this.random.nextInt(20) == 0) {
+                    // No solid ground to fight from here — take off instead.
+                    setIsFlying(true);
+                    if (this.onGround()) {
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
+                    }
+                } else if (getIsFlying() && solidGroundBelow && this.random.nextInt(20) == 0) {
+                    // Ground is available — land to keep fighting from there instead of flying.
+                    setIsFlying(false);
                 }
             }
 
