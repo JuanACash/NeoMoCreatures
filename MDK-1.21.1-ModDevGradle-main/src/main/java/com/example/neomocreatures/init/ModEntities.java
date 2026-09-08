@@ -8,6 +8,7 @@ import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCScorpionEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -110,6 +111,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_manticore"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCScorpionEntity>> MOC_SCORPION =
+        ENTITY_TYPES.register("moc_scorpion", () -> EntityType.Builder
+                .of(MoCScorpionEntity::new, MobCategory.MONSTER)
+                .sized(1.4F, 0.9F)
+                .clientTrackingRange(10)
+                .build("moc_scorpion"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -131,6 +139,7 @@ public class ModEntities {
                 event.put(MOC_ELEPHANT.get(), MoCElephantEntity.createAttributes().build());
                 event.put(MOC_BIG_CAT.get(), MoCBigCatEntity.createAttributes().build());
                 event.put(MOC_MANTICORE.get(), MoCManticoreEntity.createAttributes().build());
+                event.put(MOC_SCORPION.get(), MoCScorpionEntity.createAttributes().build());
         });
         }
         
@@ -198,6 +207,27 @@ public class ModEntities {
                         return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
                 },
                 net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerScorpionSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(MOC_SCORPION.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (type, level, reason, pos, random) -> {
+                        boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                                && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
+                        if (!spaceOk || level.getBlockState(pos.below()).isAir()) {
+                        return false;
+                        }
+                        if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
+                        return true;
+                        }
+                        if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+                        return false;
+                        }
+                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                },
+                RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
         public static void registerWyvernSpawnPlacements(RegisterSpawnPlacementsEvent event) {

@@ -78,6 +78,7 @@
   "item.neomocreatures.panthard_spawn_egg": "Panthard Spawn Egg",
   "item.neomocreatures.panthger_spawn_egg": "Panthger Spawn Egg",
   "item.neomocreatures.manticore_spawn_egg": "Manticore Spawn Egg",
+  "item.neomocreatures.scorpion_spawn_egg": "Scorpion Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -270,7 +271,7 @@
   "entity.neomocreatures.wyvern": "Wyvern",
   "entity.neomocreatures.moc_elephant": "Elephant",
   "entity.neomocreatures.moc_big_cat": "Big Cat",
-  "entity.neomocreatures.moc_manticore": "Manticore",
+  "entity.neomocreatures.moc_scorpion": "Scorpion",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

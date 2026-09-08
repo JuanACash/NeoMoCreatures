@@ -68,6 +68,8 @@ public class MoCBigCatEntity extends TamableAnimal implements net.minecraft.worl
     private static final double RIDDEN_FLYER_GRAVITY_PULL = 0.02D;
     private static final int WING_FLAP_BURST_TICKS = 20;
     private static final int SAFE_FALL_BLOCKS = 3;
+    private static final float LIGER_RIDER_HEIGHT_BONUS = 0.2F;
+
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBigCatEntity.class, EntityDataSerializers.INT);
@@ -646,6 +648,9 @@ protected void registerGoals() {
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
+            if (!player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE))) {
+                player.drop(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE), false);
+            }
         }
     }
 
@@ -1116,7 +1121,8 @@ protected void registerGoals() {
         float yaw = this.getYRot() * ((float) Math.PI / 180F);
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
-        double y = this.getY() + RIDER_HEIGHT * this.getScale();
+        float extraHeight = getVariant() == BigCatVariant.LIGER ? LIGER_RIDER_HEIGHT_BONUS : 0F;
+        double y = this.getY() + (RIDER_HEIGHT + extraHeight) * this.getScale();
         moveFunction.accept(passenger, x, y, z);
     }
 

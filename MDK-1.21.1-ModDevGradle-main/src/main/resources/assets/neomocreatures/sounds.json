@@ -104,6 +104,17 @@
       "neomocreatures:moc_scorpion/scorpion_sting2"
     ]
   },
+  "moc_scorpion.claw": { "sounds": ["neomocreatures:moc_scorpion/scorpion_claw"] },
+  "moc_scorpion.ambient": {
+    "sounds": [
+      "neomocreatures:moc_scorpion/scorpion_grunt1",
+      "neomocreatures:moc_scorpion/scorpion_grunt2",
+      "neomocreatures:moc_scorpion/scorpion_grunt3",
+      "neomocreatures:moc_scorpion/scorpion_grunt4"
+    ]
+  },
+  "moc_scorpion.hurt": { "sounds": ["neomocreatures:moc_scorpion/scorpion_hurt"] },
+  "moc_scorpion.death": { "sounds": ["neomocreatures:moc_scorpion/scorpion_dying"] },
 
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },

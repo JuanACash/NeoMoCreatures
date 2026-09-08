@@ -48,6 +48,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.item.Items;
 
 public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.HasCustomInventoryScreen {
 
@@ -855,11 +856,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     /** Mouth-open animation + horse's drinking sound, shared by all four essences. */
     private void useEssence(Player player, ItemStack stack) {
         startMouthAnimation();
-        if (!this.level().isClientSide && !player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
         if (!this.level().isClientSide) {
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
             this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+            if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
+            }
         }
     }
 

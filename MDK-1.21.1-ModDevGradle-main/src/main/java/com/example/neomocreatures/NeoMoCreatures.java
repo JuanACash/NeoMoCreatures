@@ -260,6 +260,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.PANTHARD_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHGER_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
+                    output.accept(ModItems.SCORPION_SPAWN_EGG.get());
 
                 }).build());
 
@@ -298,6 +299,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerManticoreSpawnPlacements);
         modEventBus.addListener(ModEntities::registerElephantSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBigCatSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerScorpionSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

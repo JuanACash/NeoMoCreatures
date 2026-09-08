@@ -66,6 +66,8 @@ public class ModItems {
                 com.example.neomocreatures.entity.bigcat.BigCatVariant.PANTHGER, 0x1A1A1A, 0xE0771C, new Item.Properties()));
     public static final DeferredItem<Item> MANTICORE_SPAWN_EGG = ITEMS.register("manticore_spawn_egg",
         () -> new com.example.neomocreatures.item.ManticoreSpawnEggItem(0x4A7A3A, 0x2E5222, new Item.Properties()));
+    public static final DeferredItem<Item> SCORPION_SPAWN_EGG = ITEMS.register("scorpion_spawn_egg",
+        () -> new com.example.neomocreatures.item.ScorpionSpawnEggItem(0xC2914F, 0x1A1A1A, new Item.Properties()));
     
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
