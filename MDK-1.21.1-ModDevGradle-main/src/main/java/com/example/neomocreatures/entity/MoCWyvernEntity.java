@@ -1136,12 +1136,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             }
 
             if (getIsFlying() && !this.isVehicle()) {
-                Vec3 motion = this.getDeltaMovement();
-                double newY;
                 LivingEntity attackTarget = this.getTarget();
 
                 if (attackTarget != null) {
+                    Vec3 motion = this.getDeltaMovement();
                     double heightDiff = attackTarget.getY() - this.getY();
+                    double newY;
                     if (heightDiff < -1.0D) {
                         newY = Math.max(motion.y - 0.08D, -0.6D);
                     } else if (heightDiff > 1.0D) {
@@ -1149,24 +1149,21 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                     } else {
                         newY = motion.y * 0.8D;
                     }
-                } else {
-                    int groundY = this.level().getHeight(
-                            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                            this.getBlockX(), this.getBlockZ());
-                    double heightAboveGround = this.getY() - groundY;
-
-                    if (heightAboveGround < 10.0D) {
-                        newY = Math.min(motion.y + 0.06D, 0.5D);
-                    } else if (heightAboveGround > 48.0D) {
-                        newY = Math.max(motion.y - 0.05D, -0.5D);
-                    } else {
-                        newY = motion.y * 0.8D;
-                        if (Math.abs(newY) < 0.01D) {
-                            newY = 0.0D;
-                        }
-                    }
+                    this.setDeltaMovement(motion.x, newY, motion.z);
                 }
-                this.setDeltaMovement(motion.x, newY, motion.z);
+
+                // Always keep some lateral drift while airborne — otherwise it can sit almost
+                // still between WyvernFlyGoal's destination picks (or while climbing/descending
+                // toward a target), which reads as "stuck in place."
+                Vec3 horizontal = this.getDeltaMovement();
+                double lateralSpeedSqr = horizontal.x * horizontal.x + horizontal.z * horizontal.z;
+                if (lateralSpeedSqr < 0.01D) {
+                    double angle = this.random.nextDouble() * Math.PI * 2.0D;
+                    this.setDeltaMovement(
+                            this.getDeltaMovement().x + Math.cos(angle) * 0.08D,
+                            this.getDeltaMovement().y,
+                            this.getDeltaMovement().z + Math.sin(angle) * 0.08D);
+                }
 
                 if (this.horizontalCollision) {
                     this.setDeltaMovement(this.getDeltaMovement().add(
@@ -1175,13 +1172,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
                 if (isAirborneFlapping()) {
                     wingFlap();
-                }
-
-                if (this.getNavigation().isDone() && this.getTarget() == null) {
-                    if (this.random.nextInt(40) == 0) {
-                        this.setDeltaMovement(this.getDeltaMovement().add(0.0D,
-                                0.3D + (this.random.nextDouble() * 0.3D), 0.0D));
-                    }
                 }
             }
         }

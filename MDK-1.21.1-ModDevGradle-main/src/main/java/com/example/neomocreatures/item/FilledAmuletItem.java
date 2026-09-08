@@ -54,6 +54,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("BigCatVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BIG_CAT.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("ManticoreVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_MANTICORE.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -89,6 +92,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnElephant(level, tag, pos);
         } else if (tag.contains("BigCatVariant")) {
             spawned = spawnBigCat(level, tag, pos);
+        } else if (tag.contains("ManticoreVariant")) {
+            spawned = spawnManticore(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -262,5 +267,27 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(bigCat);
         return bigCat;
+    }
+
+    private Entity spawnManticore(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCManticoreEntity manticore = ModEntities.MOC_MANTICORE.get().create(level);
+        if (manticore == null) return null;
+        manticore.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        manticore.setVariant(com.example.neomocreatures.entity.manticore.ManticoreVariant.valueOf(tag.getString("ManticoreVariant")));
+        manticore.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            manticore.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        manticore.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            manticore.setAge(tag.getInt("Age"));
+        } else {
+            manticore.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            manticore.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(manticore);
+        return manticore;
     }
 }

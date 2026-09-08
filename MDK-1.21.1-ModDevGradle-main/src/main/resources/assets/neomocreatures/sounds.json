@@ -98,6 +98,13 @@
   "moc_big_cat.death_baby": { "sounds": ["neomocreatures:moc_big_cat/cub_dying"] },
   "moc_big_cat.death": { "sounds": ["neomocreatures:moc_big_cat/lion_death"] },
 
+  "moc_scorpion.sting": {
+    "sounds": [
+      "neomocreatures:moc_scorpion/scorpion_sting1",
+      "neomocreatures:moc_scorpion/scorpion_sting2"
+    ]
+  },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

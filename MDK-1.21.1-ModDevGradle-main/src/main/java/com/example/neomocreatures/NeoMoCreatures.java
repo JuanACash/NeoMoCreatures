@@ -85,6 +85,12 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOUNTAIN_WYVERN_EGG.get());
                     output.accept(ModItems.SEA_WYVERN_EGG.get());
                     output.accept(ModItems.MOTHER_WYVERN_EGG.get());
+                    output.accept(ModItems.PLAIN_MANTICORE_EGG.get());
+                    output.accept(ModItems.DARK_MANTICORE_EGG.get());
+                    output.accept(ModItems.FROST_MANTICORE_EGG.get());
+                    output.accept(ModItems.FIRE_MANTICORE_EGG.get());
+                    output.accept(ModItems.TOXIC_MANTICORE_EGG.get());
+
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
                     output.accept(ModItems.SHARK_TEETH.get());
@@ -289,7 +295,9 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerSpawnPlacements);
         modEventBus.addListener(ModEntities::registerHorseMobSpawnPlacements);
         modEventBus.addListener(ModEntities::registerWyvernSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerManticoreSpawnPlacements);
         modEventBus.addListener(ModEntities::registerElephantSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerBigCatSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

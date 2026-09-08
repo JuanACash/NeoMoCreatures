@@ -1197,7 +1197,7 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
      */
     @Override
     public void onPlayerJump(int jumpPower) {
-        if (jumpPower > 0 && this.onGround()) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater())) {
             double jumpVelocity = getVariant().getJumpVelocity();
             net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, jumpVelocity, motion.z);

@@ -543,25 +543,33 @@ protected void registerGoals() {
             net.minecraft.world.DifficultyInstance difficulty,
             net.minecraft.world.entity.MobSpawnType spawnReason,
             @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        BigCatVariant variant;
+        BigCatGroupData resultGroupData = null;
+
         if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
                 || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
             WildFamily family;
             if (spawnGroupData instanceof BigCatGroupData shared) {
-                family = shared.family; // rest of the herd: reuse whatever the first member rolled
+                family = shared.family;
             } else {
                 family = pickFamilyForBiome(level, this.blockPosition());
-                spawnGroupData = new BigCatGroupData(family);
             }
-            variant = rollVariantForFamily(family);
+            resultGroupData = new BigCatGroupData(family);
+            setVariant(rollVariantForFamily(family));
         } else {
-            variant = BigCatVariant.randomLion(this.random); // /summon, mob spawner, etc.
+            setVariant(BigCatVariant.randomLion(this.random)); // /summon, mob spawner, etc.
         }
-        setVariant(variant);
+
         if (this.random.nextInt(4) == 0) {
-            this.setAge(-variant.getGrowthTicks());
+            this.setAge(-getVariant().getGrowthTicks());
         }
-        return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+
+        // Never forward our own custom SpawnGroupData into AgeableMob's finalizeSpawn —
+        // internamente lo convierte sin comprobar el tipo y revienta con cualquier otra
+        // cosa. Le dejamos manejar su propia lógica de "probabilidad de cría" con datos
+        // frescos (null), y devolvemos LA NUESTRA aparte para que el resto de la manada
+        // siga recibiendo la familia correcta.
+        super.finalizeSpawn(level, difficulty, spawnReason, null);
+        return resultGroupData;
     }
 
     /** Which family a whole herd will be, decided once per herd by biome — never mixed within a group. */
@@ -1218,7 +1226,7 @@ protected void registerGoals() {
     /** Fixed 2.7-block jump, no charge bar — same one-shot approach as the elephant's. */
     @Override
     public void onPlayerJump(int jumpPower) {
-        if (jumpPower > 0 && this.onGround()) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater())) {
             net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
             this.hasImpulse = true;

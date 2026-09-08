@@ -71,7 +71,9 @@ public class ModNetworking {
                     wyvern.setDescendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCBigCatEntity bigCat) {
                     bigCat.setDescendHeld(payload.pressed());
-                }
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCManticoreEntity manticore) {
+                    manticore.setDescendHeld(payload.pressed());
+                } 
             }));
 
         registrar.playToServer(
@@ -84,6 +86,8 @@ public class ModNetworking {
                     wyvern.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCBigCatEntity bigCat) {
                     bigCat.setAscendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCManticoreEntity manticore) {
+                    manticore.setAscendHeld(payload.pressed());
                 }
             }));
     }

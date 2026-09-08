@@ -230,6 +230,7 @@
   "item.neomocreatures.kitty_bed_yellow": "Yellow Kitty Bed",
   "item.neomocreatures.kitty_litter": "Kitty Litter",
   "item.neomocreatures.medallion": "Medallion",
+
   "item.neomocreatures.moc_egg": "Mystery Egg",
   "item.neomocreatures.jungle_wyvern_egg": "Jungle Wyvern Egg",
   "item.neomocreatures.swamp_wyvern_egg": "Swamp Wyvern Egg",
@@ -240,6 +241,11 @@
   "item.neomocreatures.mountain_wyvern_egg": "Mountain Wyvern Egg",
   "item.neomocreatures.sea_wyvern_egg": "Sea Wyvern Egg",
   "item.neomocreatures.mother_wyvern_egg": "Mother Wyvern Egg",
+  "item.neomocreatures.plain_manticore_egg": "Manticore Egg",
+  "item.neomocreatures.dark_manticore_egg": "Dark Manticore Egg",
+  "item.neomocreatures.frost_manticore_egg": "Frost Manticore Egg",
+  "item.neomocreatures.fire_manticore_egg": "Fire Manticore Egg",
+  "item.neomocreatures.toxic_manticore_egg": "Toxic Manticore Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",

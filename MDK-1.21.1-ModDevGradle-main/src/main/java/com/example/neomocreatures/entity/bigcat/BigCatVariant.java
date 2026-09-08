@@ -16,7 +16,7 @@ public enum BigCatVariant {
     LEOPARD(6, "big_cat_leopard", 25.0D, 6.0D, false, 0.93D, SpawnFamily.LEOPARD),
     SNOW_LEOPARD(7, "big_cat_snow_leopard", 25.0D, 6.0D, false, 0.93D, SpawnFamily.LEOPARD),
     PANTHER(8, "big_cat_panther", 25.0D, 6.0D, false, 0.94D, SpawnFamily.PANTHER),
-    LIGER(9, "big_cat_liger", 35.0D, 7.0D, false, 1.08D, SpawnFamily.HYBRID),
+    LIGER(9, "big_cat_liger", 35.0D, 7.0D, false, 1.3D, SpawnFamily.HYBRID),
     LIARD(10, "big_cat_liard", 30.0D, 6.5D, false, 0.94D, SpawnFamily.HYBRID),
     LEOGER(11, "big_cat_leoger", 40.0D, 6.5D, false, 1.04D, SpawnFamily.HYBRID),
     LITHER(12, "big_cat_lither", 25.0D, 6.5D, false, 0.94D, SpawnFamily.HYBRID),

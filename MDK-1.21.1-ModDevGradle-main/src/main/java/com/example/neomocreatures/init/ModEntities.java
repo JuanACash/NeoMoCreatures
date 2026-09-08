@@ -173,6 +173,33 @@ public class ModEntities {
                 net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
+        public static void registerManticoreSpawnPlacements(net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent event) {
+        event.register(MOC_MANTICORE.get(),
+                net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND,
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (type, level, reason, pos, random) -> {
+                        boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                                && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
+                        if (!spaceOk) {
+                        return false;
+                        }
+                        if (level.getBlockState(pos.below()).isAir()) {
+                        return false;
+                        }
+
+                        if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
+                        return true; // red manticores — no light restriction in the Nether
+                        }
+
+                        // Wiki: light level 7 or less, Easy difficulty or higher (not Peaceful).
+                        if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+                        return false;
+                        }
+                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                },
+                net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
         public static void registerWyvernSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 // Wyverns fly, so no ground/light restrictions like the horse mob check —
                 // the only requirement is that the space itself isn't solid (tall grass,
@@ -210,6 +237,16 @@ public class ModEntities {
                                 return level.getRawBrightness(pos, 0) >= 9;
                         },
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+        public static void registerBigCatSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(
+                        MOC_BIG_CAT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE
+                );
         }
     
 }

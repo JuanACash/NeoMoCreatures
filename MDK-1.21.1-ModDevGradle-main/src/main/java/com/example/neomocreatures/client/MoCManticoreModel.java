@@ -13,14 +13,6 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
-/**
- * Shares the exact same body geometry as MoCBigCatModel (same shared Techne
- * base file in the original — MoCModelAbstractBigCat), plus the mane/fangs
- * (a manticore always has both, unlike the big cat's lion-only check), the
- * scorpion stinger tail, front claws, and wings that fold on the ground and
- * only extend/flap while airborne. No saddle/chest/collar yet — those come
- * in a later step.
- */
 public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
 
     private static final float R = 57.29578F;
@@ -58,6 +50,8 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
     private final ModelPart sTail3;
     private final ModelPart sTail4;
     private final ModelPart sTail5;
+    private final ModelPart stingerLump;
+    private final ModelPart stinger;
     private final ModelPart mane;
     private final ModelPart chinHair;
     private final ModelPart leftChinBeard;
@@ -72,6 +66,14 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
     private final ModelPart rightClaw1;
     private final ModelPart rightClaw2;
     private final ModelPart rightClaw3;
+    private final ModelPart saddle;
+    private final ModelPart saddleFront;
+    private final ModelPart saddleBack;
+    private final ModelPart leftFootHarness;
+    private final ModelPart leftFootRing;
+    private final ModelPart rightFootHarness;
+    private final ModelPart rightFootRing;
+    private final ModelPart storageChest;
 
     public MoCManticoreModel(ModelPart root) {
         this.root = root;
@@ -107,6 +109,8 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         this.sTail3 = root.getChild("s_tail_3");
         this.sTail4 = root.getChild("s_tail_4");
         this.sTail5 = root.getChild("s_tail_5");
+        this.stingerLump = root.getChild("stinger_lump");
+        this.stinger = root.getChild("stinger");
         this.mane = head.getChild("mane");
         this.chinHair = lowerJaw.getChild("chin_hair");
         this.leftChinBeard = head.getChild("left_chin_beard");
@@ -123,6 +127,14 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         this.rightClaw1 = rightFrontFoot.getChild("right_claw_1");
         this.rightClaw2 = rightFrontFoot.getChild("right_claw_2");
         this.rightClaw3 = rightFrontFoot.getChild("right_claw_3");
+        this.saddle = chest.getChild("saddle");
+        this.saddleFront = saddle.getChild("saddle_front");
+        this.saddleBack = saddle.getChild("saddle_back");
+        this.leftFootHarness = saddle.getChild("left_foot_harness");
+        this.leftFootRing = leftFootHarness.getChild("left_foot_ring");
+        this.rightFootHarness = saddle.getChild("right_foot_harness");
+        this.rightFootRing = rightFootHarness.getChild("right_foot_ring");
+        this.storageChest = abdomen.getChild("storage_chest");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -303,6 +315,36 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
                 CubeListBuilder.create().texOffs(12, 91).addBox(-1.5F, 0F, -1.5F, 3, 2, 3),
                 PartPose.offsetAndRotation(0F, 2.6F, -0.8F, 27F / R, 0F, 0F));
 
+        PartDefinition saddle = chest.addOrReplaceChild("saddle",
+                CubeListBuilder.create().texOffs(79, 18).addBox(-4F, -1F, -3F, 8, 2, 6),
+                PartPose.offset(0F, 0.5F, -1F));
+
+        saddle.addOrReplaceChild("saddle_front",
+                CubeListBuilder.create().texOffs(101, 26).addBox(-2.5F, -1F, -1.5F, 5, 2, 3),
+                PartPose.offsetAndRotation(0F, -1.0F, -1.5F, -10.6F / R, 0F, 0F));
+
+        saddle.addOrReplaceChild("saddle_back",
+                CubeListBuilder.create().texOffs(77, 26).addBox(-4F, -2F, -2F, 8, 2, 4),
+                PartPose.offsetAndRotation(0F, 0.7F, 4F, 12.78F / R, 0F, 0F));
+
+        PartDefinition leftFootHarness = saddle.addOrReplaceChild("left_foot_harness",
+                CubeListBuilder.create().texOffs(81, 18).addBox(-0.5F, 0F, -0.5F, 1, 5, 1),
+                PartPose.offset(4F, 0F, 0.5F));
+        leftFootHarness.addOrReplaceChild("left_foot_ring",
+                CubeListBuilder.create().texOffs(107, 31).addBox(0F, 0F, 0F, 1, 2, 2),
+                PartPose.offset(-0.5F, 5F, -1F));
+
+        PartDefinition rightFootHarness = saddle.addOrReplaceChild("right_foot_harness",
+                CubeListBuilder.create().texOffs(101, 18).addBox(-0.5F, 0F, -0.5F, 1, 5, 1),
+                PartPose.offset(-4F, 0F, 0.5F));
+        rightFootHarness.addOrReplaceChild("right_foot_ring",
+                CubeListBuilder.create().texOffs(101, 31).addBox(0F, 0F, 0F, 1, 2, 2),
+                PartPose.offset(-0.5F, 5F, -1F));
+
+        abdomen.addOrReplaceChild("storage_chest",
+                CubeListBuilder.create().texOffs(32, 59).addBox(-5F, -2F, -2.5F, 10, 4, 5),
+                PartPose.offsetAndRotation(0F, -2F, 5.5F, -90F / R, 0F, 0F));
+
         root.addOrReplaceChild("inner_wing",
                 CubeListBuilder.create().texOffs(26, 115).addBox(0F, 0F, 0F, 7, 2, 11),
                 PartPose.offsetAndRotation(4F, 9F, -7F, 0F, -20F / R, 0F));
@@ -337,6 +379,12 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         root.addOrReplaceChild("s_tail_5",
                 CubeListBuilder.create().texOffs(108, 42).mirror().addBox(-2F, 12.9F, -9F, 4, 3, 6),
                 PartPose.offsetAndRotation(0F, 8F, 0F, 3.035737F, 0F, 0F));
+        root.addOrReplaceChild("stinger_lump",
+                CubeListBuilder.create().texOffs(112, 34).mirror().addBox(-1.5F, 7.9F, 6F, 3, 3, 5),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 2.031914F, 0F, 0F));
+        root.addOrReplaceChild("stinger",
+                CubeListBuilder.create().texOffs(118, 29).mirror().addBox(-0.5F, 1.9F, 8F, 1, 1, 4),
+                PartPose.offsetAndRotation(0F, 8F, 0F, 1.213985F, 0F, 0F));
 
         return LayerDefinition.create(mesh, 128, 128);
     }
@@ -355,7 +403,6 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         leftHindUpperLeg.xRot = -25F / R + rLegXRot;
         leftUpperLeg.xRot = 15F / R + lLegXRot;
         rightHindUpperLeg.xRot = -25F / R + lLegXRot;
-        abdomen.yRot = Mth.cos(limbSwing * 0.3F) * 0.25F * limbSwingAmount;
         leftLowerLeg.xRot = -21.5F / R;
         rightLowerLeg.xRot = -21.5F / R;
         leftHindFoot.xRot = 27F / R;
@@ -386,16 +433,19 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         }
         lowerJaw.xRot = targetMouthAngle / R;
 
-        boolean floating = !entity.onGround();
+        boolean floating = entity.isVehicle() ? !entity.onGround() : entity.isSoaring();
+        boolean flapping = entity.isVehicle() ? entity.isAscendHeld() : floating;
         float wingRot;
         if (floating) {
-            wingRot = Mth.cos((ageInTicks * 0.3F) + (float) Math.PI) * 1.2F;
-            outerWing.yRot = -0.3228859F + (wingRot / 2F);
-            outerWingR.yRot = 0.3228859F - (wingRot / 2F);
+        wingRot = flapping
+                ? Mth.cos((ageInTicks * 0.3F) + (float) Math.PI) * 1.2F
+                : 0.1F; // extended and still while gliding/descending
+        outerWing.yRot = -0.3228859F + (wingRot / 2F);
+        outerWingR.yRot = 0.3228859F - (wingRot / 2F);
         } else {
-            wingRot = 60F / R;
-            outerWing.yRot = -90F / R;
-            outerWingR.yRot = 90F / R;
+        wingRot = 60F / R;
+        outerWing.yRot = -90F / R;
+        outerWingR.yRot = 90F / R;
         }
 
         innerWingR.y = innerWing.y;
@@ -420,23 +470,31 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         midWingR.zRot = -wingRot;
         outerWingR.zRot = -wingRot;
 
+        boolean sitting = entity.isSittingSynced();
+        float stingY = sitting ? 17F : 8F;
+        float stingZ = sitting ? -3F : 0F;
+
         int stingTicks = entity.getStingTicks();
         if (stingTicks == 0) {
             sTailRoot.xRot = 33F / R;
-            sTailRoot.y = 8F;
-            sTailRoot.z = 0F;
+            sTailRoot.y = stingY;
+            sTailRoot.z = stingZ;
             sTail2.xRot = 54.5F / R;
-            sTail2.y = 8F;
-            sTail2.z = 0F;
+            sTail2.y = stingY;
+            sTail2.z = stingZ;
             sTail3.xRot = 95.1F / R;
-            sTail3.y = 8F;
-            sTail3.z = 0F;
+            sTail3.y = stingY;
+            sTail3.z = stingZ;
             sTail4.xRot = 141.8F / R;
-            sTail4.y = 8F;
-            sTail4.z = 0F;
+            sTail4.y = stingY;
+            sTail4.z = stingZ;
             sTail5.xRot = 173.9F / R;
-            sTail5.y = 8F;
-            sTail5.z = 0F;
+            sTail5.y = stingY;
+            sTail5.z = stingZ;
+            stingerLump.y = stingY;
+            stingerLump.z = stingZ;
+            stinger.y = stingY;
+            stinger.z = stingZ;
         } else {
             sTailRoot.xRot = 95.2F / R;
             sTailRoot.y = 14.5F;
@@ -463,6 +521,36 @@ public class MoCManticoreModel extends HierarchicalModel<MoCManticoreEntity> {
         neckHair.visible = true;
         leftFang.visible = true;
         rightFang.visible = true;
+
+        saddle.visible = entity.isSaddled();
+        storageChest.visible = entity.hasChest();
+
+        if (sitting) {
+            chest.y = 14F;
+            chest.xRot = -45F / R;
+            abdomen.xRot = -10F / R;
+            neckBase.xRot = 20F / R;
+            rightUpperLeg.xRot = 35F / R;
+            leftUpperLeg.xRot = 35F / R;
+            rightLowerLeg.xRot = 5F / R;
+            leftLowerLeg.xRot = 5F / R;
+            rightHindUpperLeg.y = 1F;
+            leftHindUpperLeg.y = 1F;
+            rightHindUpperLeg.xRot = -50F / R;
+            leftHindUpperLeg.xRot = -50F / R;
+            rightHindFoot.xRot = 90F / R;
+            leftHindFoot.xRot = 90F / R;
+            tailRoot.xRot = 100F / R;
+            tail2.xRot = 35F / R;
+            tail3.xRot = 10F / R;
+        } else {
+            chest.y = 8F;
+            chest.xRot = 0F;
+            abdomen.xRot = 0F;
+            neckBase.xRot = -14F / R;
+            rightHindUpperLeg.y = 3F;
+            leftHindUpperLeg.y = 3F;
+        }
     }
 
     @Override
