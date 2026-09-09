@@ -254,8 +254,15 @@ public class MoCScorpionModel extends HierarchicalModel<MoCScorpionEntity> {
 
     @Override
     public void setupAnim(MoCScorpionEntity entity, float limbSwing, float limbSwingAmount,
-                           float ageInTicks, float netHeadYaw, float headPitch) {
-        boolean poisoning = entity.getStingTicks() != 0 && entity.getStingTicks() < 15;
+                  float ageInTicks, float netHeadYaw, float headPitch) {
+    if (entity.isHeld()) {
+                limbSwing = 0F;
+                limbSwingAmount = 0F;
+                ageInTicks = 0F;
+                netHeadYaw = 0F;
+                headPitch = 0F;
+    }
+    boolean poisoning = entity.getStingTicks() != 0 && entity.getStingTicks() < 15;
 
         if (!poisoning) {
             body.xRot = 5F / R;

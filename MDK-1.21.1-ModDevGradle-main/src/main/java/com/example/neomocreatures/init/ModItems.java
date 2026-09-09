@@ -521,6 +521,26 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
             new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
                 ModEntities.WYVERN_MOTHER_TAMED, null, 0.0D, "MOTHER")));
+    public static final DeferredItem<Item> DIRT_SCORPION_EGG = ITEMS.register("dirt_scorpion_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                    new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                            com.example.neomocreatures.init.ModEntities.MOC_SCORPION, null, 0.0D, "DIRT")));
+    public static final DeferredItem<Item> CAVE_SCORPION_EGG = ITEMS.register("cave_scorpion_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                    new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                            com.example.neomocreatures.init.ModEntities.MOC_SCORPION, null, 0.0D, "CAVE")));
+    public static final DeferredItem<Item> FROST_SCORPION_EGG = ITEMS.register("frost_scorpion_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                    new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                            com.example.neomocreatures.init.ModEntities.MOC_SCORPION, null, 0.0D, "FROST")));
+    public static final DeferredItem<Item> FIRE_SCORPION_EGG = ITEMS.register("fire_scorpion_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                    new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                            com.example.neomocreatures.init.ModEntities.MOC_SCORPION, null, 0.0D, "NETHER")));
+    public static final DeferredItem<Item> UNDEAD_SCORPION_EGG = ITEMS.register("undead_scorpion_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                    new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                            com.example.neomocreatures.init.ModEntities.MOC_SCORPION, null, 0.0D, "UNDEAD")));
     public static final DeferredItem<Item> PLAIN_MANTICORE_EGG = ITEMS.register("plain_manticore_egg",
         () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
                 new com.example.neomocreatures.item.MoCEggItem.HatchSpec(

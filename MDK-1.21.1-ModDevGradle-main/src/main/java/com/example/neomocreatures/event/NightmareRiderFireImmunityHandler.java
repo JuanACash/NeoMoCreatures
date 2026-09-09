@@ -4,6 +4,8 @@ import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
+import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
@@ -42,7 +44,11 @@ public class NightmareRiderFireImmunityHandler {
                 && (horse.getSpecies() == Species.NIGHTMARE || horse.getSpecies() == Species.DARK_PEGASUS)) {
             return true;
         }
-        return entity.getVehicle() instanceof MoCManticoreEntity manticore
-                && manticore.getVariant() == ManticoreVariant.FIRE;
+        if (entity.getVehicle() instanceof MoCManticoreEntity manticore
+                && manticore.getVariant() == ManticoreVariant.FIRE) {
+            return true;
+        }
+        return entity.getVehicle() instanceof MoCScorpionEntity scorpion
+            && scorpion.getVariant() == ScorpionVariant.NETHER;
     }
 }

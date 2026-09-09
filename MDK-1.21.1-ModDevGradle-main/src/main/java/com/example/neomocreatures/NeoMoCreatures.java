@@ -85,6 +85,11 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOUNTAIN_WYVERN_EGG.get());
                     output.accept(ModItems.SEA_WYVERN_EGG.get());
                     output.accept(ModItems.MOTHER_WYVERN_EGG.get());
+                    output.accept(ModItems.DIRT_SCORPION_EGG.get());
+                    output.accept(ModItems.CAVE_SCORPION_EGG.get());
+                    output.accept(ModItems.FROST_SCORPION_EGG.get());
+                    output.accept(ModItems.FIRE_SCORPION_EGG.get());
+                    output.accept(ModItems.UNDEAD_SCORPION_EGG.get());
                     output.accept(ModItems.PLAIN_MANTICORE_EGG.get());
                     output.accept(ModItems.DARK_MANTICORE_EGG.get());
                     output.accept(ModItems.FROST_MANTICORE_EGG.get());

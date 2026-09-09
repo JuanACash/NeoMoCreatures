@@ -18,35 +18,39 @@ public enum ScorpionVariant {
     DIRT(0, "scorpion_dirt", false) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
-            target.addEffect(new MobEffectInstance(MobEffects.POISON, 70, 0));
+            target.addEffect(new MobEffectInstance(MobEffects.POISON, STING_EFFECT_DURATION_TICKS, 0));
         }
     },
     CAVE(1, "scorpion_cave", false) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
-            target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 70, 0));
+            target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, STING_EFFECT_DURATION_TICKS, 0));
         }
     },
     NETHER(2, "scorpion_fire", true) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
             if (target instanceof Player && !stingerInNether) {
-                target.igniteForSeconds(15);
+                target.igniteForSeconds(STING_FIRE_DURATION_SECONDS);
             }
         }
     },
     FROST(3, "scorpion_frost", false) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
-            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 70, 0));
+            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STING_EFFECT_DURATION_TICKS, 0));
         }
     },
     UNDEAD(4, "scorpion_undead", false) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
-            // Undead scorpions are passive per the wiki — never sting unprompted.
+            target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, STING_EFFECT_DURATION_TICKS, 0));
         }
     };
+
+    // Every color's sting lasts exactly 3 seconds per the wiki (20 ticks = 1 second).
+    private static final int STING_EFFECT_DURATION_TICKS = 60;
+    private static final int STING_FIRE_DURATION_SECONDS = 3;
 
     private final int id;
     private final String textureName;
