@@ -30,8 +30,8 @@ public enum ScorpionVariant {
     NETHER(2, "scorpion_fire", true) {
         @Override
         public void applySting(LivingEntity target, boolean stingerInNether) {
-            if (target instanceof Player && !stingerInNether) {
-                target.igniteForSeconds(STING_FIRE_DURATION_SECONDS);
+            if (target instanceof Player) {
+                target.igniteForSeconds(15);
             }
         }
     },

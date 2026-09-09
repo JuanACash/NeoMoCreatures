@@ -5,6 +5,7 @@ import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCScorpionEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -50,7 +51,9 @@ public class ScrollOfFreedomItem extends Item {
             bigCat.dropAllEquipment();
         } else if (target instanceof MoCManticoreEntity manticore) {
             manticore.dropAllEquipment();
-        }
+        } else if (target instanceof MoCScorpionEntity scorpion) {
+            scorpion.dropAllEquipment();
+        } 
         // (future entities with their own equipment: add their drop here)
 
         if (target instanceof TamableAnimal tamable) {

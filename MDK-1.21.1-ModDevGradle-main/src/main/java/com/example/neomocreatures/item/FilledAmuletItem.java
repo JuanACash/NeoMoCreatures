@@ -3,6 +3,8 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
@@ -57,6 +59,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("ManticoreVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_MANTICORE.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("ScorpionVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_SCORPION.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -94,6 +99,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnBigCat(level, tag, pos);
         } else if (tag.contains("ManticoreVariant")) {
             spawned = spawnManticore(level, tag, pos);
+        } else if (tag.contains("ScorpionVariant")) {
+            spawned = spawnScorpion(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -289,5 +296,23 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(manticore);
         return manticore;
+    }
+
+    private Entity spawnScorpion(Level level, CompoundTag tag, BlockPos pos) {
+        MoCScorpionEntity scorpion = ModEntities.MOC_SCORPION.get().create(level);
+        if (scorpion == null) return null;
+        scorpion.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        scorpion.setVariant(ScorpionVariant.valueOf(tag.getString("ScorpionVariant")));
+        scorpion.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            scorpion.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        scorpion.setBaby(!tag.getBoolean("Adult"));
+        scorpion.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            scorpion.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(scorpion);
+        return scorpion;
     }
 }

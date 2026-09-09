@@ -37,7 +37,7 @@ public enum ManticoreVariant {
     FIRE(3, "manticore_fire", true) {
         @Override
         public void applySting(LivingEntity target, boolean managerInNether) {
-            if (target instanceof Player && !managerInNether) {
+            if (target instanceof Player) {
                 target.igniteForSeconds(15);
             }
         }

@@ -225,6 +225,9 @@ public class ModEntities {
                         if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
                         return false;
                         }
+                        if (pos.getY() <= 40) {
+                        return true; // cave scorpion — no light restriction underground
+                        }
                         return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
                 },
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);

@@ -24,6 +24,7 @@ import net.minecraft.util.Mth;
 public class MoCScorpionModel extends HierarchicalModel<MoCScorpionEntity> {
 
     private static final float R = 57.29578F;
+    private boolean sittingForRender;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -427,6 +428,42 @@ public class MoCScorpionModel extends HierarchicalModel<MoCScorpionEntity> {
         leg8B.xRot = leg8A.xRot; leg8B.zRot = -70F / R - f16;
         leg8C.xRot = leg8A.xRot; leg8C.zRot = -70F / R - f16;
 
+        sittingForRender = false;
+        if (entity.isSittingSynced()) {
+                sittingForRender = true;
+                leg1A.xRot = -10F / R; leg1A.zRot = 35F / R;
+                leg1B.zRot = 20F / R;
+                leg1C.zRot = 35F / R;
+
+                leg2A.xRot = -30F / R; leg2A.zRot = 35F / R;
+                leg2B.zRot = 20F / R;
+                leg2C.zRot = 35F / R;
+
+                leg3A.xRot = -45F / R; leg3A.zRot = 35F / R;
+                leg3B.zRot = 20F / R;
+                leg3C.zRot = 35F / R;
+
+                leg4A.xRot = -60F / R; leg4A.zRot = 35F / R;
+                leg4B.zRot = 20F / R;
+                leg4C.zRot = 35F / R;
+
+                leg5A.xRot = -10F / R; leg5A.zRot = -35F / R;
+                leg5B.zRot = -20F / R;
+                leg5C.zRot = -35F / R;
+
+                leg6A.xRot = -30F / R; leg6A.zRot = -35F / R;
+                leg6B.zRot = -20F / R;
+                leg6C.zRot = -35F / R;
+
+                leg7A.xRot = -45F / R; leg7A.zRot = -35F / R;
+                leg7B.zRot = -20F / R;
+                leg7C.zRot = -35F / R;
+
+                leg8A.xRot = -60F / R; leg8A.zRot = -35F / R;
+                leg8B.zRot = -20F / R;
+                leg8C.zRot = -35F / R;
+                }
+
         headBackTrack(netHeadYaw, headPitch);
     }
 
@@ -437,6 +474,13 @@ public class MoCScorpionModel extends HierarchicalModel<MoCScorpionEntity> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, color);
+        if (sittingForRender) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 0.30D, 0.0D);
+                root.render(poseStack, buffer, packedLight, packedOverlay, color);
+                poseStack.popPose();
+        } else {
+                root.render(poseStack, buffer, packedLight, packedOverlay, color);
+        }
     }
 }

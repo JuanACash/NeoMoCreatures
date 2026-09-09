@@ -115,8 +115,11 @@ public class MoCManticoreEntity extends TamableAnimal implements com.example.neo
 
         @Override
         public boolean canUse() {
-            return !this.manticore.isTame() && !this.manticore.isOrderedToSit()
-                    && getBrightness(this.manticore) <= 0.5F && super.canUse();
+            if (this.manticore.isTame() || this.manticore.isOrderedToSit()) {
+                return false;
+            }
+            boolean inNether = this.manticore.level().dimension() == net.minecraft.world.level.Level.NETHER;
+            return (inNether || getBrightness(this.manticore) <= 0.5F) && super.canUse();
         }
     }
 

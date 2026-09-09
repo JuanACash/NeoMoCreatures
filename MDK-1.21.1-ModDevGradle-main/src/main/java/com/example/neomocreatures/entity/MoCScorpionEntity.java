@@ -46,9 +46,11 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
     private static final int MOUTH_TALK_TICKS = 50;
     private static final int MAX_BABIES_DROPPED = 5; // rand.nextInt(5) -> 0-4 babies, matches the original
     private static final float HEAL_AMOUNT = 4.0F;
+    private static final double TAMED_MAX_HEALTH = 40.0D;
     private static final int TRANSFORM_DURATION_TICKS = 100; // 5s, matches the wyvern/big cat essence pacing
     private static final int TRANSFORM_SOUND_TICKS = 60;
     private static final float BABY_SCALE = 0.3F;
+    private static final int GROWTH_TICKS = 24000;
     private static final float BABY_HITBOX_SCALE = 0.4F;
     private static final float RIDER_HEIGHT = 0F;
     private static final float RIDER_FORWARD = -0.1F;
@@ -73,10 +75,15 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_SADDLED =
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SITTING_SYNCED =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
 
     public MoCScorpionEntity(EntityType<? extends MoCScorpionEntity> type, Level level) {
         super(type, level);
     }
+
+    @Nullable
+    private net.minecraft.resources.ResourceLocation saddleItemId;
 
     @Override
     protected void registerGoals() {
@@ -88,7 +95,17 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new ScorpionDarknessTargetGoal<>(this, Player.class));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D) {
+            @Override
+            public boolean canUse() {
+                return !MoCScorpionEntity.this.isOrderedToSit() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !MoCScorpionEntity.this.isOrderedToSit() && super.canContinueToUse();
+            }
+        });
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
     }
@@ -107,7 +124,11 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
 
         @Override
         public boolean canUse() {
-            return !this.scorpion.isTame() && getRawLight(this.scorpion) <= 9 && super.canUse();
+            if (this.scorpion.isTame() || this.scorpion.getVariant() == ScorpionVariant.UNDEAD) {
+                return false;
+            }
+            boolean inNether = this.scorpion.level().dimension() == net.minecraft.world.level.Level.NETHER;
+            return (inNether || getRawLight(this.scorpion) <= 9) && super.canUse();
         }
     }
 
@@ -121,9 +142,25 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
     }
 
     @Override
+    public void tame(Player player) {
+        super.tame(player);
+        AttributeInstance healthAttr = this.getAttribute(Attributes.MAX_HEALTH);
+        if (healthAttr != null) {
+            healthAttr.setBaseValue(TAMED_MAX_HEALTH);
+        }
+        this.setHealth((float) TAMED_MAX_HEALTH);
+    }
+
+    @Override
     public boolean isFood(ItemStack stack) {
         return false; // taming is the pick-up-baby mechanic, not feeding (later step)
     }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return 5;
+    }
+    
 
     private boolean isHealingFood(ItemStack stack) {
         return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get())
@@ -181,13 +218,43 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         };
     }
 
+    /** Each color drops its own chitin. */
+    private static Item chitinItemFor(ScorpionVariant variant) {
+        return switch (variant) {
+            case DIRT -> com.example.neomocreatures.init.ModItems.CHITIN.get();
+            case CAVE -> com.example.neomocreatures.init.ModItems.CHITIN_BLACK.get();
+            case FROST -> com.example.neomocreatures.init.ModItems.CHITIN_FROST.get();
+            case NETHER -> com.example.neomocreatures.init.ModItems.CHITIN_NETHER.get();
+            case UNDEAD -> com.example.neomocreatures.init.ModItems.CHITIN_UNDEAD.get();
+        };
+    }
+
+    /** Each color only ever drops its own sting. */
+    private static Item stingItemFor(ScorpionVariant variant) {
+        return switch (variant) {
+            case DIRT -> com.example.neomocreatures.init.ModItems.SCORP_STING_DIRT.get();
+            case CAVE -> com.example.neomocreatures.init.ModItems.SCORP_STING_CAVE.get();
+            case FROST -> com.example.neomocreatures.init.ModItems.SCORP_STING_FROST.get();
+            case NETHER -> com.example.neomocreatures.init.ModItems.SCORP_STING_NETHER.get();
+            case UNDEAD -> com.example.neomocreatures.init.ModItems.SCORP_STING_UNDEAD.get();
+        };
+    }
+
+    private float getGrowthFraction() {
+        if (!this.isBaby()) {
+            return 1.0F;
+        }
+        float progress = net.minecraft.util.Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
+        return net.minecraft.util.Mth.lerp(progress, BABY_SCALE, 1.0F);
+    }
+
     private void tickGrowth() {
         AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
         if (scaleAttr == null) {
             return;
         }
         if (!this.level().isClientSide) {
-            float newScale = this.isBaby() ? BABY_SCALE : 1.0F;
+            float newScale = getGrowthFraction();
             if (scaleAttr.getBaseValue() != newScale) {
                 scaleAttr.setBaseValue(newScale);
             }
@@ -217,6 +284,7 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         this.entityData.set(DATA_HELD_BY, java.util.Optional.of(player.getUUID()));
         this.setNoAi(true);
         this.setNoGravity(true);
+        this.noPhysics = true;
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
     }
 
@@ -224,7 +292,12 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         this.entityData.set(DATA_HELD_BY, java.util.Optional.empty());
         this.setNoAi(false);
         this.setNoGravity(false);
+        this.noPhysics = false;
         this.heldBy = null;
+    }
+
+    public void releaseHeldPublic() {
+        stopHolding();
     }
 
     private void tickHeld() {
@@ -267,6 +340,24 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         return false;
     }
 
+    @Override
+    public boolean isPushable() {
+        return !isHeld();
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return !isHeld() && super.canBeCollidedWith();
+    }
+
+    @Override
+    public void pushEntities() {
+        if (isHeld()) {
+            return;
+        }
+        super.pushEntities();
+    }
+
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
@@ -274,6 +365,14 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             return player;
         }
         return null;
+    }
+
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (!this.level().isClientSide) {
+            setSitting(false);
+        }
     }
 
     @Override
@@ -352,6 +451,15 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         this.entityData.set(DATA_SADDLED, saddled);
     }
 
+    public boolean isSittingSynced() {
+        return this.entityData.get(DATA_SITTING_SYNCED);
+    }
+
+    private void setSitting(boolean sitting) {
+        this.setOrderedToSit(sitting);
+        this.entityData.set(DATA_SITTING_SYNCED, sitting);
+    }
+
     /** Public entry point for spawn eggs / other external code — internal logic stays on setHasBabies(). */
     public void setHasBabiesPublic(boolean flag) {
         setHasBabies(flag);
@@ -365,7 +473,7 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         // ridden, exactly like the original MoCEntityPetScorpion.
         if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get()) && !this.isVehicle()) {
             if (!this.level().isClientSide) {
-                this.setOrderedToSit(!this.isOrderedToSit());
+                setSitting(!this.isSittingSynced());
                 this.setTarget(null);
                 this.getNavigation().stop();
                 this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
@@ -382,6 +490,12 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             if (stack.is(net.minecraft.world.item.Items.BOOK)) {
                 if (!this.level().isClientSide) {
                     com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                }
+                return InteractionResult.SUCCESS;
+            }
+            if (stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+                if (!this.level().isClientSide) {
+                    capturePetInstant(player, hand);
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -425,19 +539,11 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
                         || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
                 if (!this.level().isClientSide) {
                     setSaddled(true);
+                    this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
                     this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
-                if (!this.level().isClientSide) {
-                    setSaddled(false);
-                    this.ejectPassengers();
-                    this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.SADDLE));
-                    this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -467,6 +573,22 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             }
             return InteractionResult.SUCCESS;
         }
+        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+            if (!this.level().isClientSide) {
+                setSaddled(false);
+                this.ejectPassengers();
+                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                        : net.minecraft.world.item.Items.SADDLE;
+                this.saddleItemId = null;
+                this.spawnAtLocation(new ItemStack(saddleItem));
+                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                if (!player.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
 
         return super.mobInteract(player, hand);
     }
@@ -482,6 +604,7 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         builder.define(DATA_TRANSFORM_TICKS, 0);
         builder.define(DATA_HELD_BY, java.util.Optional.empty());
         builder.define(DATA_SADDLED, false);
+        builder.define(DATA_SITTING_SYNCED, false);
     }
 
     @Override
@@ -490,6 +613,10 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         tag.putString("ScorpionVariant", getVariant().name());
         tag.putBoolean("ScorpionBabies", hasBabies());
         tag.putBoolean("ScorpionSaddled", isSaddled());
+        tag.putBoolean("ScorpionSittingSynced", isSittingSynced());
+        if (this.saddleItemId != null) {
+            tag.putString("ScorpionSaddleItem", this.saddleItemId.toString());
+        }
     }
 
     @Override
@@ -506,6 +633,12 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
         }
         if (tag.contains("ScorpionSaddled")) {
             setSaddled(tag.getBoolean("ScorpionSaddled"));
+        }
+        if (tag.contains("ScorpionSittingSynced")) {
+            setSitting(tag.getBoolean("ScorpionSittingSynced"));
+        }
+        if (tag.contains("ScorpionSaddleItem", 8)) {
+            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("ScorpionSaddleItem"));
         }
     }
 
@@ -531,10 +664,53 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             net.minecraft.world.DifficultyInstance difficulty,
             net.minecraft.world.entity.MobSpawnType spawnReason,
             @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if (!this.isTame() && this.random.nextInt(4) == 0) {
-            setHasBabies(true);
+        if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
+                || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
+            boolean isNether = level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER;
+            if (isNether) {
+                setVariant(ScorpionVariant.NETHER);
+            } else if (this.blockPosition().getY() <= 40) {
+                setVariant(ScorpionVariant.CAVE);
+            } else {
+                var biome = level.getBiome(this.blockPosition());
+                boolean snowy = biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.GROVE)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_SLOPES)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_PEAKS)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.JAGGED_PEAKS)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_RIVER)
+                        || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN);
+                setVariant(snowy ? ScorpionVariant.FROST : ScorpionVariant.DIRT);
+            }
+
+            boolean hasBabies = this.random.nextInt(4) == 0;
+            if (hasBabies) {
+                setHasBabies(true);
+            }
+
+            // Wiki: a scorpion carrying babies on its back can never have a rider.
+            if (!hasBabies && this.random.nextFloat() < 0.15F) {
+                net.minecraft.world.entity.EntityType<?> riderType = isNether
+                        ? (this.random.nextBoolean() ? net.minecraft.world.entity.EntityType.ZOMBIFIED_PIGLIN
+                                : net.minecraft.world.entity.EntityType.PIGLIN)
+                        : (this.random.nextBoolean() ? net.minecraft.world.entity.EntityType.ZOMBIE
+                                : net.minecraft.world.entity.EntityType.SKELETON);
+                spawnRider(level, riderType);
+            }
         }
         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+    }
+
+    private void spawnRider(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.world.entity.EntityType<?> riderType) {
+        Entity rider = riderType.create(level.getLevel());
+        if (rider instanceof Mob mob) {
+            mob.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
+            level.getLevel().addFreshEntity(mob);
+            mob.startRiding(this);
+        }
     }
 
     @Override
@@ -559,8 +735,83 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             baby.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * 360F, 0F);
             baby.setVariant(getVariant());
             baby.setBaby(true);
+            baby.setAge(-GROWTH_TICKS);
+            baby.setPersistenceRequired();
             this.level().addFreshEntity(baby);
             baby.playSound(net.minecraft.sounds.SoundEvents.SLIME_SQUISH, 1.0F, 1.0F);
+        }
+    }
+
+    /** Saddle always drops if equipped, regardless of who removed it. */
+    public void dropAllEquipment() {
+        if (isSaddled()) {
+            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                    : net.minecraft.world.item.Items.SADDLE;
+            this.spawnAtLocation(new ItemStack(saddleItem));
+            this.saddleItemId = null;
+            setSaddled(false);
+        }
+    }
+
+    /** Snapshot used to restore this scorpion later from a filled Pet Amulet. */
+    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("ScorpionVariant", getVariant().name());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    /** Pet Amulet capture: instant, no vanish animation. Saddle drops on the ground, not saved. */
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropAllEquipment();
+        CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, source, recentlyHit);
+
+        int lootingLevel = 0;
+        if (source.getEntity() instanceof LivingEntity attacker) {
+            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
+                    level.registryAccess().holderOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
+                    attacker);
+        }
+
+        if (this.isBaby()) {
+            // Babies only ever drop string — no chitin, no stings.
+            int stringCount = this.random.nextInt(3 + lootingLevel); // 0-2 base, extended by looting
+            for (int i = 0; i < stringCount; i++) {
+                this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.STRING));
+            }
+        } else {
+            int chitinCount = this.random.nextInt(2 + lootingLevel); // 0-1 base, extended by looting
+            for (int i = 0; i < chitinCount; i++) {
+                this.spawnAtLocation(new ItemStack(chitinItemFor(getVariant())));
+            }
+
+            int stingCount = this.random.nextInt(2 + lootingLevel); // 0-1 base, extended by looting
+            for (int i = 0; i < stingCount; i++) {
+                this.spawnAtLocation(new ItemStack(stingItemFor(getVariant())));
+            }
+        }
+
+        if (isSaddled()) {
+            Item saddleItem = this.saddleItemId != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                    : net.minecraft.world.item.Items.SADDLE;
+            this.spawnAtLocation(new ItemStack(saddleItem)); // not affected by looting
         }
     }
 
@@ -573,6 +824,7 @@ public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, ne
             }
         }
         this.setBaby(true);
+        this.setAge(-GROWTH_TICKS);
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);

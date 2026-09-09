@@ -281,6 +281,8 @@ public class NeoMoCreatures {
         NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.ScorpArmorSetBonusHandler.class);
         NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.NightmareRiderFireImmunityHandler.class);
         NeoForge.EVENT_BUS.register(com.example.neomocreatures.client.NightmareOverlayHandler.class);
+        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.ScorpionHoldReleaseHandler.class);
+        NeoForge.EVENT_BUS.register(new com.example.neomocreatures.entity.CaveScorpionSpawner());
     }
 
     private void registerDeferredRegistries(IEventBus modEventBus) {
