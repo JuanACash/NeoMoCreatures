@@ -116,6 +116,20 @@
   "moc_scorpion.hurt": { "sounds": ["neomocreatures:moc_scorpion/scorpion_hurt"] },
   "moc_scorpion.death": { "sounds": ["neomocreatures:moc_scorpion/scorpion_dying"] },
 
+  "moc_ostrich.ambient": {
+    "sounds": [
+      "neomocreatures:moc_ostrich/ostrich_grunt1",
+      "neomocreatures:moc_ostrich/ostrich_grunt2"
+    ]
+  },
+  "moc_ostrich.hurt": {
+    "sounds": [
+      "neomocreatures:moc_ostrich/ostrich_hurt1",
+      "neomocreatures:moc_ostrich/ostrich_hurt2"
+    ]
+  },
+  "moc_ostrich.death": { "sounds": ["neomocreatures:moc_ostrich/ostrich_dying"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

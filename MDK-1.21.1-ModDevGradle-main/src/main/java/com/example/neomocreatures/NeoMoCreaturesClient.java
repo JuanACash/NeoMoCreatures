@@ -16,6 +16,8 @@ import com.example.neomocreatures.client.MoCBigCatModel;
 import com.example.neomocreatures.client.MoCBigCatRenderer;
 import com.example.neomocreatures.client.MoCManticoreModel;
 import com.example.neomocreatures.client.MoCManticoreRenderer;
+import com.example.neomocreatures.client.MoCOstrichModel;
+import com.example.neomocreatures.client.MoCOstrichRenderer;
 import com.example.neomocreatures.client.MoCScorpionModel;
 import com.example.neomocreatures.client.MoCScorpionRenderer;
 
@@ -54,6 +56,8 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCBigCatRenderer.MOC_BIG_CAT_LAYER, MoCBigCatModel::createBodyLayer);
                 event.registerLayerDefinition(MoCManticoreRenderer.MOC_MANTICORE_LAYER, MoCManticoreModel::createBodyLayer);
                 event.registerLayerDefinition(MoCScorpionRenderer.MOC_SCORPION_LAYER, MoCScorpionModel::createBodyLayer);
+                event.registerLayerDefinition(MoCOstrichRenderer.MOC_OSTRICH_LAYER, MoCOstrichModel::createBodyLayer);
+
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -68,6 +72,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_BIG_CAT.get(), MoCBigCatRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_MANTICORE.get(), MoCManticoreRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SCORPION.get(), MoCScorpionRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_OSTRICH.get(), MoCOstrichRenderer::new);
         });
                 
     }

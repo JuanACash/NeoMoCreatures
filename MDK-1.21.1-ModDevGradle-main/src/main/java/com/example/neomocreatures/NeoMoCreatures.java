@@ -266,6 +266,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.PANTHGER_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
+                    output.accept(ModItems.OSTRICH_SPAWN_EGG.get());
 
                 }).build());
 
