@@ -5,6 +5,7 @@ import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.entity.MoCOstrichEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -89,6 +90,13 @@ public class WhipItem extends Item {
             for (MoCElephantEntity elephant : level.getEntitiesOfClass(MoCElephantEntity.class, player.getBoundingBox().inflate(RADIUS))) {
                 if (elephant.isTame() && elephant.hasHarness() && elephant.isVehicle()) {
                     elephant.startWhipCharge();
+                }
+            }
+
+            // Wiki: whip gives a ridden ostrich a short speed boost.
+            for (MoCOstrichEntity ostrich : level.getEntitiesOfClass(MoCOstrichEntity.class, player.getBoundingBox().inflate(RADIUS))) {
+                if (ostrich.isTame() && ostrich.isVehicle()) {
+                    ostrich.applyWhipBoost();
                 }
             }
 

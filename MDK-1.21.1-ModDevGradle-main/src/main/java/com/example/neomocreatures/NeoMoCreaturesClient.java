@@ -20,7 +20,6 @@ import com.example.neomocreatures.client.MoCOstrichModel;
 import com.example.neomocreatures.client.MoCOstrichRenderer;
 import com.example.neomocreatures.client.MoCScorpionModel;
 import com.example.neomocreatures.client.MoCScorpionRenderer;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -57,7 +56,6 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCManticoreRenderer.MOC_MANTICORE_LAYER, MoCManticoreModel::createBodyLayer);
                 event.registerLayerDefinition(MoCScorpionRenderer.MOC_SCORPION_LAYER, MoCScorpionModel::createBodyLayer);
                 event.registerLayerDefinition(MoCOstrichRenderer.MOC_OSTRICH_LAYER, MoCOstrichModel::createBodyLayer);
-
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {

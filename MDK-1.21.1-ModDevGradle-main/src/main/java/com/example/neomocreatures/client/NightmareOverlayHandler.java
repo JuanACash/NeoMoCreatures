@@ -33,5 +33,9 @@ public class NightmareOverlayHandler {
         if (player.getVehicle() instanceof MoCScorpionEntity scorpion && scorpion.getVariant() == ScorpionVariant.NETHER) {
             event.setCanceled(true);
         }
+        if (player.getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich
+                && ostrich.getEssence() == com.example.neomocreatures.entity.MoCOstrichEntity.ESSENCE_FIRE) {
+            event.setCanceled(true);
+        }
     }
 }

@@ -253,6 +253,7 @@
   "item.neomocreatures.frost_manticore_egg": "Frost Manticore Egg",
   "item.neomocreatures.fire_manticore_egg": "Nether Manticore Egg",
   "item.neomocreatures.toxic_manticore_egg": "Toxic Manticore Egg",
+  "item.neomocreatures.ostrich_egg": "Ostrich Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",

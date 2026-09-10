@@ -52,6 +52,52 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
     private final ModelPart neckU;
     private final ModelPart neckL;
     private final ModelPart head;
+    private final ModelPart saddleA;
+    private final ModelPart saddleB;
+    private final ModelPart saddleC;
+    private final ModelPart saddleL;
+    private final ModelPart saddleR;
+    private final ModelPart saddleL2;
+private final ModelPart saddleR2;
+private final ModelPart chestBag;
+private final ModelPart flagpole;
+private final ModelPart flagWhite;
+private final ModelPart flagOrange;
+private final ModelPart flagMagenta;
+private final ModelPart flagLightBlue;
+private final ModelPart flagYellow;
+private final ModelPart flagLime;
+private final ModelPart flagPink;
+private final ModelPart flagGray;
+private final ModelPart flagLightGray;
+private final ModelPart flagCyan;
+private final ModelPart flagPurple;
+private final ModelPart flagBlue;
+private final ModelPart flagBrown;
+private final ModelPart flagGreen;
+private final ModelPart flagRed;
+private final ModelPart flagBlack;
+private final ModelPart helmetLeather;
+private final ModelPart helmetIron;
+private final ModelPart helmetGold;
+private final ModelPart helmetDiamond;
+private final ModelPart helmetHide;
+private final ModelPart helmetNeckHide;
+private final ModelPart helmetHideEar1;
+private final ModelPart helmetHideEar2;
+private final ModelPart helmetFur;
+private final ModelPart helmetNeckFur;
+private final ModelPart helmetFurEar1;
+private final ModelPart helmetFurEar2;
+private final ModelPart helmetReptile;
+private final ModelPart helmetReptileEar1;
+private final ModelPart helmetReptileEar2;
+private final ModelPart helmetScorpDirt;
+private final ModelPart helmetScorpCave;
+private final ModelPart helmetScorpFrost;
+private final ModelPart helmetScorpNether;
+private final ModelPart helmetScorpUndead;
+private final ModelPart uniHorn;
 
     public MoCOstrichModel(ModelPart root) {
         this.root = root;
@@ -89,6 +135,52 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
         this.neckU = root.getChild("neck_u");
         this.neckL = root.getChild("neck_l");
         this.head = root.getChild("head");
+        this.saddleA = root.getChild("saddle_a");
+        this.saddleB = root.getChild("saddle_b");
+        this.saddleC = root.getChild("saddle_c");
+        this.saddleL = root.getChild("saddle_l");
+        this.saddleR = root.getChild("saddle_r");
+        this.saddleL2 = root.getChild("saddle_l2");
+        this.saddleR2 = root.getChild("saddle_r2");
+        this.chestBag = root.getChild("chest_bag");
+        this.flagpole = root.getChild("flagpole");
+        this.flagWhite = root.getChild("flag_white");
+        this.flagOrange = root.getChild("flag_orange");
+        this.flagMagenta = root.getChild("flag_magenta");
+        this.flagLightBlue = root.getChild("flag_light_blue");
+        this.flagYellow = root.getChild("flag_yellow");
+        this.flagLime = root.getChild("flag_lime");
+        this.flagPink = root.getChild("flag_pink");
+        this.flagGray = root.getChild("flag_gray");
+        this.flagLightGray = root.getChild("flag_light_gray");
+        this.flagCyan = root.getChild("flag_cyan");
+        this.flagPurple = root.getChild("flag_purple");
+        this.flagBlue = root.getChild("flag_blue");
+        this.flagBrown = root.getChild("flag_brown");
+        this.flagGreen = root.getChild("flag_green");
+        this.flagRed = root.getChild("flag_red");
+        this.flagBlack = root.getChild("flag_black");
+        this.helmetLeather = root.getChild("helmet_leather");
+        this.helmetIron = root.getChild("helmet_iron");
+        this.helmetGold = root.getChild("helmet_gold");
+        this.helmetDiamond = root.getChild("helmet_diamond");
+        this.helmetHide = root.getChild("helmet_hide");
+        this.helmetNeckHide = root.getChild("helmet_neck_hide");
+        this.helmetHideEar1 = root.getChild("helmet_hide_ear1");
+        this.helmetHideEar2 = root.getChild("helmet_hide_ear2");
+        this.helmetFur = root.getChild("helmet_fur");
+        this.helmetNeckFur = root.getChild("helmet_neck_fur");
+        this.helmetFurEar1 = root.getChild("helmet_fur_ear1");
+        this.helmetFurEar2 = root.getChild("helmet_fur_ear2");
+        this.helmetReptile = root.getChild("helmet_reptile");
+        this.helmetReptileEar1 = root.getChild("helmet_reptile_ear1");
+        this.helmetReptileEar2 = root.getChild("helmet_reptile_ear2");
+        this.helmetScorpDirt = root.getChild("helmet_scorp_dirt");
+        this.helmetScorpCave = root.getChild("helmet_scorp_cave");
+        this.helmetScorpFrost = root.getChild("helmet_scorp_frost");
+        this.helmetScorpNether = root.getChild("helmet_scorp_nether");
+        this.helmetScorpUndead = root.getChild("helmet_scorp_undead");
+        this.uniHorn = root.getChild("uni_horn");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -205,6 +297,121 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
                 CubeListBuilder.create().texOffs(0, 0).addBox(-1.5F, -16F, -4.5F, 3, 4, 3),
                 PartPose.offset(0F, 3F, -6F));
 
+        root.addOrReplaceChild("saddle_a",
+                CubeListBuilder.create().texOffs(72, 18).addBox(-4F, 0.5F, -3F, 8, 1, 8), PartPose.ZERO);
+        root.addOrReplaceChild("saddle_b",
+                CubeListBuilder.create().texOffs(72, 27).addBox(-1.5F, 0F, -3F, 3, 1, 2), PartPose.ZERO);
+        root.addOrReplaceChild("saddle_c",
+                CubeListBuilder.create().texOffs(84, 27).addBox(-4F, 0F, 3F, 8, 1, 2), PartPose.ZERO);
+        root.addOrReplaceChild("saddle_l",
+                CubeListBuilder.create().texOffs(72, 30).addBox(-0.5F, 0F, -0.5F, 1, 6, 1), PartPose.offset(4F, 1F, 0F));
+        root.addOrReplaceChild("saddle_r",
+                CubeListBuilder.create().texOffs(84, 30).addBox(-0.5F, 0F, -0.5F, 1, 6, 1), PartPose.offset(-4F, 1F, 0F));
+        root.addOrReplaceChild("saddle_l2",
+                CubeListBuilder.create().texOffs(76, 30).addBox(-0.5F, 6F, -1F, 1, 2, 2), PartPose.offset(4F, 1F, 0F));
+        root.addOrReplaceChild("saddle_r2",
+                CubeListBuilder.create().texOffs(88, 30).addBox(-0.5F, 6F, -1F, 1, 2, 2), PartPose.offset(-4F, 1F, 0F));
+
+        root.addOrReplaceChild("chest_bag",
+                CubeListBuilder.create().texOffs(32, 7).addBox(-4.5F, -3F, 5F, 9, 4, 7),
+                PartPose.rotation(-14.91F / R, 0F, 0F));
+
+        root.addOrReplaceChild("flagpole",
+                CubeListBuilder.create().texOffs(28, 0).addBox(-0.5F, -15F, -0.5F, 1, 17, 1),
+                PartPose.offsetAndRotation(0F, 0F, 5F, -14.91F / R, 0F, 0F));
+
+        java.util.Map<String, int[]> flagTexOffsets = new java.util.LinkedHashMap<>();
+        flagTexOffsets.put("flag_black", new int[]{108, 8});
+        flagTexOffsets.put("flag_gray", new int[]{108, 16});
+        flagTexOffsets.put("flag_yellow", new int[]{48, 46});
+        flagTexOffsets.put("flag_brown", new int[]{48, 42});
+        flagTexOffsets.put("flag_green", new int[]{48, 38});
+        flagTexOffsets.put("flag_cyan", new int[]{48, 50});
+        flagTexOffsets.put("flag_light_blue", new int[]{68, 32});
+        flagTexOffsets.put("flag_blue", new int[]{68, 28});
+        flagTexOffsets.put("flag_purple", new int[]{88, 32});
+        flagTexOffsets.put("flag_magenta", new int[]{88, 28});
+        flagTexOffsets.put("flag_lime", new int[]{108, 32});
+        flagTexOffsets.put("flag_pink", new int[]{108, 28});
+        flagTexOffsets.put("flag_red", new int[]{108, 24});
+        flagTexOffsets.put("flag_white", new int[]{108, 20});
+        flagTexOffsets.put("flag_light_gray", new int[]{108, 12});
+        flagTexOffsets.put("flag_orange", new int[]{88, 24});
+        for (var entry : flagTexOffsets.entrySet()) {
+        root.addOrReplaceChild(entry.getKey(),
+                CubeListBuilder.create().texOffs(entry.getValue()[0], entry.getValue()[1]).addBox(0F, -2.1F, 0F, 0, 4, 10),
+                PartPose.offsetAndRotation(0F, -12F, 8F, -14.91F / R, 0F, 0F));
+        }
+
+        root.addOrReplaceChild("helmet_leather",
+                CubeListBuilder.create().texOffs(66, 0).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_iron",
+                CubeListBuilder.create().texOffs(84, 46).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_gold",
+                CubeListBuilder.create().texOffs(112, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_diamond",
+                CubeListBuilder.create().texOffs(96, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+
+        root.addOrReplaceChild("helmet_hide",
+                CubeListBuilder.create().texOffs(96, 5).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_neck_hide",
+                CubeListBuilder.create().texOffs(58, 0).addBox(-1.5F, -12F, -4.5F, 3, 1, 3),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_hide_ear1",
+                CubeListBuilder.create().texOffs(84, 9).addBox(-2.5F, -18F, -3F, 2, 2, 1),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_hide_ear2",
+                CubeListBuilder.create().texOffs(90, 9).addBox(0.5F, -18F, -3F, 2, 2, 1),
+                PartPose.offset(0F, 3F, -6F));
+
+        root.addOrReplaceChild("helmet_fur",
+                CubeListBuilder.create().texOffs(84, 0).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_neck_fur",
+                CubeListBuilder.create().texOffs(96, 0).addBox(-1.5F, -12F, -4.5F, 3, 1, 3),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_fur_ear1",
+                CubeListBuilder.create().texOffs(66, 9).addBox(-2.5F, -18F, -3F, 2, 2, 1),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_fur_ear2",
+                CubeListBuilder.create().texOffs(76, 9).addBox(0.5F, -18F, -3F, 2, 2, 1),
+                PartPose.offset(0F, 3F, -6F));
+
+        root.addOrReplaceChild("helmet_reptile",
+                CubeListBuilder.create().texOffs(64, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_reptile_ear1",
+                CubeListBuilder.create().texOffs(114, 50).addBox(-2.5F, -16.5F, -2F, 0, 5, 5),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 0F, -35F / R, 0F));
+        root.addOrReplaceChild("helmet_reptile_ear2",
+                CubeListBuilder.create().texOffs(114, 45).addBox(2.5F, -16.5F, -2F, 0, 5, 5),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 0F, 35F / R, 0F));
+
+        root.addOrReplaceChild("helmet_scorp_dirt",
+                CubeListBuilder.create().texOffs(0, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_scorp_cave",
+                CubeListBuilder.create().texOffs(32, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_scorp_frost",
+                CubeListBuilder.create().texOffs(16, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_scorp_nether",
+                CubeListBuilder.create().texOffs(48, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("helmet_scorp_undead",
+                CubeListBuilder.create().texOffs(80, 64).addBox(-2F, -16.5F, -5F, 4, 5, 4),
+                PartPose.offset(0F, 3F, -6F));
+
+        root.addOrReplaceChild("uni_horn",
+                CubeListBuilder.create().texOffs(0, 8).addBox(-0.5F, -21F, 0.5F, 1, 6, 1),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 18.17F / R, 0F, 0F));
+        
         return LayerDefinition.create(mesh, 128, 128);
     }
 
@@ -219,18 +426,26 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
         float lLegXRot = Mth.cos(limbSwing * 0.4F) * 1.1F * limbSwingAmount;
         float rLegXRot = Mth.cos(limbSwing * 0.4F + (float) Math.PI) * 1.1F * limbSwingAmount;
 
-        boolean hiding = entity.isHiding();
+        boolean hiding = entity.isHiding() || entity.isHeadBuried();
         float headY;
         float headXRot;
         float headYRot;
-        if (hiding) {
-            headY = 15F;
-            headXRot = 160F / R;
+        if (entity.isCharging()) {
+        headY = 3F;
+        headXRot = 90F / R;
+        headYRot = 0F;
+        } else if (hiding) {
+            headY = 11F;
+            headXRot = 150F / R;
+            headYRot = 0F;
+        } else if (entity.isVehicle()) {
+            headY = 3F;
+            headXRot = 0F;
             headYRot = 0F;
         } else {
-            headY = 3F;
-            headXRot = rLegXRot / 20F + (-headPitch / R);
-            headYRot = netHeadYaw / R;
+             headY = 3F;
+             headXRot = rLegXRot / 20F + (-headPitch / R);
+             headYRot = netHeadYaw / R;
         }
 
         head.y = headY;
@@ -278,6 +493,19 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
         neckLFeather.xRot = 11.5F / R + headXRot;
         neckLFeather.yRot = headYRot;
 
+        // Mouth open/closed is a hard swap between two hand-modeled pose sets
+        // (matches the original), not a continuous rotation — rotating either set
+        // away from its authored angle exposes gaps never meant to be visible.
+        boolean mouthOpen = entity.getMouthTicks() != 0;
+        uBeak.visible = !mouthOpen;
+        uBeak2.visible = !mouthOpen;
+        lBeak.visible = !mouthOpen;
+        lBeak2.visible = !mouthOpen;
+        uBeakB.visible = mouthOpen;
+        uBeak2B.visible = mouthOpen;
+        lBeakB.visible = mouthOpen;
+        lBeak2B.visible = mouthOpen;
+
         lLegA.xRot = 10F / R + lLegXRot;
         lLegB.xRot = lLegA.xRot;
         lLegC.xRot = -15F / R + lLegXRot;
@@ -287,9 +515,14 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
         rLegC.xRot = -15F / R + rLegXRot;
         rFoot.xRot = rLegA.xRot;
 
-        float wingF = 10F / R + Mth.cos(limbSwing * 0.6F) * 0.2F * limbSwingAmount;
+        float wingF;
+        if (entity.isFlying()) {
+        wingF = 0.6F; // wide open, mostly still — a real flight glide, not the idle flap
+        } else {
+        wingF = 10F / R + Mth.cos(limbSwing * 0.6F) * 0.2F * limbSwingAmount;
         if (entity.getWingTicks() != 0) {
-            wingF += 0.87266463F;
+                wingF += 0.87266463F;
+                }
         }
         lWingB.yRot = 5F / R + wingF;
         lWingC.yRot = 5F / R + wingF;
@@ -304,6 +537,81 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
         tail1.yRot = tailRot;
         tail2.yRot = tailRot - 15F / R;
         tail3.yRot = tailRot + 15F / R;
+
+        boolean saddled = entity.isSaddled();
+        saddleA.visible = saddled;
+        saddleB.visible = saddled;
+        saddleC.visible = saddled;
+        saddleL.visible = saddled;
+        saddleR.visible = saddled;
+        saddleL2.visible = saddled;
+        saddleR2.visible = saddled;
+
+        boolean hasChestVisible = entity.hasChest();
+        chestBag.visible = hasChestVisible;
+        flagpole.visible = hasChestVisible;
+
+        int flagColor = entity.getFlagColor();
+        flagWhite.visible = flagColor == 0;
+        flagOrange.visible = flagColor == 1;
+        flagMagenta.visible = flagColor == 2;
+        flagLightBlue.visible = flagColor == 3;
+        flagYellow.visible = flagColor == 4;
+        flagLime.visible = flagColor == 5;
+        flagPink.visible = flagColor == 6;
+        flagGray.visible = flagColor == 7;
+        flagLightGray.visible = flagColor == 8;
+        flagCyan.visible = flagColor == 9;
+        flagPurple.visible = flagColor == 10;
+        flagBlue.visible = flagColor == 11;
+        flagBrown.visible = flagColor == 12;
+        flagGreen.visible = flagColor == 13;
+        flagRed.visible = flagColor == 14;
+        flagBlack.visible = flagColor == 15;
+
+        // Helmets track the head's live rotation every frame (matches the original
+        // exactly — including through the hiding/burying pose).
+        int helmet = entity.getHelmet();
+        ModelPart[] allHelmets = {helmetLeather, helmetIron, helmetGold, helmetDiamond,
+                helmetHide, helmetNeckHide, helmetHideEar1, helmetHideEar2,
+                helmetFur, helmetNeckFur, helmetFurEar1, helmetFurEar2,
+                helmetReptile, helmetReptileEar1, helmetReptileEar2,
+                helmetScorpDirt, helmetScorpCave, helmetScorpFrost, helmetScorpNether, helmetScorpUndead};
+        for (ModelPart part : allHelmets) {
+        part.visible = false;
+        }
+        ModelPart[] activeGroup = switch (helmet) {
+        case 1 -> new ModelPart[]{helmetLeather};
+        case 2 -> new ModelPart[]{helmetIron};
+        case 3 -> new ModelPart[]{helmetGold};
+        case 4 -> new ModelPart[]{helmetDiamond};
+        case 5 -> new ModelPart[]{helmetHide, helmetNeckHide, helmetHideEar1, helmetHideEar2};
+        case 6 -> new ModelPart[]{helmetFur, helmetNeckFur, helmetFurEar1, helmetFurEar2};
+        case 7 -> new ModelPart[]{helmetReptile, helmetReptileEar1, helmetReptileEar2};
+        case 8 -> new ModelPart[]{helmetScorpDirt};
+        case 9 -> new ModelPart[]{helmetScorpCave};
+        case 10 -> new ModelPart[]{helmetScorpFrost};
+        case 11 -> new ModelPart[]{helmetScorpNether};
+        case 12 -> new ModelPart[]{helmetScorpUndead};
+        default -> new ModelPart[0];
+        };
+        for (ModelPart part : activeGroup) {
+        part.visible = true;
+        part.y = head.y;
+        part.xRot = head.xRot;
+        part.yRot = head.yRot;
+        }
+        // The reptile helmet's ears keep their own fixed yRot offset from the head, per the original.
+        if (helmet == 7) {
+        helmetReptileEar1.yRot = -35F / R + head.yRot;
+        helmetReptileEar2.yRot = 35F / R + head.yRot;
+        }
+
+        uniHorn.visible = entity.getEssence() == MoCOstrichEntity.ESSENCE_UNIHORNED;
+        uniHorn.y = head.y;
+        uniHorn.xRot = 18F / R + headXRot;
+        uniHorn.yRot = headYRot;
+
     }
 
     @Override

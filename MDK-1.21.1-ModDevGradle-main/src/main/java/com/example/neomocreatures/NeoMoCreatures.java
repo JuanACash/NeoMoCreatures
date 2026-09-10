@@ -95,6 +95,12 @@ public class NeoMoCreatures {
                     output.accept(ModItems.FROST_MANTICORE_EGG.get());
                     output.accept(ModItems.FIRE_MANTICORE_EGG.get());
                     output.accept(ModItems.TOXIC_MANTICORE_EGG.get());
+                    output.accept(ModItems.DIRT_SCORPION_EGG.get());
+                    output.accept(ModItems.CAVE_SCORPION_EGG.get());
+                    output.accept(ModItems.FROST_SCORPION_EGG.get());
+                    output.accept(ModItems.FIRE_SCORPION_EGG.get());
+                    output.accept(ModItems.UNDEAD_SCORPION_EGG.get());
+                    output.accept(ModItems.OSTRICH_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());

@@ -563,6 +563,10 @@ public class ModItems {
             () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
                     new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
                             com.example.neomocreatures.init.ModEntities.MOC_MANTICORE, null, 0.0D, "TOXIC")));
+    public static final DeferredItem<Item> OSTRICH_EGG = ITEMS.register("ostrich_egg",
+            () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+                        new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                                com.example.neomocreatures.init.ModEntities.MOC_OSTRICH, null, 0.0D, null)));
 
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());

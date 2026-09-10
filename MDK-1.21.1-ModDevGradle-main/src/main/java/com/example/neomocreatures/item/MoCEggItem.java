@@ -62,27 +62,24 @@ public class MoCEggItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
+        CompoundTag storedTag = context.getItemInHand().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        String storedVariant = storedTag.contains("HatchVariant", 8) ? storedTag.getString("HatchVariant") : null;
+        boolean storedWasPickedUp = storedTag.getBoolean("WasPickedUp");
+
         ResourceLocation hatchEntityId;
         String variantId;
         if (this.spec != null) {
             boolean rollTier2 = this.spec.tier2Type() != null
                     && serverLevel.random.nextDouble() < this.spec.tier2Chance();
-            EntityType<?> chosen;
-            if (rollTier2) {
-                chosen = this.spec.tier2Type().get();
-            } else {
-                chosen = this.spec.tier1Type().get();
-            }
+            EntityType<?> chosen = rollTier2 ? this.spec.tier2Type().get() : this.spec.tier1Type().get();
             hatchEntityId = BuiltInRegistries.ENTITY_TYPE.getKey(chosen);
-            variantId = this.spec.variantId();
+            variantId = storedVariant != null ? storedVariant : this.spec.variantId();
         } else {
-            CompoundTag tag = context.getItemInHand().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-            if (!tag.contains("HatchEntityType", 8)) {
-                // No spec baked in and no drop-tagged NBT — nothing to hatch.
+            if (!storedTag.contains("HatchEntityType", 8)) {
                 return InteractionResult.PASS;
             }
-            hatchEntityId = ResourceLocation.parse(tag.getString("HatchEntityType"));
-            variantId = tag.contains("HatchVariant", 8) ? tag.getString("HatchVariant") : null;
+            hatchEntityId = ResourceLocation.parse(storedTag.getString("HatchEntityType"));
+            variantId = storedVariant;
         }
 
         BlockPos pos = context.getClickedPos().relative(context.getClickedFace());
@@ -94,6 +91,7 @@ public class MoCEggItem extends Item {
         egg.setHatchVariant(variantId);
         egg.setSourceItemId(BuiltInRegistries.ITEM.getKey(this));
         egg.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        egg.setWasPickedUp(storedWasPickedUp);
         serverLevel.addFreshEntity(egg);
 
         Player player = context.getPlayer();

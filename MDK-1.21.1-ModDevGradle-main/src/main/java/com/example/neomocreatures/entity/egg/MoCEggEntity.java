@@ -66,6 +66,9 @@ public class MoCEggEntity extends Mob {
     /** Which item to hand back if this egg gets picked back up (see playerTouch()). */
     @Nullable
     private ResourceLocation sourceItemId;
+    private boolean requiresLight = true;
+    private boolean requirePickupToTame = false;
+    private boolean wasPickedUp = false;
 
     private int hatchTicks;
     private int unwatchedTicks;
@@ -96,6 +99,18 @@ public class MoCEggEntity extends Mob {
 
     public void setSourceItemId(@Nullable ResourceLocation sourceItemId) {
         this.sourceItemId = sourceItemId;
+    }
+
+    public void setRequiresLight(boolean requiresLight) {
+        this.requiresLight = requiresLight;
+    }
+
+    public void setRequirePickupToTame(boolean requirePickupToTame) {
+        this.requirePickupToTame = requirePickupToTame;
+    }
+
+    public void setWasPickedUp(boolean wasPickedUp) {
+        this.wasPickedUp = wasPickedUp;
     }
 
     /** Wiki: not affected by knockback (but still pushable by mobs/players/pistons). */
@@ -132,9 +147,9 @@ public class MoCEggEntity extends Mob {
         }
 
         if (this.random.nextInt(20) == 0) {
-            // Needs a nearby light source (a torch, glowstone, etc. — block
-            // light specifically, not sunlight) to progress toward hatching.
-            if (this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH) {
+            boolean lightOk = !this.requiresLight
+                    || this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH;
+            if (lightOk) {
                 this.hatchTicks++;
                 if (this.hatchTicks == NOTIFY_AT) {
                     notifyNearbyPlayer();
@@ -168,8 +183,13 @@ public class MoCEggEntity extends Mob {
             }
             serverLevel.addFreshEntity(spawned);
 
-            // Wiki: stray too far (9+ blocks) and the hatch comes out wild.
-            Player tamer = this.level().getNearestPlayer(this, TAME_RADIUS);
+            // Wiki (species-specific for the ostrich): only tames if a player actually
+            // picked this exact egg up and placed it back down themselves — mere
+            // proximity at hatch time doesn't count. Other species keep the original
+            // proximity-based rule.
+            Player tamer = (!this.requirePickupToTame || this.wasPickedUp)
+                    ? this.level().getNearestPlayer(this, TAME_RADIUS)
+                    : null;
             if (spawned instanceof EggHatchable hatchable) {
                 hatchable.onHatchedFromEgg(tamer, this.hatchVariant);
             }
@@ -191,11 +211,25 @@ public class MoCEggEntity extends Mob {
                 : BuiltInRegistries.ITEM.getKey(ModItems.MOC_EGG.get());
         Item item = BuiltInRegistries.ITEM.get(itemId);
         ItemStack stack = new ItemStack(item);
+        if (this.hatchVariant != null || this.requirePickupToTame) {
+            CompoundTag data = new CompoundTag();
+            if (this.hatchVariant != null) {
+                data.putString("HatchVariant", this.hatchVariant);
+            }
+            data.putBoolean("WasPickedUp", true);
+            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                    net.minecraft.world.item.component.CustomData.of(data));
+        }
 
         if (player.getInventory().add(stack)) {
             this.playSound(SoundEvents.ITEM_PICKUP, 0.2F,
                     ((this.random.nextFloat() - this.random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
             player.take(this, 1);
+
+            if (this.hatchEntityId.equals(BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.MOC_OSTRICH.get()))) {
+                com.example.neomocreatures.entity.MoCOstrichEntity.alertNearbyOstriches(
+                        this.level(), this.position(), player, 15.0D);
+            }
         } else {
             return;
         }
@@ -212,6 +246,7 @@ public class MoCEggEntity extends Mob {
         if (this.sourceItemId != null) {
             tag.putString("SourceItem", this.sourceItemId.toString());
         }
+        tag.putBoolean("RequiresLight", this.requiresLight);
     }
 
     @Override
@@ -219,6 +254,9 @@ public class MoCEggEntity extends Mob {
         super.readAdditionalSaveData(tag);
         if (tag.contains("HatchEntityType", 8)) {
             this.hatchEntityId = ResourceLocation.parse(tag.getString("HatchEntityType"));
+        }
+        if (tag.contains("RequiresLight")) {
+            this.requiresLight = tag.getBoolean("RequiresLight");
         }
         this.hatchVariant = tag.contains("HatchVariant", 8) ? tag.getString("HatchVariant") : null;
         this.sourceItemId = tag.contains("SourceItem", 8) ? ResourceLocation.parse(tag.getString("SourceItem")) : null;

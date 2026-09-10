@@ -88,7 +88,9 @@ public class ModNetworking {
                     bigCat.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCManticoreEntity manticore) {
                     manticore.setAscendHeld(payload.pressed());
-                }
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich) {
+                    ostrich.setAscendHeld(payload.pressed());
+                } 
             }));
     }
 }

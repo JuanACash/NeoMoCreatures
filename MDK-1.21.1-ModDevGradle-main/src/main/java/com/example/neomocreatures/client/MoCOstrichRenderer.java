@@ -19,8 +19,44 @@ public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrich
 
     @Override
     public ResourceLocation getTextureLocation(MoCOstrichEntity entity) {
-        String textureName = entity.isBaby() ? "ostrich_baby" : entity.getVariant().getTextureName();
+        if (entity.isBaby()) {
+            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
+                    "textures/entity/moc_ostrich/ostrich_baby.png");
+        }
+
+        int currentEssence = entity.getEssence();
+        if (entity.isTransforming()) {
+            int ticksLeft = entity.getTransformTicks();
+            int interval = Math.max(1, ticksLeft / 8);
+            boolean showTarget = (entity.tickCount / interval) % 2 == 0;
+            if (showTarget) {
+                currentEssence = entity.getPendingEssence();
+            }
+        }
+
+        String textureName = essenceTextureName(currentEssence, entity.getVariant());
         return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
                 "textures/entity/moc_ostrich/" + textureName + ".png");
+    }
+
+    private static String essenceTextureName(int essence, com.example.neomocreatures.entity.ostrich.OstrichVariant variant) {
+        return switch (essence) {
+            case MoCOstrichEntity.ESSENCE_WYVERN -> "ostrich_dark";
+            case MoCOstrichEntity.ESSENCE_FIRE -> "ostrich_fire";
+            case MoCOstrichEntity.ESSENCE_UNDEAD -> "ostrich_undead";
+            case MoCOstrichEntity.ESSENCE_UNIHORNED -> "ostrich_light";
+            default -> variant.getTextureName();
+        };
+    }
+
+    @Override
+    protected void renderNameTag(MoCOstrichEntity entity, net.minecraft.network.chat.Component displayName,
+                                com.mojang.blaze3d.vertex.PoseStack poseStack,
+                                net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight, float partialTick) {
+        if (this.entityRenderDispatcher.distanceToSqr(entity) > TameableOverlayRenderer.NAME_AND_HEALTH_SHOW_DISTANCE_SQR) {
+            return;
+        }
+        TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
+        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
     }
 }

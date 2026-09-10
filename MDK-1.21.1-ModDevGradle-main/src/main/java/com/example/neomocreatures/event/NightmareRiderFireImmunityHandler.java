@@ -48,7 +48,10 @@ public class NightmareRiderFireImmunityHandler {
                 && manticore.getVariant() == ManticoreVariant.FIRE) {
             return true;
         }
-        return entity.getVehicle() instanceof MoCScorpionEntity scorpion
-            && scorpion.getVariant() == ScorpionVariant.NETHER;
+        if (entity.getVehicle() instanceof MoCScorpionEntity scorpion && scorpion.getVariant() == ScorpionVariant.NETHER) {
+            return true;
+        }
+        return entity.getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich
+            && ostrich.getEssence() == com.example.neomocreatures.entity.MoCOstrichEntity.ESSENCE_FIRE;
     }
 }
