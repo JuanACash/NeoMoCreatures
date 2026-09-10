@@ -520,6 +520,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
             // Real makeEntityJump(): fires repeatedly while space is held, not
             // just on a single press — its own short debounce (not a one-shot).
             if (canFlyEssence() && isAscendHeld()) {
+                jumpDebounceCounter++; // FIX: this increment was missing, so the counter never advanced
                 if (jumpDebounceCounter > 5) {
                     jumpDebounceCounter = 1;
                 }
@@ -527,6 +528,8 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
                     this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
                     jumpPending = true;
                 }
+            } else {
+                jumpDebounceCounter = 0; // reset so the next hold starts with an immediate thrust pulse
             }
 
             if (jumpPending && canFlyEssence()) {
