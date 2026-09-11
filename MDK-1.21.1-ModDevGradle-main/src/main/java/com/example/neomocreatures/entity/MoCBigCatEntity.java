@@ -3,6 +3,7 @@ package com.example.neomocreatures.entity;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
+import com.example.neomocreatures.entity.MoCBearEntity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -139,10 +140,21 @@ protected void registerGoals() {
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        if (!canHunt(target) || target instanceof MoCBigCatEntity) {
+        if (!canHunt(target) || target instanceof MoCBigCatEntity || target instanceof MoCBearEntity
+                || target instanceof net.minecraft.world.entity.animal.PolarBear
+                || target instanceof net.minecraft.world.entity.animal.Panda
+                || target instanceof MoCElephantEntity) {
             return false;
         }
         return target != null && target.getBbHeight() < MAX_PREY_SIZE && target.getBbWidth() < MAX_PREY_SIZE;
+    }
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     @Override
@@ -423,6 +435,10 @@ protected void registerGoals() {
 
     public boolean hasMedallion() {
         return this.entityData.get(DATA_HAS_MEDALLION);
+    }
+
+    public void setMedallion(boolean value) {
+        this.entityData.set(DATA_HAS_MEDALLION, value);
     }
 
     public boolean isSaddled() {
@@ -773,13 +789,13 @@ protected void registerGoals() {
     }
 
     @Override
-    public void refreshDimensions() {
-        super.refreshDimensions();
+    protected net.minecraft.world.phys.AABB makeBoundingBox() {
         if (this.isBaby()) {
             net.minecraft.world.entity.EntityDimensions babyDimensions =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
-            this.setBoundingBox(babyDimensions.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
+            return babyDimensions.makeBoundingBox(this.position());
         }
+        return super.makeBoundingBox();
     }
 
     @Override
@@ -872,7 +888,11 @@ protected void registerGoals() {
 
     /** Medallion/saddle/chest always drop if present, regardless of who killed it. Never affected by Looting. */
     public void dropAllEquipment() {
-        if (hasMedallion()) {
+        dropAllEquipment(true);
+    }
+
+    private void dropAllEquipment(boolean includeMedallion) {
+        if (includeMedallion && hasMedallion()) {
             this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MEDALLION.get()));
             this.entityData.set(DATA_HAS_MEDALLION, false);
         }
@@ -901,6 +921,7 @@ protected void registerGoals() {
         tag.putBoolean("Adult", !this.isBaby());
         tag.putInt("Age", this.getAge());
         tag.putBoolean("Wings", hasWings());
+        tag.putBoolean("Medallion", hasMedallion());
         tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
         if (owner != null) {
             tag.putUUID("OwnerUUID", owner);
@@ -910,7 +931,7 @@ protected void registerGoals() {
 
     /** Pet Amulet capture: instant, no vanish animation. Medallion/saddle/chest drop on the ground, not saved. */
     private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
+        dropAllEquipment(false); // keep the medallion — it travels with the cat inside the amulet
         CompoundTag tag = buildAmuletTag(player.getUUID());
         ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
         filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,

@@ -274,6 +274,9 @@ public class FilledAmuletItem extends Item {
         if (tag.getBoolean("Wings")) {
             bigCat.setWings(true);
         }
+        if (tag.getBoolean("Medallion")) {
+            bigCat.setMedallion(true);
+        }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             bigCat.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
         }

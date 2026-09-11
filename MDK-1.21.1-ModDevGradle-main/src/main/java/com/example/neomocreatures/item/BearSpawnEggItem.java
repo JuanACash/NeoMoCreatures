@@ -47,4 +47,29 @@ public class BearSpawnEggItem extends DeferredSpawnEggItem {
 
         return InteractionResult.SUCCESS;
     }
+
+    @Override
+    public net.minecraft.world.InteractionResult interactLivingEntity(
+            net.minecraft.world.item.ItemStack stack,
+            net.minecraft.world.entity.player.Player player,
+            net.minecraft.world.entity.LivingEntity target,
+            net.minecraft.world.InteractionHand hand) {
+        if (!(target instanceof MoCBearEntity adult) || adult.isBaby() || adult.getVariant() != this.variant) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        if (!(target.level() instanceof ServerLevel serverLevel)) {
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
+        MoCBearEntity cub = ModEntities.MOC_BEAR.get().create(serverLevel);
+        if (cub != null) {
+            cub.moveTo(target.getX(), target.getY(), target.getZ(), 0F, 0F);
+            cub.setVariant(this.variant);
+            cub.setBaby(true);
+            serverLevel.addFreshEntity(cub);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
 }

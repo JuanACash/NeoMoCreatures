@@ -1136,15 +1136,21 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
     }
 
     @Override
-    public void refreshDimensions() {
-        super.refreshDimensions();
+    protected net.minecraft.world.phys.AABB makeBoundingBox() {
         if (this.isBaby()) {
-            // Overrides the bounding box AFTER the normal (visual-scale-driven) pass,
-            // independent of Attributes.SCALE, so the hitbox doesn't shrink with the model.
             net.minecraft.world.entity.EntityDimensions babyDimensions =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
-            this.setBoundingBox(babyDimensions.makeBoundingBox(this.getX(), this.getY(), this.getZ()));
+            return babyDimensions.makeBoundingBox(this.position());
         }
+        return super.makeBoundingBox();
+    }
+
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     @Override

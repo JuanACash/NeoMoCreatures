@@ -1093,6 +1093,9 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+            return false;
+        }
         boolean hurt = super.hurt(source, amount);
         if (!hurt || this.level().isClientSide) {
             return hurt;

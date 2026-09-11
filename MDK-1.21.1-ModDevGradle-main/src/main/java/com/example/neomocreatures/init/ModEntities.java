@@ -210,7 +210,7 @@ public class ModEntities {
                         if (!spaceOk) {
                         return false;
                         }
-                        if (level.getBlockState(pos.below()).isAir()) {
+                        if (!level.getBlockState(pos.below()).canOcclude()) {
                         return false;
                         }
 
@@ -222,7 +222,9 @@ public class ModEntities {
                         if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
                         return false;
                         }
-                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                        // Block light only — skips the sky-light roll that makes wide-open biomes
+                        // (desert) statistically much harder to pass than shaded ones (savanna).
+                        return level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos) <= 7;
                 },
                 net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
@@ -234,7 +236,7 @@ public class ModEntities {
                 (type, level, reason, pos, random) -> {
                         boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
                                 && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
-                        if (!spaceOk || level.getBlockState(pos.below()).isAir()) {
+                        if (!spaceOk || !level.getBlockState(pos.below()).canOcclude()) {
                         return false;
                         }
                         if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
@@ -243,10 +245,10 @@ public class ModEntities {
                         if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
                         return false;
                         }
-                        if (pos.getY() <= 40) {
-                        return true; // cave scorpion — no light restriction underground
+                        if (pos.getY() <= 40 && !level.canSeeSky(pos)) {
+                        return true; // cave scorpion — genuinely underground, no light restriction
                         }
-                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                        return level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos) <= 7;
                 },
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }

@@ -4,11 +4,14 @@ import com.example.neomocreatures.entity.bear.BearVariant;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
@@ -25,27 +28,44 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 
 import javax.annotation.Nullable;
 
-public class MoCBearEntity extends TamableAnimal {
+public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.entity.HasCustomInventoryScreen {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_BEAR_STATE =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
+            SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_ATTACK_TICKS =
+            SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.BOOLEAN);
 
+    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
+    @Nullable
+    private net.minecraft.resources.ResourceLocation saddleItemId;
+    
+       
+    private static final int MOUTH_TICKS_MAX = 20;
+    private static final int ATTACK_TICKS_MAX = 8;
     public static final int FOURS_STATE = 0;
     public static final int STANDING_STATE = 1;
     public static final int SITTING_STATE = 2;
+    private static final float RIDER_HEIGHT = 0.8F; // ajustable — se escala solo por especie vía getScale()
+    private static final float RIDER_FORWARD = 0F;
 
     private static final float BABY_SCALE = 0.5F;
 
@@ -57,10 +77,19 @@ public class MoCBearEntity extends TamableAnimal {
     }
 
     @Override
+    public float maxUpStep() {
+        return 1.0F;
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(DATA_VARIANT, BearVariant.BLACK.getId());
         builder.define(DATA_BEAR_STATE, FOURS_STATE);
+        builder.define(DATA_MOUTH_TICKS, 0);
+        builder.define(DATA_ATTACK_TICKS, 0);
+        builder.define(DATA_SADDLED, false);
+        builder.define(DATA_HAS_CHEST, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -88,6 +117,36 @@ public class MoCBearEntity extends TamableAnimal {
         this.entityData.set(DATA_BEAR_STATE, state);
     }
 
+    public boolean isSaddled() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    private void setSaddled(boolean saddled) {
+        this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    public boolean hasChest() {
+        return this.entityData.get(DATA_HAS_CHEST);
+    }
+
+    private void setHasChest(boolean hasChest) {
+        this.entityData.set(DATA_HAS_CHEST, hasChest);
+    }
+
+    public int getMouthTicks() {
+        return this.entityData.get(DATA_MOUTH_TICKS);
+    }
+
+    public int getAttackTicks() {
+        return this.entityData.get(DATA_ATTACK_TICKS);
+    }
+
+    private void startTalking() {
+        if (this.entityData.get(DATA_MOUTH_TICKS) == 0) {
+            this.entityData.set(DATA_MOUTH_TICKS, 1);
+        }
+    }
+
     // ---------------------------------------------------------------
     // Temperament: this is the single choke point for "does this bear
     // ever fight back". Cubs and pandas simply can never have a target,
@@ -101,18 +160,89 @@ public class MoCBearEntity extends TamableAnimal {
         super.setTarget(target);
     }
 
+    private static boolean isBlackGrizzlyTamingMeat(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.COOKED_BEEF)
+                || stack.is(net.minecraft.world.item.Items.COOKED_PORKCHOP)
+                || stack.is(net.minecraft.world.item.Items.COOKED_CHICKEN)
+                || stack.is(net.minecraft.world.item.Items.COOKED_MUTTON)
+                || stack.is(net.minecraft.world.item.Items.COOKED_RABBIT)
+                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_COOKED.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.DUCK_COOKED.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.VENISON_COOKED.get());
+    }
+
+    private static boolean isPolarTamingMeat(ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.COOKED_COD)
+                || stack.is(net.minecraft.world.item.Items.COOKED_SALMON)
+                || stack.is(com.example.neomocreatures.init.ModItems.TURTLE_COOKED.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.CRAB_COOKED.get());
+    }
+
+    private boolean isTamingMeatForVariant(ItemStack stack) {
+        return getVariant() == BearVariant.POLAR ? isPolarTamingMeat(stack) : isBlackGrizzlyTamingMeat(stack);
+    }
+
+    /** Healing accepts any meat, cooked or raw, either species' list — more lenient than taming on purpose. */
+    private static boolean isAnyMeat(ItemStack stack) {
+        return isBlackGrizzlyTamingMeat(stack) || isPolarTamingMeat(stack)
+                || stack.is(net.minecraft.world.item.Items.BEEF)
+                || stack.is(net.minecraft.world.item.Items.PORKCHOP)
+                || stack.is(net.minecraft.world.item.Items.CHICKEN)
+                || stack.is(net.minecraft.world.item.Items.MUTTON)
+                || stack.is(net.minecraft.world.item.Items.RABBIT)
+                || stack.is(net.minecraft.world.item.Items.COD)
+                || stack.is(net.minecraft.world.item.Items.SALMON)
+                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.DUCK_RAW.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.VENISON_RAW.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.TURTLE_RAW.get())
+                || stack.is(com.example.neomocreatures.init.ModItems.CRAB_RAW.get());
+    }
+
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+        if (getBearState() == SITTING_STATE) {
+            this.getNavigation().stop();
+            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            return;
+        }
+        super.travel(travelVector);
+    }
+
     private boolean shouldTargetPlayers(@Nullable LivingEntity target) {
-        return getVariant().getTemperament() == BearVariant.Temperament.HOSTILE;
+        BearVariant.Temperament temperament = getVariant().getTemperament();
+        if (temperament == BearVariant.Temperament.HOSTILE) {
+            return true;
+        }
+        return temperament == BearVariant.Temperament.NEUTRAL && hasNearbyCubOfSameSpecies(8.0D);
+    }
+
+    private boolean hasNearbyCubOfSameSpecies(double radius) {
+        return !this.level().getEntitiesOfClass(MoCBearEntity.class,
+                this.getBoundingBox().inflate(radius, 4.0D, radius),
+                b -> b.isBaby() && b.getVariant() == this.getVariant()).isEmpty();
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity);
+        return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity)
+                && !(target instanceof net.minecraft.world.entity.animal.PolarBear)
+                && !(target instanceof net.minecraft.world.entity.animal.Panda)
+                && !(target instanceof MoCElephantEntity)
+                && !(target instanceof net.minecraft.world.entity.animal.Bee);
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.4D));
+        this.goalSelector.addGoal(1, new PandaOnlyPanicGoal(this, 1.4D));
         this.goalSelector.addGoal(2, new FollowSameVariantAdultGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
@@ -151,7 +281,24 @@ public class MoCBearEntity extends TamableAnimal {
         if (!this.level().isClientSide) {
             tickGrowth();
             tickBearState();
+            tickMouthAndAttack();
+            tickEatNearbyFood();
         }
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        boolean hurt = super.doHurtTarget(target);
+        if (hurt) {
+            this.entityData.set(DATA_ATTACK_TICKS, ATTACK_TICKS_MAX);
+            if (getVariant() != BearVariant.PANDA && getBearState() != SITTING_STATE) {
+                // Reuses tickBearState's existing 100-tick expiry for a short rear-up swipe,
+                // instead of adding a second timer.
+                setBearState(STANDING_STATE);
+                this.standingTicks = 81;
+            }
+        }
+        return hurt;
     }
 
     // ---------------------------------------------------------------
@@ -189,6 +336,14 @@ public class MoCBearEntity extends TamableAnimal {
     // occasionally, especially near a player.
     // ---------------------------------------------------------------
     private void tickBearState() {
+        if (this.isVehicle()) {
+            // Being ridden always overrides any stand/sit pose — no rearing up or sitting mid-ride.
+            if (getBearState() != FOURS_STATE) {
+                setBearState(FOURS_STATE);
+            }
+            this.standingTicks = 0;
+            return;
+        }
         if (this.standingTicks > 0 && ++this.standingTicks > 100) {
             this.standingTicks = 0;
             setBearState(FOURS_STATE);
@@ -202,16 +357,69 @@ public class MoCBearEntity extends TamableAnimal {
         }
     }
 
+    private static final double EAT_NEARBY_ITEM_RANGE = 8.0D;
+
+    private void tickEatNearbyFood() {
+        if (this.isTame() || !this.isBaby() || getVariant() == BearVariant.PANDA) {
+            return;
+        }
+        net.minecraft.world.entity.item.ItemEntity nearestFood = null;
+        double nearestDistSqr = EAT_NEARBY_ITEM_RANGE * EAT_NEARBY_ITEM_RANGE;
+        for (net.minecraft.world.entity.item.ItemEntity itemEntity : this.level().getEntitiesOfClass(
+                net.minecraft.world.entity.item.ItemEntity.class, this.getBoundingBox().inflate(EAT_NEARBY_ITEM_RANGE))) {
+            if (itemEntity.getOwner() == null || !isTamingMeatForVariant(itemEntity.getItem())) {
+                continue;
+            }
+            double distSqr = itemEntity.distanceToSqr(this);
+            if (distSqr < nearestDistSqr) {
+                nearestDistSqr = distSqr;
+                nearestFood = itemEntity;
+            }
+        }
+        if (nearestFood == null) {
+            return;
+        }
+        if (nearestDistSqr > 4.0D) {
+            this.getNavigation().moveTo(nearestFood, 1.0D);
+            return;
+        }
+        nearestFood.getItem().shrink(1);
+        if (nearestFood.getItem().isEmpty()) {
+            nearestFood.discard();
+        }
+        startTalking();
+        this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+        java.util.UUID thrower = nearestFood.getOwner().getUUID();
+        this.setOwnerUUID(thrower);
+        this.setTame(true, true);
+        com.example.neomocreatures.util.NamingHelper.promptRename(this, thrower);
+    }
+
+    private void tickMouthAndAttack() {
+        int mouth = this.entityData.get(DATA_MOUTH_TICKS);
+        if (mouth > 0 && ++mouth > MOUTH_TICKS_MAX) {
+            mouth = 0;
+        }
+        this.entityData.set(DATA_MOUTH_TICKS, mouth);
+
+        int attack = this.entityData.get(DATA_ATTACK_TICKS);
+        if (attack > 0) {
+            this.entityData.set(DATA_ATTACK_TICKS, attack - 1);
+        }
+}
+
     // ---------------------------------------------------------------
     // Sounds — all 4 species share the same set, matching the original.
     // ---------------------------------------------------------------
     @Override
     protected SoundEvent getAmbientSound() {
+        startTalking();
         return com.example.neomocreatures.init.ModSounds.BEAR_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
+        startTalking();
         return com.example.neomocreatures.init.ModSounds.BEAR_HURT.get();
     }
 
@@ -224,6 +432,25 @@ public class MoCBearEntity extends TamableAnimal {
     public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("BearVariant", getVariant().getId());
+        tag.putBoolean("BearSitting", getBearState() == SITTING_STATE);
+        tag.putBoolean("BearSaddled", isSaddled());
+        if (this.saddleItemId != null) {
+            tag.putString("BearSaddleItem", this.saddleItemId.toString());
+        }
+        tag.putBoolean("BearHasChest", hasChest());
+        if (hasChest()) {
+            net.minecraft.nbt.ListTag chestList = new net.minecraft.nbt.ListTag();
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack chestStack = chestInventory.getItem(slot);
+                if (!chestStack.isEmpty()) {
+                    net.minecraft.nbt.CompoundTag slotTag = new net.minecraft.nbt.CompoundTag();
+                    slotTag.putInt("Slot", slot);
+                    slotTag.put("Item", chestStack.save(this.registryAccess()));
+                    chestList.add(slotTag);
+                }
+            }
+            tag.put("BearChestItems", chestList);
+        }
     }
 
     @Override
@@ -231,6 +458,25 @@ public class MoCBearEntity extends TamableAnimal {
         super.readAdditionalSaveData(tag);
         if (tag.contains("BearVariant")) {
             setVariant(BearVariant.byId(tag.getInt("BearVariant")));
+        }
+        if (tag.getBoolean("BearSitting")) {
+            setBearState(SITTING_STATE);
+            this.standingTicks = 0;
+        }
+        setSaddled(tag.getBoolean("BearSaddled"));
+        if (tag.contains("BearSaddleItem")) {
+            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("BearSaddleItem"));
+        }
+        if (tag.getBoolean("BearHasChest")) {
+            setHasChest(true);
+            for (net.minecraft.nbt.Tag entry : tag.getList("BearChestItems", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+                net.minecraft.nbt.CompoundTag slotTag = (net.minecraft.nbt.CompoundTag) entry;
+                int slot = slotTag.getInt("Slot");
+                ItemStack chestStack = ItemStack.parse(this.registryAccess(), slotTag.getCompound("Item")).orElse(ItemStack.EMPTY);
+                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
+                    chestInventory.setItem(slot, chestStack);
+                }
+            }
         }
     }
 
@@ -291,6 +537,20 @@ public class MoCBearEntity extends TamableAnimal {
         }
     }
 
+    private static class PandaOnlyPanicGoal extends net.minecraft.world.entity.ai.goal.PanicGoal {
+    private final MoCBearEntity bear;
+
+    PandaOnlyPanicGoal(MoCBearEntity bear, double speedModifier) {
+            super(bear, speedModifier);
+            this.bear = bear;
+        }
+
+        @Override
+        public boolean canUse() {
+            return this.bear.getVariant().getTemperament() == BearVariant.Temperament.PASSIVE && super.canUse();
+        }
+    }
+
     /**
      * Reactive check, not a real ongoing goal: every so often, if a nearby
      * cub of the same species currently has an attacker, the adult (if
@@ -323,5 +583,185 @@ public class MoCBearEntity extends TamableAnimal {
             }
             return false;
         }
+    }
+
+    private void openChestMenu(Player player) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            net.minecraft.network.chat.Component title = this.hasCustomName()
+                    ? this.getDisplayName().copy().append(" Storage")
+                    : net.minecraft.network.chat.Component.literal("Bear Storage");
+            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
+                            net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    title));
+        }
+    }
+
+    /** E while riding opens the chest instead of the player's own inventory. */
+    @Override
+    public void openCustomInventoryScreen(Player player) {
+        if (this.level().isClientSide || !this.isTame()) {
+            return;
+        }
+        if (hasChest()) {
+            openChestMenu(player);
+            return;
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
+                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        }
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (isSaddled() && this.getFirstPassenger() instanceof Player player && this.hasPassenger(player)) {
+            return player;
+        }
+        return null;
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
+        double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
+        double y = this.getY() + RIDER_HEIGHT * this.getScale();
+        moveFunction.accept(passenger, x, y, z);
+    }
+
+    @Override
+    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+        return new net.minecraft.world.phys.Vec3(player.xxa, 0.0D, player.zza);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        // Noticeably slower than BigCat/Manticore on purpose — combine with speed potions if needed.
+        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    @Override
+    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        this.setYRot(player.getYRot());
+        this.yRotO = this.getYRot();
+        this.setXRot(player.getXRot() * 0.5F);
+        this.setRot(this.getYRot(), this.getXRot());
+        this.yBodyRot = this.getYRot();
+        this.yHeadRot = this.getYRot();
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
+            if (!this.level().isClientSide) {
+                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+            if (!this.level().isClientSide) {
+                setBearState(getBearState() == SITTING_STATE ? FOURS_STATE : SITTING_STATE);
+                this.standingTicks = 0; // whip-sit is permanent, not the timed wild stand/sit
+                this.setTarget(null);
+                this.getNavigation().stop();
+                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
+                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                        0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
+                if (!player.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.isTame() && getVariant() == BearVariant.PANDA && stack.is(net.minecraft.world.item.Items.BAMBOO)) {
+            if (!this.level().isClientSide) {
+                startTalking();
+                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+                this.tame(player);
+                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && isAnyMeat(stack) && this.getHealth() < this.getMaxHealth()) {
+            if (!this.level().isClientSide) {
+                startTalking();
+                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.heal(this.getMaxHealth());
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
+            && (stack.is(net.minecraft.world.item.Items.SADDLE)
+                || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+            if (!this.level().isClientSide) {
+                setSaddled(true);
+                this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+            if (!this.level().isClientSide) {
+                setSaddled(false);
+                this.ejectPassengers();
+                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                        : net.minecraft.world.item.Items.SADDLE;
+                this.saddleItemId = null;
+                this.spawnAtLocation(new ItemStack(saddleItem));
+                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasChest()
+                && stack.is(net.minecraft.world.item.Items.CHEST)) {
+            if (!this.level().isClientSide) {
+                setHasChest(true);
+                this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            if (!this.level().isClientSide) {
+                setBearState(FOURS_STATE); // interrumpe cualquier pose de pie/sentado al montarlo
+                this.standingTicks = 0;
+                player.startRiding(this);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+            openChestMenu(player);
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.mobInteract(player, hand);
     }
 }

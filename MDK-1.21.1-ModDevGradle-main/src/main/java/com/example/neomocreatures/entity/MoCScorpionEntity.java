@@ -38,7 +38,8 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 
-public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.PlayerRideableJumping {
+public class MoCScorpionEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.PlayerRideableJumping,
+        net.minecraft.world.entity.monster.Enemy {
 
     private static final int STING_CHANCE = 5; // 1 in 5, matches rand.nextInt(5)==0
     private static final int STING_ANIM_TICKS = 50;

@@ -15,6 +15,8 @@ import net.minecraft.util.Mth;
 
 public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
 
+    private static final int ATTACK_TICKS_MAX = 8;
+
     private final ModelPart root;
 
     // fours (state 0)
@@ -26,6 +28,9 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
     // sitting (state 2)
     private final ModelPart cHead, cSnout, cMouth, cMouthOpen, cLEar, cREar, cNeck, cTorso, cAbdomen, cTail;
     private final ModelPart cLegFL1, cLegFL2, cLegFL3, cLegFR1, cLegFR2, cLegFR3, cLegRL1, cLegRL2, cLegRL3, cLegRR1, cLegRR2, cLegRR3;
+
+    private final ModelPart saddle, saddleBack, saddleFront, bag;
+    private final ModelPart saddleSitted, saddleBackSitted, saddleFrontSitted, bagSitted;
 
     public MoCBearModel(ModelPart root) {
         this.root = root;
@@ -98,6 +103,15 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
         this.cLegRR1 = root.getChild("c_leg_rr1");
         this.cLegRR2 = root.getChild("c_leg_rr2");
         this.cLegRR3 = root.getChild("c_leg_rr3");
+
+        this.saddle = root.getChild("saddle");
+        this.saddleBack = root.getChild("saddle_back");
+        this.saddleFront = root.getChild("saddle_front");
+        this.bag = root.getChild("bag");
+        this.saddleSitted = root.getChild("saddle_sitted");
+        this.saddleBackSitted = root.getChild("saddle_back_sitted");
+        this.saddleFrontSitted = root.getChild("saddle_front_sitted");
+        this.bagSitted = root.getChild("bag_sitted");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -248,6 +262,24 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
         root.addOrReplaceChild("c_leg_rr3", CubeListBuilder.create().texOffs(2, 107).addBox(-2F, 0F, -3F, 4, 2, 5),
                 PartPose.offsetAndRotation(-5.5F, 22F, -6F, -1.375609F, 0F, -0.3490659F));
 
+        root.addOrReplaceChild("saddle", CubeListBuilder.create().texOffs(36, 114).addBox(-4F, -0.5F, -3F, 8, 2, 6),
+                PartPose.offset(0F, 4F, -2F));
+        root.addOrReplaceChild("saddle_back", CubeListBuilder.create().texOffs(20, 108).addBox(-4F, -0.2F, 2.9F, 8, 2, 4),
+                PartPose.offsetAndRotation(0F, 4F, -2F, 0.10088F, 0F, 0F));
+        root.addOrReplaceChild("saddle_front", CubeListBuilder.create().texOffs(36, 122).addBox(-2.5F, -1F, -3F, 5, 2, 3),
+                PartPose.offsetAndRotation(0F, 4F, -2F, -0.1850049F, 0F, 0F));
+        root.addOrReplaceChild("bag", CubeListBuilder.create().texOffs(0, 114).addBox(-5F, -3F, -2.5F, 10, 2, 5),
+                PartPose.offsetAndRotation(0F, 7F, 7F, -0.4363323F, 0F, 0F));
+
+        root.addOrReplaceChild("saddle_sitted", CubeListBuilder.create().texOffs(36, 114).addBox(-4F, -0.5F, -3F, 8, 2, 6),
+                PartPose.offsetAndRotation(0F, 7.5F, 6.5F, -0.9686577F, 0F, 0F));
+        root.addOrReplaceChild("saddle_back_sitted", CubeListBuilder.create().texOffs(20, 108).addBox(-4F, -0.3F, 2.9F, 8, 2, 4),
+                PartPose.offsetAndRotation(0F, 7.5F, 6.5F, -0.9162979F, 0F, 0F));
+        root.addOrReplaceChild("saddle_front_sitted", CubeListBuilder.create().texOffs(36, 122).addBox(-2.5F, -1F, -3F, 5, 2, 3),
+                PartPose.offsetAndRotation(0F, 7.5F, 6.5F, -1.151917F, 0F, 0F));
+        root.addOrReplaceChild("bag_sitted", CubeListBuilder.create().texOffs(0, 114).addBox(-5F, -3F, -2.5F, 10, 2, 5),
+                PartPose.offsetAndRotation(0F, 17F, 8F, -1.570796F, 0F, 0F));
+
         return LayerDefinition.create(mesh, 128, 128);
     }
 
@@ -269,11 +301,16 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
                 "b_leg_rl1", "b_leg_rl2", "b_leg_rl3", "b_leg_rr1", "b_leg_rr2", "b_leg_rr3",
                 "c_head", "c_snout", "c_mouth", "c_mouth_open", "c_l_ear", "c_r_ear", "c_neck", "c_torso", "c_abdomen", "c_tail",
                 "c_leg_fl1", "c_leg_fl2", "c_leg_fl3", "c_leg_fr1", "c_leg_fr2", "c_leg_fr3",
-                "c_leg_rl1", "c_leg_rl2", "c_leg_rl3", "c_leg_rr1", "c_leg_rr2", "c_leg_rr3"}) {
+                "c_leg_rl1", "c_leg_rl2", "c_leg_rl3", "c_leg_rr1", "c_leg_rr2", "c_leg_rr3",
+                "saddle", "saddle_back", "saddle_front", "bag",
+                "saddle_sitted", "saddle_back_sitted", "saddle_front_sitted", "bag_sitted"}) {
             root.getChild(name).visible = false;
         }
 
-        boolean openMouth = false; // wired up once bite/attack animation is added in a later step
+        boolean openMouth = entity.getMouthTicks() > 0 || entity.getAttackTicks() > 0;
+        float attackLunge = entity.getAttackTicks() > 0
+                ? Mth.sin((ATTACK_TICKS_MAX - entity.getAttackTicks()) * 0.4F) * 0.35F
+                : 0F;
         int state = entity.getBearState();
 
         float lLegRotX = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
@@ -291,7 +328,7 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
             mouth.visible = !openMouth;
             mouthOpen.visible = openMouth;
 
-            head.xRot = 0.1502636F + xAngle; head.yRot = yAngle;
+            head.xRot = 0.1502636F + xAngle - attackLunge; head.yRot = yAngle;
             snout.xRot = 0.1502636F + xAngle; snout.yRot = yAngle;
             mouth.xRot = -0.0068161F + xAngle; mouth.yRot = yAngle;
             mouthOpen.xRot = 0.534236F + xAngle; mouthOpen.yRot = yAngle;
@@ -303,6 +340,14 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
             legFR1.xRot = 0.2617994F + rLegRotX; legFR2.xRot = rLegRotX; legFR3.xRot = rLegRotX;
             legRL1.xRot = -0.1745329F + rLegRotX; legRL2.xRot = rLegRotX; legRL3.xRot = rLegRotX;
             tail.zRot = lLegRotX * 0.2F;
+            if (entity.isSaddled()) {
+                saddle.visible = true;
+                saddleBack.visible = true;
+                saddleFront.visible = true;
+                }
+                if (entity.hasChest()) {
+                bag.visible = true;
+                }
         } else if (state == MoCBearEntity.STANDING_STATE) {
             bHead.visible = true; bSnout.visible = true; bLEar.visible = true; bREar.visible = true;
             bNeck.visible = true; bTorso.visible = true; bAbdomen.visible = true; bTail.visible = true;
@@ -313,7 +358,7 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
             bMouth.visible = !openMouth;
             bMouthOpen.visible = openMouth;
 
-            bHead.xRot = -0.0242694F - xAngle; bHead.yRot = yAngle;
+            bHead.xRot = -0.0242694F - xAngle - attackLunge; bHead.yRot = yAngle;
             bSnout.xRot = -0.0242694F - xAngle; bSnout.yRot = yAngle;
             bMouth.xRot = -0.08726F - xAngle; bMouth.yRot = yAngle;
             bMouthOpen.xRot = 0.5235988F - xAngle; bMouthOpen.yRot = yAngle;
@@ -336,12 +381,20 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
             cMouth.visible = !openMouth;
             cMouthOpen.visible = openMouth;
 
-            cHead.xRot = 0.1502636F + xAngle; cHead.yRot = yAngle;
+            cHead.xRot = 0.1502636F + xAngle - attackLunge; cHead.yRot = yAngle;
             cSnout.xRot = 0.1502636F + xAngle; cSnout.yRot = yAngle;
             cMouth.xRot = -0.0068161F + xAngle; cMouth.yRot = yAngle;
             cMouthOpen.xRot = 0.3665191F + xAngle; cMouthOpen.yRot = yAngle;
             cLEar.xRot = 0.1502636F + xAngle; cLEar.yRot = -0.3490659F + yAngle;
             cREar.xRot = 0.1502636F + xAngle; cREar.yRot = 0.3490659F + yAngle;
+        }
+        if (entity.isSaddled()) {
+        saddleSitted.visible = true;
+        saddleBackSitted.visible = true;
+        saddleFrontSitted.visible = true;
+        }
+        if (entity.hasChest()) {
+        bagSitted.visible = true;
         }
     }
 

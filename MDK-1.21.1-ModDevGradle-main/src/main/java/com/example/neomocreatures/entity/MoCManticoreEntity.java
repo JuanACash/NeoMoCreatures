@@ -39,7 +39,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 
 public class MoCManticoreEntity extends TamableAnimal implements com.example.neomocreatures.entity.egg.EggHatchable,
-        net.minecraft.world.entity.HasCustomInventoryScreen {
+        net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.monster.Enemy {
 
     private static final int STING_CHANCE = 5;
     private static final int STING_ANIM_TICKS = 50;

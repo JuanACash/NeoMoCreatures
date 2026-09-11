@@ -33,7 +33,7 @@ public class ModItems {
     public static final DeferredItem<Item> WYVERN_SPAWN_EGG = ITEMS.register("wyvern_spawn_egg",
         () -> new com.example.neomocreatures.item.WyvernSpawnEggItem(new Item.Properties()));
     public static final DeferredItem<Item> MOC_ELEPHANT_SPAWN_EGG = ITEMS.register("moc_elephant_spawn_egg",
-        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_ELEPHANT, 0x5C4A3A, 0xE8DCC8, new Item.Properties()));
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.MOC_ELEPHANT, 0xE8DCC8, 0x5C4A3A, new Item.Properties()));
     public static final DeferredItem<Item> LION_SPAWN_EGG = ITEMS.register("lion_spawn_egg",
         () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
                 com.example.neomocreatures.entity.bigcat.BigCatVariant.SpawnFamily.LION, 0xC2A25C, 0x6B4A1F, new Item.Properties()));
@@ -65,11 +65,11 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.BigCatSpawnEggItem(
                 com.example.neomocreatures.entity.bigcat.BigCatVariant.PANTHGER, 0x1A1A1A, 0xE0771C, new Item.Properties()));
     public static final DeferredItem<Item> MANTICORE_SPAWN_EGG = ITEMS.register("manticore_spawn_egg",
-        () -> new com.example.neomocreatures.item.ManticoreSpawnEggItem(0x4A7A3A, 0x2E5222, new Item.Properties()));
+        () -> new com.example.neomocreatures.item.ManticoreSpawnEggItem(0x000000, 0x4A7A3A, new Item.Properties()));
     public static final DeferredItem<Item> SCORPION_SPAWN_EGG = ITEMS.register("scorpion_spawn_egg",
-        () -> new com.example.neomocreatures.item.ScorpionSpawnEggItem(0xC2914F, 0x1A1A1A, new Item.Properties()));
+        () -> new com.example.neomocreatures.item.ScorpionSpawnEggItem(0xC2914F, 0xFF0000, new Item.Properties()));
     public static final DeferredItem<Item> OSTRICH_SPAWN_EGG = ITEMS.register("ostrich_spawn_egg",
-        () -> new com.example.neomocreatures.item.OstrichSpawnEggItem(0xC49A6C, 0x2B2B2B, new Item.Properties()));
+        () -> new com.example.neomocreatures.item.OstrichSpawnEggItem(0xEDE8D0, 0x90D5FF, new Item.Properties()));
     public static final DeferredItem<Item> BLACK_BEAR_SPAWN_EGG = ITEMS.register("black_bear_spawn_egg",
         () -> new com.example.neomocreatures.item.BearSpawnEggItem(
                 com.example.neomocreatures.entity.bear.BearVariant.BLACK, 0x3A2E24, 0x1A1410, new Item.Properties()));
