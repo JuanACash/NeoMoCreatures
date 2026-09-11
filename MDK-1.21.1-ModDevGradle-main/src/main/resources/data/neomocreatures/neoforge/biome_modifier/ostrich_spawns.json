@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:desert", "minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna"],
+  "spawners": [
+    { "type": "neomocreatures:moc_ostrich", "weight": 16, "minCount": 1, "maxCount": 4 }
+  ]
+}

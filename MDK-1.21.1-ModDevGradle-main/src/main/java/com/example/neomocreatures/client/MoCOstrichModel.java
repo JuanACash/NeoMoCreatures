@@ -38,6 +38,12 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
     private final ModelPart tail1;
     private final ModelPart tail2;
     private final ModelPart tail3;
+    private final ModelPart tailBase;
+    private final ModelPart tailPart1;
+    private final ModelPart tailPart2;
+    private final ModelPart tailPart3;
+    private final ModelPart tailPart4;
+    private final ModelPart tailPart5;    
     private final ModelPart lWingB;
     private final ModelPart lWingC;
     private final ModelPart lWingD;
@@ -121,6 +127,12 @@ private final ModelPart uniHorn;
         this.tail1 = root.getChild("tail1");
         this.tail2 = root.getChild("tail2");
         this.tail3 = root.getChild("tail3");
+        this.tailBase = root.getChild("tail_base");
+        this.tailPart1 = root.getChild("tail_part1");
+        this.tailPart2 = root.getChild("tail_part2");
+        this.tailPart3 = root.getChild("tail_part3");
+        this.tailPart4 = root.getChild("tail_part4");
+        this.tailPart5 = root.getChild("tail_part5");
         this.lWingB = root.getChild("l_wing_b");
         this.lWingC = root.getChild("l_wing_c");
         this.lWingD = root.getChild("l_wing_d");
@@ -244,13 +256,32 @@ private final ModelPart uniHorn;
 
         root.addOrReplaceChild("tail1",
                 CubeListBuilder.create().texOffs(44, 18).addBox(-0.5F, -2F, -2F, 1, 4, 6),
-                PartPose.offsetAndRotation(0F, 4F, 11F, 20F / R, 0F, 0F));
+                PartPose.offsetAndRotation(0F, 4F, 15F, 20F / R, 0F, 0F));
         root.addOrReplaceChild("tail2",
                 CubeListBuilder.create().texOffs(58, 18).addBox(-2.6F, -2F, -2F, 1, 4, 6),
-                PartPose.offsetAndRotation(0F, 4F, 11F, 20F / R, -15F / R, 0F));
+                PartPose.offsetAndRotation(0F, 4F, 15F, 20F / R, -15F / R, 0F));
         root.addOrReplaceChild("tail3",
                 CubeListBuilder.create().texOffs(30, 18).addBox(1.6F, -2F, -2F, 1, 4, 6),
-                PartPose.offsetAndRotation(0F, 4F, 11F, 20F / R, 15F / R, 0F));
+                PartPose.offsetAndRotation(0F, 4F, 15F, 20F / R, 15F / R, 0F));
+
+        root.addOrReplaceChild("tail_base",
+                CubeListBuilder.create().texOffs(30, 28).addBox(-2.5F, -1F, 0F, 5, 5, 5),
+                PartPose.offset(0F, 4F, 10F));
+        root.addOrReplaceChild("tail_part1",
+                CubeListBuilder.create().texOffs(30, 28).addBox(-2.5F, -2.2F, 5F, 5, 5, 5),
+                PartPose.offsetAndRotation(0F, 4F, 10F, -0.2974289F, 0F, 0F));
+        root.addOrReplaceChild("tail_part2",
+                CubeListBuilder.create().texOffs(60, 73).addBox(-2.5F, -4.3F, 9F, 5, 5, 8),
+                PartPose.offsetAndRotation(0F, 4F, 10F, -0.5205006F, 0F, 0F));
+        root.addOrReplaceChild("tail_part3",
+                CubeListBuilder.create().texOffs(60, 86).addBox(-2F, 1F, 16F, 4, 4, 7),
+                PartPose.offsetAndRotation(0F, 4F, 10F, -0.2230717F, 0F, 0F));
+        root.addOrReplaceChild("tail_part4",
+                CubeListBuilder.create().texOffs(60, 97).addBox(-1.5F, 8F, 20.6F, 3, 3, 7),
+                PartPose.offsetAndRotation(0F, 4F, 10F, 0.0743572F, 0F, 0F));
+        root.addOrReplaceChild("tail_part5",
+                CubeListBuilder.create().texOffs(60, 107).addBox(-1F, 16.5F, 22.9F, 2, 2, 5),
+                PartPose.offsetAndRotation(0F, 4F, 10F, 0.4089647F, 0F, 0F));
 
         root.addOrReplaceChild("l_wing_b",
                 CubeListBuilder.create().texOffs(68, 46).addBox(-0.5F, -3F, 0F, 1, 4, 14),
@@ -506,6 +537,41 @@ private final ModelPart uniHorn;
         lBeakB.visible = mouthOpen;
         lBeak2B.visible = mouthOpen;
 
+        boolean specialWings = entity.getEssence() == MoCOstrichEntity.ESSENCE_FIRE
+                || entity.getEssence() == MoCOstrichEntity.ESSENCE_WYVERN;
+        boolean floating = specialWings && entity.isVehicle() && entity.isFlying();
+
+        if (floating) {
+        // Folded flight pose: legs tucked up and back, matches the original's flyer stance
+        lLegC.y = 8F;
+        lLegC.z = 17F;
+        rLegC.y = 8F;
+        rLegC.z = 17F;
+        lFoot.y = -5F;
+        lFoot.z = -3F;
+        rFoot.y = -5F;
+        rFoot.z = -3F;
+
+        lLegA.xRot = 40F / R;
+        lLegB.xRot = lLegA.xRot;
+        lLegC.xRot = -85F / R;
+        lFoot.xRot = 25F / R;
+
+        rLegA.xRot = 40F / R;
+        rLegB.xRot = rLegA.xRot;
+        rLegC.xRot = -85F / R;
+        rFoot.xRot = 25F / R;
+        } else {
+        // Ground pose (default resting pivots restored in case the previous frame was floating)
+        lLegC.y = 5F;
+        lLegC.z = 4F;
+        rLegC.y = 5F;
+        rLegC.z = 4F;
+        lFoot.y = 5F;
+        lFoot.z = 4F;
+        rFoot.y = 5F;
+        rFoot.z = 4F;
+
         lLegA.xRot = 10F / R + lLegXRot;
         lLegB.xRot = lLegA.xRot;
         lLegC.xRot = -15F / R + lLegXRot;
@@ -514,15 +580,35 @@ private final ModelPart uniHorn;
         rLegB.xRot = rLegA.xRot;
         rLegC.xRot = -15F / R + rLegXRot;
         rFoot.xRot = rLegA.xRot;
+        }
+
+        lWingB.visible = !specialWings;
+        lWingC.visible = !specialWings;
+        rWingB.visible = !specialWings;
+        rWingC.visible = !specialWings;
+        lWingD.visible = specialWings;
+        lWingE.visible = specialWings;
+        rWingD.visible = specialWings;
+        rWingE.visible = specialWings;
 
         float wingF;
-        if (entity.isFlying()) {
-        wingF = 0.6F; // wide open, mostly still — a real flight glide, not the idle flap
+        if (specialWings) {
+        int ascendCooldown = entity.getAscendCooldownTicks();
+        if (ascendCooldown > 0) {
+                wingF = -40F / R + Mth.cos(ascendCooldown * 0.3F) * 1.3F; // big flap pulse right after a thrust
+        } else if (entity.isVehicle() && entity.isFlying()) {
+                wingF = Mth.cos(ageInTicks * 0.8F) * 0.2F; // slow glide wave while airborne
+        } else {
+                wingF = Mth.cos(limbSwing * 0.3F) * limbSwingAmount; // ground idle sway
+        }
+        lWingD.zRot = -20F / R - wingF;
+        lWingE.zRot = -20F / R - wingF;
+        rWingD.zRot = 20F / R + wingF;
+        rWingE.zRot = 20F / R + wingF;
         } else {
         wingF = 10F / R + Mth.cos(limbSwing * 0.6F) * 0.2F * limbSwingAmount;
         if (entity.getWingTicks() != 0) {
                 wingF += 0.87266463F;
-                }
         }
         lWingB.yRot = 5F / R + wingF;
         lWingC.yRot = 5F / R + wingF;
@@ -532,11 +618,41 @@ private final ModelPart uniHorn;
         lWingC.xRot = rLegXRot / 10F;
         rWingB.xRot = 5F / R + rLegXRot / 10F;
         rWingC.xRot = rLegXRot / 10F;
+        }
 
+        boolean darkTail = entity.getEssence() == MoCOstrichEntity.ESSENCE_WYVERN;
+        tail1.visible = !darkTail;
+        tail2.visible = !darkTail;
+        tail3.visible = !darkTail;
+        tailPart1.visible = darkTail;
+        tailPart2.visible = darkTail;
+        tailPart3.visible = darkTail;
+        tailPart4.visible = darkTail;
+        tailPart5.visible = darkTail;
+
+        if (darkTail) {
+        float tailSwaySpread = 15F;
+        float darkTailRot = floating
+                ? Mth.cos(ageInTicks * 0.5F) * 0.15F // gentle sway while airborne, since limbSwing goes flat mid-flight
+                : Mth.cos(limbSwing * 0.5F) * 0.3F * limbSwingAmount;
+        tailBase.yRot = darkTailRot; // the connector piece sways with the first segment
+        darkTailRot += darkTailRot / tailSwaySpread;
+        tailPart1.yRot = darkTailRot;
+        darkTailRot += darkTailRot / tailSwaySpread;
+        tailPart2.yRot = darkTailRot;
+        darkTailRot += darkTailRot / tailSwaySpread;
+        tailPart3.yRot = darkTailRot;
+        darkTailRot += darkTailRot / tailSwaySpread;
+        tailPart4.yRot = darkTailRot;
+        darkTailRot += darkTailRot / tailSwaySpread;
+        tailPart5.yRot = darkTailRot;
+        } else {
+        tailBase.yRot = 0F; // static connector for the normal (non-dark) tail
         float tailRot = Mth.cos(limbSwing * 0.5F) * 0.3F * limbSwingAmount;
         tail1.yRot = tailRot;
         tail2.yRot = tailRot - 15F / R;
         tail3.yRot = tailRot + 15F / R;
+        }
 
         boolean saddled = entity.isSaddled();
         saddleA.visible = saddled;

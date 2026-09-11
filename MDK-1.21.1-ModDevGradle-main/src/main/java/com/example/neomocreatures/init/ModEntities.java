@@ -290,5 +290,18 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE
                 );
         }
+
+        public static void registerOstrichSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_OSTRICH.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                if (!level.getBlockState(pos.below()).canOcclude()) {
+                                return false; // needs solid ground underneath (works on sand too, not just grass)
+                                }
+                                return level.getRawBrightness(pos, 0) >= 9;
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
     
 }

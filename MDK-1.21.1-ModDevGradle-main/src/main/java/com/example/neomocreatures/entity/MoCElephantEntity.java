@@ -245,6 +245,15 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
         }
     }
 
+    private void applyLavaBuoyancy() {
+        if (this.isInLava()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
     /**
      * Breaks enough blocks directly ahead — as many as its own height needs —
      * to clear a path, and damages whatever it rams into, while moving with
@@ -928,6 +937,7 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
             tickHarnessSit();
             tickTuskBulldozer();
             avoidHazardsAhead();
+            applyLavaBuoyancy();
             if (this.isVehicle()) {
                 tickWhipCharge();
             }
@@ -1197,7 +1207,7 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
      */
     @Override
     public void onPlayerJump(int jumpPower) {
-        if (jumpPower > 0 && (this.onGround() || this.isInWater())) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
             double jumpVelocity = getVariant().getJumpVelocity();
             net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, jumpVelocity, motion.z);

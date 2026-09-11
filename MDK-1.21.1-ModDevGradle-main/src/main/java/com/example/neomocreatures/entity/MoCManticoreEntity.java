@@ -774,6 +774,24 @@ public class MoCManticoreEntity extends TamableAnimal implements com.example.neo
         }
     }
 
+    private void applyWaterBuoyancy() {
+        if (this.isInWater() && !this.isVehicle()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
+    private void applyLavaBuoyancy() {
+        if (this.isInLava() && !this.isVehicle()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
     private float getGrowthFraction() {
         if (!this.isBaby()) {
             return 1.0F;
@@ -814,6 +832,8 @@ public class MoCManticoreEntity extends TamableAnimal implements com.example.neo
 
             tickIdleCounters();
             updateFlight();
+            applyWaterBuoyancy();
+            applyLavaBuoyancy();
         }
     }
 

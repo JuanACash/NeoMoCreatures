@@ -1151,6 +1151,15 @@ protected void registerGoals() {
         }
     }
 
+    private void applyLavaBuoyancy() {
+        if (this.isInLava() && !getIsFlying()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
     @Override
     protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
         super.tickRidden(player, travelVector);
@@ -1183,6 +1192,7 @@ protected void registerGoals() {
     public void travel(net.minecraft.world.phys.Vec3 travelVector) {
         if (!hasWings()) {
             applyWaterBuoyancy();
+            applyLavaBuoyancy();
             super.travel(travelVector);
             return;
         }
@@ -1215,6 +1225,7 @@ protected void registerGoals() {
             this.fallDistance = 0.0F;
         } else {
             applyWaterBuoyancy();
+            applyLavaBuoyancy();
             super.travel(travelVector);
         }
     }
@@ -1232,7 +1243,7 @@ protected void registerGoals() {
     /** Fixed 2.7-block jump, no charge bar — same one-shot approach as the elephant's. */
     @Override
     public void onPlayerJump(int jumpPower) {
-        if (jumpPower > 0 && (this.onGround() || this.isInWater())) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
             net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
             this.hasImpulse = true;

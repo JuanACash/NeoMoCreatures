@@ -1047,6 +1047,15 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         }
     }
 
+    private void applyLavaBuoyancy() {
+        if (this.isInLava() && !getIsFlying()) {
+            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
+            }
+        }
+    }
+
     private static final float RIDDEN_FLYER_FRICTION = 0.93F;
     private static final double RIDDEN_ASCEND_THRUST = 0.15D;
     private static final double RIDDEN_DESCEND_THRUST = 0.3D;
@@ -1089,6 +1098,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             this.fallDistance = 0.0F;
         } else {
             applyWaterBuoyancy();
+            applyLavaBuoyancy();
             super.travel(travelVector);
         }
     }

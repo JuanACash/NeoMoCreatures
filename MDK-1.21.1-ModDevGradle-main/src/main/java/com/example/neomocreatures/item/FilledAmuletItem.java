@@ -62,7 +62,10 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("ScorpionVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_SCORPION.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
-        } else if (tag.contains("EntityType")) {
+        } else if (tag.contains("OstrichVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_OSTRICH.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        }else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
             tooltip.add(type.getDescription().copy().withStyle(net.minecraft.ChatFormatting.GRAY));
@@ -101,6 +104,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnManticore(level, tag, pos);
         } else if (tag.contains("ScorpionVariant")) {
             spawned = spawnScorpion(level, tag, pos);
+        } else if (tag.contains("OstrichVariant")) {
+            spawned = spawnOstrich(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -314,5 +319,30 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(scorpion);
         return scorpion;
+    }
+
+    private Entity spawnOstrich(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCOstrichEntity ostrich = ModEntities.MOC_OSTRICH.get().create(level);
+        if (ostrich == null) return null;
+        ostrich.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        ostrich.setVariant(com.example.neomocreatures.entity.ostrich.OstrichVariant.valueOf(tag.getString("OstrichVariant")));
+        if (tag.contains("OstrichEssence")) {
+            ostrich.setEssence(tag.getInt("OstrichEssence"));
+        }
+        ostrich.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            ostrich.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        ostrich.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            ostrich.setAge(tag.getInt("Age"));
+        } else {
+            ostrich.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            ostrich.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(ostrich);
+        return ostrich;
     }
 }

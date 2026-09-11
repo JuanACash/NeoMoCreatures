@@ -22,16 +22,14 @@ public enum OstrichVariant {
         return textureName;
     }
 
-    public static OstrichVariant rollNatural(java.util.random.RandomGenerator random) {
+    public static OstrichVariant rollNatural(net.minecraft.util.RandomSource random) {
         int roll = random.nextInt(100);
-        if (roll <= 20) {
-            return MALE;
-        } else if (roll <= 65) {
+        if (roll <= 56) {
             return FEMALE;
-        } else if (roll <= 95) {
-            return DARK;
+        } else if (roll <= 94) {
+            return MALE;
         } else {
-            return WHITE;
+            return WHITE; // albino
         }
     }
 

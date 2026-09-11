@@ -49,7 +49,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
     private static final double RIDER_BACK_OFFSET = 0.15D;
     private static final int TRANSFORM_DURATION_TICKS = 100;
     private static final int TRANSFORM_SOUND_TICKS = 60;
-    private static final int JUMP_DEBOUNCE_TICKS = 8;
+    private static final int JUMP_DEBOUNCE_TICKS = 10;
     private static final double CHARGE_RADIUS = 2.0D;
 
     public static final int ESSENCE_NONE = 0;
@@ -100,6 +100,8 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
             SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_PENDING_ESSENCE =
             SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_UNIHORNED_CHARGE_TICKS =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
 
     private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
     @Nullable
@@ -110,7 +112,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
     private int eggAppearCounter;
     private int pairingType;
     private int jumpDebounceCounter;
-    private int unihornedChargeTicks;
+    private boolean wasAscendHeldLastTick;
     private boolean jumpPending;
 
     @Nullable
@@ -212,6 +214,10 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         return this.entityData.get(DATA_WING_TICKS);
     }
 
+    public int getAscendCooldownTicks() {
+        return this.jumpDebounceCounter;
+    }
+
     private void flapWings() {
         if (this.entityData.get(DATA_WING_TICKS) == 0) {
             this.entityData.set(DATA_WING_TICKS, 1);
@@ -254,7 +260,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         return this.entityData.get(DATA_ESSENCE);
     }
 
-    private void setEssence(int essence) {
+    public void setEssence(int essence) {
         this.entityData.set(DATA_ESSENCE, essence);
     }
 
@@ -285,7 +291,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
     }
 
     public boolean isCharging() {
-        return unihornedChargeTicks > 0;
+        return this.entityData.get(DATA_UNIHORNED_CHARGE_TICKS) > 0;
     }
 
     private boolean canFlyEssence() {
@@ -330,6 +336,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         builder.define(DATA_TRANSFORM_TICKS, 0);
         builder.define(DATA_ASCEND_HELD, false);
         builder.define(DATA_PENDING_ESSENCE, ESSENCE_NONE);
+        builder.define(DATA_UNIHORNED_CHARGE_TICKS, 0);
     }
 
     @Override
@@ -428,6 +435,29 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         }
     }
 
+    @Nullable
+    @Override
+    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
+            net.minecraft.world.level.ServerLevelAccessor level,
+            net.minecraft.world.DifficultyInstance difficulty,
+            net.minecraft.world.entity.MobSpawnType spawnType,
+            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+        net.minecraft.world.entity.SpawnGroupData data =
+                super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+
+        int roll = this.random.nextInt(100);
+        if (roll < 20) {
+            // 20% chance to spawn straight as a chick
+            this.setBaby(true);
+            this.setAge(-GROWTH_TICKS);
+            setVariant(this.random.nextBoolean() ? OstrichVariant.MALE : OstrichVariant.FEMALE);
+        } else {
+            setVariant(OstrichVariant.rollNatural(this.random));
+        }
+
+        return data;
+    }
+
     @Override
     @Nullable
     protected SoundEvent getAmbientSound() {
@@ -519,17 +549,15 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
 
             // Real makeEntityJump(): fires repeatedly while space is held, not
             // just on a single press — its own short debounce (not a one-shot).
-            if (canFlyEssence() && isAscendHeld()) {
-                jumpDebounceCounter++; // FIX: this increment was missing, so the counter never advanced
-                if (jumpDebounceCounter > 5) {
-                    jumpDebounceCounter = 1;
-                }
-                if (jumpDebounceCounter == 1) {
-                    this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
-                    jumpPending = true;
-                }
-            } else {
-                jumpDebounceCounter = 0; // reset so the next hold starts with an immediate thrust pulse
+            // Real cooldown: counts down every tick regardless of ascend key state,
+            // so releasing and spamming the key does not bypass the wait.
+            if (jumpDebounceCounter > 0) {
+                jumpDebounceCounter--;
+            }
+
+            if (canFlyEssence() && isAscendHeld() && jumpDebounceCounter == 0) {
+                jumpPending = true;
+                jumpDebounceCounter = JUMP_DEBOUNCE_TICKS;
             }
 
             if (jumpPending && canFlyEssence()) {
@@ -604,8 +632,65 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 100, 1, false, true));
         if (getEssence() == ESSENCE_UNIHORNED) {
-            unihornedChargeTicks = 100;
+            this.entityData.set(DATA_UNIHORNED_CHARGE_TICKS, 100);
         }
+    }
+
+    public void dropAllEquipment() {
+        if (isSaddled()) {
+            this.ejectPassengers();
+            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                    : net.minecraft.world.item.Items.SADDLE;
+            this.spawnAtLocation(new ItemStack(saddleItem));
+            this.saddleItemId = null;
+            setSaddled(false);
+        }
+        if (getHelmet() != HELMET_NONE) {
+            this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
+            setHelmet(HELMET_NONE);
+        }
+        if (hasChest()) {
+            this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack stack = chestInventory.getItem(slot);
+                if (!stack.isEmpty()) {
+                    this.spawnAtLocation(stack);
+                }
+            }
+            chestInventory.clearContent();
+            if (getFlagColor() != -1) {
+                this.spawnAtLocation(new ItemStack(woolItemFor(net.minecraft.world.item.DyeColor.byId(getFlagColor()))));
+                setFlagColor(-1);
+            }
+            setHasChest(false);
+        }
+    }
+
+    /** Snapshot used to restore this ostrich later from a filled Pet Amulet. */
+    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("OstrichVariant", getVariant().name());
+        tag.putInt("OstrichEssence", getEssence());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    /** Pet Amulet capture: instant, no vanish animation. Saddle/helmet/chest drop on the ground, not saved. */
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropAllEquipment();
+        CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
     }
 
     private void tickUnihornedCharge() {
@@ -628,6 +713,13 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
             if (!this.level().isClientSide) {
                 com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (!this.level().isClientSide) {
+                capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }
@@ -711,7 +803,10 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
             int helmetFromItem = helmetIdFor(stack);
             if (helmetFromItem != HELMET_NONE) {
                 if (getHelmet() != HELMET_NONE) {
-                    return InteractionResult.FAIL;
+                    // SUCCESS (not FAIL) fully consumes the interaction, so vanilla's own
+                    // item-based armor-equip fallback never gets a chance to sneak the new
+                    // helmet into the entity's real (unused) head equipment slot.
+                    return InteractionResult.SUCCESS;
                 }
                 if (!this.level().isClientSide) {
                     setHelmet(helmetFromItem);
@@ -781,6 +876,15 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         }
 
         if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            // Before mounting, give priority to whatever the held item wants to do
+            // (scrolls, pet amulet, future items with their own interactLivingEntity).
+            // Same pattern MoCHorseEntity uses for the same reason.
+            if (!stack.isEmpty()) {
+                InteractionResult itemResult = stack.interactLivingEntity(player, this, hand);
+                if (itemResult.consumesAction()) {
+                    return itemResult;
+                }
+            }
             if (!this.level().isClientSide) {
                 player.startRiding(this);
             }
@@ -1053,12 +1157,14 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         if (!this.level().isClientSide) {
             tickIdleCounters();
             tickBreeding();
+            tickAscendFlapSound();
             if (hidingCounter > 0 && --hidingCounter == 0) {
                 setHiding(false);
             }
             tickEssenceTransform();
-            if (unihornedChargeTicks > 0) {
-                unihornedChargeTicks--;
+            int chargeTicksRemaining = this.entityData.get(DATA_UNIHORNED_CHARGE_TICKS);
+            if (chargeTicksRemaining > 0) {
+                this.entityData.set(DATA_UNIHORNED_CHARGE_TICKS, chargeTicksRemaining - 1);
                 tickUnihornedCharge();
             }
         }
@@ -1093,13 +1199,73 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
         this.entityData.set(DATA_WING_TICKS, wing);
     }
 
+    // Plays the wing-flap sound exactly once per key press (not once per thrust pulse),
+    // entirely server-side so it never depends on client/server timing.
+    private void tickAscendFlapSound() {
+        boolean ascendHeldNow = isAscendHeld();
+        if (ascendHeldNow && !wasAscendHeldLastTick && canFlyEssence()) {
+            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
+        }
+        wasAscendHeldLastTick = ascendHeldNow;
+    }
+
     @Override
     public void die(DamageSource source) {
         if (!this.level().isClientSide) {
+            int lootingLevel = 0;
+            if (source.getEntity() instanceof LivingEntity killer) {
+                var lootingHolder = killer.level().registryAccess()
+                        .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                        .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
+                lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(lootingHolder, killer);
+            }
+
+            // Raw ostrich meat: 0-2 base, afectado por looting. Se suelta siempre en crudo,
+            // incluso si murió en fuego (no hay lógica de "cooked on fire" aquí).
+            int meatCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
+            for (int i = 0; i < meatCount; i++) {
+                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.OSTRICH_RAW.get()));
+            }
+
+            // Essence hearts / unicorn horn según la esencia del avestruz, 25% base + looting.
+            net.minecraft.world.item.Item essenceHeartItem = switch (getEssence()) {
+                case ESSENCE_WYVERN -> com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get();
+                case ESSENCE_FIRE -> com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get();
+                case ESSENCE_UNDEAD -> com.example.neomocreatures.init.ModItems.HEART_OF_UNDEAD.get();
+                case ESSENCE_UNIHORNED -> com.example.neomocreatures.init.ModItems.UNICORN_HORN.get();
+                default -> null;
+            };
+            if (essenceHeartItem != null) {
+                float chance = 0.25F + lootingLevel * 0.1F;
+                if (this.random.nextFloat() < chance) {
+                    int heartCount = 1 + this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
+                    for (int i = 0; i < heartCount; i++) {
+                        this.spawnAtLocation(new ItemStack(essenceHeartItem));
+                    }
+                }
+            }
+
+            // Saddle equipada (la real o la crafteada, según saddleItemId).
+            if (isSaddled()) {
+                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                        : net.minecraft.world.item.Items.SADDLE;
+                this.spawnAtLocation(new ItemStack(saddleItem));
+            }
+
+            // Helmet equipado.
+            if (getHelmet() != HELMET_NONE) {
+                this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
+            }
+
+            // Chest + contenido + wool de la bandera (igual que antes).
             if (hasChest()) {
                 this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
                 for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                    this.spawnAtLocation(chestInventory.getItem(slot));
+                    ItemStack chestStack = chestInventory.getItem(slot);
+                    if (!chestStack.isEmpty()) {
+                        this.spawnAtLocation(chestStack);
+                    }
                 }
                 if (getFlagColor() != -1) {
                     this.spawnAtLocation(new ItemStack(woolItemFor(net.minecraft.world.item.DyeColor.byId(getFlagColor()))));

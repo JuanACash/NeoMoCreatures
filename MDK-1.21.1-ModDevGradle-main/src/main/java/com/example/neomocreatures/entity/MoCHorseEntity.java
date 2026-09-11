@@ -2487,7 +2487,7 @@ public class MoCHorseEntity extends AbstractHorse {
         };
 
         boolean floatingInWater = this.isInWater() && !isSkeletonStage();
-        boolean floatingInLava = getSpecies() == Species.DARK_PEGASUS && this.isInLava() && !isSkeletonStage();
+        boolean floatingInLava = this.isInLava() && !isSkeletonStage();
 
         this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
         this.moveRelative(friction / 10F, travelVector);
@@ -2528,7 +2528,7 @@ public class MoCHorseEntity extends AbstractHorse {
             }
         }
 
-        if (getSpecies() == Species.NIGHTMARE && this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
+        if (this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
             double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
@@ -2594,7 +2594,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
     @Override
     public void onPlayerJump(int jumpPower) {
-        if (this.isInWater() || (getSpecies() == Species.NIGHTMARE && this.isInLava())) {
+        if (this.isInWater() || this.isInLava()) {
             if (jumpPower < 0) {
                 jumpPower = 0;
             }
