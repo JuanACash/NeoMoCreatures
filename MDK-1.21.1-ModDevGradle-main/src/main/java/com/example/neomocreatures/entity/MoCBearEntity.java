@@ -39,7 +39,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 
 import javax.annotation.Nullable;
 
-public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.entity.HasCustomInventoryScreen {
+public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.entity.HasCustomInventoryScreen,
+        net.minecraft.world.entity.PlayerRideableJumping {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
@@ -64,13 +65,14 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
     public static final int FOURS_STATE = 0;
     public static final int STANDING_STATE = 1;
     public static final int SITTING_STATE = 2;
-    private static final float RIDER_HEIGHT = 0.8F; // ajustable — se escala solo por especie vía getScale()
-    private static final float RIDER_FORWARD = 0F;
+    private static final float RIDER_FORWARD = -0.1F;
 
     private static final float BABY_SCALE = 0.5F;
+    private static final double BREED_ISOLATION_RADIUS = 8.0D;
 
     private int standingTicks;
     private float lastAppliedScale = -1F;
+    private float playerJumpPendingScale;
 
     public MoCBearEntity(EntityType<? extends MoCBearEntity> type, Level level) {
         super(type, level);
@@ -98,7 +100,8 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
                 .add(Attributes.MAX_HEALTH, 30.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 6.0D)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.JUMP_STRENGTH, 0.5D);
     }
 
     public BearVariant getVariant() {
@@ -206,7 +209,43 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
             super.travel(net.minecraft.world.phys.Vec3.ZERO);
             return;
         }
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player
+                && this.playerJumpPendingScale > 0.0F
+                && (this.onGround() || this.isInWater() || this.isInLava())) {
+            executeRidersJump(this.playerJumpPendingScale);
+            this.playerJumpPendingScale = 0.0F;
+        }
         super.travel(travelVector);
+        if (this.isVehicle() && (this.isInWater() || this.isInLava())) {
+            applyFluidBuoyancy();
+        }
+    }
+
+    private void executeRidersJump(float scale) {
+        double jumpY = this.getJumpPower() * scale;
+        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(motion.x, jumpY, motion.z);
+        this.hasImpulse = true;
+    }
+
+    /**
+     * Aplicado DESPUÉS de super.travel() a propósito: la física de agua/lava
+     * de LivingEntity ya corrió y aplicó su propia gravedad/drag, así que si
+     * empujáramos antes, esa lógica interna lo atenuaría. Empujando después
+     * garantizamos que el oso realmente flote en vez de hundirse.
+     */
+    private void applyFluidBuoyancy() {
+        double fluidTop = this.blockPosition().getY()
+                + this.level().getFluidState(this.blockPosition()).getHeight(this.level(), this.blockPosition());
+        double bodyTop = this.getY() + this.getBbHeight();
+        double submersion = fluidTop - bodyTop;
+        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        if (submersion > 0.1D) {
+            double push = Mth.clamp(submersion * 0.15D, 0.04D, 0.2D);
+            this.setDeltaMovement(motion.x, Math.max(motion.y, push), motion.z);
+        } else if (motion.y < 0.0D) {
+            this.setDeltaMovement(motion.x, motion.y * 0.3D, motion.z);
+        }
     }
 
     private boolean shouldTargetPlayers(@Nullable LivingEntity target) {
@@ -244,10 +283,11 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PandaOnlyPanicGoal(this, 1.4D));
         this.goalSelector.addGoal(2, new FollowSameVariantAdultGoal(this, 1.0D));
-        this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0D, false));
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new ProtectCubGoal(this));
@@ -257,13 +297,65 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
 
     @Override
     public boolean isFood(net.minecraft.world.item.ItemStack stack) {
-        return false; // no taming/feeding yet — that's a later step
+        return isTame() && isAnyMeat(stack);
+    }
+
+
+    @Override
+    public boolean canMate(Animal otherAnimal) {
+        if (otherAnimal == this || !(otherAnimal instanceof MoCBearEntity other)) {
+            return false;
+        }
+        if (other.getVariant() != this.getVariant() || !super.canMate(otherAnimal)) {
+            return false;
+        }
+        return !hasNearbyThirdBear(other) && !other.hasNearbyThirdBear(this);
+    }
+
+
+    private boolean hasNearbyThirdBear(MoCBearEntity partner) {
+        return !this.level().getEntitiesOfClass(MoCBearEntity.class,
+                this.getBoundingBox().inflate(BREED_ISOLATION_RADIUS),
+                bear -> bear != this && bear != partner).isEmpty();
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob otherParent) {
-        return null; // breeding comes later, alongside taming
+        MoCBearEntity baby = com.example.neomocreatures.init.ModEntities.MOC_BEAR.get().create(level);
+        if (baby != null) {
+            baby.setVariant(this.getVariant());
+        }
+        return baby;
+    }
+
+    @Override
+    public void spawnChildFromBreeding(net.minecraft.server.level.ServerLevel level, Animal partner) {
+        MoCBearEntity baby = (MoCBearEntity) this.getBreedOffspring(level, partner);
+        if (baby == null) {
+            return;
+        }
+        baby.setBaby(true);
+        baby.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+        level.addFreshEntity(baby);
+
+        this.setAge(6000);
+        partner.setAge(6000);
+        this.resetLove();
+        partner.resetLove();
+        level.broadcastEntityEvent(this, (byte) 18);
+        if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+            level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
+                    level, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
+        }
+
+        java.util.UUID ownerUUID = this.getOwnerUUID();
+        Player nearbyOwner = ownerUUID != null ? level.getPlayerByUUID(ownerUUID) : null;
+        if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= 1000.0D) { // ~10 bloques
+            baby.setOwnerUUID(nearbyOwner.getUUID());
+            baby.setTame(true, true);
+            com.example.neomocreatures.util.NamingHelper.promptRename(baby, nearbyOwner.getUUID());
+        }
     }
 
     @Nullable
@@ -480,6 +572,52 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         }
     }
 
+        // ---------------------------------------------------------------
+    // Drops: 0-2 hide (+1 por nivel de Looting, tope 5), silla exacta
+    // que tenía puesta, cofre + contenido si tenía. El XP (1-3) se
+    // otorga vía shouldDropExperience()/lastHurtByPlayerTime, que
+    // vanilla ya activa tanto con jugador como con lobo domesticado.
+    // ---------------------------------------------------------------
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+
+        int lootingLevel = 0;
+        if (damageSource.getEntity() instanceof LivingEntity attacker) {
+            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
+                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
+                    attacker);
+        }
+
+        int hide = Math.min(this.random.nextInt(3) + lootingLevel, 5); // 0-2 base, +1 por nivel, tope 5
+        if (hide > 0) {
+            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hide));
+        }
+
+        if (isSaddled()) {
+            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                    : net.minecraft.world.item.Items.SADDLE;
+            this.spawnAtLocation(new ItemStack(saddleItem));
+        }
+
+        if (hasChest()) {
+            this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack chestStack = chestInventory.getItem(slot);
+                if (!chestStack.isEmpty()) {
+                    this.spawnAtLocation(chestStack);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return 1 + this.random.nextInt(3); // 1-3
+    }
+
     // ---------------------------------------------------------------
     // A cub only follows an ADULT of its own species — never a
     // different species, tamed or not. It loses this once it itself
@@ -630,7 +768,7 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         float yaw = this.getYRot() * ((float) Math.PI / 180F);
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
-        double y = this.getY() + RIDER_HEIGHT * this.getScale();
+        double y = this.getY() + (float) getVariant().getRiderHeight() * this.getScale();
         moveFunction.accept(passenger, x, y, z);
     }
 
@@ -654,6 +792,27 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         this.setRot(this.getYRot(), this.getXRot());
         this.yBodyRot = this.getYRot();
         this.yHeadRot = this.getYRot();
+    }
+
+    @Override
+    public boolean canJump() {
+        return isSaddled() && this.isVehicle();
+    }
+
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        if (jumpPower < 0) {
+            jumpPower = 0;
+        }
+        this.playerJumpPendingScale = jumpPower >= 90 ? 1.0F : 0.4F + 0.4F * jumpPower / 90.0F;
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+    }
+
+    @Override
+    public void handleStopJump() {
     }
 
     @Override

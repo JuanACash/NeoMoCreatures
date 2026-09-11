@@ -393,7 +393,7 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
         saddleBackSitted.visible = true;
         saddleFrontSitted.visible = true;
         }
-        if (entity.hasChest()) {
+        if (state == MoCBearEntity.SITTING_STATE && entity.hasChest()) {
         bagSitted.visible = true;
         }
     }
