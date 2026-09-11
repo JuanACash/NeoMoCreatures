@@ -70,6 +70,18 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.ScorpionSpawnEggItem(0xC2914F, 0x1A1A1A, new Item.Properties()));
     public static final DeferredItem<Item> OSTRICH_SPAWN_EGG = ITEMS.register("ostrich_spawn_egg",
         () -> new com.example.neomocreatures.item.OstrichSpawnEggItem(0xC49A6C, 0x2B2B2B, new Item.Properties()));
+    public static final DeferredItem<Item> BLACK_BEAR_SPAWN_EGG = ITEMS.register("black_bear_spawn_egg",
+        () -> new com.example.neomocreatures.item.BearSpawnEggItem(
+                com.example.neomocreatures.entity.bear.BearVariant.BLACK, 0x3A2E24, 0x1A1410, new Item.Properties()));
+        public static final DeferredItem<Item> GRIZZLY_BEAR_SPAWN_EGG = ITEMS.register("grizzly_bear_spawn_egg",
+        () -> new com.example.neomocreatures.item.BearSpawnEggItem(
+                com.example.neomocreatures.entity.bear.BearVariant.GRIZZLY, 0x8B5A2B, 0xC89B6A, new Item.Properties()));
+        public static final DeferredItem<Item> POLAR_BEAR_SPAWN_EGG = ITEMS.register("polar_bear_spawn_egg",
+        () -> new com.example.neomocreatures.item.BearSpawnEggItem(
+                com.example.neomocreatures.entity.bear.BearVariant.POLAR, 0xF0F5F7, 0xA9C6D8, new Item.Properties()));
+        public static final DeferredItem<Item> PANDA_BEAR_SPAWN_EGG = ITEMS.register("panda_bear_spawn_egg",
+        () -> new com.example.neomocreatures.item.BearSpawnEggItem(
+                com.example.neomocreatures.entity.bear.BearVariant.PANDA, 0xF5F5F0, 0x1A1A1A, new Item.Properties()));
     
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());

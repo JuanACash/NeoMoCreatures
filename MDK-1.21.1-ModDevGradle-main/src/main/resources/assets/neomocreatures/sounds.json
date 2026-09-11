@@ -130,6 +130,27 @@
   },
   "moc_ostrich.death": { "sounds": ["neomocreatures:moc_ostrich/ostrich_dying"] },
 
+  "moc_bear.ambient": {
+    "sounds": [
+      "neomocreatures:moc_bear/bear_grunt1",
+      "neomocreatures:moc_bear/bear_grunt2",
+      "neomocreatures:moc_bear/bear_grunt3",
+      "neomocreatures:moc_bear/bear_grunt4",
+      "neomocreatures:moc_bear/bear_grunt5"
+    ]
+  },
+  "moc_bear.hurt": {
+    "sounds": [
+      "neomocreatures:moc_bear/bear_hurt1",
+      "neomocreatures:moc_bear/bear_hurt2"
+    ]
+  },
+  "moc_bear.death": {
+    "sounds": [
+      "neomocreatures:moc_bear/bear_death"
+    ]
+  },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

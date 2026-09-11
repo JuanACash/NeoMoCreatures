@@ -78,6 +78,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> OSTRICH_HURT = register("moc_ostrich.hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> OSTRICH_DEATH = register("moc_ostrich.death");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAR_AMBIENT = register("moc_bear.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAR_HURT = register("moc_bear.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAR_DEATH = register("moc_bear.death");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

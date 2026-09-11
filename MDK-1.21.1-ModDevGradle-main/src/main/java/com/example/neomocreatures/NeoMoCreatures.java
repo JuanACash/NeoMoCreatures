@@ -270,6 +270,10 @@ public class NeoMoCreatures {
                     output.accept(ModItems.LITHER_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHARD_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHGER_SPAWN_EGG.get());
+                    output.accept(ModItems.BLACK_BEAR_SPAWN_EGG.get());
+                    output.accept(ModItems.GRIZZLY_BEAR_SPAWN_EGG.get());
+                    output.accept(ModItems.POLAR_BEAR_SPAWN_EGG.get());
+                    output.accept(ModItems.PANDA_BEAR_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
                     output.accept(ModItems.OSTRICH_SPAWN_EGG.get());
