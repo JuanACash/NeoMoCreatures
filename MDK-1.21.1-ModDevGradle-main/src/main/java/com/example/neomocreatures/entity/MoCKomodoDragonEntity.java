@@ -74,12 +74,18 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
     /** Wiki: "often spawn with random sizes... can grow to at least 3 blocks long." */
     private static final float MIN_ADULT_SCALE_VARIANCE = 0.6F;
     private static final float MAX_ADULT_SCALE_VARIANCE = 1.0F;
+    private static final float LARGE_ADULT_EGG_SCALE_THRESHOLD = ADULT_SCALE * 0.9F;
 
     /** Wiki: "made to jump (1.2 blocks)" — same velocity vanilla gives the player's ~1.25-block jump. */
     private static final float JUMP_VELOCITY = 0.42F;
     /** Rider seat position relative to the entity's own origin — likely needs visual tuning in-game. */
-    private static final double RIDER_FORWARD = 0.0D;
-    private static final double RIDER_HEIGHT = 0.75D;
+    private static final double RIDER_FORWARD = -0.1D;
+    private static final double RIDER_HEIGHT = 0.3D;
+    private static final double RIDER_HEIGHT_SWIMMING = 0.1D;
+    /** Much gentler than MoCBigCatEntity's flight thrust — this is swimming, not flying. */
+    private static final double RIDDEN_ASCEND_THRUST = 0.05D;
+    private static final double RIDDEN_DESCEND_THRUST = 0.05D;
+    private static final float SWIM_SPEED_MULTIPLIER = 1.6F;
 
     /** This individual's rolled adult scale — same for its whole life, persisted below. */
     private float individualAdultScale = ADULT_SCALE;
@@ -87,6 +93,10 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
     private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
             SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_ASCEND_HELD =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
             SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** Which item to give back when the saddle is sheared off — vanilla saddle vs the mod's crafted one. */
@@ -147,13 +157,22 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         double dx = -Math.sin(yaw) * input.z + Math.cos(yaw) * input.x;
         double dz = Math.cos(yaw) * input.z + Math.sin(yaw) * input.x;
 
-        float speed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        float speed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * SWIM_SPEED_MULTIPLIER;
         Vec3 desired = new Vec3(dx * speed, 0.0D, dz * speed);
 
         Vec3 current = this.getDeltaMovement();
+        double newY;
+        if (isAscendHeld()) {
+            newY = current.y + RIDDEN_ASCEND_THRUST;
+        } else if (isDescendHeld()) {
+            newY = current.y - RIDDEN_DESCEND_THRUST;
+        } else {
+            newY = current.y * 0.8D; // no input: hold depth steady, same as before
+        }
+
         this.setDeltaMovement(new Vec3(
                 Mth.lerp(0.2D, current.x, desired.x),
-                current.y * 0.8D,
+                newY,
                 Mth.lerp(0.2D, current.z, desired.z)));
         this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
     }
@@ -192,7 +211,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
                 return;
             }
 
-            float speed = (float) (this.speedModifier * this.komodo.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            float speed = (float) (this.speedModifier * this.komodo.getAttributeValue(Attributes.MOVEMENT_SPEED))* SWIM_SPEED_MULTIPLIER;
             Vec3 desired = new Vec3(dx, dy, dz).normalize().scale(speed);
             this.komodo.setDeltaMovement(this.komodo.getDeltaMovement().lerp(desired, 0.125D));
 
@@ -211,7 +230,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
      /** True only when genuinely submerged (eyes underwater) — not just standing
      *  in ankle-deep water at the shore, which is where isInWater() gets noisy
      *  and was causing the swim/land movement models to fight each other. */
-    private boolean isSwimmingDeep() {
+    public boolean isSwimmingDeep() {
         return this.isEyeInFluid(net.minecraft.tags.FluidTags.WATER);
     }
 
@@ -238,6 +257,24 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         super.defineSynchedData(builder);
         builder.define(DATA_MOUTH_TICKS, 0);
         builder.define(DATA_SADDLED, false);
+        builder.define(DATA_ASCEND_HELD, false);
+        builder.define(DATA_DESCEND_HELD, false);
+    }
+
+    public void setAscendHeld(boolean held) {
+        this.entityData.set(DATA_ASCEND_HELD, held);
+    }
+
+    public void setDescendHeld(boolean held) {
+        this.entityData.set(DATA_DESCEND_HELD, held);
+    }
+
+    public boolean isAscendHeld() {
+        return this.entityData.get(DATA_ASCEND_HELD);
+    }
+
+    public boolean isDescendHeld() {
+        return this.entityData.get(DATA_DESCEND_HELD);
     }
 
     public boolean isSaddled() {
@@ -509,7 +546,8 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         float yaw = this.getYRot() * ((float) Math.PI / 180F);
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
-        double y = this.getY() + RIDER_HEIGHT * this.getScale();
+        double height = this.isSwimmingDeep() ? RIDER_HEIGHT_SWIMMING : RIDER_HEIGHT;
+        double y = this.getY() + height * this.getScale();
         moveFunction.accept(passenger, x, y, z);
     }
 
@@ -521,20 +559,16 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
 
     @Override
     protected float getRiddenSpeed(Player player) {
-        // Wiki: "one of the slowest rideable mobs". The raw attribute alone
-        // still reads as running (AI wander goals apply their own damping —
-        // e.g. RandomStrollGoal's 0.9 modifier — that a ridden mob doesn't get
-        // for free), so this cuts it down to an explicit walking pace. A Speed
-        // potion on the dragon still raises this naturally either way.
-        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * 0.6F;
+        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) *0.5F;
     }
+
 
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         this.setYRot(player.getYRot());
         this.yRotO = this.getYRot();
-        this.setXRot(player.getXRot() * 0.5F);
+        this.setXRot(0.0F);
         this.setRot(this.getYRot(), this.getXRot());
         this.yBodyRot = this.getYRot();
         this.yHeadRot = this.getYRot();
@@ -542,7 +576,9 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
 
     @Override
     public boolean canJump() {
-        return isSaddled() && this.isVehicle();
+        // Wiki: jumping is turned off while mounted in water — Space instead
+        // means "ascend" there (see travelRiddenInWater).
+        return isSaddled() && this.isVehicle() && !this.isInWater();
     }
 
     /** Wiki: "made to jump (1.2 blocks)" — fixed impulse, no charge bar. */
@@ -576,9 +612,53 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         }
     }
 
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+
+        int lootingLevel = 0;
+        if (damageSource.getEntity() instanceof LivingEntity attacker) {
+            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
+                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
+                    attacker);
+        }
+
+        int hide = Math.min(this.random.nextInt(2) + lootingLevel, 4); // 0-1 base, +1 per Looting level
+        if (hide > 0) {
+            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.REPTILE_HIDE.get(), hide));
+        }
+
+        if (!this.isBaby() && this.individualAdultScale >= LARGE_ADULT_EGG_SCALE_THRESHOLD) {
+            float eggChance = 0.25F + (0.10F * lootingLevel);
+            if (this.random.nextFloat() < eggChance) {
+                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.KOMODO_DRAGON_EGG.get()));
+            }
+        }
+
+        dropSaddleIfWorn();
+    }
+
+    private void dropSaddleIfWorn() {
+        if (!isSaddled()) {
+            return;
+        }
+        net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
+                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
+                : net.minecraft.world.item.Items.SADDLE;
+        this.spawnAtLocation(new ItemStack(saddleItem));
+        this.saddleItemId = null;
+        setSaddled(false);
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return 1 + this.random.nextInt(3); // 1-3
+    }
+
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null; // no breeding yet — see class javadoc
+        return null; // no breeding
     }
 }

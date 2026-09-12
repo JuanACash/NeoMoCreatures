@@ -73,7 +73,9 @@ public class ModNetworking {
                     bigCat.setDescendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCManticoreEntity manticore) {
                     manticore.setDescendHeld(payload.pressed());
-                } 
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCKomodoDragonEntity komodo) {
+                    komodo.setDescendHeld(payload.pressed());
+                }
             }));
 
         registrar.playToServer(
@@ -90,7 +92,9 @@ public class ModNetworking {
                     manticore.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich) {
                     ostrich.setAscendHeld(payload.pressed());
-                } 
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCKomodoDragonEntity komodo) {
+                    komodo.setAscendHeld(payload.pressed());
+                }
             }));
     }
 }

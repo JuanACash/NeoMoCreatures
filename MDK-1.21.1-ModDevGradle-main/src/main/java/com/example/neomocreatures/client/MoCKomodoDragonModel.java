@@ -31,6 +31,9 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
     private final ModelPart nose;
     private final ModelPart mouth;
     private final ModelPart tongue;
+    private final ModelPart saddleA;
+    private final ModelPart saddleB;
+    private final ModelPart saddleC;
     private final ModelPart chest;
     private final ModelPart abdomen;
     private final ModelPart tail;
@@ -58,6 +61,9 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         this.nose = this.neck.getChild("nose");
         this.mouth = this.neck.getChild("mouth");
         this.tongue = this.mouth.getChild("tongue");
+        this.saddleA = root.getChild("saddle_a");
+        this.saddleB = root.getChild("saddle_b");
+        this.saddleC = root.getChild("saddle_c");
         this.chest = root.getChild("chest");
         this.abdomen = root.getChild("abdomen");
         this.tail = root.getChild("tail");
@@ -112,6 +118,18 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         root.addOrReplaceChild("abdomen",
                 CubeListBuilder.create().texOffs(36, 49).addBox(-3F, 0F, -1F, 6, 7, 8),
                 PartPose.offset(0F, 13F, 0F));
+
+        // 1:1 port of MoCModelKomodo's SaddleA/SaddleB/SaddleC — same UV offsets
+        // on the same 64x64 canvas, so the existing texture art lines up as-is.
+        root.addOrReplaceChild("saddle_a",
+                CubeListBuilder.create().texOffs(36, 28).mirror().addBox(-2.5F, 0.5F, -4F, 5, 1, 8),
+                PartPose.offset(0F, 12F, 0F));
+        root.addOrReplaceChild("saddle_b",
+                CubeListBuilder.create().texOffs(54, 37).mirror().addBox(-1.5F, 0F, -4F, 3, 1, 2),
+                PartPose.offset(0F, 12F, 0F));
+        root.addOrReplaceChild("saddle_c",
+                CubeListBuilder.create().texOffs(36, 37).mirror().addBox(-2.5F, 0F, 2F, 5, 1, 2),
+                PartPose.offset(0F, 12F, 0F));
 
         // --- Tail (4-segment chain) ------------------------------------------
         PartDefinition tail = root.addOrReplaceChild("tail",
@@ -172,7 +190,11 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
     public void setupAnim(MoCKomodoDragonEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
         boolean sitting = entity.isInSittingPose();
-        boolean swimming = entity.isInWater();
+        boolean swimming = entity.isSwimmingDeep();
+        boolean saddled = entity.isSaddled();
+        this.saddleA.visible = saddled;
+        this.saddleB.visible = saddled;
+        this.saddleC.visible = saddled;
         int mouthTicks = entity.getMouthTicks();
         boolean mouthOpen = mouthTicks != 0;
 
@@ -184,18 +206,37 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         boolean tailFlicking = (ageInTicks + seed * 17L) % 240F < 40F;
         boolean tongueFlicking = !mouthOpen && (ageInTicks + seed * 31L) % 180F < 20F;
 
+        // Ridden movement holds the "accelerator" fully down as long as the
+        // player presses forward, so limbSwingAmount (computed purely from
+        // distance moved that tick) sits near its 1.0 ceiling almost
+        // constantly — unlike unridden AI walking, which eases in/out and
+        // rarely sustains that peak. That's the actual cause of the front
+        // legs swinging far enough to poke through the jaw while mounted;
+        // it has nothing to do with the numeric movement speed. Capping the
+        // amount used for the leg swing (only while there's a rider) fixes
+        // it without changing how the unridden walk looks at all.
+        float legSwingAmount = entity.isVehicle() ? Math.min(limbSwingAmount, 0.6F) : limbSwingAmount;
+
         float tailXRot = Mth.cos(limbSwing * 0.4F) * 0.2F * limbSwingAmount;
-        float leftLegXRot = Mth.cos(limbSwing * 1.2F) * 1.2F * limbSwingAmount;
-        float rightLegXRot = Mth.cos((limbSwing * 1.2F) + (float) Math.PI) * 1.2F * limbSwingAmount;
+        float leftLegXRot = Mth.cos(limbSwing * 1.2F) * 1.2F * legSwingAmount;
+        float rightLegXRot = Mth.cos((limbSwing * 1.2F) + (float) Math.PI) * 1.2F * legSwingAmount;
         float clampedYaw = Mth.clamp(netHeadYaw, -60F, 60F);
 
         float bodyLift = 0F;
         if (swimming) {
             bodyLift = 4F;
             this.tail1.xRot = -tailXRot;
+            // Explicitly zero xRot on every leg segment here — it's the field
+            // the walking branch below uses for its leg-swing oscillation, and
+            // if a dragon walks into water this branch is the only thing that
+            // stops that stale oscillation from leaking into the swim pose.
+            this.legFrontLeft1.xRot = 0F; this.legFrontLeft2.xRot = 0F;
             this.legFrontLeft1.zRot = 0F; this.legFrontLeft2.zRot = -65F / R; this.legFrontLeft1.yRot = -80F / R;
+            this.legBackLeft1.xRot = 0F; this.legBackLeft2.xRot = 0F;
             this.legBackLeft1.zRot = 0F; this.legBackLeft2.zRot = -65F / R; this.legBackLeft1.yRot = -80F / R;
+            this.legFrontRight1.xRot = 0F; this.legFrontRight2.xRot = 0F;
             this.legFrontRight1.zRot = 0F; this.legFrontRight2.zRot = 65F / R; this.legFrontRight1.yRot = 80F / R;
+            this.legBackRight1.xRot = 0F; this.legBackRight2.xRot = 0F;
             this.legBackRight1.zRot = 0F; this.legBackRight2.zRot = 65F / R; this.legBackRight1.yRot = 80F / R;
         } else if (sitting) {
             bodyLift = 4F;
@@ -242,8 +283,20 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         this.tail3.xRot = (13F / R) + tailXRot;
         this.tail4.xRot = (11F / R) + tailXRot;
 
-        float t = tailFlicking ? ageInTicks / 4F : limbSwing / 2F;
-        float amplitude = 0.35F;
+        // Swimming must ALWAYS wag the tail regardless of limbSwing (which is
+        // unreliable while ridden) or the idle tailFlicking roll — the
+        // side-to-side motion IS the swim stroke that sells self-propulsion.
+        float t;
+        if (swimming) {
+            t = ageInTicks / 3F;
+        } else if (tailFlicking) {
+            t = ageInTicks / 4F;
+        } else {
+            t = limbSwing / 2F;
+        }
+        // A slightly wider stroke while swimming makes the propulsion read
+        // more clearly than the subtler idle-flick amplitude used on land.
+        float amplitude = swimming ? 0.5F : 0.35F;
         float angularSpeed = 0.6F;
         float phaseStep = 0.6F;
         this.tail1.yRot = amplitude * Mth.sin(angularSpeed * t);
@@ -262,6 +315,9 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         this.legFrontRight.y = lift + 17F;
         this.legBackRight.y = lift + 17F;
         this.abdomen.y = lift + 13F;
+        this.saddleA.y = lift + 12F;
+        this.saddleB.y = lift + 12F;
+        this.saddleC.y = lift + 12F;
     }
 
     @Override
