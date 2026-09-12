@@ -65,6 +65,7 @@
   "item.neomocreatures.grizzly_bear_spawn_egg": "Grizzly Bear Spawn Egg",
   "item.neomocreatures.polar_bear_spawn_egg": "Polar Bear Spawn Egg",
   "item.neomocreatures.panda_bear_spawn_egg": "Panda Bear Spawn Egg",
+  "item.neomocreatures.komodo_dragon_spawn_egg": "Komodo Dragon Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -239,6 +240,7 @@
   "item.neomocreatures.fire_manticore_egg": "Nether Manticore Egg",
   "item.neomocreatures.toxic_manticore_egg": "Toxic Manticore Egg",
   "item.neomocreatures.ostrich_egg": "Ostrich Egg",
+  "item.neomocreatures.komodo_dragon_egg": "Komodo Dragon Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",
@@ -267,6 +269,7 @@
   "entity.neomocreatures.moc_scorpion": "Scorpion",
   "entity.neomocreatures.moc_ostrich": "Ostrich",
   "entity.neomocreatures.moc_bear": "Bear",
+  "entity.neomocreatures.moc_komodo_dragon": "Komodo Dragon",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

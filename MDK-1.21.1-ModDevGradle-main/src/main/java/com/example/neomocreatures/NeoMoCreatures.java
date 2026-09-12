@@ -101,6 +101,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.FIRE_SCORPION_EGG.get());
                     output.accept(ModItems.UNDEAD_SCORPION_EGG.get());
                     output.accept(ModItems.OSTRICH_EGG.get());
+                    output.accept(ModItems.KOMODO_DRAGON_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
@@ -277,6 +278,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
                     output.accept(ModItems.OSTRICH_SPAWN_EGG.get());
+                    output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
 
                 }).build());
 

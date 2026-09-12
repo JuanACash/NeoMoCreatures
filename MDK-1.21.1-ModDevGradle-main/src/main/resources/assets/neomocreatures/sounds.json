@@ -151,6 +151,11 @@
     ]
   },
 
+  "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
+  "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
+  "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
+  "moc_komodo.death": { "sounds": ["neomocreatures:moc_snake/snake_dying"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

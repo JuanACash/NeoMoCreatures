@@ -11,6 +11,7 @@ import com.example.neomocreatures.entity.MoCManticoreEntity;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
+import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -134,6 +135,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_bear"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCKomodoDragonEntity>> MOC_KOMODO_DRAGON =
+        ENTITY_TYPES.register("moc_komodo_dragon", () -> EntityType.Builder
+                .of(MoCKomodoDragonEntity::new, MobCategory.CREATURE)
+                .sized(1.3F, 0.9F)
+                .clientTrackingRange(10)
+                .build("moc_komodo_dragon"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -158,6 +166,7 @@ public class ModEntities {
                 event.put(MOC_SCORPION.get(), MoCScorpionEntity.createAttributes().build());
                 event.put(MOC_OSTRICH.get(), MoCOstrichEntity.createAttributes().build());
                 event.put(MOC_BEAR.get(), MoCBearEntity.createAttributes().build());
+                event.put(MOC_KOMODO_DRAGON.get(), MoCKomodoDragonEntity.createAttributes().build());
         });
         }
         
