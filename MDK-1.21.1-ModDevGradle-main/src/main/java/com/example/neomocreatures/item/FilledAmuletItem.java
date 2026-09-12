@@ -65,7 +65,10 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("OstrichVariant")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_OSTRICH.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
-        }else if (tag.contains("EntityType")) {
+        } else if (tag.contains("BearVariant")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BEAR.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
             tooltip.add(type.getDescription().copy().withStyle(net.minecraft.ChatFormatting.GRAY));
@@ -106,6 +109,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnScorpion(level, tag, pos);
         } else if (tag.contains("OstrichVariant")) {
             spawned = spawnOstrich(level, tag, pos);
+        } else if (tag.contains("BearVariant")) {
+            spawned = spawnBear(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -347,5 +352,28 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(ostrich);
         return ostrich;
+    }
+
+    private Entity spawnBear(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCBearEntity bear =
+                ModEntities.MOC_BEAR.get().create(level);
+        if (bear == null) return null;
+        bear.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        bear.setVariant(com.example.neomocreatures.entity.bear.BearVariant.byId(tag.getInt("BearVariant")));
+        bear.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            bear.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        bear.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            bear.setAge(tag.getInt("Age"));
+        } else {
+            bear.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            bear.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(bear);
+        return bear;
     }
 }

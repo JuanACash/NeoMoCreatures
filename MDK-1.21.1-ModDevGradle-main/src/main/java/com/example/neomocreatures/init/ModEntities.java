@@ -222,9 +222,9 @@ public class ModEntities {
                         if (level.getLevel().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
                         return false;
                         }
-                        // Block light only — skips the sky-light roll that makes wide-open biomes
-                        // (desert) statistically much harder to pass than shaded ones (savanna).
-                        return level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos) <= 7;
+                        // Same darkness rule zombies/skeletons use — accounts for time of day
+                        // and moon phase, unlike a raw sky-light comparison.
+                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
                 },
                 net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
@@ -248,7 +248,9 @@ public class ModEntities {
                         if (pos.getY() <= 40 && !level.canSeeSky(pos)) {
                         return true; // cave scorpion — genuinely underground, no light restriction
                         }
-                        return level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos) <= 7;
+                        // Same darkness rule zombies/skeletons use — accounts for time of day
+                        // and moon phase, unlike a raw sky-light comparison.
+                        return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
                 },
                 RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
@@ -315,6 +317,25 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
-        
+        public static void registerBearSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_BEAR.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                var biome = level.getBiome(pos);
+                                boolean onFrozenOceanIce = (biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
+                                        || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN))
+                                        && level.getBlockState(pos.below()).is(net.minecraft.world.level.block.Blocks.ICE);
+
+                                // Covers grass_block, snow layers, snow_block and packed_ice for
+                                // black/grizzly/panda and most polar bear terrain; the frozen-ocean
+                                // check above adds plain ICE, which isn't in that tag.
+                                boolean groundOk = onFrozenOceanIce
+                                        || level.getBlockState(pos.below()).is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON);
+
+                                return groundOk && level.getRawBrightness(pos, 0) >= 9;
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
     
 }

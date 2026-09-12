@@ -249,6 +249,9 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
     }
 
     private boolean shouldTargetPlayers(@Nullable LivingEntity target) {
+        if (this.isTame()) {
+            return false; // A tamed bear never picks fights on its own.
+        }
         BearVariant.Temperament temperament = getVariant().getTemperament();
         if (temperament == BearVariant.Temperament.HOSTILE) {
             return true;
@@ -263,6 +266,9 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
+        if (this.isTame()) {
+            return false; // A tamed bear never hunts other animals on its own.
+        }
         return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity)
                 && !(target instanceof net.minecraft.world.entity.animal.PolarBear)
                 && !(target instanceof net.minecraft.world.entity.animal.Panda)
@@ -358,13 +364,90 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         }
     }
 
+    /** Carries the variant chosen for the first spawned member to the rest of its group — same fix
+     *  MoCBigCatEntity uses so a herd never ends up with mixed species. */
+    private static final class BearGroupData implements SpawnGroupData {
+        final BearVariant variant;
+        BearGroupData(BearVariant variant) {
+            this.variant = variant;
+        }
+    }
+
     @Nullable
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                          MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
-        // Variant/biome-based natural spawning is its own later step; for now
-        // spawn eggs are what set the variant (see BearSpawnEggItem).
-        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        SpawnGroupData resultGroupData = spawnGroupData;
+
+        if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
+            BearVariant variant = spawnGroupData instanceof BearGroupData shared
+                    ? shared.variant
+                    : pickVariantForBiome(level, this.blockPosition());
+            resultGroupData = new BearGroupData(variant);
+            setVariant(variant);
+
+            // Wiki: "Bear cubs will occasionally spawn with adults." Same 1-in-4
+            // roll MoCBigCatEntity uses for its own wild groups.
+            if (this.random.nextInt(4) == 0) {
+                this.setAge(-getVariant().getGrowthTicks());
+            }
+        }
+        // For SPAWN_EGG / mob spawner / command spawns the variant is left as the
+        // default (BLACK) or set explicitly beforehand — see BearSpawnEggItem.
+
+        // Never forward our own custom SpawnGroupData into AgeableMob's finalizeSpawn —
+        // same fix as MoCBigCatEntity: it converts the data without checking the type
+        // and crashes with anything that isn't its own. We track the group's shared
+        // variant ourselves and hand it back separately.
+        super.finalizeSpawn(level, difficulty, spawnType, null);
+        return resultGroupData;
+    }
+
+    /** Which variant a whole group will be, decided once per group by biome — never mixed within a group. */
+    private BearVariant pickVariantForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+        var biome = level.getBiome(pos);
+
+        // Same biomes vanilla's own polar bear spawns in — always POLAR, no roll.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
+                || biome.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES)
+                || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
+                || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN)) {
+            return BearVariant.POLAR;
+        }
+
+        // Same biomes vanilla's own panda spawns in — always PANDA, no roll.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.BAMBOO_JUNGLE)
+                || biome.is(net.minecraft.world.level.biome.Biomes.CHERRY_GROVE)) {
+            return BearVariant.PANDA;
+        }
+
+        // Grizzly-only forest.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.DARK_FOREST)) {
+            return BearVariant.GRIZZLY;
+        }
+
+        // Black-only forest.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.BIRCH_FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_BIRCH_FOREST)) {
+            return BearVariant.BLACK;
+        }
+
+        // Shared forest/taiga — either black or grizzly.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.TAIGA)
+                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA)
+                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA)) {
+            return this.random.nextBoolean() ? BearVariant.BLACK : BearVariant.GRIZZLY;
+        }
+
+        // Safety net for a biome not explicitly listed (e.g. a datapack biome reusing
+        // one of these spawners) — decide by climate instead of defaulting silently.
+        float temperature = biome.value().getBaseTemperature();
+        if (temperature <= 0.15F) {
+            return BearVariant.POLAR;
+        }
+        return this.random.nextBoolean() ? BearVariant.BLACK : BearVariant.GRIZZLY;
     }
 
     @Override
@@ -595,13 +678,24 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
             this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hide));
         }
 
+        dropAllEquipment();
+    }
+
+    /**
+     * Drops the saddle and chest (with its contents) and clears the
+     * saddled/chest flags. Shared by {@link #dropCustomDeathLoot} and by
+     * the Scroll of Freedom / Pet Amulet items, which need the bear to
+     * stay alive afterward.
+     */
+    public void dropAllEquipment() {
         if (isSaddled()) {
             net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
                     ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
                     : net.minecraft.world.item.Items.SADDLE;
             this.spawnAtLocation(new ItemStack(saddleItem));
+            this.saddleItemId = null;
+            setSaddled(false);
         }
-
         if (hasChest()) {
             this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
             for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
@@ -610,7 +704,33 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
                     this.spawnAtLocation(chestStack);
                 }
             }
+            setHasChest(false);
         }
+    }
+
+    /** Builds the NBT payload stored inside a filled Pet Amulet for this bear. */
+    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putInt("BearVariant", getVariant().getId());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    /** Captures this tamed bear into a Pet Amulet and removes it from the world. */
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropAllEquipment();
+        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
     }
 
     @Override
@@ -706,7 +826,8 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
 
         @Override
         public boolean canUse() {
-            if (this.bear.isBaby() || this.bear.getVariant().getTemperament() != BearVariant.Temperament.NEUTRAL
+            if (this.bear.isTame() || this.bear.isBaby()
+                    || this.bear.getVariant().getTemperament() != BearVariant.Temperament.NEUTRAL
                     || this.bear.getTarget() != null) {
                 return false;
             }
@@ -842,6 +963,13 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
             return InteractionResult.SUCCESS;
         }
 
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (!this.level().isClientSide) {
+                capturePetInstant(player, hand);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (!this.isTame() && getVariant() == BearVariant.PANDA && stack.is(net.minecraft.world.item.Items.BAMBOO)) {
             if (!this.level().isClientSide) {
                 startTalking();
@@ -916,7 +1044,8 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()
+                && !stack.is(com.example.neomocreatures.init.ModItems.SCROLL_OF_FREEDOM.get())) {
             openChestMenu(player);
             return InteractionResult.SUCCESS;
         }
