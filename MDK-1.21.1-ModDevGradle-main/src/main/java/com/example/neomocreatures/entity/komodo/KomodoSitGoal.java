@@ -42,6 +42,7 @@ public class KomodoSitGoal extends Goal {
     public boolean canContinueToUse() {
         return this.sitDurationTicks < MAX_SIT_DURATION_TICKS
                 && !this.komodo.isInWater()
+                && !this.komodo.isVehicle()
                 && this.komodo.getTarget() == null;
     }
 

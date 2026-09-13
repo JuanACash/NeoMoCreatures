@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:swamp", "minecraft:savanna_plateau"],
+  "spawners": [
+    { "type": "neomocreatures:moc_komodo_dragon", "weight": 10, "minCount": 1, "maxCount": 3 }
+  ]
+}

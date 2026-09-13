@@ -263,11 +263,11 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOC_ELEPHANT_SPAWN_EGG.get());
                     output.accept(ModItems.LION_SPAWN_EGG.get());
                     output.accept(ModItems.TIGER_SPAWN_EGG.get());
-                    output.accept(ModItems.LEOPARD_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHER_SPAWN_EGG.get());
-                    output.accept(ModItems.LIGER_SPAWN_EGG.get());
-                    output.accept(ModItems.LIARD_SPAWN_EGG.get());
+                    output.accept(ModItems.LEOPARD_SPAWN_EGG.get());
                     output.accept(ModItems.LEOGER_SPAWN_EGG.get());
+                    output.accept(ModItems.LIARD_SPAWN_EGG.get());
+                    output.accept(ModItems.LIGER_SPAWN_EGG.get());
                     output.accept(ModItems.LITHER_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHARD_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHGER_SPAWN_EGG.get());
@@ -322,6 +322,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerScorpionSpawnPlacements);
         modEventBus.addListener(ModEntities::registerOstrichSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBearSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerKomodoSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

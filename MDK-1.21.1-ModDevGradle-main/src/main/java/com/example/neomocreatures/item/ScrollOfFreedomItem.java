@@ -8,6 +8,7 @@ import com.example.neomocreatures.entity.MoCManticoreEntity;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
+import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -59,6 +60,8 @@ public class ScrollOfFreedomItem extends Item {
             ostrich.dropAllEquipment();
         } else if (target instanceof MoCBearEntity bear) {
             bear.dropAllEquipment();
+        } else if (target instanceof MoCKomodoDragonEntity komodo) {
+            komodo.dropAllEquipment();
         }
         // (future entities with their own equipment: add their drop here)
 

@@ -90,6 +90,10 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
     /** This individual's rolled adult scale — same for its whole life, persisted below. */
     private float individualAdultScale = ADULT_SCALE;
 
+    public void setIndividualAdultScale(float scale) {
+        this.individualAdultScale = scale;
+    }
+
     private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
             SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SADDLED =
@@ -477,6 +481,13 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
             return InteractionResult.SUCCESS;
         }
 
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (!this.level().isClientSide) {
+                capturePetInstant(player, hand);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
@@ -521,6 +532,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
                 this.setOrderedToSit(false);
+                this.setInSittingPose(false);
                 player.startRiding(this);
             }
             return InteractionResult.SUCCESS;
@@ -636,10 +648,10 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
             }
         }
 
-        dropSaddleIfWorn();
+        dropAllEquipment();
     }
 
-    private void dropSaddleIfWorn() {
+    public void dropAllEquipment() {
         if (!isSaddled()) {
             return;
         }
@@ -649,6 +661,32 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
         this.spawnAtLocation(new ItemStack(saddleItem));
         this.saddleItemId = null;
         setSaddled(false);
+    }
+
+    /** Builds the NBT payload stored inside a filled Pet Amulet for this dragon. */
+    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putBoolean("KomodoDragon", true);
+        tag.putFloat("IndividualAdultScale", this.individualAdultScale);
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    /** Captures this tamed dragon into a Pet Amulet and removes it from the world. */
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        dropAllEquipment();
+        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
     }
 
     @Override

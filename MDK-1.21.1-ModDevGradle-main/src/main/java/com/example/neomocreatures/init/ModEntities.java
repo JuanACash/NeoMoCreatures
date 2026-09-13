@@ -346,5 +346,14 @@ public class ModEntities {
                         },
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
+
+        public static void registerKomodoSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_KOMODO_DRAGON.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
     
 }
