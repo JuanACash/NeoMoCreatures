@@ -171,6 +171,26 @@
     ]
   },
 
+  "moc_raccoon.ambient": {
+    "sounds": [
+      "neomocreatures:moc_raccoon/raccoon_grunt1",
+      "neomocreatures:moc_raccoon/raccoon_grunt2",
+      "neomocreatures:moc_raccoon/raccoon_grunt3",
+      "neomocreatures:moc_raccoon/raccoon_grunt4"
+    ]
+  },
+  "moc_raccoon.hurt": {
+    "sounds": [
+      "neomocreatures:moc_raccoon/raccoon_hurt1",
+      "neomocreatures:moc_raccoon/raccoon_hurt2"
+    ]
+  },
+  "moc_raccoon.death": {
+    "sounds": [
+      "neomocreatures:moc_raccoon/raccoon_dying"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },

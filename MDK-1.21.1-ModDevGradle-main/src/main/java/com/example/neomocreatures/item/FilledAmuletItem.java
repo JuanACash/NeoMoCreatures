@@ -74,6 +74,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Fox")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_FOX.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Raccoon")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_RACCOON.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -121,6 +124,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnKomodo(level, tag, pos);
         } else if (tag.contains("Fox")) {
             spawned = spawnFox(level, tag, pos);
+        } else if (tag.contains("Raccoon")) {
+            spawned = spawnRaccoon(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -433,5 +438,27 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(fox);
         return fox;
+    }
+
+    private Entity spawnRaccoon(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCRaccoonEntity raccoon =
+                ModEntities.MOC_RACCOON.get().create(level);
+        if (raccoon == null) return null;
+        raccoon.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        raccoon.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            raccoon.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        raccoon.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            raccoon.setAge(tag.getInt("Age"));
+        } else {
+            raccoon.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            raccoon.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(raccoon);
+        return raccoon;
     }
 }

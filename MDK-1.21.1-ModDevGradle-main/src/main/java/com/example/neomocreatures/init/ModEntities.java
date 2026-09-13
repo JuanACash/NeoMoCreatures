@@ -13,6 +13,7 @@ import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
 import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 import com.example.neomocreatures.entity.MoCFoxEntity;
+import com.example.neomocreatures.entity.MoCRaccoonEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -150,6 +151,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_komodo_dragon"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCRaccoonEntity>> MOC_RACCOON =
+        ENTITY_TYPES.register("moc_raccoon", () -> EntityType.Builder
+                .of(com.example.neomocreatures.entity.MoCRaccoonEntity::new, MobCategory.CREATURE)
+                .sized(0.6F, 0.525F)
+                .clientTrackingRange(8)
+                .build("moc_raccoon"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -175,6 +183,7 @@ public class ModEntities {
                 event.put(MOC_OSTRICH.get(), MoCOstrichEntity.createAttributes().build());
                 event.put(MOC_BEAR.get(), MoCBearEntity.createAttributes().build());
                 event.put(MOC_FOX.get(), MoCFoxEntity.createAttributes().build());
+                event.put(MOC_RACCOON.get(), MoCRaccoonEntity.createAttributes().build());
                 event.put(MOC_KOMODO_DRAGON.get(), MoCKomodoDragonEntity.createAttributes().build());
         });
         }
@@ -367,6 +376,15 @@ public class ModEntities {
 
         public static void registerFoxSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_FOX.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerRaccoonSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_RACCOON.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
