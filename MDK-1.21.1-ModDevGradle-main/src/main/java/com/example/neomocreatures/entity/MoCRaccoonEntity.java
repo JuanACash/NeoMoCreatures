@@ -30,6 +30,8 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.component.DataComponents;
@@ -83,7 +85,16 @@ public class MoCRaccoonEntity extends TamableAnimal {
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        // No small-animal hunting goal — wiki: "Not added yet", same as the original.
+        // Wiki: "Raccoons will also attack smaller mobs such as insects and
+        // kitties." Same pattern as MoCFoxEntity's own hunting goal.
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Animal.class, true, this::canHuntTarget));
+    }
+
+    private boolean canHuntTarget(@Nullable LivingEntity target) {
+        if (this.isBaby() || this.isTame() || target instanceof MoCRaccoonEntity) {
+            return false;
+        }
+        return target.getBbWidth() <= 0.7F && target.getBbHeight() <= 0.7F;
     }
 
     @Override
