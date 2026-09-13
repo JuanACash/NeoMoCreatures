@@ -261,6 +261,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
                     output.accept(ModItems.WYVERN_SPAWN_EGG.get());
                     output.accept(ModItems.MOC_ELEPHANT_SPAWN_EGG.get());
+                    output.accept(ModItems.OSTRICH_SPAWN_EGG.get());
                     output.accept(ModItems.LION_SPAWN_EGG.get());
                     output.accept(ModItems.TIGER_SPAWN_EGG.get());
                     output.accept(ModItems.PANTHER_SPAWN_EGG.get());
@@ -275,10 +276,10 @@ public class NeoMoCreatures {
                     output.accept(ModItems.GRIZZLY_BEAR_SPAWN_EGG.get());
                     output.accept(ModItems.POLAR_BEAR_SPAWN_EGG.get());
                     output.accept(ModItems.PANDA_BEAR_SPAWN_EGG.get());
+                    output.accept(ModItems.FOX_SPAWN_EGG.get());
+                    output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
-                    output.accept(ModItems.OSTRICH_SPAWN_EGG.get());
-                    output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
 
                 }).build());
 
@@ -323,6 +324,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerOstrichSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBearSpawnPlacements);
         modEventBus.addListener(ModEntities::registerKomodoSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerFoxSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

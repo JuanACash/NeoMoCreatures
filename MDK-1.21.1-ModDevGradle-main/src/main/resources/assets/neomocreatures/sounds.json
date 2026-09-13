@@ -151,6 +151,26 @@
     ]
   },
 
+  "moc_fox.ambient": {
+    "sounds": [
+      "neomocreatures:moc_fox/fox_call2",
+      "neomocreatures:moc_fox/fox_call3",
+      "neomocreatures:moc_fox/fox_call4",
+      "neomocreatures:moc_fox/fox_call5"
+    ]
+  },
+  "moc_fox.hurt": {
+    "sounds": [
+      "neomocreatures:moc_fox/fox_hurt1",
+      "neomocreatures:moc_fox/fox_hurt2"
+    ]
+  },
+  "moc_fox.death": {
+    "sounds": [
+      "neomocreatures:moc_fox/fox_dying"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },

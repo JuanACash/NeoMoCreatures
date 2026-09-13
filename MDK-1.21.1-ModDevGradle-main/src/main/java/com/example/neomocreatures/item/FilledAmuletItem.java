@@ -71,6 +71,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("KomodoDragon")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_KOMODO_DRAGON.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Fox")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_FOX.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -116,6 +119,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnBear(level, tag, pos);
         } else if (tag.contains("KomodoDragon")) {
             spawned = spawnKomodo(level, tag, pos);
+        } else if (tag.contains("Fox")) {
+            spawned = spawnFox(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -405,5 +410,28 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(komodo);
         return komodo;
+    }
+
+    private Entity spawnFox(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCFoxEntity fox =
+                ModEntities.MOC_FOX.get().create(level);
+        if (fox == null) return null;
+        fox.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        fox.setSnow(tag.getBoolean("Snow"));
+        fox.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            fox.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        fox.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            fox.setAge(tag.getInt("Age"));
+        } else {
+            fox.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            fox.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(fox);
+        return fox;
     }
 }

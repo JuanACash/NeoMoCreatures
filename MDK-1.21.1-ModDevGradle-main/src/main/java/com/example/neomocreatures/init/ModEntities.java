@@ -12,6 +12,7 @@ import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
 import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
+import com.example.neomocreatures.entity.MoCFoxEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -135,6 +136,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_bear"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCFoxEntity>> MOC_FOX =
+        ENTITY_TYPES.register("moc_fox", () -> EntityType.Builder
+                .of(com.example.neomocreatures.entity.MoCFoxEntity::new, MobCategory.CREATURE)
+                .sized(0.6F, 0.7F)
+                .clientTrackingRange(8)
+                .build("moc_fox"));
+
     public static final DeferredHolder<EntityType<?>, EntityType<MoCKomodoDragonEntity>> MOC_KOMODO_DRAGON =
         ENTITY_TYPES.register("moc_komodo_dragon", () -> EntityType.Builder
                 .of(MoCKomodoDragonEntity::new, MobCategory.CREATURE)
@@ -166,6 +174,7 @@ public class ModEntities {
                 event.put(MOC_SCORPION.get(), MoCScorpionEntity.createAttributes().build());
                 event.put(MOC_OSTRICH.get(), MoCOstrichEntity.createAttributes().build());
                 event.put(MOC_BEAR.get(), MoCBearEntity.createAttributes().build());
+                event.put(MOC_FOX.get(), MoCFoxEntity.createAttributes().build());
                 event.put(MOC_KOMODO_DRAGON.get(), MoCKomodoDragonEntity.createAttributes().build());
         });
         }
@@ -349,6 +358,15 @@ public class ModEntities {
 
         public static void registerKomodoSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_KOMODO_DRAGON.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerFoxSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_FOX.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
