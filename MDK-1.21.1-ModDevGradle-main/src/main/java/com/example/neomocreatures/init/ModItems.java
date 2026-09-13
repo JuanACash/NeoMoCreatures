@@ -87,6 +87,9 @@ public class ModItems {
         public static final DeferredItem<Item> RACCOON_SPAWN_EGG = ITEMS.register("raccoon_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_RACCOON, 0x6E6E6E, 0x2B2B2B, new Item.Properties()));
+        public static final DeferredItem<Item> TURKEY_SPAWN_EGG = ITEMS.register("turkey_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_TURKEY, 0x92C5FC, 0xF98B7C, new Item.Properties()));
         public static final DeferredItem<Item> KOMODO_DRAGON_SPAWN_EGG = ITEMS.register("komodo_dragon_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_KOMODO_DRAGON, 0x8B8000, 0x00008B, new Item.Properties()));

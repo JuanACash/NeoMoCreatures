@@ -77,6 +77,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Raccoon")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_RACCOON.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Turkey")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_TURKEY.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -126,6 +129,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnFox(level, tag, pos);
         } else if (tag.contains("Raccoon")) {
             spawned = spawnRaccoon(level, tag, pos);
+        } else if (tag.contains("Turkey")) {
+            spawned = spawnTurkey(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -460,5 +465,28 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(raccoon);
         return raccoon;
+    }
+
+    private Entity spawnTurkey(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCTurkeyEntity turkey =
+                ModEntities.MOC_TURKEY.get().create(level);
+        if (turkey == null) return null;
+        turkey.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        turkey.setMale(tag.getBoolean("Male"));
+        turkey.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            turkey.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        turkey.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            turkey.setAge(tag.getInt("Age"));
+        } else {
+            turkey.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            turkey.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(turkey);
+        return turkey;
     }
 }

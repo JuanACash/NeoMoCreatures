@@ -191,6 +191,18 @@
     ]
   },
 
+  "moc_turkey.ambient": {
+    "sounds": [
+      "neomocreatures:moc_turkey/turkey_gobble1",
+      "neomocreatures:moc_turkey/turkey_gobble2"
+    ]
+  },
+  "moc_turkey.hurt": {
+    "sounds": [
+      "neomocreatures:moc_turkey/turkey_hurt"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },

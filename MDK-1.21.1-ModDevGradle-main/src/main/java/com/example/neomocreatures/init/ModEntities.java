@@ -14,6 +14,7 @@ import com.example.neomocreatures.entity.MoCBearEntity;
 import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 import com.example.neomocreatures.entity.MoCFoxEntity;
 import com.example.neomocreatures.entity.MoCRaccoonEntity;
+import com.example.neomocreatures.entity.MoCTurkeyEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -158,6 +159,13 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_raccoon"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCTurkeyEntity>> MOC_TURKEY =
+        ENTITY_TYPES.register("moc_turkey", () -> EntityType.Builder
+                .of(com.example.neomocreatures.entity.MoCTurkeyEntity::new, MobCategory.CREATURE)
+                .sized(0.7F, 0.9F)
+                .clientTrackingRange(8)
+                .build("moc_turkey"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -184,6 +192,7 @@ public class ModEntities {
                 event.put(MOC_BEAR.get(), MoCBearEntity.createAttributes().build());
                 event.put(MOC_FOX.get(), MoCFoxEntity.createAttributes().build());
                 event.put(MOC_RACCOON.get(), MoCRaccoonEntity.createAttributes().build());
+                event.put(MOC_TURKEY.get(), MoCTurkeyEntity.createAttributes().build());
                 event.put(MOC_KOMODO_DRAGON.get(), MoCKomodoDragonEntity.createAttributes().build());
         });
         }
@@ -392,4 +401,12 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
     
+        public static void registerTurkeySpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_TURKEY.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
 }
