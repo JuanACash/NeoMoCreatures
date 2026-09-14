@@ -203,6 +203,15 @@
     ]
   },
 
+  "moc_goat.ambient_male": { "sounds": ["neomocreatures:moc_goat/goat_grunt_male"] },
+  "moc_goat.ambient_female": { "sounds": ["neomocreatures:moc_goat/goat_grunt_female"] },
+  "moc_goat.ambient_baby": { "sounds": ["neomocreatures:moc_goat/goat_grunt_baby"] },
+  "moc_goat.hurt": { "sounds": ["neomocreatures:moc_goat/goat_hurt"] },
+  "moc_goat.death": { "sounds": ["neomocreatures:moc_goat/goat_dying"] },
+  "moc_goat.eating": { "sounds": ["neomocreatures:moc_goat/goat_eating"] },
+  "moc_goat.dig": { "sounds": ["neomocreatures:moc_goat/goat_dig"] },
+  "moc_goat.smack": { "sounds": ["neomocreatures:moc_goat/goat_smack"] },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },

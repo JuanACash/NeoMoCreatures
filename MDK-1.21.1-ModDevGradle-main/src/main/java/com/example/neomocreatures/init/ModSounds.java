@@ -98,6 +98,15 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> TURKEY_AMBIENT = register("moc_turkey.ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> TURKEY_HURT = register("moc_turkey.hurt");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_AMBIENT_MALE = register("moc_goat.ambient_male");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_AMBIENT_FEMALE = register("moc_goat.ambient_female");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_AMBIENT_BABY = register("moc_goat.ambient_baby");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_HURT = register("moc_goat.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_DEATH = register("moc_goat.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_EATING = register("moc_goat.eating");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_DIG = register("moc_goat.dig");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_SMACK = register("moc_goat.smack");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

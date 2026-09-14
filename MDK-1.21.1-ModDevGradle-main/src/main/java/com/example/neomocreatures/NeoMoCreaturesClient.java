@@ -30,6 +30,8 @@ import com.example.neomocreatures.client.MoCRaccoonModel;
 import com.example.neomocreatures.client.MoCRaccoonRenderer;
 import com.example.neomocreatures.client.MoCTurkeyModel;
 import com.example.neomocreatures.client.MoCTurkeyRenderer;
+import com.example.neomocreatures.client.MoCGoatModel;
+import com.example.neomocreatures.client.MoCGoatRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -72,6 +74,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCKomodoDragonRenderer.MOC_KOMODO_LAYER, MoCKomodoDragonModel::createBodyLayer);
                 event.registerLayerDefinition(MoCRaccoonRenderer.MOC_RACCOON_LAYER, MoCRaccoonModel::createBodyLayer);
                 event.registerLayerDefinition(MoCTurkeyRenderer.MOC_TURKEY_LAYER, MoCTurkeyModel::createBodyLayer);
+                event.registerLayerDefinition(MoCGoatRenderer.MOC_GOAT_LAYER, MoCGoatModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -92,6 +95,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_KOMODO_DRAGON.get(), MoCKomodoDragonRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_RACCOON.get(), MoCRaccoonRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_TURKEY.get(), MoCTurkeyRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_GOAT.get(), MoCGoatRenderer::new);
         });
                 
     }

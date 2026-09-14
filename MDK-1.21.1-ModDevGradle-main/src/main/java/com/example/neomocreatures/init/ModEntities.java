@@ -15,6 +15,7 @@ import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 import com.example.neomocreatures.entity.MoCFoxEntity;
 import com.example.neomocreatures.entity.MoCRaccoonEntity;
 import com.example.neomocreatures.entity.MoCTurkeyEntity;
+import com.example.neomocreatures.entity.MoCGoatEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -131,16 +132,16 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_ostrich"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCBearEntity>> MOC_BEAR =
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCBearEntity>> MOC_BEAR =
         ENTITY_TYPES.register("moc_bear", () -> EntityType.Builder
                 .of(MoCBearEntity::new, MobCategory.CREATURE)
                 .sized(1.1F, 1.5F)
                 .clientTrackingRange(10)
                 .build("moc_bear"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCFoxEntity>> MOC_FOX =
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFoxEntity>> MOC_FOX =
         ENTITY_TYPES.register("moc_fox", () -> EntityType.Builder
-                .of(com.example.neomocreatures.entity.MoCFoxEntity::new, MobCategory.CREATURE)
+                .of(MoCFoxEntity::new, MobCategory.CREATURE)
                 .sized(0.6F, 0.7F)
                 .clientTrackingRange(8)
                 .build("moc_fox"));
@@ -152,19 +153,26 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_komodo_dragon"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCRaccoonEntity>> MOC_RACCOON =
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCRaccoonEntity>> MOC_RACCOON =
         ENTITY_TYPES.register("moc_raccoon", () -> EntityType.Builder
-                .of(com.example.neomocreatures.entity.MoCRaccoonEntity::new, MobCategory.CREATURE)
+                .of(MoCRaccoonEntity::new, MobCategory.CREATURE)
                 .sized(0.6F, 0.525F)
                 .clientTrackingRange(8)
                 .build("moc_raccoon"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCTurkeyEntity>> MOC_TURKEY =
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCTurkeyEntity>> MOC_TURKEY =
         ENTITY_TYPES.register("moc_turkey", () -> EntityType.Builder
-                .of(com.example.neomocreatures.entity.MoCTurkeyEntity::new, MobCategory.CREATURE)
+                .of(MoCTurkeyEntity::new, MobCategory.CREATURE)
                 .sized(0.7F, 0.9F)
                 .clientTrackingRange(8)
                 .build("moc_turkey"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCGoatEntity>> MOC_GOAT =
+        ENTITY_TYPES.register("moc_goat", () -> EntityType.Builder
+                .of(MoCGoatEntity::new, MobCategory.CREATURE)
+                .sized(0.8F, 0.9F)
+                .clientTrackingRange(10)
+                .build("moc_goat"));
 
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
@@ -193,6 +201,7 @@ public class ModEntities {
                 event.put(MOC_FOX.get(), MoCFoxEntity.createAttributes().build());
                 event.put(MOC_RACCOON.get(), MoCRaccoonEntity.createAttributes().build());
                 event.put(MOC_TURKEY.get(), MoCTurkeyEntity.createAttributes().build());
+                event.put(MOC_GOAT.get(), MoCGoatEntity.createAttributes().build());
                 event.put(MOC_KOMODO_DRAGON.get(), MoCKomodoDragonEntity.createAttributes().build());
         });
         }
@@ -292,11 +301,6 @@ public class ModEntities {
         }
 
         public static void registerWyvernSpawnPlacements(RegisterSpawnPlacementsEvent event) {
-                // Wyverns fly, so no ground/light restrictions like the horse mob check —
-                // the only requirement is that the space itself isn't solid (tall grass,
-                // mushrooms, and other no-collision decoration are fine to spawn through).
-                // Which biomes actually roll a wyvern is controlled entirely by each
-                // Wyvern Lair biome's own spawners.creature list, not by anything here.
                 for (DeferredHolder<EntityType<?>, EntityType<MoCWyvernEntity>> wyvernType
                         : java.util.List.of(WYVERN, WYVERN_TIER2, WYVERN_MOTHER)) {
                         event.register(
@@ -407,6 +411,14 @@ public class ModEntities {
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
                                 Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerGoatSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_GOAT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        net.minecraft.world.entity.animal.Animal::checkAnimalSpawnRules,
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

@@ -80,6 +80,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Turkey")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_TURKEY.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Goat")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_GOAT.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -131,6 +134,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnRaccoon(level, tag, pos);
         } else if (tag.contains("Turkey")) {
             spawned = spawnTurkey(level, tag, pos);
+        } else if (tag.contains("Goat")) {
+            spawned = spawnGoat(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -488,5 +493,29 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(turkey);
         return turkey;
+    }
+
+    private Entity spawnGoat(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCGoatEntity goat =
+                ModEntities.MOC_GOAT.get().create(level);
+        if (goat == null) return null;
+        goat.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        goat.setMale(tag.getBoolean("Male"));
+        goat.setColorIndex(tag.getInt("Color"));
+        goat.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            goat.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        goat.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            goat.setAge(tag.getInt("Age"));
+        } else {
+            goat.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            goat.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(goat);
+        return goat;
     }
 }
