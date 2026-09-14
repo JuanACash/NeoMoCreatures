@@ -212,6 +212,48 @@
   "moc_goat.dig": { "sounds": ["neomocreatures:moc_goat/goat_dig"] },
   "moc_goat.smack": { "sounds": ["neomocreatures:moc_goat/goat_smack"] },
 
+"moc_kitty.ambient": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_grunt1", "neomocreatures:moc_kitty/kitty_grunt2"]
+  },
+  "moc_kitty.ambient_baby": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_baby_grunt"]
+  },
+  "moc_kitty.hurt": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_hurt1", "neomocreatures:moc_kitty/kitty_hurt2", "neomocreatures:moc_kitty/kitty_hurt3"]
+  },
+  "moc_kitty.hurt_baby": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_baby_hurt1", "neomocreatures:moc_kitty/kitty_baby_hurt2"]
+  },
+  "moc_kitty.death": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_dying1", "neomocreatures:moc_kitty/kitty_dying2"]
+  },
+  "moc_kitty.death_baby": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_baby_dying"]
+  },
+  "moc_kitty.eating": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_eating"]
+  },
+  "moc_kitty.eating_fish": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_eating_fish"]
+  },
+  "moc_kitty.food": {
+    "sounds": [
+      "neomocreatures:moc_kitty/kitty_food1", "neomocreatures:moc_kitty/kitty_food2",
+      "neomocreatures:moc_kitty/kitty_food3", "neomocreatures:moc_kitty/kitty_food4"
+    ]
+  },
+  "moc_kitty.purr": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_purr1", "neomocreatures:moc_kitty/kitty_purr2"]
+  },
+  "moc_kitty.trapped": {
+    "sounds": ["neomocreatures:moc_kitty/kitty_trapped"]
+  },
+  "moc_kitty.upset": {
+    "sounds": [
+      "neomocreatures:moc_kitty/kitty_upset1", "neomocreatures:moc_kitty/kitty_upset2", "neomocreatures:moc_kitty/kitty_upset3"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },

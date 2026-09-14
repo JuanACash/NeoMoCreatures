@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +37,7 @@ public class MoCTurkeyEntity extends TamableAnimal {
     private static final float BABY_SCALE = 0.5F;
 
     private static final Ingredient TEMPTATION_ITEMS = Ingredient.of(Items.MELON_SEEDS);
+    private static final Ingredient BREEDING_ITEMS = Ingredient.of(Items.WHEAT_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS);
 
     private static final EntityDataAccessor<Boolean> DATA_MALE =
             SynchedEntityData.defineId(MoCTurkeyEntity.class, EntityDataSerializers.BOOLEAN);
@@ -70,7 +72,8 @@ public class MoCTurkeyEntity extends TamableAnimal {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.4D));
-        this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, TEMPTATION_ITEMS, false));
+        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(3, new TemptGoal(this, 1.0D, TEMPTATION_ITEMS, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
 
@@ -163,13 +166,58 @@ public class MoCTurkeyEntity extends TamableAnimal {
 
     @Override
     public boolean isFood(ItemStack stack) {
-        return false; // no breeding — taming/healing use dedicated items below, not vanilla food-love
+        return this.isTame() && BREEDING_ITEMS.test(stack);
+    }
+
+    @Override
+    public boolean canMate(Animal otherAnimal) {
+        if (otherAnimal == this || !(otherAnimal instanceof MoCTurkeyEntity other)) {
+            return false;
+        }
+        if (!this.isTame() || !other.isTame()) {
+            return false;
+        }
+        if (this.isMale() == other.isMale()) {
+            return false; // needs one male and one female
+        }
+        return super.canMate(otherAnimal);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null; // wiki: "Turkeys cannot be bred despite having different genders."
+        MoCTurkeyEntity baby = com.example.neomocreatures.init.ModEntities.MOC_TURKEY.get().create(level);
+        if (baby != null) {
+            baby.setMale(this.random.nextBoolean());
+        }
+        return baby;
+    }
+
+    @Override
+    public void spawnChildFromBreeding(ServerLevel level, Animal partner) {
+        MoCTurkeyEntity baby = (MoCTurkeyEntity) this.getBreedOffspring(level, partner);
+        if (baby == null) {
+            return;
+        }
+        baby.setBaby(true);
+        baby.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+        level.addFreshEntity(baby);
+
+        this.setAge(6000);
+        partner.setAge(6000);
+        this.resetLove();
+        partner.resetLove();
+        level.broadcastEntityEvent(this, (byte) 18);
+        if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+            level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
+                    level, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
+        }
+
+        java.util.UUID ownerUUID = this.getOwnerUUID();
+        if (ownerUUID != null) {
+            baby.setOwnerUUID(ownerUUID);
+            baby.setTame(true, true);
+        }
     }
 
     @Override

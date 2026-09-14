@@ -107,6 +107,19 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_DIG = register("moc_goat.dig");
     public static final DeferredHolder<SoundEvent, SoundEvent> GOAT_SMACK = register("moc_goat.smack");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_AMBIENT = register("moc_kitty.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_AMBIENT_BABY = register("moc_kitty.ambient_baby");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_HURT = register("moc_kitty.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_HURT_BABY = register("moc_kitty.hurt_baby");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_DEATH = register("moc_kitty.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_DEATH_BABY = register("moc_kitty.death_baby");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_EATING = register("moc_kitty.eating");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_EATING_FISH = register("moc_kitty.eating_fish");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_FOOD = register("moc_kitty.food");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_PURR = register("moc_kitty.purr");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_TRAPPED = register("moc_kitty.trapped");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_UPSET = register("moc_kitty.upset");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

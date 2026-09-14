@@ -37,6 +37,7 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     private final ModelPart tail3;
     private final ModelPart tail4;
     private final ModelPart tailTip;
+    private final ModelPart tailTusk;
     private final ModelPart leftUpperLeg;
     private final ModelPart leftLowerLeg;
     private final ModelPart rightUpperLeg;
@@ -74,12 +75,20 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
     private final ModelPart rightClaw1;
     private final ModelPart rightClaw2;
     private final ModelPart rightClaw3;
+    private final ModelPart neckHarness;
+    private final ModelPart harnessStick;
+    private final ModelPart leftHarness;
+    private final ModelPart rightHarness;
 
     public MoCBigCatModel(ModelPart root) {
         this.root = root;
         this.chest = root.getChild("chest");
         this.neckBase = chest.getChild("neck_base");
         this.headBack = neckBase.getChild("head_back");
+        this.neckHarness = headBack.getChild("neck_harness");
+        this.harnessStick = headBack.getChild("harness_stick");
+        this.leftHarness = root.getChild("left_harness");
+        this.rightHarness = root.getChild("right_harness");
         this.head = headBack.getChild("head");
         this.lowerJaw = head.getChild("lower_jaw");
         this.leftEar = head.getChild("left_ear");
@@ -90,6 +99,7 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         this.tail3 = tail2.getChild("tail_3");
         this.tail4 = tail3.getChild("tail_4");
         this.tailTip = tail4.getChild("tail_tip");
+        this.tailTusk = tail4.getChild("tail_tusk");
         this.leftUpperLeg = chest.getChild("left_upper_leg");
         this.leftLowerLeg = leftUpperLeg.getChild("left_lower_leg");
         this.rightUpperLeg = chest.getChild("right_upper_leg");
@@ -129,6 +139,7 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         this.rightClaw1 = rightFrontFoot.getChild("right_claw_1");
         this.rightClaw2 = rightFrontFoot.getChild("right_claw_2");
         this.rightClaw3 = rightFrontFoot.getChild("right_claw_3");
+
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -146,6 +157,19 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         PartDefinition headBack = neckBase.addOrReplaceChild("head_back",
                 CubeListBuilder.create().texOffs(0, 0).addBox(-2.51F, -2.5F, -1F, 5, 5, 2),
                 PartPose.offsetAndRotation(0F, 2.7F, -2.9F, 14F / R, 0F, 0F));
+
+        headBack.addOrReplaceChild("neck_harness",
+                CubeListBuilder.create().texOffs(85, 32).addBox(-3F, -3F, -2F, 6, 6, 2),
+                PartPose.offset(0F, 0F, 0.95F));
+        headBack.addOrReplaceChild("harness_stick",
+                CubeListBuilder.create().texOffs(85, 42).addBox(-3.5F, -0.5F, -0.5F, 7, 1, 1),
+                PartPose.offsetAndRotation(0F, -1.8F, 0.5F, 45F / R, 0F, 0F));
+        root.addOrReplaceChild("left_harness",
+                CubeListBuilder.create().texOffs(85, 32).addBox(3.2F, -0.6F, 1.5F, 0, 1, 9),
+                PartPose.offsetAndRotation(0F, 8.6F, -13F, 25F / R, 0F, 0F));
+        root.addOrReplaceChild("right_harness",
+                CubeListBuilder.create().texOffs(85, 31).addBox(-3.2F, -0.6F, 1.5F, 0, 1, 9),
+                PartPose.offsetAndRotation(0F, 8.6F, -13F, 25F / R, 0F, 0F));
 
         neckBase.addOrReplaceChild("neck_hair",
                 CubeListBuilder.create().texOffs(108, 17).addBox(-2F, -1F, -3F, 4, 2, 6),
@@ -239,6 +263,9 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         tail4.addOrReplaceChild("tail_tip",
                 CubeListBuilder.create().texOffs(96, 55).addBox(-1F, 0F, -1F, 2, 4, 2),
                 PartPose.offsetAndRotation(0.01F, 3.5F, 0F, 21F / R, 0F, 0F));
+        tail4.addOrReplaceChild("tail_tusk",
+                CubeListBuilder.create().texOffs(96, 49).addBox(-1.5F, 0F, -1.5F, 3, 3, 3),
+                PartPose.offsetAndRotation(0F, 3.5F, 0F, 21F / R, 0F, 0F));
 
         PartDefinition leftUpperLeg = chest.addOrReplaceChild("left_upper_leg",
                 CubeListBuilder.create().texOffs(0, 96).addBox(-1.5F, 0F, -2F, 3, 7, 4),
@@ -402,11 +429,17 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         tail3.xRot = -17F / R + tailXRot;
         tail4.xRot = 21F / R + tailXRot;
         tailTip.xRot = 21F / R + tailXRot;
+        tailTusk.xRot = 21F / R + tailXRot;
         tail2.yRot = tailTicks != 0 ? Mth.cos(ageInTicks * 0.3F) : 0F;
 
         // Head tracking.
         headBack.xRot = 14F / R + headPitch / R;
         headBack.yRot = netHeadYaw / R;
+
+        leftHarness.xRot = 25F / R + headBack.xRot;
+        leftHarness.yRot = headBack.yRot;
+        rightHarness.xRot = 25F / R + headBack.xRot;
+        rightHarness.yRot = headBack.yRot;
 
         // Mouth open/close for roaring, hurt, and eating.
         int mouthTicks = entity.getMouthTicks();
@@ -432,8 +465,15 @@ public class MoCBigCatModel extends HierarchicalModel<MoCBigCatEntity> {
         neckHair.visible = hasMane;
 
         collar.visible = entity.isTame();
-        saddle.visible = entity.isSaddled();
+        boolean bigCatSaddled = entity.isSaddled();
+        saddle.visible = bigCatSaddled;
         storageChest.visible = entity.hasChest();
+
+        neckHarness.visible = bigCatSaddled;
+        harnessStick.visible = bigCatSaddled;
+        boolean bigCatRiddenSaddled = bigCatSaddled && entity.isVehicle();
+        leftHarness.visible = bigCatRiddenSaddled;
+        rightHarness.visible = bigCatRiddenSaddled;
 
         // Sitting reclines the whole torso back and down — not just folded legs —
         // matching the original exactly (Chest itself moves/rotates, not just its children).

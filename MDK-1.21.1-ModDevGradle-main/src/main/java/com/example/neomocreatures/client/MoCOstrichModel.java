@@ -65,6 +65,10 @@ public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
     private final ModelPart saddleR;
     private final ModelPart saddleL2;
 private final ModelPart saddleR2;
+private final ModelPart neckHarness;
+private final ModelPart neckHarness2;
+private final ModelPart neckHarnessLeft;
+private final ModelPart neckHarnessRight;
 private final ModelPart chestBag;
 private final ModelPart flagpole;
 private final ModelPart flagWhite;
@@ -154,6 +158,10 @@ private final ModelPart uniHorn;
         this.saddleR = root.getChild("saddle_r");
         this.saddleL2 = root.getChild("saddle_l2");
         this.saddleR2 = root.getChild("saddle_r2");
+        this.neckHarness = root.getChild("neck_harness");
+        this.neckHarness2 = root.getChild("neck_harness_2");
+        this.neckHarnessLeft = root.getChild("neck_harness_left");
+        this.neckHarnessRight = root.getChild("neck_harness_right");
         this.chestBag = root.getChild("chest_bag");
         this.flagpole = root.getChild("flagpole");
         this.flagWhite = root.getChild("flag_white");
@@ -342,6 +350,19 @@ private final ModelPart uniHorn;
                 CubeListBuilder.create().texOffs(76, 30).addBox(-0.5F, 6F, -1F, 1, 2, 2), PartPose.offset(4F, 1F, 0F));
         root.addOrReplaceChild("saddle_r2",
                 CubeListBuilder.create().texOffs(88, 30).addBox(-0.5F, 6F, -1F, 1, 2, 2), PartPose.offset(-4F, 1F, 0F));
+
+        root.addOrReplaceChild("neck_harness",
+                CubeListBuilder.create().texOffs(0, 11).addBox(-2F, -3F, -2.5F, 4, 1, 4),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 0.4363323F, 0F, 0F));
+        root.addOrReplaceChild("neck_harness_2",
+                CubeListBuilder.create().texOffs(84, 55).addBox(-3F, -2.5F, -2F, 6, 1, 1),
+                PartPose.offset(0F, 3F, -6F));
+        root.addOrReplaceChild("neck_harness_right",
+                CubeListBuilder.create().texOffs(84, 45).addBox(-2.3F, -3.5F, -0.5F, 0, 3, 12),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 0.8983798F, 0F, 0F));
+        root.addOrReplaceChild("neck_harness_left",
+                CubeListBuilder.create().texOffs(84, 45).addBox(2.3F, -3.5F, -0.5F, 0, 3, 12),
+                PartPose.offsetAndRotation(0F, 3F, -6F, 0.8983798F, 0F, 0F));
 
         root.addOrReplaceChild("chest_bag",
                 CubeListBuilder.create().texOffs(32, 7).addBox(-4.5F, -3F, 5F, 9, 4, 7),
@@ -662,6 +683,12 @@ private final ModelPart uniHorn;
         saddleR.visible = saddled;
         saddleL2.visible = saddled;
         saddleR2.visible = saddled;
+
+        neckHarness.visible = saddled;
+        neckHarness2.visible = saddled;
+        boolean riddenSaddled = saddled && entity.isVehicle();
+        neckHarnessLeft.visible = riddenSaddled;
+        neckHarnessRight.visible = riddenSaddled;
 
         boolean hasChestVisible = entity.hasChest();
         chestBag.visible = hasChestVisible;

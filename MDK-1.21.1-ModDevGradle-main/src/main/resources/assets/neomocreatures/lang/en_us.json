@@ -70,6 +70,8 @@
   "item.neomocreatures.turkey_spawn_egg": "Turkey Spawn Egg",
   "item.neomocreatures.komodo_dragon_spawn_egg": "Komodo Dragon Spawn Egg",
   "item.neomocreatures.goat_spawn_egg": "Goat Spawn Egg",
+  "item.neomocreatures.kitty_spawn_egg": "Kitty Spawn Egg",
+  
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -278,6 +280,7 @@
   "entity.neomocreatures.moc_turkey": "Turkey",
   "entity.neomocreatures.moc_komodo_dragon": "Komodo Dragon",
   "entity.neomocreatures.moc_goat": "Goat",
+  "entity.neomocreatures.moc_kitty": "Kitty",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }
