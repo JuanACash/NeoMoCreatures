@@ -120,6 +120,9 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_TRAPPED = register("moc_kitty.trapped");
     public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_UPSET = register("moc_kitty.upset");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_BED_POURING_FOOD = register("moc_kitty.pouring_food");
+    public static final DeferredHolder<SoundEvent, SoundEvent> KITTY_BED_POURING_MILK = register("moc_kitty.pouring_milk");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

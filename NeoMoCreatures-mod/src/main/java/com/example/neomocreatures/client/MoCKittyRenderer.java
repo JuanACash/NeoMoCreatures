@@ -28,11 +28,32 @@ public class MoCKittyRenderer extends MobRenderer<MoCKittyEntity, MoCKittyModel>
 
     @Override
     protected void renderNameTag(MoCKittyEntity entity, Component displayName, PoseStack poseStack,
-                                  MultiBufferSource buffer, int packedLight, float partialTick) {
+                                MultiBufferSource buffer, int packedLight, float partialTick) {
+        MoCKittyEmoticonRenderer.render(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
         if (this.entityRenderDispatcher.distanceToSqr(entity) > TameableOverlayRenderer.NAME_AND_HEALTH_SHOW_DISTANCE_SQR) {
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
         super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+    }
+
+    @Override
+    public void render(MoCKittyEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+                        MultiBufferSource buffer, int packedLight) {
+        net.minecraft.world.entity.player.Player holder = entity.getHolder();
+        if (entity.isHeld() && holder != null) {
+            net.minecraft.world.phys.Vec3 holderEye = holder.getEyePosition(partialTick);
+            net.minecraft.world.phys.Vec3 targetPos = entity.isBaby()
+                    ? holderEye.add(0.0D, 0.2D, 0.0D)
+                    : holderEye.add(0.0D, 0.2D, 0.0D);
+            net.minecraft.world.phys.Vec3 renderedPos = entity.getPosition(partialTick);
+
+            poseStack.pushPose();
+            poseStack.translate(targetPos.x - renderedPos.x, targetPos.y - renderedPos.y, targetPos.z - renderedPos.z);
+            super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
+            poseStack.popPose();
+            return;
+        }
+        super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
     }
 }

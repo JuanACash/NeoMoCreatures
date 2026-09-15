@@ -25,6 +25,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
     private final ModelPart rightLeg;
     private final ModelPart leftLeg;
     private final ModelPart tail;
+    private final ModelPart medallion;
 
     public MoCKittyModel(ModelPart root) {
         this.root = root;
@@ -37,6 +38,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         this.rightLeg = root.getChild("right_leg");
         this.leftLeg = root.getChild("left_leg");
         this.tail = root.getChild("tail");
+        this.medallion = root.getChild("medallion");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -76,6 +78,8 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
                 PartPose.offset(1.5F, 18F, 7F));
         root.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(16, 9).mirror().addBox(-0.5F, -8F, -1F, 1, 8, 1),
                 PartPose.offset(0F, 14.5F, 7.5F));
+        root.addOrReplaceChild("medallion", CubeListBuilder.create().texOffs(51, 1).addBox(-2.5F, -1.75F, 0F, 5, 3.5F, 0),
+                PartPose.offset(0F, 18F, -2.5F));
 
         return LayerDefinition.create(mesh, 64, 32);
     }
@@ -88,7 +92,9 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
     @Override
     public void setupAnim(MoCKittyEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        boolean sitting = entity.isKittySitting();
+        boolean sitting = entity.isKittySitting()
+                || entity.getVehicle() instanceof com.example.neomocreatures.entity.MoCKittyBedEntity
+                || entity.isHeld();
         boolean swinging = entity.isKittySwinging();
         int kittyState = entity.getKittyState();
 
@@ -97,7 +103,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         for (int i = 0; i < 10; i++) {
             headParts[i].visible = i != 7 && i != 8;
         }
-        headParts[7].visible = kittyState > 2;
+        headParts[7].visible = false;
         headParts[8].visible = kittyState == 12;
 
         float headYRot = netHeadYaw / 57.29578F;
@@ -108,6 +114,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         }
         headParts[9].yRot = headYRot;
         headParts[9].xRot = headXRot;
+        medallion.visible = entity.isTame();
 
         rightArm.xRot = Mth.cos((limbSwing * 0.6662F) + 3.141593F) * 2.0F * limbSwingAmount * 0.5F;
         leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;
@@ -119,12 +126,11 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         leftLeg.yRot = 0F;
 
         if (swinging) {
-            // swingProgress isn't ported yet (no attack state machine) — holds the
-            // windup pose statically until that's wired up.
-            rightArm.xRot = -2F;
-            rightArm.yRot = 2.25F;
+                float swingProgress = entity.getSwingProgress(); // 0 → 2.0
+                rightArm.xRot = -2F + swingProgress;
+                rightArm.yRot = 2.25F - (swingProgress * 2.0F);
         } else {
-            rightArm.yRot = 0F;
+                rightArm.yRot = 0F;
         }
         leftArm.yRot = 0F;
 

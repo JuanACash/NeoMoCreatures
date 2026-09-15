@@ -489,23 +489,40 @@ public class ModItems {
     public static final DeferredItem<Item> HAYSTACK = ITEMS.registerSimpleItem("haystack", new Item.Properties().stacksTo(16));
     public static final DeferredItem<Item> KEY = ITEMS.registerSimpleItem("key", new Item.Properties());
     public static final DeferredItem<Item> KITTY_BED = ITEMS.registerSimpleItem("kitty_bed", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_BLACK = ITEMS.registerSimpleItem("kitty_bed_black", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_BLUE = ITEMS.registerSimpleItem("kitty_bed_blue", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_BROWN = ITEMS.registerSimpleItem("kitty_bed_brown", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_CYAN = ITEMS.registerSimpleItem("kitty_bed_cyan", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_GRAY = ITEMS.registerSimpleItem("kitty_bed_gray", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_GREEN = ITEMS.registerSimpleItem("kitty_bed_green", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_LIGHT_BLUE = ITEMS.registerSimpleItem("kitty_bed_light_blue", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_LIME = ITEMS.registerSimpleItem("kitty_bed_lime", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_MAGENTA = ITEMS.registerSimpleItem("kitty_bed_magenta", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_ORANGE = ITEMS.registerSimpleItem("kitty_bed_orange", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_PINK = ITEMS.registerSimpleItem("kitty_bed_pink", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_PURPLE = ITEMS.registerSimpleItem("kitty_bed_purple", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_RED = ITEMS.registerSimpleItem("kitty_bed_red", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_SILVER = ITEMS.registerSimpleItem("kitty_bed_silver", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_WHITE = ITEMS.registerSimpleItem("kitty_bed_white", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_BED_YELLOW = ITEMS.registerSimpleItem("kitty_bed_yellow", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> KITTY_LITTER = ITEMS.registerSimpleItem("kitty_litter", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> KITTY_BED_BLACK = ITEMS.register("kitty_bed_black",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.BLACK, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_BLUE = ITEMS.register("kitty_bed_blue",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.BLUE, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_BROWN = ITEMS.register("kitty_bed_brown",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.BROWN, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_CYAN = ITEMS.register("kitty_bed_cyan",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.CYAN, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_GRAY = ITEMS.register("kitty_bed_gray",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.GRAY, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_GREEN = ITEMS.register("kitty_bed_green",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.GREEN, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_LIGHT_BLUE = ITEMS.register("kitty_bed_light_blue",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.LIGHT_BLUE, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_LIME = ITEMS.register("kitty_bed_lime",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.LIME, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_MAGENTA = ITEMS.register("kitty_bed_magenta",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.MAGENTA, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_ORANGE = ITEMS.register("kitty_bed_orange",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.ORANGE, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_PINK = ITEMS.register("kitty_bed_pink",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.PINK, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_PURPLE = ITEMS.register("kitty_bed_purple",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.PURPLE, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_RED = ITEMS.register("kitty_bed_red",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.RED, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_SILVER = ITEMS.register("kitty_bed_silver",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.LIGHT_GRAY, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_WHITE = ITEMS.register("kitty_bed_white",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.WHITE, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_BED_YELLOW = ITEMS.register("kitty_bed_yellow",
+                () -> new com.example.neomocreatures.item.KittyBedItem(net.minecraft.world.item.DyeColor.YELLOW, new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> KITTY_LITTER = ITEMS.register("kitty_litter",
+                () -> new com.example.neomocreatures.item.LitterBoxItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> MEDALLION = ITEMS.registerSimpleItem("medallion", new Item.Properties());
     // Places a MoCEggEntity when used on a block — see MoCEggItem.
     public static final DeferredItem<Item> MOC_EGG = ITEMS.register("moc_egg",

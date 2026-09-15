@@ -2,8 +2,10 @@ package com.example.neomocreatures.init;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.MoCKittyBedEntity;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
+import com.example.neomocreatures.entity.MoCLitterBoxEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
@@ -191,6 +193,20 @@ public class ModEntities {
                     .clientTrackingRange(6)
                     .build("moc_egg"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCKittyBedEntity>> MOC_KITTY_BED =
+            ENTITY_TYPES.register("moc_kitty_bed", () -> EntityType.Builder
+                        .of(MoCKittyBedEntity::new, MobCategory.MISC)
+                        .sized(1.0F, 0.4F)
+                        .clientTrackingRange(6)
+                        .build("moc_kitty_bed"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCLitterBoxEntity>> MOC_LITTER_BOX =
+        ENTITY_TYPES.register("moc_litter_box", () -> EntityType.Builder
+                .of(com.example.neomocreatures.entity.MoCLitterBoxEntity::new, MobCategory.MISC)
+                .sized(1.0F, 0.4F)
+                .clientTrackingRange(6)
+                .build("moc_litter_box"));
+
     public static void registerAttributes(IEventBus modEventBus) {
         modEventBus.addListener((EntityAttributeCreationEvent event) -> {
                 event.put(MOC_HORSE.get(), MoCHorseEntity.createAttributes().build());
@@ -201,6 +217,8 @@ public class ModEntities {
                 event.put(WYVERN_MOTHER_TAMED.get(), MoCWyvernEntity.createMotherTamedAttributes().build());
                 event.put(MOC_EGG.get(), MoCEggEntity.createAttributes().build());
                 event.put(MOC_ELEPHANT.get(), MoCElephantEntity.createAttributes().build());
+                event.put(MOC_KITTY_BED.get(), MoCKittyBedEntity.createAttributes().build());
+                event.put(MOC_LITTER_BOX.get(), MoCLitterBoxEntity.createAttributes().build());
                 event.put(MOC_BIG_CAT.get(), MoCBigCatEntity.createAttributes().build());
                 event.put(MOC_MANTICORE.get(), MoCManticoreEntity.createAttributes().build());
                 event.put(MOC_SCORPION.get(), MoCScorpionEntity.createAttributes().build());

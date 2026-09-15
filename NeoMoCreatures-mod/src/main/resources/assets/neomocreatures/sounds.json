@@ -236,6 +236,12 @@
   "moc_kitty.eating_fish": {
     "sounds": ["neomocreatures:moc_kitty/kitty_eating_fish"]
   },
+  "moc_kitty.pouring_food": {
+    "sounds": ["neomocreatures:moc_kitty/pouring_food"]
+  },
+  "moc_kitty.pouring_milk": {
+    "sounds": ["neomocreatures:moc_kitty/pouring_milk"]
+  },
   "moc_kitty.food": {
     "sounds": [
       "neomocreatures:moc_kitty/kitty_food1", "neomocreatures:moc_kitty/kitty_food2",
