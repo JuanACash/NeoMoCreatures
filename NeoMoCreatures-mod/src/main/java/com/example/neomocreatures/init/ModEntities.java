@@ -448,4 +448,5 @@ public class ModEntities {
                         net.minecraft.world.entity.animal.Animal::checkAnimalSpawnRules,
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
+
 }

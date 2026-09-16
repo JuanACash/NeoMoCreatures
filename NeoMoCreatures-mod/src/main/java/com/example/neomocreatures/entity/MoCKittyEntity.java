@@ -46,10 +46,11 @@ import javax.annotation.Nullable;
  * kitty bed, taming, or the original's ~20-state AI yet — those come in
  * later steps.
  */
-public class MoCKittyEntity extends TamableAnimal {
+public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
+    private static final float BABY_HITBOX_SCALE = 0.75F;
     private static final int SWING_TICKS_MAX = 10;
     private static final double EAT_NEARBY_ITEM_RANGE = 8.0D;
     private static final int FLEE_IMMUNITY_TICKS = 6000; // 5 minutes — "for a while" after eating
@@ -69,6 +70,9 @@ public class MoCKittyEntity extends TamableAnimal {
     private static final int STATE_SEEKING_BIRTH_BED = 19;
     private static final int STATE_GIVING_BIRTH = 20;
     private static final int STATE_DEFENDING_KITTENS = 21;
+    private static final int STATE_SLEEPING = 12;
+    private static final int STATE_WANTS_TREE = 16;
+    private static final int STATE_STUCK_IN_TREE = 17;
 
     private int fleeImmuneTicks;
     private int careTimer;
@@ -92,6 +96,10 @@ public class MoCKittyEntity extends TamableAnimal {
 
     @Nullable
     private Player heldBy;
+
+    @Nullable
+    private net.minecraft.core.BlockPos treeTarget;
+    private boolean onTree;
 
     public MoCKittyEntity(EntityType<? extends MoCKittyEntity> type, Level level) {
         super(type, level);
@@ -129,6 +137,42 @@ public class MoCKittyEntity extends TamableAnimal {
         this.entityData.set(DATA_VARIANT, variant.getId());
     }
 
+    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.putBoolean("Kitty", true);
+        tag.putInt("KittyVariant", getVariant().getId());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
+        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return 1 + this.random.nextInt(3);
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHitByPlayer) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
+        if (this.isTame()) {
+            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MEDALLION.get()));
+        }
+    }
+
     // ---------------------------------------------------------------
     // Model hooks — always neutral for now. Sitting/swinging/mood state
     // get wired to real behavior once the AI state machine is ported.
@@ -147,6 +191,16 @@ public class MoCKittyEntity extends TamableAnimal {
 
     public boolean isKittySwinging() {
         return this.entityData.get(DATA_SWING_TICKS) > 0;
+    }
+
+    @Override
+    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+        if (this.isBaby()) {
+            net.minecraft.world.entity.EntityDimensions babyDimensions =
+                    this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
+            return babyDimensions.makeBoundingBox(this.position());
+        }
+        return super.makeBoundingBox();
     }
 
     /** Ramps 0 → 2.0 over the swing, exactly like the original's swingProgress. */
@@ -497,11 +551,28 @@ public class MoCKittyEntity extends TamableAnimal {
             case STATE_GIVING_BIRTH -> tickGivingBirth();
             case STATE_DEFENDING_KITTENS -> tickDefendingKittens();
             case STATE_HELD_LEAD, STATE_HELD_PLAYER -> tickHeld();
+            case STATE_SLEEPING -> tickSleeping();
+            case STATE_WANTS_TREE -> tickWantsTree();
+            case STATE_STUCK_IN_TREE -> tickStuckInTree();
             default -> tickIdleCare();
         }
     }
 
     private void tickIdleCare() {
+        if (!this.level().isDay() && this.random.nextInt(500) == 0) {
+            com.example.neomocreatures.entity.MoCKittyBedEntity bed = findAnyBed(18.0D);
+            if (bed == null) {
+                setKittyCareState(STATE_SLEEPING);
+            } else {
+                double dist = bed.distanceTo(this);
+                if (dist > 2.0F) {
+                    this.getNavigation().moveTo(bed, 1.0D);
+                } else if (this.startRiding(bed)) {
+                    setKittyCareState(STATE_SLEEPING);
+                }
+            }
+            return;
+        }
         if (this.random.nextInt(20) == 0) {
             Player nearby = this.level().getNearestPlayer(this, 12D);
             if (nearby != null && nearby.getMainHandItem().is(com.example.neomocreatures.init.ModItems.WOOL_BALL.get())) {
@@ -511,6 +582,10 @@ public class MoCKittyEntity extends TamableAnimal {
         }
         if (this.getHealth() < this.getMaxHealth() || this.random.nextInt(3000) == 0) {
             setKittyCareState(STATE_SEEKING_BED);
+            return;
+        }
+        if (this.level().canSeeSky(this.blockPosition()) && this.random.nextInt(4000) == 0) {
+            setKittyCareState(STATE_WANTS_TREE);
         }
     }
 
@@ -572,15 +647,22 @@ public class MoCKittyEntity extends TamableAnimal {
 
     private void tickLookingForMate() {
         this.careTimer++;
-        if (this.random.nextInt(50) == 0) {
-            for (MoCKittyEntity other : this.level().getEntitiesOfClass(MoCKittyEntity.class,
-                    this.getBoundingBox().inflate(16.0D, 6.0D, 16.0D),
-                    k -> k != this && k.getKittyState() == STATE_LOOKING_FOR_MATE)) {
-                this.matePartner = other;
-                other.matePartner = this;
-                setKittyCareState(STATE_MATING);
-                other.setKittyCareState(STATE_MATING);
-                break;
+        if (this.random.nextInt(20) == 0) {
+            MoCKittyEntity candidate = this.level().getEntitiesOfClass(MoCKittyEntity.class,
+                            this.getBoundingBox().inflate(16.0D, 6.0D, 16.0D),
+                            k -> k != this && k.getKittyState() == STATE_LOOKING_FOR_MATE)
+                    .stream()
+                    .min(java.util.Comparator.comparingDouble(this::distanceToSqr))
+                    .orElse(null);
+            if (candidate != null) {
+                if (this.distanceToSqr(candidate) < 4.0D) {
+                    this.matePartner = candidate;
+                    candidate.matePartner = this;
+                    setKittyCareState(STATE_MATING);
+                    candidate.setKittyCareState(STATE_MATING);
+                } else {
+                    this.getNavigation().moveTo(candidate, 1.0D);
+                }
             }
         }
         if (this.careTimer > 2000) {
@@ -667,6 +749,77 @@ public class MoCKittyEntity extends TamableAnimal {
             }
             this.careTimer = 1000;
         }
+    }
+
+    private void tickSleeping() {
+        setSitting(true);
+        if (this.random.nextInt(100) == 0) {
+            this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
+        }
+        this.careTimer++;
+        if (this.level().isDay() || (this.careTimer > 500 && this.random.nextInt(500) == 0)) {
+            setSitting(false);
+            if (this.isVehicle() || this.getVehicle() != null) {
+                this.stopRiding();
+            }
+            setKittyCareState(STATE_IDLE);
+        }
+    }
+
+    /**
+     * Simplified from the original: it walks toward a nearby tree and "arrives"
+     * there instead of literally climbing through leaves block by block (the
+     * original disables collision to crawl up through leaves, which needs APIs
+     * that don't map cleanly to the modern pathfinder without real risk of
+     * getting a kitty stuck inside a tree).
+     */
+    private void tickWantsTree() {
+        this.careTimer++;
+        if (this.careTimer > 500) {
+            setKittyCareState(this.onTree ? STATE_STUCK_IN_TREE : STATE_IDLE);
+            return;
+        }
+        if (this.treeTarget == null && this.random.nextInt(50) == 0) {
+            this.treeTarget = findNearbyTreeTop(18);
+        }
+        if (this.treeTarget == null) {
+            return;
+        }
+        this.getNavigation().moveTo(this.treeTarget.getX() + 0.5D, this.treeTarget.getY(), this.treeTarget.getZ() + 0.5D, 1.0D);
+        if (this.blockPosition().closerThan(this.treeTarget, 2.0D)) {
+            this.onTree = true;
+            this.treeTarget = null;
+        }
+    }
+
+    private void tickStuckInTree() {
+        if (this.random.nextInt(100) == 0) {
+            setKittyCareState(STATE_IDLE);
+            this.onTree = false;
+            return;
+        }
+        Player nearby = this.level().getNearestPlayer(this, 2.0D);
+        if (nearby != null) {
+            setKittyCareState(STATE_IDLE);
+            this.onTree = false;
+        }
+    }
+
+    @Nullable
+    private net.minecraft.core.BlockPos findNearbyTreeTop(int radius) {
+        net.minecraft.core.BlockPos base = this.blockPosition();
+        for (int i = 0; i < 10; i++) {
+            int dx = this.random.nextInt(radius * 2 + 1) - radius;
+            int dz = this.random.nextInt(radius * 2 + 1) - radius;
+            net.minecraft.core.BlockPos.MutableBlockPos pos = base.offset(dx, 10, dz).mutable();
+            for (int y = base.getY() + 10; y > base.getY() - 5; y--) {
+                pos.setY(y);
+                if (this.level().getBlockState(pos).is(net.minecraft.tags.BlockTags.LEAVES)) {
+                    return pos.immutable();
+                }
+            }
+        }
+        return null;
     }
 
     @Nullable
@@ -1011,6 +1164,13 @@ public class MoCKittyEntity extends TamableAnimal {
             return InteractionResult.SUCCESS;
         }
 
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (!this.level().isClientSide) {
+                capturePetInstant(player, hand);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (this.isTame() && isWhipable() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setSitting(!isKittySitting());
@@ -1057,7 +1217,8 @@ public class MoCKittyEntity extends TamableAnimal {
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.pickupCooldown <= 0 && canBePickedUp() && stack.isEmpty()) {
+        if (this.isTame() && this.pickupCooldown <= 0 && canBePickedUp() && stack.isEmpty()
+                && !com.example.neomocreatures.util.PetCarryUtil.isAlreadyCarryingAPet(player)) {
             if (!this.level().isClientSide) {
                 startHolding(player);
                 setKittyCareState(STATE_HELD_PLAYER);
