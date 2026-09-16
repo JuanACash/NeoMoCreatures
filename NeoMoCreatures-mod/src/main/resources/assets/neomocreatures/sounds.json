@@ -265,6 +265,14 @@
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
   "moc_komodo.death": { "sounds": ["neomocreatures:moc_snake/snake_dying"] },
 
+  "moc_snake.ambient": { "sounds": ["neomocreatures:moc_snake/snake_hiss1", "neomocreatures:moc_snake/snake_hiss2"] },
+  "moc_snake.angry": { "sounds": ["neomocreatures:moc_snake/snake_upset1", "neomocreatures:moc_snake/snake_upset2"] },
+  "moc_snake.rattle": { "sounds": ["neomocreatures:moc_snake/snake_rattle1", "neomocreatures:moc_snake/snake_rattle2"] },
+  "moc_snake.snap": { "sounds": ["neomocreatures:moc_snake/snake_snap"] },
+  "moc_snake.swim": { "sounds": ["neomocreatures:moc_snake/snake_swim"] },
+  "moc_snake.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
+  "moc_snake.death": { "sounds": ["neomocreatures:moc_snake/snake_dying"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

@@ -71,6 +71,7 @@
   "item.neomocreatures.komodo_dragon_spawn_egg": "Komodo Dragon Spawn Egg",
   "item.neomocreatures.goat_spawn_egg": "Goat Spawn Egg",
   "item.neomocreatures.kitty_spawn_egg": "Kitty Spawn Egg",
+  "item.neomocreatures.snake_spawn_egg": "Snake Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -247,6 +248,14 @@
   "item.neomocreatures.toxic_manticore_egg": "Toxic Manticore Egg",
   "item.neomocreatures.ostrich_egg": "Ostrich Egg",
   "item.neomocreatures.komodo_dragon_egg": "Komodo Dragon Egg",
+  "item.neomocreatures.snake_egg_green_dark": "Dark Snake Egg",
+  "item.neomocreatures.snake_egg_wolf": "Spotted Snake Egg",
+  "item.neomocreatures.snake_egg_orange": "Orange Snake Egg",
+  "item.neomocreatures.snake_egg_green_bright": "Green Snake Egg",
+  "item.neomocreatures.snake_egg_coral": "Coral Snake Egg",
+  "item.neomocreatures.snake_egg_cobra": "Cobra Egg",
+  "item.neomocreatures.snake_egg_rattle": "Rattlesnake Egg",
+  "item.neomocreatures.snake_egg_python": "Python Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",
@@ -281,6 +290,7 @@
   "entity.neomocreatures.moc_komodo_dragon": "Komodo Dragon",
   "entity.neomocreatures.moc_goat": "Goat",
   "entity.neomocreatures.moc_kitty": "Kitty",
+  "entity.neomocreatures.moc_snake": "Snake",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

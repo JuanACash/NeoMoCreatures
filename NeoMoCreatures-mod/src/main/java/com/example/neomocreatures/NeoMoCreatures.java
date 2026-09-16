@@ -101,6 +101,14 @@ public class NeoMoCreatures {
                     output.accept(ModItems.FIRE_SCORPION_EGG.get());
                     output.accept(ModItems.UNDEAD_SCORPION_EGG.get());
                     output.accept(ModItems.OSTRICH_EGG.get());
+                    output.accept(ModItems.SNAKE_EGG_GREEN_DARK.get());
+                    output.accept(ModItems.SNAKE_EGG_WOLF.get());
+                    output.accept(ModItems.SNAKE_EGG_ORANGE.get());
+                    output.accept(ModItems.SNAKE_EGG_GREEN_BRIGHT.get());
+                    output.accept(ModItems.SNAKE_EGG_CORAL.get());
+                    output.accept(ModItems.SNAKE_EGG_COBRA.get());
+                    output.accept(ModItems.SNAKE_EGG_RATTLE.get());
+                    output.accept(ModItems.SNAKE_EGG_PYTHON.get());
                     output.accept(ModItems.KOMODO_DRAGON_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
@@ -281,6 +289,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.RACCOON_SPAWN_EGG.get());
                     output.accept(ModItems.TURKEY_SPAWN_EGG.get());
                     output.accept(ModItems.GOAT_SPAWN_EGG.get());
+                    output.accept(ModItems.SNAKE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());

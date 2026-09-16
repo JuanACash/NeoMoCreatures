@@ -99,6 +99,8 @@ public class ModItems {
         public static final DeferredItem<Item> KITTY_SPAWN_EGG = ITEMS.register("kitty_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_KITTY, 0xD8B48C, 0x8B5A2B, new Item.Properties()));
+        public static final DeferredItem<Item> SNAKE_SPAWN_EGG = ITEMS.register("snake_spawn_egg",
+        () -> new com.example.neomocreatures.item.SnakeSpawnEggItem(0x2E4B1E, 0xC9A227, new Item.Properties()));
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
@@ -616,6 +618,38 @@ public class ModItems {
             () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
                         new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
                                 com.example.neomocreatures.init.ModEntities.MOC_KOMODO_DRAGON, null, 0.0D, null)));
+    public static final DeferredItem<Item> SNAKE_EGG_GREEN_DARK = ITEMS.register("snake_egg_green_dark",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "GREEN_DARK")));
+    public static final DeferredItem<Item> SNAKE_EGG_WOLF = ITEMS.register("snake_egg_wolf",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "WOLF")));
+    public static final DeferredItem<Item> SNAKE_EGG_ORANGE = ITEMS.register("snake_egg_orange",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "ORANGE")));
+    public static final DeferredItem<Item> SNAKE_EGG_GREEN_BRIGHT = ITEMS.register("snake_egg_green_bright",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "GREEN_BRIGHT")));
+    public static final DeferredItem<Item> SNAKE_EGG_CORAL = ITEMS.register("snake_egg_coral",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "CORAL")));
+    public static final DeferredItem<Item> SNAKE_EGG_COBRA = ITEMS.register("snake_egg_cobra",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "COBRA")));
+    public static final DeferredItem<Item> SNAKE_EGG_RATTLE = ITEMS.register("snake_egg_rattle",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "RATTLE")));
+    public static final DeferredItem<Item> SNAKE_EGG_PYTHON = ITEMS.register("snake_egg_python",
+        () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SNAKE, null, 0.0D, "PYTHON")));
 
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());
