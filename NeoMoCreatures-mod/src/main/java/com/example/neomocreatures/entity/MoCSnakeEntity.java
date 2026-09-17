@@ -535,13 +535,118 @@ public class MoCSnakeEntity extends TamableAnimal
         return wasHurt;
     }
 
+    /** Carries the variant chosen for the first spawned member to the rest of its group — same fix MoCBearEntity/MoCBigCatEntity use so a group never ends up mixed species. */
+    private static final class SnakeGroupData implements SpawnGroupData {
+        final SnakeVariant variant;
+        SnakeGroupData(SnakeVariant variant) {
+            this.variant = variant;
+        }
+    }
+
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
-                                         MobSpawnType spawnReason, @Nullable SpawnGroupData spawnGroupData) {
-        // Uniformly random for now — biome-weighted selection (matching the
-        // original's checkSpawningBiome()) is ported in the natural-spawn step.
-        setVariant(SnakeVariant.random(this.random));
-        return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData resultGroupData = spawnGroupData;
+
+        if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
+            SnakeVariant variant = spawnGroupData instanceof SnakeGroupData shared
+                    ? shared.variant
+                    : pickVariantForBiome(level, this.blockPosition());
+            resultGroupData = new SnakeGroupData(variant);
+            setVariant(variant);
+        } else {
+            // SPAWN_EGG / mob spawner / command spawns: uniformly random,
+            // same as before (see SnakeSpawnEggItem, which sets its own
+            // variant directly and doesn't go through this path at all).
+            setVariant(SnakeVariant.random(this.random));
+        }
+
+        // Never forward our own custom SpawnGroupData into TamableAnimal's
+        // finalizeSpawn — same fix as MoCBearEntity: it converts the data
+        // without checking the type and crashes with anything that isn't
+        // its own. We track the group's shared variant ourselves instead.
+        super.finalizeSpawn(level, difficulty, spawnType, null);
+        return resultGroupData;
+    }
+
+    /**
+     * Wiki: rattlesnakes/spotted (wolf) snakes in deserts and badlands;
+     * cobras, pythons and green (bright) snakes in jungles/sparse jungles,
+     * cobras also in savannas; coral snakes in forests; orange snakes in
+     * plains; dark snakes almost anywhere (the fallback here).
+     */
+    private SnakeVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
+        var biome = level.getBiome(pos);
+
+        if (biome.is(net.minecraft.world.level.biome.Biomes.DESERT)
+                || biome.is(net.minecraft.world.level.biome.Biomes.BADLANDS)
+                || biome.is(net.minecraft.world.level.biome.Biomes.ERODED_BADLANDS)
+                || biome.is(net.minecraft.world.level.biome.Biomes.WOODED_BADLANDS)) {
+            return this.random.nextBoolean() ? SnakeVariant.RATTLE : SnakeVariant.WOLF;
+        }
+
+        // Wiki: "cobras also spawn in savannas" — savanna is cobra-only,
+        // unlike the jungle biomes it shares with python/green.
+        if (biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA)
+                || biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU)) {
+            return SnakeVariant.COBRA;
+        }
+
+        // Wiki: pythons can also spawn in mangrove swamps, including right
+        // on the water surface (see the custom spawn placement predicate).
+        if (biome.is(net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP)) {
+            return SnakeVariant.PYTHON;
+        }
+
+        if (biome.is(net.minecraft.world.level.biome.Biomes.JUNGLE)
+                || biome.is(net.minecraft.world.level.biome.Biomes.SPARSE_JUNGLE)) {
+            SnakeVariant[] options = {SnakeVariant.COBRA, SnakeVariant.PYTHON, SnakeVariant.GREEN_BRIGHT};
+            return options[this.random.nextInt(options.length)];
+        }
+
+        if (biome.is(net.minecraft.world.level.biome.Biomes.FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.BIRCH_FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_BIRCH_FOREST)
+                || biome.is(net.minecraft.world.level.biome.Biomes.DARK_FOREST)) {
+            return SnakeVariant.CORAL;
+        }
+
+        if (biome.is(net.minecraft.world.level.biome.Biomes.PLAINS)
+                || biome.is(net.minecraft.world.level.biome.Biomes.SUNFLOWER_PLAINS)) {
+            return SnakeVariant.ORANGE;
+        }
+
+        return SnakeVariant.GREEN_DARK;
+    }
+
+    @Override
+    public boolean shouldDropExperience() {
+        // Handled manually in dropCustomDeathLoot(), gated on the killer.
+        return false;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+
+        // Wiki: "when killed by a player or tamed wolf" — anything else
+        // (falling, lava, another wild mob) drops nothing.
+        Entity killer = damageSource.getEntity();
+        boolean validKiller = killer instanceof Player
+                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
+        if (!validKiller) {
+            return;
+        }
+
+        // Wiki: 0-2 eggs of its own variant, not affected by Fortune/Looting.
+        int eggCount = this.random.nextInt(3);
+        if (eggCount > 0) {
+            this.spawnAtLocation(new ItemStack(getEggItem(), eggCount));
+        }
+
+        // Wiki: 1-3 experience.
+        int xp = 1 + this.random.nextInt(3);
+        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(level, this.getX(), this.getY(), this.getZ(), xp));
     }
 
     @Override
@@ -608,6 +713,43 @@ public class MoCSnakeEntity extends TamableAnimal
         return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get());
     }
 
+    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("Snake", true);
+        tag.putInt("SnakeVariant", getVariant().getId());
+        tag.putFloat("Health", this.getHealth());
+        tag.putBoolean("Adult", !this.isBaby());
+        tag.putInt("Age", this.getAge());
+        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
+        if (owner != null) {
+            tag.putUUID("OwnerUUID", owner);
+        }
+        return tag;
+    }
+
+    private void capturePetInstant(Player player, InteractionHand hand) {
+        CompoundTag tag = buildAmuletTag(player.getUUID());
+        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
+        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                net.minecraft.world.item.component.CustomData.of(tag));
+        player.setItemInHand(hand, filled);
+        this.discard();
+    }
+
+    /** The taming egg matching this snake's own variant — used for the death drop. */
+    private net.minecraft.world.item.Item getEggItem() {
+        return switch (getVariant()) {
+            case GREEN_DARK -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_GREEN_DARK.get();
+            case WOLF -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_WOLF.get();
+            case ORANGE -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_ORANGE.get();
+            case GREEN_BRIGHT -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_GREEN_BRIGHT.get();
+            case CORAL -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_CORAL.get();
+            case COBRA -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_COBRA.get();
+            case RATTLE -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_RATTLE.get();
+            case PYTHON -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_PYTHON.get();
+        };
+    }
+
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -626,6 +768,13 @@ public class MoCSnakeEntity extends TamableAnimal
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (!this.level().isClientSide) {
+                capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }

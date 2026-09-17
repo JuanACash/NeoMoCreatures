@@ -458,4 +458,35 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
+        public static void registerSnakeSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_SNAKE.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                // Wiki: snakes can spawn on sand/clay/dirt too — not just
+                                // the vanilla "animals_spawnable_on" (grass-only) tag
+                                // Animal.checkAnimalSpawnRules() requires — and pythons
+                                // can spawn right on the water surface, but only in
+                                // mangrove swamps.
+                                if (level.getRawBrightness(pos, 0) <= 8) {
+                                        return false;
+                                }
+                                net.minecraft.world.level.block.state.BlockState below =
+                                        level.getBlockState(pos.below());
+                                if (below.is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON)
+                                        || below.is(net.minecraft.tags.BlockTags.TERRACOTTA)
+                                        || below.is(net.minecraft.world.level.block.Blocks.SAND)
+                                        || below.is(net.minecraft.world.level.block.Blocks.RED_SAND)
+                                        || below.is(net.minecraft.world.level.block.Blocks.DIRT)
+                                        || below.is(net.minecraft.world.level.block.Blocks.COARSE_DIRT)
+                                        || below.is(net.minecraft.world.level.block.Blocks.MUD)
+                                        || below.is(net.minecraft.world.level.block.Blocks.MANGROVE_ROOTS)) {
+                                        return true;
+                                }
+                                return level.getFluidState(pos.below()).is(net.minecraft.tags.FluidTags.WATER)
+                                        && level.getBiome(pos).is(net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP);
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
 }

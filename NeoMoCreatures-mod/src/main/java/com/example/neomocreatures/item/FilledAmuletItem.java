@@ -86,6 +86,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Kitty")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_KITTY.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Snake")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_SNAKE.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -141,6 +144,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnGoat(level, tag, pos);
         } else if (tag.contains("Kitty")) {
             spawned = spawnKitty(level, tag, pos);
+        } else if (tag.contains("Snake")) {
+            spawned = spawnSnake(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -545,5 +550,28 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(kitty);
         return kitty;
+    }
+
+    private Entity spawnSnake(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCSnakeEntity snake =
+                ModEntities.MOC_SNAKE.get().create(level);
+        if (snake == null) return null;
+        snake.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        snake.setVariant(com.example.neomocreatures.entity.snake.SnakeVariant.byId(tag.getInt("SnakeVariant")));
+        snake.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            snake.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        snake.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            snake.setAge(tag.getInt("Age"));
+        } else {
+            snake.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            snake.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(snake);
+        return snake;
     }
 }
