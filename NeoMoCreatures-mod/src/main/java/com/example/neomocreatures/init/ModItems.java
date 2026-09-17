@@ -103,6 +103,8 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.SnakeSpawnEggItem(0x2E4B1E, 0xC9A227, new Item.Properties()));
         public static final DeferredItem<Item> BUNNY_SPAWN_EGG = ITEMS.register("bunny_spawn_egg",
         () -> new com.example.neomocreatures.item.BunnySpawnEggItem(0xFF66C4, 0xFFF066, new Item.Properties()));
+        public static final DeferredItem<Item> BIRD_SPAWN_EGG = ITEMS.register("bird_spawn_egg",
+        () -> new com.example.neomocreatures.item.BirdSpawnEggItem(0x4A90D9, 0x32CD32, new Item.Properties()));
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());

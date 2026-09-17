@@ -136,6 +136,13 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_LIFT = register("moc_bunny.lift");
     public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_LAND = register("moc_bunny.land");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_WHITE = register("moc_bird.ambient_white");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_BLACK = register("moc_bird.ambient_black");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_GREEN = register("moc_bird.ambient_green");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_BLUE = register("moc_bird.ambient_blue");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_YELLOW = register("moc_bird.ambient_yellow");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BIRD_AMBIENT_RED = register("moc_bird.ambient_red");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

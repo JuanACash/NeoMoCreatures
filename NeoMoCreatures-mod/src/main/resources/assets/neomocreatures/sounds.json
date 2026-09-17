@@ -278,6 +278,13 @@
   "moc_bunny.lift": { "sounds": ["neomocreatures:moc_bunny/rabbit_lift"] },
   "moc_bunny.land": { "sounds": ["neomocreatures:moc_bunny/rabbit_land"] },
 
+  "moc_bird.ambient_white": { "sounds": ["neomocreatures:moc_bird/bird_white1"] },
+  "moc_bird.ambient_black": { "sounds": ["neomocreatures:moc_bird/bird_black1", "neomocreatures:moc_bird/bird_black2", "neomocreatures:moc_bird/bird_black3"] },
+  "moc_bird.ambient_green": { "sounds": ["neomocreatures:moc_bird/bird_green1", "neomocreatures:moc_bird/bird_green2", "neomocreatures:moc_bird/bird_green3"] },
+  "moc_bird.ambient_blue": { "sounds": ["neomocreatures:moc_bird/bird_blue1", "neomocreatures:moc_bird/bird_blue2", "neomocreatures:moc_bird/bird_blue3", "neomocreatures:moc_bird/bird_blue4"] },
+  "moc_bird.ambient_yellow": { "sounds": ["neomocreatures:moc_bird/bird_yellow1", "neomocreatures:moc_bird/bird_yellow2", "neomocreatures:moc_bird/bird_yellow3", "neomocreatures:moc_bird/bird_yellow4", "neomocreatures:moc_bird/bird_yellow5"] },
+  "moc_bird.ambient_red": { "sounds": ["neomocreatures:moc_bird/bird_red1", "neomocreatures:moc_bird/bird_red2", "neomocreatures:moc_bird/bird_red3", "neomocreatures:moc_bird/bird_red4", "neomocreatures:moc_bird/bird_red5"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

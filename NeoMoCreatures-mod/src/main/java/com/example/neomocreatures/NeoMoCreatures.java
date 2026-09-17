@@ -289,6 +289,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.BUNNY_SPAWN_EGG.get());
                     output.accept(ModItems.RACCOON_SPAWN_EGG.get());
                     output.accept(ModItems.TURKEY_SPAWN_EGG.get());
+                    output.accept(ModItems.BIRD_SPAWN_EGG.get());
                     output.accept(ModItems.GOAT_SPAWN_EGG.get());
                     output.accept(ModItems.SNAKE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
