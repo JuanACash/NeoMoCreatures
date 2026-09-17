@@ -118,9 +118,7 @@ public class MoCBunnyModel extends HierarchicalModel<MoCBunnyEntity> {
         this.body.xRot = (float) (Math.PI / 2);
         this.tail.xRot = (float) (Math.PI / 2);
 
-        // TODO (step 2): also skip this while entity.isHeld() (CarriedPet) once
-        // the pickup mechanic lands, matching the original's getVehicle() check.
-        if (entity.getVehicle() == null) {
+        if (entity.getVehicle() == null && !entity.isHeld()) {
             float frontLeg = Mth.cos(limbSwing * 0.6662F) * 1.0F * limbSwingAmount;
             float hindLeg = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.2F * limbSwingAmount;
             this.legFrontRight.xRot = frontLeg;

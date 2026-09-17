@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#neomocreatures:is_wyvern_lair",
+  "spawners": [
+    { "type": "neomocreatures:moc_bunny", "weight": 3, "minCount": 4, "maxCount": 6 }
+  ]
+}

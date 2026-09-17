@@ -89,6 +89,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Snake")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_SNAKE.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Bunny")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BUNNY.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -146,6 +149,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnKitty(level, tag, pos);
         } else if (tag.contains("Snake")) {
             spawned = spawnSnake(level, tag, pos);
+        } else if (tag.contains("Bunny")) {
+            spawned = spawnBunny(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -573,5 +578,31 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(snake);
         return snake;
+    }
+
+        private Entity spawnBunny(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCBunnyEntity bunny =
+                ModEntities.MOC_BUNNY.get().create(level);
+        if (bunny == null) return null;
+        bunny.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        try {
+            bunny.setVariant(com.example.neomocreatures.entity.bunny.BunnyVariant.valueOf(tag.getString("BunnyVariant")));
+        } catch (IllegalArgumentException ignored) {
+        }
+        bunny.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            bunny.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        bunny.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            bunny.setAge(tag.getInt("Age"));
+        } else {
+            bunny.setBaby(!tag.getBoolean("Adult"));
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            bunny.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(bunny);
+        return bunny;
     }
 }

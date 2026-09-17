@@ -275,6 +275,8 @@
 
   "moc_bunny.hurt": { "sounds": ["neomocreatures:moc_bunny/rabbit_hurt1", "neomocreatures:moc_bunny/rabbit_hurt2"] },
   "moc_bunny.death": { "sounds": ["neomocreatures:moc_bunny/rabbit_dying"] },
+  "moc_bunny.lift": { "sounds": ["neomocreatures:moc_bunny/rabbit_lift"] },
+  "moc_bunny.land": { "sounds": ["neomocreatures:moc_bunny/rabbit_land"] },
 
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },

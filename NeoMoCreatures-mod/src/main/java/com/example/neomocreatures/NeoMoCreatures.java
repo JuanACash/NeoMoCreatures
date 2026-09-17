@@ -344,6 +344,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerTurkeySpawnPlacements);
         modEventBus.addListener(ModEntities::registerGoatSpawnPlacements);
         modEventBus.addListener(ModEntities::registerSnakeSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerBunnySpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

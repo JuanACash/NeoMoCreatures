@@ -133,6 +133,8 @@ public class ModSounds {
 
     public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_HURT = register("moc_bunny.hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_DEATH = register("moc_bunny.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_LIFT = register("moc_bunny.lift");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BUNNY_LAND = register("moc_bunny.land");
 
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
