@@ -273,6 +273,9 @@
   "moc_snake.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
   "moc_snake.death": { "sounds": ["neomocreatures:moc_snake/snake_dying"] },
 
+  "moc_bunny.hurt": { "sounds": ["neomocreatures:moc_bunny/rabbit_hurt1", "neomocreatures:moc_bunny/rabbit_hurt2"] },
+  "moc_bunny.death": { "sounds": ["neomocreatures:moc_bunny/rabbit_dying"] },
+
   "item.horse_grunt_undead1": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead1"] },
   "item.horse_grunt_undead2": { "sounds": ["neomocreatures:moc_horse/horse_grunt_undead2"] },
   "item.horse_hurt_undead": { "sounds": ["neomocreatures:moc_horse/horse_hurt_undead"] },

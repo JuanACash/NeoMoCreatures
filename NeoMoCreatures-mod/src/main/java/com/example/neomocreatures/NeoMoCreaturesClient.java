@@ -40,6 +40,8 @@ import com.example.neomocreatures.client.MoCLitterBoxModel;
 import com.example.neomocreatures.client.MoCLitterBoxRenderer;
 import com.example.neomocreatures.client.MoCSnakeModel;
 import com.example.neomocreatures.client.MoCSnakeRenderer;
+import com.example.neomocreatures.client.MoCBunnyModel;
+import com.example.neomocreatures.client.MoCBunnyRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -87,6 +89,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCKittyBedRenderer.MOC_KITTY_BED_LAYER, MoCKittyBedModel::createBodyLayer);
                 event.registerLayerDefinition(MoCLitterBoxRenderer.MOC_LITTER_BOX_LAYER, MoCLitterBoxModel::createBodyLayer);
                 event.registerLayerDefinition(MoCSnakeRenderer.MOC_SNAKE_LAYER, MoCSnakeModel::createBodyLayer);
+                event.registerLayerDefinition(MoCBunnyRenderer.MOC_BUNNY_LAYER, MoCBunnyModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -112,6 +115,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_KITTY_BED.get(), MoCKittyBedRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_LITTER_BOX.get(), MoCLitterBoxRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SNAKE.get(), MoCSnakeRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BUNNY.get(), MoCBunnyRenderer::new);
         });
                 
     }

@@ -286,6 +286,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.POLAR_BEAR_SPAWN_EGG.get());
                     output.accept(ModItems.PANDA_BEAR_SPAWN_EGG.get());
                     output.accept(ModItems.FOX_SPAWN_EGG.get());
+                    output.accept(ModItems.BUNNY_SPAWN_EGG.get());
                     output.accept(ModItems.RACCOON_SPAWN_EGG.get());
                     output.accept(ModItems.TURKEY_SPAWN_EGG.get());
                     output.accept(ModItems.GOAT_SPAWN_EGG.get());

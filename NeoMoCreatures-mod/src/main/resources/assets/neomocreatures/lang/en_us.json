@@ -72,6 +72,7 @@
   "item.neomocreatures.goat_spawn_egg": "Goat Spawn Egg",
   "item.neomocreatures.kitty_spawn_egg": "Kitty Spawn Egg",
   "item.neomocreatures.snake_spawn_egg": "Snake Spawn Egg",
+  "item.neomocreatures.bunny_spawn_egg": "Bunny Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -291,6 +292,7 @@
   "entity.neomocreatures.moc_goat": "Goat",
   "entity.neomocreatures.moc_kitty": "Kitty",
   "entity.neomocreatures.moc_snake": "Snake",
+  "entity.neomocreatures.moc_bunny": "Bunny",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }
