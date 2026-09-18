@@ -87,9 +87,13 @@ public class MoCBirdModel extends HierarchicalModel<MoCBirdEntity> {
         this.head.xRot = -(headPitch * 0.5F) / DEG_TO_RAD;
         this.beak.yRot = this.head.yRot = netHeadYaw / DEG_TO_RAD;
 
-        // Original's isOnAir() && getVehicle() == null — approximated with
-        // onGround() since we don't track a separate flying flag yet.
-        if (!entity.onGround() && entity.getVehicle() == null) {
+        // While carried, the bird isn't flying on its own, but should still
+        // flap if the player wearing it is currently falling — read from the
+        // entity's own hysteresis-smoothed flag instead of recomputing a raw
+        // velocity check here every frame, which flickered on/off constantly.
+        boolean flying = entity.isHeld() ? entity.isHolderFalling() : !entity.onGround();
+
+        if (flying) {
             this.leftLeg.xRot = 1.4F;
             this.rightLeg.xRot = 1.4F;
         } else {
@@ -97,14 +101,7 @@ public class MoCBirdModel extends HierarchicalModel<MoCBirdEntity> {
             this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * limbSwingAmount;
         }
 
-        // Original sets wing zRot directly to +/-ageInTicks with no bound at
-        // all — confirmed identical in the 12.0.5 jar too, so it's not a
-        // porting mistake, but a full unbounded 360-degree spin looks wrong
-        // regardless of version. Using it as the phase of a bounded flap
-        // (like vanilla's Parrot) instead of the raw angle keeps the same
-        // "always moving, never repeats the exact same frame twice" feel
-        // without the propeller look.
-        if (!entity.onGround() && entity.getVehicle() == null) {
+        if (flying) {
             float flap = Mth.sin(ageInTicks * 1.3F) * 0.9F + 0.9F;
             this.rightWing.zRot = flap;
             this.leftWing.zRot = -flap;

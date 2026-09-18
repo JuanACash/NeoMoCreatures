@@ -92,6 +92,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Bunny")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BUNNY.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains("Bird")) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BIRD.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -151,6 +154,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnSnake(level, tag, pos);
         } else if (tag.contains("Bunny")) {
             spawned = spawnBunny(level, tag, pos);
+        } else if (tag.contains("Bird")) {
+            spawned = spawnBird(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -604,5 +609,26 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(bunny);
         return bunny;
+    }
+
+        private Entity spawnBird(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCBirdEntity bird =
+                ModEntities.MOC_BIRD.get().create(level);
+        if (bird == null) return null;
+        bird.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        try {
+            bird.setVariant(com.example.neomocreatures.entity.bird.BirdVariant.valueOf(tag.getString("BirdVariant")));
+        } catch (IllegalArgumentException ignored) {
+        }
+        bird.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            bird.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        bird.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            bird.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(bird);
+        return bird;
     }
 }
