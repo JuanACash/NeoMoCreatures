@@ -22,6 +22,7 @@ import com.example.neomocreatures.entity.MoCKittyEntity;
 import com.example.neomocreatures.entity.MoCSnakeEntity;
 import com.example.neomocreatures.entity.MoCBunnyEntity;
 import com.example.neomocreatures.entity.MoCBirdEntity;
+import com.example.neomocreatures.entity.MoCSharkEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -208,6 +209,13 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_bird"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSharkEntity>> MOC_SHARK =
+        ENTITY_TYPES.register("moc_shark", () -> EntityType.Builder
+                .of(MoCSharkEntity::new, MobCategory.WATER_AMBIENT)
+                .sized(1.6F, 1.0F)
+                .clientTrackingRange(10)
+                .build("moc_shark"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -257,6 +265,7 @@ public class ModEntities {
                 event.put(MOC_SNAKE.get(), MoCSnakeEntity.createAttributes().build());
                 event.put(MOC_BUNNY.get(), MoCBunnyEntity.createAttributes().build());
                 event.put(MOC_BIRD.get(), MoCBirdEntity.createAttributes().build());
+                event.put(MOC_SHARK.get(), MoCSharkEntity.createAttributes().build());
         });
         }
         
@@ -522,6 +531,15 @@ public class ModEntities {
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
                                 Animal.checkAnimalSpawnRules(type, level, reason, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerSharkSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_SHARK.get(),
+                        SpawnPlacementTypes.IN_WATER,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 

@@ -67,6 +67,7 @@ public class MoCEggEntity extends Mob {
     @Nullable
     private ResourceLocation sourceItemId;
     private boolean requiresLight = true;
+    private boolean requiresWater = false;
     private boolean requirePickupToTame = false;
     private boolean wasPickedUp = false;
 
@@ -105,6 +106,10 @@ public class MoCEggEntity extends Mob {
         this.requiresLight = requiresLight;
     }
 
+    public void setRequiresWater(boolean requiresWater) {
+        this.requiresWater = requiresWater;
+    }
+
     public void setRequirePickupToTame(boolean requirePickupToTame) {
         this.requirePickupToTame = requirePickupToTame;
     }
@@ -130,6 +135,13 @@ public class MoCEggEntity extends Mob {
     }
 
     @Override
+    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+        // No egg (of any creature) should ever drown — the shark egg in
+        // particular needs to sit submerged in water to hatch at all.
+        return false;
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
@@ -149,7 +161,9 @@ public class MoCEggEntity extends Mob {
         if (this.random.nextInt(20) == 0) {
             boolean lightOk = !this.requiresLight
                     || this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH;
-            if (lightOk) {
+            // Wiki: shark eggs "can only hatch if they are in the water" — no torch needed.
+            boolean waterOk = !this.requiresWater || this.isInWater();
+            if (lightOk && waterOk) {
                 this.hatchTicks++;
                 if (this.hatchTicks == NOTIFY_AT) {
                     notifyNearbyPlayer();
@@ -247,6 +261,7 @@ public class MoCEggEntity extends Mob {
             tag.putString("SourceItem", this.sourceItemId.toString());
         }
         tag.putBoolean("RequiresLight", this.requiresLight);
+        tag.putBoolean("RequiresWater", this.requiresWater);
     }
 
     @Override
@@ -257,6 +272,9 @@ public class MoCEggEntity extends Mob {
         }
         if (tag.contains("RequiresLight")) {
             this.requiresLight = tag.getBoolean("RequiresLight");
+        }
+        if (tag.contains("RequiresWater")) {
+            this.requiresWater = tag.getBoolean("RequiresWater");
         }
         this.hatchVariant = tag.contains("HatchVariant", 8) ? tag.getString("HatchVariant") : null;
         this.sourceItemId = tag.contains("SourceItem", 8) ? ResourceLocation.parse(tag.getString("SourceItem")) : null;

@@ -105,6 +105,8 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.BunnySpawnEggItem(0xFF66C4, 0xFFF066, new Item.Properties()));
         public static final DeferredItem<Item> BIRD_SPAWN_EGG = ITEMS.register("bird_spawn_egg",
         () -> new com.example.neomocreatures.item.BirdSpawnEggItem(0x4A90D9, 0x32CD32, new Item.Properties()));
+        public static final DeferredItem<Item> SHARK_SPAWN_EGG = ITEMS.register("shark_spawn_egg",
+        () -> new com.example.neomocreatures.item.SharkSpawnEggItem(0x5B6E7A, 0x2C4E6B, new Item.Properties()));
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
@@ -490,8 +492,10 @@ public class ModItems {
     public static final DeferredItem<Item> CHITIN_UNDEAD = ITEMS.registerSimpleItem("chitin_undead", new Item.Properties());
     public static final DeferredItem<Item> BUILDER_HAMMER = ITEMS.registerSimpleItem("builder_hammer", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> FIRESTONE_CHUNK = ITEMS.registerSimpleItem("firestone_chunk", new Item.Properties());
-    public static final DeferredItem<Item> FISH_NET = ITEMS.registerSimpleItem("fish_net", new Item.Properties().stacksTo(16));
-    public static final DeferredItem<Item> FISH_NET_FULL = ITEMS.registerSimpleItem("fish_net_full", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> FISH_NET = ITEMS.register("fish_net",
+        () -> new com.example.neomocreatures.item.FishNetItem(new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<Item> FISH_NET_FULL = ITEMS.register("fish_net_full",
+        () -> new com.example.neomocreatures.item.FilledFishNetItem(new Item.Properties().stacksTo(1), FISH_NET.get()));
     public static final DeferredItem<Item> HAYSTACK = ITEMS.registerSimpleItem("haystack", new Item.Properties().stacksTo(16));
     public static final DeferredItem<Item> KEY = ITEMS.registerSimpleItem("key", new Item.Properties());
     public static final DeferredItem<Item> KITTY_BED = ITEMS.registerSimpleItem("kitty_bed", new Item.Properties().stacksTo(1));
@@ -654,6 +658,10 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.MoCEggItem(new Item.Properties(),
             new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
                 ModEntities.MOC_SNAKE, null, 0.0D, "PYTHON")));
+    public static final DeferredItem<Item> SHARK_EGG = ITEMS.register("shark_egg",
+        () -> new com.example.neomocreatures.item.SharkEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                ModEntities.MOC_SHARK, null, 0.0D, null)));
 
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());

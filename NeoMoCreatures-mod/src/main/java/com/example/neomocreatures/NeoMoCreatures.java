@@ -110,6 +110,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SNAKE_EGG_RATTLE.get());
                     output.accept(ModItems.SNAKE_EGG_PYTHON.get());
                     output.accept(ModItems.KOMODO_DRAGON_EGG.get());
+                    output.accept(ModItems.SHARK_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
@@ -293,6 +294,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.GOAT_SPAWN_EGG.get());
                     output.accept(ModItems.SNAKE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
+                    output.accept(ModItems.SHARK_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
 
@@ -347,6 +349,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerSnakeSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBunnySpawnPlacements);
         modEventBus.addListener(ModEntities::registerBirdSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerSharkSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

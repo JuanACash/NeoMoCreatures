@@ -55,6 +55,10 @@ public class MoCEggItem extends Item {
         this.spec = spec;
     }
 
+    /** Hook for subclasses (e.g. a water-only egg) to tweak hatch conditions beyond light. No-op by default. */
+    protected void configureEgg(MoCEggEntity egg) {
+    }
+
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
@@ -92,6 +96,7 @@ public class MoCEggItem extends Item {
         egg.setSourceItemId(BuiltInRegistries.ITEM.getKey(this));
         egg.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
         egg.setWasPickedUp(storedWasPickedUp);
+        configureEgg(egg);
         serverLevel.addFreshEntity(egg);
 
         Player player = context.getPlayer();
