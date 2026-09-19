@@ -80,6 +80,23 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable {
         return new WaterBoundPathNavigation(this, level);
     }
 
+        
+    /**
+     * Mob.checkSpawnObstruction() rechaza cualquier posición con líquido en la hitbox.
+     * El original extendía WaterAnimal, que lo sobreescribe para permitir agua; con
+     * TamableAnimal, sin esto el spawn natural en el océano siempre falla.
+     */
+    @Override
+    public boolean checkSpawnObstruction(net.minecraft.world.level.LevelReader level) {
+        return level.isUnobstructed(this);
+    }
+
+    /** Animal.removeWhenFarAway() devuelve false: sin esto los tiburones salvajes nunca despawnean. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isTame() && !this.isPersistenceRequired();
+    }
+
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0D, 40));
