@@ -211,7 +211,7 @@ public class ModEntities {
 
     public static final DeferredHolder<EntityType<?>, EntityType<MoCSharkEntity>> MOC_SHARK =
         ENTITY_TYPES.register("moc_shark", () -> EntityType.Builder
-                .of(MoCSharkEntity::new, MobCategory.WATER_AMBIENT)
+                .of(MoCSharkEntity::new, MobCategory.WATER_CREATURE)
                 .sized(1.6F, 1.0F)
                 .clientTrackingRange(10)
                 .build("moc_shark"));
