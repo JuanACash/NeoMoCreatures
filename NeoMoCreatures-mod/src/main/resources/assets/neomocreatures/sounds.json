@@ -260,6 +260,23 @@
     ]
   },
 
+  
+  "moc_turtle.hurt": {
+    "sounds": [
+      "neomocreatures:moc_turtle/turtle_hurt"
+    ]
+  },
+  "moc_turtle.death": {
+    "sounds": [
+      "neomocreatures:moc_turtle/turtle_dying"
+    ]
+  },
+  "moc_turtle.angry": {
+    "sounds": [
+      "neomocreatures:moc_turtle/turtle_hissing"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
