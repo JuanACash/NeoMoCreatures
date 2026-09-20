@@ -14,6 +14,7 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -25,6 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -32,15 +34,16 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -56,7 +59,7 @@ import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.level.LevelReader;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityTurtle}.
@@ -138,6 +141,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
         super(type, level);
         // Amphibious: the pathfinder must not treat water as costly terrain.
         this.setPathfindingMalus(PathType.WATER, 0.0F);
+        this.moveControl = new TurtleSwimMoveControl(this);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -157,7 +161,6 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new ImmobilizedGoal(this));
-        this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new FollowOwnerWithinRangeGoal(this, 0.8D));
         this.goalSelector.addGoal(3, new SeekFloorFoodGoal(this, 0.8D));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
@@ -357,6 +360,144 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
             return false;
         }
         return super.canDrownInFluidType(type);
+    }
+
+    // ---------------------------------------------------------------------
+    // Water: floats at a random depth under the surface, as in the original
+    // (amphibian travel + "diving depth"). It does not dive or swim freely.
+    // ---------------------------------------------------------------------
+
+    /** Horizontal swimming speed relative to walking speed (original: 0.08 in water vs 0.12 on land). */
+    private static final float SWIM_SPEED_MULTIPLIER = 0.67F;
+    private static final double SWIM_ACCELERATION = 0.125D;
+    private static final float SWIM_MAX_TURN_DEGREES = 30.0F;
+    private static final double WATER_DRAG = 0.9D;
+    private static final double WATER_SINK_PER_TICK = 0.005D;
+    /** 1 in N chance per tick of picking a new floating depth. */
+    private static final int DIVING_DEPTH_REROLL_ODDS = 500;
+    /** Caps the rise so a turtle that ends up deep (e.g. spawned underwater) floats up gently instead of shooting out. */
+    private static final double MAX_RISE_SPEED = 0.05D;
+    /** Upward push when it bumps into a bank while swimming, so it can climb out of the water. */
+    private static final double CLIMB_OUT_IMPULSE = 0.1D;
+    private static final int MAX_SURFACE_SCAN = 32;
+
+    /** How far below the water surface this turtle floats; negative until first rolled. */
+    private double divingDepth = -1.0D;
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (!this.isInWater() || this.isHeld()) {
+            super.travel(travelVector);
+            return;
+        }
+        this.applyBuoyancy();
+        this.move(MoverType.SELF, this.getDeltaMovement());
+        Vec3 motion = this.getDeltaMovement().scale(WATER_DRAG);
+        this.setDeltaMovement(motion.x, motion.y - WATER_SINK_PER_TICK, motion.z);
+    }
+
+    /** Original: min = (size + 8) / 340, max = size / 100, where size is the scale in hundredths. */
+    private void rollDivingDepth() {
+        double scale = this.getScale();
+        double min = (scale * 100.0D + 8.0D) / 340.0D;
+        this.divingDepth = min + this.random.nextDouble() * (scale - min);
+    }
+
+    /** Pushes the turtle up whenever it is deeper than its floating depth. */
+    private void applyBuoyancy() {
+        if (this.divingDepth < 0.0D || this.random.nextInt(DIVING_DEPTH_REROLL_ODDS) == 0) {
+            this.rollDivingDepth();
+        }
+        double surfaceY = this.findWaterSurfaceY();
+        if (surfaceY == Double.NEGATIVE_INFINITY) {
+            return;
+        }
+        double depth = surfaceY - this.getY();
+        if (depth > this.divingDepth) {
+            Vec3 motion = this.getDeltaMovement();
+            double rise = Math.min(Math.max(motion.y, 0.0D) + 0.001D + depth * 0.01D, MAX_RISE_SPEED);
+            this.setDeltaMovement(motion.x, rise, motion.z);
+        }
+    }
+
+    /** Y of the water surface above the turtle, or {@code Double.NEGATIVE_INFINITY} if it is not in a water column. */
+    private double findWaterSurfaceY() {
+        BlockPos.MutableBlockPos pos = this.blockPosition().mutable();
+        if (!this.isWaterAt(pos)) {
+            pos.move(0, -1, 0); // feet can bob just above the surface
+            if (!this.isWaterAt(pos)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+        for (int i = 0; i < MAX_SURFACE_SCAN; i++) {
+            pos.move(0, 1, 0);
+            if (!this.isWaterAt(pos)) {
+                pos.move(0, -1, 0);
+                break;
+            }
+        }
+        return pos.getY() + this.level().getFluidState(pos).getHeight(this.level(), pos);
+    }
+
+    private boolean isWaterAt(BlockPos pos) {
+        return this.level().getFluidState(pos).is(FluidTags.WATER);
+    }
+
+    @Override
+    public boolean isAffectedByFluids() {
+        // Opts out of vanilla's water jump/buoyancy; the buoyancy above replaces it.
+        return false;
+    }
+
+    @Override
+    public boolean isPushedByFluid() {
+        return false; // currents do not carry a turtle away
+    }
+
+    /** Original: turtles never jump on land. */
+    @Override
+    public void jumpFromGround() {
+    }
+
+    /** Horizontal movement toward the navigation target while in water; depth is handled by applyBuoyancy(). */
+    private static final class TurtleSwimMoveControl extends MoveControl {
+        private final MoCTurtleEntity turtle;
+
+        TurtleSwimMoveControl(MoCTurtleEntity turtle) {
+            super(turtle);
+            this.turtle = turtle;
+        }
+
+        @Override
+        public void tick() {
+            if (!this.turtle.isInWater() || this.turtle.isHeld()) {
+                super.tick();
+                return;
+            }
+            if (this.operation != MoveControl.Operation.MOVE_TO || this.turtle.getNavigation().isDone()) {
+                this.turtle.setSpeed(0.0F);
+                return;
+            }
+            double dx = this.wantedX - this.turtle.getX();
+            double dz = this.wantedZ - this.turtle.getZ();
+            if (dx * dx + dz * dz < 2.5E-7D) {
+                this.turtle.setSpeed(0.0F);
+                return;
+            }
+            float speed = (float) (this.speedModifier * this.turtle.getAttributeValue(Attributes.MOVEMENT_SPEED))
+                    * SWIM_SPEED_MULTIPLIER;
+            Vec3 wanted = new Vec3(dx, 0.0D, dz).normalize().scale(speed);
+            Vec3 motion = this.turtle.getDeltaMovement();
+            double y = this.turtle.horizontalCollision ? Math.max(motion.y, CLIMB_OUT_IMPULSE) : motion.y;
+            this.turtle.setDeltaMovement(
+                    motion.x + (wanted.x - motion.x) * SWIM_ACCELERATION,
+                    y,
+                    motion.z + (wanted.z - motion.z) * SWIM_ACCELERATION);
+
+            float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+            this.turtle.setYRot(this.rotlerp(this.turtle.getYRot(), targetYaw, SWIM_MAX_TURN_DEGREES));
+            this.turtle.yBodyRot = this.turtle.getYRot();
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -562,16 +703,20 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
         return null; // turtles do not breed
     }
 
+    /**
+     * Mob's default rejects any position with liquid in the hitbox, which would stop natural spawns in
+     * water. WaterAnimal overrides it the same way.
+     */
     @Override
-    public int getMaxSpawnClusterSize() {
-        return 2;
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return level.isUnobstructed(this);
     }
 
     // ---------------------------------------------------------------------
     // Sounds, XP and loot
     // ---------------------------------------------------------------------
 
-    // No ambient sound: the original never had one (its sound event was an unfinished TODO).
+
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {

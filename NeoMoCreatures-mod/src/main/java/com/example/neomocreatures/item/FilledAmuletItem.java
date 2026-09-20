@@ -95,6 +95,9 @@ public class FilledAmuletItem extends Item {
         } else if (tag.contains("Bird")) {
             tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_BIRD.get().getDescription()
                     .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+        } else if (tag.contains(com.example.neomocreatures.entity.MoCTurtleEntity.AMULET_KEY)) {
+            tooltip.add(com.example.neomocreatures.init.ModEntities.MOC_TURTLE.get().getDescription()
+                    .copy().withStyle(net.minecraft.ChatFormatting.GRAY));
         } else if (tag.contains("EntityType")) {
             ResourceLocation typeId = ResourceLocation.parse(tag.getString("EntityType"));
             net.minecraft.world.entity.EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(typeId);
@@ -156,6 +159,8 @@ public class FilledAmuletItem extends Item {
             spawned = spawnBunny(level, tag, pos);
         } else if (tag.contains("Bird")) {
             spawned = spawnBird(level, tag, pos);
+        } else if (tag.contains(com.example.neomocreatures.entity.MoCTurtleEntity.AMULET_KEY)) {
+            spawned = spawnTurtle(level, tag, pos);
         } else {
             spawned = spawnGeneric(level, tag, pos);
         }
@@ -630,5 +635,25 @@ public class FilledAmuletItem extends Item {
         }
         level.addFreshEntity(bird);
         return bird;
+    }
+
+    private Entity spawnTurtle(Level level, CompoundTag tag, BlockPos pos) {
+        com.example.neomocreatures.entity.MoCTurtleEntity turtle =
+                ModEntities.MOC_TURTLE.get().create(level);
+        if (turtle == null) return null;
+        turtle.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        turtle.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            turtle.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        turtle.setHealth(tag.getFloat("Health"));
+        if (tag.contains("Scale")) {
+            turtle.setGrowthScale(tag.getFloat("Scale"));
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            turtle.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        level.addFreshEntity(turtle);
+        return turtle;
     }
 }

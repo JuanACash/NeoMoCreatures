@@ -553,4 +553,23 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
+        public static void registerTurtleSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_TURTLE.get(),
+                        SpawnPlacementTypes.NO_RESTRICTIONS,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                // Amphibious: it may appear in shallow water or on mud, sand and dirt.
+                                // Skylight (raw brightness) rules out caves and underground water pockets.
+                                if (level.getRawBrightness(pos, 0) <= 8) {
+                                        return false;
+                                }
+                                if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                                        return true;
+                                }
+                                net.minecraft.world.level.block.state.BlockState ground = level.getBlockState(pos.below());
+                                return ground.is(net.minecraft.tags.BlockTags.DIRT) || ground.is(net.minecraft.tags.BlockTags.SAND);
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
 }

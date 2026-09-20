@@ -1,0 +1,7 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": ["minecraft:swamp", "minecraft:mangrove_swamp", "minecraft:jungle"],
+  "spawners": [
+    { "type": "neomocreatures:moc_turtle", "weight": 12, "minCount": 2, "maxCount": 4 }
+  ]
+}
