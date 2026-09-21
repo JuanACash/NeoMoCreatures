@@ -4,6 +4,7 @@ import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
 import com.example.neomocreatures.entity.MoCMantaRayEntity;
+import com.example.neomocreatures.entity.MoCFishyEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -22,6 +23,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 import java.util.List;
 
@@ -46,6 +50,8 @@ public class FilledFishNetItem extends Item {
             tooltip.add(ModEntities.MOC_DOLPHIN.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains(MoCMantaRayEntity.NET_KEY)) {
             tooltip.add(ModEntities.MOC_MANTA_RAY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
+        } if (tag.contains(MoCFishyEntity.NET_KEY)) {
+            tooltip.add(ModEntities.MOC_FISHY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             tooltip.add(Component.literal(tag.getString("Name"))
                     .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -64,7 +70,12 @@ public class FilledFishNetItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        BlockPos pos = player.blockPosition().relative(player.getDirection());
+        // Same fluid-only ray trace vanilla buckets use, so releasing works while looking at water
+        // from the shore or the surface, not only when standing inside the water block itself.
+        BlockHitResult hit = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
+        BlockPos pos = hit.getType() == HitResult.Type.BLOCK
+                ? hit.getBlockPos()
+                : player.blockPosition().relative(player.getDirection());
         Entity spawned = null;
         if (tag.contains("Shark")) {
             // Wiki: shark eggs only hatch in water — the same restriction
@@ -85,6 +96,11 @@ public class FilledFishNetItem extends Item {
         } if (tag.contains(MoCMantaRayEntity.NET_KEY)) {
             if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
                 spawned = spawnMantaRay((ServerLevel) level, tag, pos);
+                promptNamingIfUnnamed(spawned, tag, player);
+            }
+        } if (tag.contains(MoCFishyEntity.NET_KEY)) {
+            if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                spawned = spawnFishy((ServerLevel) level, tag, pos);
                 promptNamingIfUnnamed(spawned, tag, player);
             }
         } if (spawned == null) {
@@ -146,6 +162,15 @@ public class FilledFishNetItem extends Item {
         ray.restoreFromNet(tag);
         level.addFreshEntity(ray);
         return ray;
+    }
+
+    private Entity spawnFishy(ServerLevel level, CompoundTag tag, BlockPos pos) {
+        MoCFishyEntity fishy = ModEntities.MOC_FISHY.get().create(level);
+        if (fishy == null) return null;
+        fishy.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        fishy.restoreFromNet(tag);
+        level.addFreshEntity(fishy);
+        return fishy;
     }
 
     /** A freshly released pet without a name asks its owner to name it (original: tameWithName on release). */

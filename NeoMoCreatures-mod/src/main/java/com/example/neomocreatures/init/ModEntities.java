@@ -27,6 +27,7 @@ import com.example.neomocreatures.entity.MoCTurtleEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
 import com.example.neomocreatures.entity.MoCMantaRayEntity;
+import com.example.neomocreatures.entity.MoCFishyEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -254,6 +255,16 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_manta_ray"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFishyEntity>> MOC_FISHY =
+        ENTITY_TYPES.register("moc_fishy", () -> EntityType.Builder
+                .of(MoCFishyEntity::new, MobCategory.WATER_CREATURE)
+                // Original hitbox 0.5 x 0.3, divided by the 0.6 scale attribute the entity applies.
+                .sized(0.83F, 0.5F)
+                // Original: the eyes sit at 65% of the hitbox height.
+                .eyeHeight(0.325F)
+                .clientTrackingRange(8)
+                .build("moc_fishy"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -308,6 +319,7 @@ public class ModEntities {
                 event.put(MOC_STINGRAY.get(), MoCStingrayEntity.createAttributes().build());
                 event.put(MOC_DOLPHIN.get(), MoCDolphinEntity.createAttributes().build());
                 event.put(MOC_MANTA_RAY.get(), MoCMantaRayEntity.createAttributes().build());
+                event.put(MOC_FISHY.get(), MoCFishyEntity.createAttributes().build());
         });
         }
         
@@ -637,6 +649,17 @@ public class ModEntities {
                         (type, level, reason, pos, random) ->
                                 // Original: any water position within 12 blocks under sea level.
                                 pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+        
+        public static void registerFishySpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_FISHY.get(),
+                        SpawnPlacementTypes.IN_WATER,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                // Wiki: layer 46 up to sea level, in any water.
+                                pos.getY() >= 46 && pos.getY() <= level.getSeaLevel()
                                         && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }

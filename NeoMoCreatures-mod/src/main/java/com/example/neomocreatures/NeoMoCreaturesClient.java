@@ -54,6 +54,8 @@ import com.example.neomocreatures.client.MoCDolphinModel;
 import com.example.neomocreatures.client.MoCDolphinRenderer;
 import com.example.neomocreatures.client.MoCMantaRayModel;
 import com.example.neomocreatures.client.MoCMantaRayRenderer;
+import com.example.neomocreatures.client.MoCFishyModel;
+import com.example.neomocreatures.client.MoCFishyRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -108,6 +110,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCStingrayRenderer.MOC_STINGRAY_LAYER, MoCStingrayModel::createBodyLayer);
                 event.registerLayerDefinition(MoCDolphinRenderer.MOC_DOLPHIN_LAYER, MoCDolphinModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMantaRayRenderer.MOC_MANTA_RAY_LAYER, MoCMantaRayModel::createBodyLayer);
+                event.registerLayerDefinition(MoCFishyRenderer.MOC_FISHY_LAYER, MoCFishyModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -140,6 +143,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_STINGRAY.get(), MoCStingrayRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_DOLPHIN.get(), MoCDolphinRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_MANTA_RAY.get(), MoCMantaRayRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FISHY.get(), MoCFishyRenderer::new);
         });
                 
     }

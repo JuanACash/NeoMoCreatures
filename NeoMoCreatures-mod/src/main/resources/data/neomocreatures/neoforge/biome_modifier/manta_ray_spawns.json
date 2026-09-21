@@ -8,6 +8,6 @@
     "minecraft:warm_ocean"
   ],
   "spawners": [
-    { "type": "neomocreatures:moc_manta_ray", "weight": 12, "minCount": 1, "maxCount": 3 }
+    { "type": "neomocreatures:moc_manta_ray", "weight": 10, "minCount": 1, "maxCount": 3 }
   ]
 }
