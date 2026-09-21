@@ -25,6 +25,7 @@ import com.example.neomocreatures.entity.MoCBirdEntity;
 import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCTurtleEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
+import com.example.neomocreatures.entity.MoCDolphinEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -234,6 +235,15 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_stingray"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCDolphinEntity>> MOC_DOLPHIN =
+        ENTITY_TYPES.register("moc_dolphin", () -> EntityType.Builder
+                .of(MoCDolphinEntity::new, MobCategory.WATER_CREATURE)
+                .sized(1.3F, 0.605F)
+                // Original: the eyes sit at 31.5% of the hitbox height.
+                .eyeHeight(0.19F)
+                .clientTrackingRange(10)
+                .build("moc_dolphin"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -286,6 +296,7 @@ public class ModEntities {
                 event.put(MOC_SHARK.get(), MoCSharkEntity.createAttributes().build());
                 event.put(MOC_TURTLE.get(), MoCTurtleEntity.createAttributes().build());
                 event.put(MOC_STINGRAY.get(), MoCStingrayEntity.createAttributes().build());
+                event.put(MOC_DOLPHIN.get(), MoCDolphinEntity.createAttributes().build());
         });
         }
         
@@ -594,6 +605,17 @@ public class ModEntities {
                                         && level.getFluidState(pos.below()).is(net.minecraft.tags.FluidTags.WATER)
                                         && level.getBlockState(pos.above()).is(net.minecraft.world.level.block.Blocks.WATER);
                         },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerDolphinSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_DOLPHIN.get(),
+                        SpawnPlacementTypes.IN_WATER,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                // Original: any water position within 12 blocks under sea level.
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

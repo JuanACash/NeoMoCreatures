@@ -77,6 +77,7 @@
   "item.neomocreatures.shark_spawn_egg": "Shark Spawn Egg",
   "item.neomocreatures.turtle_spawn_egg": "Turtle Spawn Egg",
   "item.neomocreatures.stingray_spawn_egg": "Stingray Spawn Egg",
+  "item.neomocreatures.dolphin_spawn_egg": "Dolphin Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -302,6 +303,7 @@
   "entity.neomocreatures.moc_shark": "Shark",
   "entity.neomocreatures.moc_turtle": "Turtle",
   "entity.neomocreatures.moc_stingray": "Stingray",
+  "entity.neomocreatures.moc_dolphin": "Dolphin",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

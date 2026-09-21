@@ -75,6 +75,8 @@ public class ModNetworking {
                     manticore.setDescendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCKomodoDragonEntity komodo) {
                     komodo.setDescendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCDolphinEntity dolphin) {
+                    dolphin.setDescendHeld(payload.pressed());
                 }
             }));
 
@@ -94,6 +96,8 @@ public class ModNetworking {
                     ostrich.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCKomodoDragonEntity komodo) {
                     komodo.setAscendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCDolphinEntity dolphin) {
+                    dolphin.setAscendHeld(payload.pressed());
                 }
             }));
     }

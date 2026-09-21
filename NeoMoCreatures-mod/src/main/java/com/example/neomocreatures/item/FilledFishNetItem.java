@@ -2,6 +2,7 @@ package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
+import com.example.neomocreatures.entity.MoCDolphinEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -40,6 +41,8 @@ public class FilledFishNetItem extends Item {
             tooltip.add(ModEntities.MOC_SHARK.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains(MoCStingrayEntity.NET_KEY)) {
             tooltip.add(ModEntities.MOC_STINGRAY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
+        } if (tag.contains(MoCDolphinEntity.NET_KEY)) {
+            tooltip.add(ModEntities.MOC_DOLPHIN.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             tooltip.add(Component.literal(tag.getString("Name"))
                     .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -69,6 +72,11 @@ public class FilledFishNetItem extends Item {
         } if (tag.contains(MoCStingrayEntity.NET_KEY)) {
             if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
                 spawned = spawnStingray((ServerLevel) level, tag, pos);
+                promptNamingIfUnnamed(spawned, tag, player);
+            }
+        } if (tag.contains(MoCDolphinEntity.NET_KEY)) {
+            if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                spawned = spawnDolphin((ServerLevel) level, tag, pos);
                 promptNamingIfUnnamed(spawned, tag, player);
             }
         } if (spawned == null) {
@@ -112,6 +120,15 @@ public class FilledFishNetItem extends Item {
         }
         level.addFreshEntity(ray);
         return ray;
+    }
+
+    private Entity spawnDolphin(ServerLevel level, CompoundTag tag, BlockPos pos) {
+        MoCDolphinEntity dolphin = ModEntities.MOC_DOLPHIN.get().create(level);
+        if (dolphin == null) return null;
+        dolphin.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        dolphin.restoreFromNet(tag);
+        level.addFreshEntity(dolphin);
+        return dolphin;
     }
 
     /** A freshly released pet without a name asks its owner to name it (original: tameWithName on release). */

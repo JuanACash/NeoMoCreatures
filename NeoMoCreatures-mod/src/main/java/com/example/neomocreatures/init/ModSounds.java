@@ -148,6 +148,11 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> TURTLE_DEATH = register("moc_turtle.death");
     public static final DeferredHolder<SoundEvent, SoundEvent> TURTLE_ANGRY = register("moc_turtle.angry");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_AMBIENT = register("moc_dolphin.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_HURT = register("moc_dolphin.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_DEATH = register("moc_dolphin.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_UPSET = register("moc_dolphin.upset");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

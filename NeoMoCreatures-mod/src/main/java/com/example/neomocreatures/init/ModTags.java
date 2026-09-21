@@ -20,4 +20,6 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_FUR = tag("repairs_fur_armor");
     public static final TagKey<Item> REPAIRS_REPTILE = tag("repairs_reptile_armor");
     public static final TagKey<Item> REPAIRS_HIDE = tag("repairs_hide_armor");
+    public static final TagKey<Item> RAW_FISHES = tag("raw_fishes");
+    public static final TagKey<Item> COOKED_FISHES = tag("cooked_fishes");
 }

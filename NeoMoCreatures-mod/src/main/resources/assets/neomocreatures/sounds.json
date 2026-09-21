@@ -277,6 +277,35 @@
     ]
   },
 
+  "moc_dolphin.ambient": {
+    "sounds": [
+      "neomocreatures:moc_dolphin/dolphin_call1",
+      "neomocreatures:moc_dolphin/dolphin_call2",
+      "neomocreatures:moc_dolphin/dolphin_call3",
+      "neomocreatures:moc_dolphin/dolphin_call4",
+      "neomocreatures:moc_dolphin/dolphin_call5",
+      "neomocreatures:moc_dolphin/dolphin_call6"
+    ]
+  },
+  "moc_dolphin.hurt": {
+    "sounds": [
+      "neomocreatures:moc_dolphin/dolphin_hurt1",
+      "neomocreatures:moc_dolphin/dolphin_hurt2"
+    ]
+  },
+  "moc_dolphin.death": {
+    "sounds": [
+      "neomocreatures:moc_dolphin/dolphin_dying1",
+      "neomocreatures:moc_dolphin/dolphin_dying2",
+      "neomocreatures:moc_dolphin/dolphin_dying3"
+    ]
+  },
+  "moc_dolphin.upset": {
+    "sounds": [
+      "neomocreatures:moc_dolphin/dolphin_upset"
+    ]
+  },
+
   "moc_komodo.hiss1": { "sounds": ["neomocreatures:moc_snake/snake_hiss1"] },
   "moc_komodo.hiss2": { "sounds": ["neomocreatures:moc_snake/snake_hiss2"] },
   "moc_komodo.hurt": { "sounds": ["neomocreatures:moc_snake/snake_hurt"] },
