@@ -110,6 +110,9 @@ public class ModItems {
         public static final DeferredItem<Item> TURTLE_SPAWN_EGG = ITEMS.register("turtle_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_TURTLE, 0x634315, 0xA0991B, new Item.Properties()));
+        public static final DeferredItem<Item> STINGRAY_SPAWN_EGG = ITEMS.register("stingray_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_STINGRAY, 0xADEBB3, 0xDFB945, new Item.Properties()));
         
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());

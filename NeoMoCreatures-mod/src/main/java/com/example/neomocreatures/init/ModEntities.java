@@ -24,6 +24,7 @@ import com.example.neomocreatures.entity.MoCBunnyEntity;
 import com.example.neomocreatures.entity.MoCBirdEntity;
 import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCTurtleEntity;
+import com.example.neomocreatures.entity.MoCStingrayEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -225,6 +226,14 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_turtle"));
 
+    
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCStingrayEntity>> MOC_STINGRAY =
+        ENTITY_TYPES.register("moc_stingray", () -> EntityType.Builder
+                .of(MoCStingrayEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.7F, 0.3F)
+                .clientTrackingRange(8)
+                .build("moc_stingray"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -276,6 +285,7 @@ public class ModEntities {
                 event.put(MOC_BIRD.get(), MoCBirdEntity.createAttributes().build());
                 event.put(MOC_SHARK.get(), MoCSharkEntity.createAttributes().build());
                 event.put(MOC_TURTLE.get(), MoCTurtleEntity.createAttributes().build());
+                event.put(MOC_STINGRAY.get(), MoCStingrayEntity.createAttributes().build());
         });
         }
         
@@ -572,4 +582,18 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
+        public static void registerStingraySpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_STINGRAY.get(),
+                        SpawnPlacementTypes.IN_WATER,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                // Same rule as vanilla surface water animals: within 13 blocks under sea level,
+                                // with water below and above. The stingray then settles at its own depth.
+                                int seaLevel = level.getSeaLevel();
+                                return pos.getY() >= seaLevel - 13 && pos.getY() <= seaLevel
+                                        && level.getFluidState(pos.below()).is(net.minecraft.tags.FluidTags.WATER)
+                                        && level.getBlockState(pos.above()).is(net.minecraft.world.level.block.Blocks.WATER);
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
 }
