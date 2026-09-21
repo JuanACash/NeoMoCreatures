@@ -77,6 +77,8 @@ public class ModNetworking {
                     komodo.setDescendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCDolphinEntity dolphin) {
                     dolphin.setDescendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCMantaRayEntity ray) {
+                    ray.setDescendHeld(payload.pressed());
                 }
             }));
 
@@ -98,6 +100,8 @@ public class ModNetworking {
                     komodo.setAscendHeld(payload.pressed());
                 } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCDolphinEntity dolphin) {
                     dolphin.setAscendHeld(payload.pressed());
+                } else if (context.player().getVehicle() instanceof com.example.neomocreatures.entity.MoCMantaRayEntity ray) {
+                    ray.setAscendHeld(payload.pressed());
                 }
             }));
     }

@@ -26,6 +26,7 @@ import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCTurtleEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
+import com.example.neomocreatures.entity.MoCMantaRayEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -244,6 +245,15 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_dolphin"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCMantaRayEntity>> MOC_MANTA_RAY =
+        ENTITY_TYPES.register("moc_manta_ray", () -> EntityType.Builder
+                .of(MoCMantaRayEntity::new, MobCategory.WATER_CREATURE)
+                .sized(1.4F, 0.4F)
+                // Original: the eyes sit at 58.75% of the hitbox height.
+                .eyeHeight(0.235F)
+                .clientTrackingRange(10)
+                .build("moc_manta_ray"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -297,6 +307,7 @@ public class ModEntities {
                 event.put(MOC_TURTLE.get(), MoCTurtleEntity.createAttributes().build());
                 event.put(MOC_STINGRAY.get(), MoCStingrayEntity.createAttributes().build());
                 event.put(MOC_DOLPHIN.get(), MoCDolphinEntity.createAttributes().build());
+                event.put(MOC_MANTA_RAY.get(), MoCMantaRayEntity.createAttributes().build());
         });
         }
         
@@ -610,6 +621,17 @@ public class ModEntities {
 
         public static void registerDolphinSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_DOLPHIN.get(),
+                        SpawnPlacementTypes.IN_WATER,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                // Original: any water position within 12 blocks under sea level.
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerMantaRaySpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_MANTA_RAY.get(),
                         SpawnPlacementTypes.IN_WATER,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->

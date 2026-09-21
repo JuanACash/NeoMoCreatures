@@ -3,6 +3,7 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.entity.MoCSharkEntity;
 import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
+import com.example.neomocreatures.entity.MoCMantaRayEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -43,6 +44,8 @@ public class FilledFishNetItem extends Item {
             tooltip.add(ModEntities.MOC_STINGRAY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains(MoCDolphinEntity.NET_KEY)) {
             tooltip.add(ModEntities.MOC_DOLPHIN.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
+        } if (tag.contains(MoCMantaRayEntity.NET_KEY)) {
+            tooltip.add(ModEntities.MOC_MANTA_RAY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             tooltip.add(Component.literal(tag.getString("Name"))
                     .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -77,6 +80,11 @@ public class FilledFishNetItem extends Item {
         } if (tag.contains(MoCDolphinEntity.NET_KEY)) {
             if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
                 spawned = spawnDolphin((ServerLevel) level, tag, pos);
+                promptNamingIfUnnamed(spawned, tag, player);
+            }
+        } if (tag.contains(MoCMantaRayEntity.NET_KEY)) {
+            if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                spawned = spawnMantaRay((ServerLevel) level, tag, pos);
                 promptNamingIfUnnamed(spawned, tag, player);
             }
         } if (spawned == null) {
@@ -129,6 +137,15 @@ public class FilledFishNetItem extends Item {
         dolphin.restoreFromNet(tag);
         level.addFreshEntity(dolphin);
         return dolphin;
+    }
+
+    private Entity spawnMantaRay(ServerLevel level, CompoundTag tag, BlockPos pos) {
+        MoCMantaRayEntity ray = ModEntities.MOC_MANTA_RAY.get().create(level);
+        if (ray == null) return null;
+        ray.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        ray.restoreFromNet(tag);
+        level.addFreshEntity(ray);
+        return ray;
     }
 
     /** A freshly released pet without a name asks its owner to name it (original: tameWithName on release). */
