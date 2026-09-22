@@ -33,6 +33,7 @@ import com.example.neomocreatures.entity.MoCCodEntity;
 import com.example.neomocreatures.entity.MoCSalmonEntity;
 import com.example.neomocreatures.entity.MoCBassEntity;
 import com.example.neomocreatures.entity.MoCSmallFishEntity;
+import com.example.neomocreatures.entity.MoCJellyfishEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -305,6 +306,15 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_small_fish"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCJellyfishEntity>> MOC_JELLYFISH =
+        ENTITY_TYPES.register("moc_jellyfish", () -> EntityType.Builder
+                .of(MoCJellyfishEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.45F, 0.575F)
+                // Original: the eyes sit at 85% of the hitbox height.
+                .eyeHeight(0.489F)
+                .clientTrackingRange(8)
+                .build("moc_jellyfish"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -364,6 +374,7 @@ public class ModEntities {
                 event.put(MOC_SALMON.get(), MoCMediumFishEntity.createAttributes().build());
                 event.put(MOC_BASS.get(), MoCMediumFishEntity.createAttributes().build());
                 event.put(MOC_SMALL_FISH.get(), MoCSmallFishEntity.createAttributes().build());
+                event.put(MOC_JELLYFISH.get(), MoCJellyfishEntity.createAttributes().build());
         });
         }
         
@@ -735,6 +746,14 @@ public class ModEntities {
                 event.register(MOC_SMALL_FISH.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
                                 // Original: any water position within 12 blocks under sea level.
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerJellyfishSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_JELLYFISH.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
                                 pos.getY() >= level.getSeaLevel() - 12
                                         && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);

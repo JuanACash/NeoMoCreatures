@@ -10,6 +10,6 @@
     "minecraft:mangrove_swamp"
   ],
   "spawners": [
-    { "type": "neomocreatures:moc_small_fish", "weight": 15, "minCount": 3, "maxCount": 7 }
+    { "type": "neomocreatures:moc_small_fish", "weight": 17, "minCount": 4, "maxCount": 7 }
   ]
 }

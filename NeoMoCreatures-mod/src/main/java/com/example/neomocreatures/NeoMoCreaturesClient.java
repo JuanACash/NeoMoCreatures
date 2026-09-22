@@ -60,6 +60,8 @@ import com.example.neomocreatures.client.MoCMediumFishModel;
 import com.example.neomocreatures.client.MoCMediumFishRenderer;
 import com.example.neomocreatures.client.MoCSmallFishModel;
 import com.example.neomocreatures.client.MoCSmallFishRenderer;
+import com.example.neomocreatures.client.MoCJellyfishModel;
+import com.example.neomocreatures.client.MoCJellyfishRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -117,6 +119,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCFishyRenderer.MOC_FISHY_LAYER, MoCFishyModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMediumFishRenderer.MOC_MEDIUM_FISH_LAYER, MoCMediumFishModel::createBodyLayer);
                 event.registerLayerDefinition(MoCSmallFishRenderer.MOC_SMALL_FISH_LAYER, MoCSmallFishModel::createBodyLayer);
+                event.registerLayerDefinition(MoCJellyfishRenderer.MOC_JELLYFISH_LAYER, MoCJellyfishModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -154,6 +157,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_SALMON.get(), MoCMediumFishRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BASS.get(), MoCMediumFishRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SMALL_FISH.get(), MoCSmallFishRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_JELLYFISH.get(), MoCJellyfishRenderer::new);
         });
                 
     }

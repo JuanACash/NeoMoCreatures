@@ -241,8 +241,29 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
-        this.setVariant(pickVariantForBiome(level));
-        return super.finalizeSpawn(level, difficulty, spawnType, new AgeableMob.AgeableMobGroupData(false));
+        // The whole group must be one species, like a real school — pick once for the first fish and
+        // reuse it for the rest of the group, instead of rolling separately for each individual.
+        SmallFishVariant variant;
+        if (spawnGroupData instanceof SchoolGroupData schoolData) {
+            variant = schoolData.variant;
+        } else {
+            variant = pickVariantForBiome(level);
+            spawnGroupData = new SchoolGroupData(variant);
+        }
+        this.setVariant(variant);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+    }
+
+    /** Carries the species picked for the first fish of a spawn group to the rest of that group.
+     *  Must extend AgeableMobGroupData, not just implement SpawnGroupData: AgeableMob.finalizeSpawn()
+     *  casts whatever is passed in back to that exact type. */
+    private static final class SchoolGroupData extends AgeableMob.AgeableMobGroupData {
+        private final SmallFishVariant variant;
+
+        SchoolGroupData(SmallFishVariant variant) {
+            super(false);
+            this.variant = variant;
+        }
     }
 
     /** Picks uniformly among the species allowed in the biome this individual is spawning in. */
