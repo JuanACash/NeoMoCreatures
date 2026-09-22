@@ -109,7 +109,7 @@ public class MoCDolphinEntity extends TamableAnimal {
     private static final double PANIC_SPEED = 1.3D;
     private static final double ATTACK_SPEED = 1.3D;
     private static final double WANDER_SPEED = 1.0D;
-    private static final int WANDER_INTERVAL = 30;
+    private static final int WANDER_INTERVAL = 10;
     private static final int WANDER_PRIORITY = 5;
 
     // ---- Swimming ----

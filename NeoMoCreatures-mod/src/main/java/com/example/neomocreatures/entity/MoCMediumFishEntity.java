@@ -82,7 +82,9 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
     private static final double FLEE_NEAR_SPEED = 1.5D;
     private static final int WANDER_PRIORITY = 5;
     private static final double WANDER_SPEED = 1.0D;
-    private static final int WANDER_INTERVAL = 50;
+    // Vanilla's own fish (AbstractFish) use 10 here; our earlier 50 meant a long average pause
+    // between swims, which read as standing still.
+    private static final int WANDER_INTERVAL = 10;
 
     // ---- Swimming ----
     private static final double MIN_CRUISE_DEPTH = 0.5D;

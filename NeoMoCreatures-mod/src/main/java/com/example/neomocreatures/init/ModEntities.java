@@ -32,6 +32,7 @@ import com.example.neomocreatures.entity.MoCFishyEntity;
 import com.example.neomocreatures.entity.MoCCodEntity;
 import com.example.neomocreatures.entity.MoCSalmonEntity;
 import com.example.neomocreatures.entity.MoCBassEntity;
+import com.example.neomocreatures.entity.MoCSmallFishEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -295,6 +296,15 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_bass"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSmallFishEntity>> MOC_SMALL_FISH =
+        ENTITY_TYPES.register("moc_small_fish", () -> EntityType.Builder
+                .of(MoCSmallFishEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.5F, 0.3F)
+                // Original: the eyes sit at 45% of the hitbox height.
+                .eyeHeight(0.135F)
+                .clientTrackingRange(6)
+                .build("moc_small_fish"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -353,6 +363,7 @@ public class ModEntities {
                 event.put(MOC_COD.get(), MoCMediumFishEntity.createAttributes().build());
                 event.put(MOC_SALMON.get(), MoCMediumFishEntity.createAttributes().build());
                 event.put(MOC_BASS.get(), MoCMediumFishEntity.createAttributes().build());
+                event.put(MOC_SMALL_FISH.get(), MoCSmallFishEntity.createAttributes().build());
         });
         }
         
@@ -715,6 +726,15 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
                 event.register(MOC_BASS.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) ->
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerSmallFishSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_SMALL_FISH.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                // Original: any water position within 12 blocks under sea level.
                                 pos.getY() >= level.getSeaLevel() - 12
                                         && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);

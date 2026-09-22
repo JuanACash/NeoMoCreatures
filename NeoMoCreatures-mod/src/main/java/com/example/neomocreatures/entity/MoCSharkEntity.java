@@ -99,7 +99,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0D, 40));
+        this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0D, 10));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         // Original: hunts players either swimming or within 16 blocks, and

@@ -131,6 +131,30 @@ public class ModItems {
         public static final DeferredItem<Item> BASS_FISH_SPAWN_EGG = ITEMS.register("bass_fish_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_BASS, 0x5672FF, 0x39FF14, new Item.Properties()));
+        public static final DeferredItem<Item> ANCHOVY_SPAWN_EGG = ITEMS.register("anchovy_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.ANCHOVY, 0x5672FF, 0xFF3B30, new Item.Properties()));
+        public static final DeferredItem<Item> ANGELFISH_SPAWN_EGG = ITEMS.register("angelfish_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.ANGELFISH, 0x5672FF, 0x8E44AD, new Item.Properties()));
+        public static final DeferredItem<Item> ANGLERFISH_SPAWN_EGG = ITEMS.register("anglerfish_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.ANGLER, 0x5672FF, 0x78909C, new Item.Properties()));
+        public static final DeferredItem<Item> CLOWNFISH_SPAWN_EGG = ITEMS.register("clownfish_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.CLOWNFISH, 0x5672FF, 0xFF8C00, new Item.Properties()));
+        public static final DeferredItem<Item> GOLDFISH_SPAWN_EGG = ITEMS.register("goldfish_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.GOLDFISH, 0x5672FF, 0x00E5FF, new Item.Properties()));
+        public static final DeferredItem<Item> HIPPOTANG_SPAWN_EGG = ITEMS.register("hippotang_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.HIPPOTANG, 0x5672FF, 0x2979FF, new Item.Properties()));
+        public static final DeferredItem<Item> MANDARINFISH_SPAWN_EGG = ITEMS.register("mandarinfish_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.MANDARIN, 0x5672FF, 0xFF00FF, new Item.Properties()));
+        public static final DeferredItem<Item> PIRANHA_SPAWN_EGG = ITEMS.register("piranha_spawn_egg",
+        () -> new com.example.neomocreatures.item.SmallFishSpawnEggItem(
+                com.example.neomocreatures.entity.smallfish.SmallFishVariant.PIRANHA, 0x5672FF, 0x6D4C41, new Item.Properties()));
 
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
@@ -698,6 +722,38 @@ public class ModItems {
         () -> new com.example.neomocreatures.item.MediumFishEggItem(new Item.Properties(),
             new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
                 com.example.neomocreatures.init.ModEntities.MOC_BASS, null, 0.0D, null)));
+    public static final DeferredItem<Item> ANCHOVY_EGG = ITEMS.register("anchovy_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "ANCHOVY")));
+    public static final DeferredItem<Item> ANGELFISH_EGG = ITEMS.register("angelfish_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "ANGELFISH")));
+    public static final DeferredItem<Item> ANGLERFISH_EGG = ITEMS.register("anglerfish_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "ANGLER")));
+    public static final DeferredItem<Item> CLOWNFISH_EGG = ITEMS.register("clownfish_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "CLOWNFISH")));
+    public static final DeferredItem<Item> GOLDFISH_EGG = ITEMS.register("goldfish_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "GOLDFISH")));
+    public static final DeferredItem<Item> HIPPOTANG_EGG = ITEMS.register("hippotang_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "HIPPOTANG")));
+    public static final DeferredItem<Item> MANDARINFISH_EGG = ITEMS.register("mandarinfish_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "MANDARIN")));
+   public static final DeferredItem<Item> PIRANHA_EGG = ITEMS.register("piranha_egg",
+        () -> new com.example.neomocreatures.item.SmallFishEggItem(new Item.Properties(),
+            new com.example.neomocreatures.item.MoCEggItem.HatchSpec(
+                com.example.neomocreatures.init.ModEntities.MOC_SMALL_FISH, null, 0.0D, "PIRANHA")));
 
     public static final DeferredItem<Item> MYSTIC_PEAR = ITEMS.registerSimpleItem("mystic_pear", new Item.Properties());
     public static final DeferredItem<Item> NETHER_CANNON = ITEMS.registerSimpleItem("nether_cannon", new Item.Properties());

@@ -83,6 +83,14 @@
   "item.neomocreatures.cod_fish_spawn_egg": "Cod Spawn Egg",
   "item.neomocreatures.salmon_fish_spawn_egg": "Salmon Spawn Egg",
   "item.neomocreatures.bass_fish_spawn_egg": "Bass Spawn Egg",
+  "item.neomocreatures.anchovy_spawn_egg": "Anchovy Spawn Egg",
+  "item.neomocreatures.angelfish_spawn_egg": "Angelfish Spawn Egg",
+  "item.neomocreatures.anglerfish_spawn_egg": "Anglerfish Spawn Egg",
+  "item.neomocreatures.clownfish_spawn_egg": "Clownfish Spawn Egg",
+  "item.neomocreatures.goldfish_spawn_egg": "Goldfish Spawn Egg",
+  "item.neomocreatures.hippotang_spawn_egg": "Hippo Tang Spawn Egg",
+  "item.neomocreatures.mandarinfish_spawn_egg": "Mandarinfish Spawn Egg",
+  "item.neomocreatures.piranha_spawn_egg": "Piranha Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -271,6 +279,14 @@
   "item.neomocreatures.cod_egg": "Cod Egg",
   "item.neomocreatures.salmon_egg": "Salmon Egg",
   "item.neomocreatures.bass_egg": "Bass Egg",
+  "item.neomocreatures.anchovy_egg": "Anchovy Egg",
+  "item.neomocreatures.angelfish_egg": "Angelfish Egg",
+  "item.neomocreatures.anglerfish_egg": "Anglerfish Egg",
+  "item.neomocreatures.clownfish_egg": "Clownfish Egg",
+  "item.neomocreatures.goldfish_egg": "Goldfish Egg",
+  "item.neomocreatures.hippotang_egg": "Hippo Tang Egg",
+  "item.neomocreatures.mandarinfish_egg": "Mandarinfish Egg",
+  "item.neomocreatures.piranha_egg": "Piranha Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",
@@ -317,6 +333,7 @@
   "entity.neomocreatures.moc_cod": "Medium Fish",
   "entity.neomocreatures.moc_salmon": "Medium Fish",
   "entity.neomocreatures.moc_bass": "Medium Fish",
+  "entity.neomocreatures.moc_small_fish": "Small Fish",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

@@ -125,7 +125,7 @@ public class MoCStingrayEntity extends TamableAnimal {
     @Override
     protected void registerGoals() {
         // Original: EntityAIWanderMoC2(1.0D, 80).
-        this.goalSelector.addGoal(2, new SeabedSwimGoal(this, 1.0D, 80));
+        this.goalSelector.addGoal(2, new SeabedSwimGoal(this, 1.0D, 10));
     }
 
     @Override

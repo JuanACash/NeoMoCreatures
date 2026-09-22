@@ -60,7 +60,7 @@ public class MoCMantaRayEntity extends TamableAnimal {
 
     // ---- Swimming ----
     private static final double WANDER_SPEED = 1.0D;
-    private static final int WANDER_INTERVAL = 80;
+    private static final int WANDER_INTERVAL = 10;
     /** Original: minDivingDepth() / maxDivingDepth() of the rays, in blocks under the water surface. */
     private static final double MIN_CRUISE_DEPTH = 3.0D;
     private static final double MAX_CRUISE_DEPTH = 6.0D;

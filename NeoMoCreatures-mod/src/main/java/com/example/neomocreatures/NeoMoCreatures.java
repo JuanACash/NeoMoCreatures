@@ -114,6 +114,14 @@ public class NeoMoCreatures {
                     output.accept(ModItems.COD_EGG.get());
                     output.accept(ModItems.SALMON_EGG.get());
                     output.accept(ModItems.BASS_EGG.get());
+                    output.accept(ModItems.ANCHOVY_EGG.get());
+                    output.accept(ModItems.ANGELFISH_EGG.get());
+                    output.accept(ModItems.ANGLERFISH_EGG.get());
+                    output.accept(ModItems.CLOWNFISH_EGG.get());
+                    output.accept(ModItems.GOLDFISH_EGG.get());
+                    output.accept(ModItems.HIPPOTANG_EGG.get());
+                    output.accept(ModItems.MANDARINFISH_EGG.get());
+                    output.accept(ModItems.PIRANHA_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
@@ -305,6 +313,14 @@ public class NeoMoCreatures {
                     output.accept(ModItems.COD_FISH_SPAWN_EGG.get());
                     output.accept(ModItems.SALMON_FISH_SPAWN_EGG.get());
                     output.accept(ModItems.BASS_FISH_SPAWN_EGG.get());
+                    output.accept(ModItems.ANCHOVY_SPAWN_EGG.get());
+                    output.accept(ModItems.ANGELFISH_SPAWN_EGG.get());
+                    output.accept(ModItems.ANGLERFISH_SPAWN_EGG.get());
+                    output.accept(ModItems.CLOWNFISH_SPAWN_EGG.get());
+                    output.accept(ModItems.GOLDFISH_SPAWN_EGG.get());
+                    output.accept(ModItems.HIPPOTANG_SPAWN_EGG.get());
+                    output.accept(ModItems.MANDARINFISH_SPAWN_EGG.get());
+                    output.accept(ModItems.PIRANHA_SPAWN_EGG.get());
                     output.accept(ModItems.FISHY_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
@@ -367,6 +383,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerMantaRaySpawnPlacements);
         modEventBus.addListener(ModEntities::registerFishySpawnPlacements);
         modEventBus.addListener(ModEntities::registerMediumFishSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerSmallFishSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {
