@@ -44,6 +44,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.neoforged.neoforge.fluids.FluidType;
+import java.util.function.Predicate;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.ambient.MoCEntityCrab}, built on {@link TamableAnimal}
@@ -104,7 +105,8 @@ public class MoCCrabEntity extends TamableAnimal {
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FollowOwnerGoal(this, FOLLOW_SPEED, 8.0F, 2.0F));
         this.goalSelector.addGoal(PANIC_PRIORITY, new PanicGoal(this, PANIC_SPEED));
-        this.goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED));
+        this.goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED,
+                (Predicate<net.minecraft.world.entity.LivingEntity>) player -> !this.isOwnedBy((Player) player)));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
