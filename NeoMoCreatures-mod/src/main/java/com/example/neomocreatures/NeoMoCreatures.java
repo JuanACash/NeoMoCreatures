@@ -111,6 +111,9 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SNAKE_EGG_PYTHON.get());
                     output.accept(ModItems.KOMODO_DRAGON_EGG.get());
                     output.accept(ModItems.SHARK_EGG.get());
+                    output.accept(ModItems.COD_EGG.get());
+                    output.accept(ModItems.SALMON_EGG.get());
+                    output.accept(ModItems.BASS_EGG.get());
 
                     output.accept(ModItems.HORSE_SADDLE.get());
                     output.accept(ModItems.HORSE_ARMOR_CRYSTAL.get());
@@ -299,6 +302,9 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SHARK_SPAWN_EGG.get());
                     output.accept(ModItems.MANTA_RAY_SPAWN_EGG.get());
                     output.accept(ModItems.STINGRAY_SPAWN_EGG.get());
+                    output.accept(ModItems.COD_FISH_SPAWN_EGG.get());
+                    output.accept(ModItems.SALMON_FISH_SPAWN_EGG.get());
+                    output.accept(ModItems.BASS_FISH_SPAWN_EGG.get());
                     output.accept(ModItems.FISHY_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
@@ -360,6 +366,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerDolphinSpawnPlacements);
         modEventBus.addListener(ModEntities::registerMantaRaySpawnPlacements);
         modEventBus.addListener(ModEntities::registerFishySpawnPlacements);
+        modEventBus.addListener(ModEntities::registerMediumFishSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

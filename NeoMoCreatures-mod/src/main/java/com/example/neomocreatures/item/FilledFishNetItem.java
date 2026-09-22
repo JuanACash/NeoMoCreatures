@@ -5,6 +5,7 @@ import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
 import com.example.neomocreatures.entity.MoCMantaRayEntity;
 import com.example.neomocreatures.entity.MoCFishyEntity;
+import com.example.neomocreatures.entity.MoCMediumFishEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -52,6 +53,9 @@ public class FilledFishNetItem extends Item {
             tooltip.add(ModEntities.MOC_MANTA_RAY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
         } if (tag.contains(MoCFishyEntity.NET_KEY)) {
             tooltip.add(ModEntities.MOC_FISHY.get().getDescription().copy().withStyle(ChatFormatting.GRAY));
+        } if (tag.contains(MoCMediumFishEntity.NET_KEY)) {
+            tooltip.add(net.minecraft.network.chat.Component.translatable("entity.neomocreatures.moc_cod")
+                    .withStyle(ChatFormatting.GRAY));
         } if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             tooltip.add(Component.literal(tag.getString("Name"))
                     .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
@@ -101,6 +105,11 @@ public class FilledFishNetItem extends Item {
         } if (tag.contains(MoCFishyEntity.NET_KEY)) {
             if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
                 spawned = spawnFishy((ServerLevel) level, tag, pos);
+                promptNamingIfUnnamed(spawned, tag, player);
+            }
+        } if (tag.contains(MoCMediumFishEntity.NET_KEY)) {
+            if (level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) {
+                spawned = spawnMediumFish((ServerLevel) level, tag, pos);
                 promptNamingIfUnnamed(spawned, tag, player);
             }
         } if (spawned == null) {
@@ -171,6 +180,18 @@ public class FilledFishNetItem extends Item {
         fishy.restoreFromNet(tag);
         level.addFreshEntity(fishy);
         return fishy;
+    }
+
+    /** One release path for all 3 species: the tag itself says which EntityType to spawn. */
+    private Entity spawnMediumFish(ServerLevel level, CompoundTag tag, BlockPos pos) {
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.parse(tag.getString("EntityId"));
+        net.minecraft.world.entity.EntityType<?> type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.get(id);
+        net.minecraft.world.entity.Entity entity = type.create(level);
+        if (!(entity instanceof MoCMediumFishEntity fish)) return null;
+        fish.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        fish.restoreFromNet(tag);
+        level.addFreshEntity(fish);
+        return fish;
     }
 
     /** A freshly released pet without a name asks its owner to name it (original: tameWithName on release). */

@@ -80,6 +80,9 @@
   "item.neomocreatures.dolphin_spawn_egg": "Dolphin Spawn Egg",
   "item.neomocreatures.manta_ray_spawn_egg": "Manta Ray Spawn Egg",
   "item.neomocreatures.fishy_spawn_egg": "Fishy Spawn Egg",
+  "item.neomocreatures.cod_fish_spawn_egg": "Cod Spawn Egg",
+  "item.neomocreatures.salmon_fish_spawn_egg": "Salmon Spawn Egg",
+  "item.neomocreatures.bass_fish_spawn_egg": "Bass Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -265,6 +268,9 @@
   "item.neomocreatures.snake_egg_rattle": "Rattlesnake Egg",
   "item.neomocreatures.snake_egg_python": "Python Egg",
   "item.neomocreatures.shark_egg": "Shark Egg",
+  "item.neomocreatures.cod_egg": "Cod Egg",
+  "item.neomocreatures.salmon_egg": "Salmon Egg",
+  "item.neomocreatures.bass_egg": "Bass Egg",
   "entity.neomocreatures.moc_egg": "Egg",
 
   "msg.neomocreatures.egg_hatching": "KEEP WATCH! Something is hatching at %s, %s, %s...",
@@ -308,6 +314,9 @@
   "entity.neomocreatures.moc_dolphin": "Dolphin",
   "entity.neomocreatures.moc_manta_ray": "Manta Ray",
   "entity.neomocreatures.moc_fishy": "Fishy",
+  "entity.neomocreatures.moc_cod": "Medium Fish",
+  "entity.neomocreatures.moc_salmon": "Medium Fish",
+  "entity.neomocreatures.moc_bass": "Medium Fish",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

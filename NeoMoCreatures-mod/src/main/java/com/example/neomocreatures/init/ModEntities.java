@@ -10,6 +10,7 @@ import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCMediumFishEntity;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
@@ -28,12 +29,16 @@ import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
 import com.example.neomocreatures.entity.MoCMantaRayEntity;
 import com.example.neomocreatures.entity.MoCFishyEntity;
+import com.example.neomocreatures.entity.MoCCodEntity;
+import com.example.neomocreatures.entity.MoCSalmonEntity;
+import com.example.neomocreatures.entity.MoCBassEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
@@ -265,6 +270,31 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_fishy"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCCodEntity>> MOC_COD =
+        ENTITY_TYPES.register("moc_cod", () -> EntityType.Builder
+                .of(MoCCodEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.7F, 0.45F)
+                // Original: the eyes sit at 77.5% of the hitbox height.
+                .eyeHeight(0.349F)
+                .clientTrackingRange(8)
+                .build("moc_cod"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSalmonEntity>> MOC_SALMON =
+        ENTITY_TYPES.register("moc_salmon", () -> EntityType.Builder
+                .of(MoCSalmonEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.7F, 0.45F)
+                .eyeHeight(0.349F)
+                .clientTrackingRange(8)
+                .build("moc_salmon"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCBassEntity>> MOC_BASS =
+        ENTITY_TYPES.register("moc_bass", () -> EntityType.Builder
+                .of(MoCBassEntity::new, MobCategory.WATER_CREATURE)
+                .sized(0.7F, 0.45F)
+                .eyeHeight(0.349F)
+                .clientTrackingRange(8)
+                .build("moc_bass"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -320,6 +350,9 @@ public class ModEntities {
                 event.put(MOC_DOLPHIN.get(), MoCDolphinEntity.createAttributes().build());
                 event.put(MOC_MANTA_RAY.get(), MoCMantaRayEntity.createAttributes().build());
                 event.put(MOC_FISHY.get(), MoCFishyEntity.createAttributes().build());
+                event.put(MOC_COD.get(), MoCMediumFishEntity.createAttributes().build());
+                event.put(MOC_SALMON.get(), MoCMediumFishEntity.createAttributes().build());
+                event.put(MOC_BASS.get(), MoCMediumFishEntity.createAttributes().build());
         });
         }
         
@@ -660,6 +693,29 @@ public class ModEntities {
                         (type, level, reason, pos, random) ->
                                 // Wiki: layer 46 up to sea level, in any water.
                                 pos.getY() >= 46 && pos.getY() <= level.getSeaLevel()
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerMediumFishSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                // A separate lambda per call, not a shared variable: SpawnPredicate<T> is invariant,
+                // so a predicate typed for the abstract base cannot be reused for each concrete
+                // EntityType<MoCCodEntity>/<MoCSalmonEntity>/<MoCBassEntity> — a fresh lambda literal
+                // adapts to whichever T each register() call needs.
+                event.register(MOC_COD.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                // Original: any water position within 12 blocks under sea level.
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+                event.register(MOC_SALMON.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                pos.getY() >= level.getSeaLevel() - 12
+                                        && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+                event.register(MOC_BASS.get(), SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                pos.getY() >= level.getSeaLevel() - 12
                                         && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
