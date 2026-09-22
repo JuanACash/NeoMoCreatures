@@ -8,6 +8,7 @@ import com.example.neomocreatures.entity.MoCFishyEntity;
 import com.example.neomocreatures.entity.MoCMediumFishEntity;
 import com.example.neomocreatures.entity.MoCSmallFishEntity;
 import com.example.neomocreatures.entity.MoCJellyfishEntity;
+import com.example.neomocreatures.entity.MoCCrabEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -63,6 +64,9 @@ public class FilledFishNetItem extends Item {
                     .withStyle(ChatFormatting.GRAY));
         } if (tag.contains(MoCJellyfishEntity.NET_KEY)) {
             tooltip.add(net.minecraft.network.chat.Component.translatable("entity.neomocreatures.moc_jellyfish")
+                    .withStyle(ChatFormatting.GRAY));
+        } if (tag.contains(MoCCrabEntity.NET_KEY)) {
+            tooltip.add(net.minecraft.network.chat.Component.translatable("entity.neomocreatures.moc_crab")
                     .withStyle(ChatFormatting.GRAY));
         } if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             tooltip.add(Component.literal(tag.getString("Name"))
@@ -130,6 +134,9 @@ public class FilledFishNetItem extends Item {
                 spawned = spawnJellyfish((ServerLevel) level, tag, pos);
                 promptNamingIfUnnamed(spawned, tag, player);
             }
+        } if (tag.contains(MoCCrabEntity.NET_KEY)) {
+            spawned = spawnCrab((ServerLevel) level, tag, pos);
+            promptNamingIfUnnamed(spawned, tag, player);
         } if (spawned == null) {
             return InteractionResultHolder.fail(stack);
         }
@@ -228,6 +235,15 @@ public class FilledFishNetItem extends Item {
         jellyfish.restoreFromNet(tag);
         level.addFreshEntity(jellyfish);
         return jellyfish;
+    }
+
+    private Entity spawnCrab(ServerLevel level, CompoundTag tag, BlockPos pos) {
+        MoCCrabEntity crab = ModEntities.MOC_CRAB.get().create(level);
+        if (crab == null) return null;
+        crab.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0F, 0F);
+        crab.restoreFromNet(tag);
+        level.addFreshEntity(crab);
+        return crab;
     }
 
     /** A freshly released pet without a name asks its owner to name it (original: tameWithName on release). */

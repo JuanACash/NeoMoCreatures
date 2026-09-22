@@ -34,6 +34,7 @@ import com.example.neomocreatures.entity.MoCSalmonEntity;
 import com.example.neomocreatures.entity.MoCBassEntity;
 import com.example.neomocreatures.entity.MoCSmallFishEntity;
 import com.example.neomocreatures.entity.MoCJellyfishEntity;
+import com.example.neomocreatures.entity.MoCCrabEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -315,6 +316,13 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_jellyfish"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCCrabEntity>> MOC_CRAB =
+        ENTITY_TYPES.register("moc_crab", () -> EntityType.Builder
+                .of(MoCCrabEntity::new, MobCategory.AMBIENT)
+                .sized(0.45F, 0.3F)
+                .clientTrackingRange(8)
+                .build("moc_crab"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -375,6 +383,7 @@ public class ModEntities {
                 event.put(MOC_BASS.get(), MoCMediumFishEntity.createAttributes().build());
                 event.put(MOC_SMALL_FISH.get(), MoCSmallFishEntity.createAttributes().build());
                 event.put(MOC_JELLYFISH.get(), MoCJellyfishEntity.createAttributes().build());
+                event.put(MOC_CRAB.get(), MoCCrabEntity.createAttributes().build());
         });
         }
         
@@ -756,6 +765,18 @@ public class ModEntities {
                         (type, level, reason, pos, random) ->
                                 pos.getY() >= level.getSeaLevel() - 12
                                         && level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerCrabSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_CRAB.get(), net.minecraft.world.entity.SpawnPlacementTypes.NO_RESTRICTIONS,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                boolean inWater = level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER);
+                                boolean onGround = level.getBlockState(pos.below()).isSolid()
+                                        && level.getBlockState(pos).isPathfindable(net.minecraft.world.level.pathfinder.PathComputationType.LAND);
+                                return inWater || onGround;
+                        },
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

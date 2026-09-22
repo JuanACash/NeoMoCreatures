@@ -92,6 +92,7 @@
   "item.neomocreatures.mandarinfish_spawn_egg": "Mandarinfish Spawn Egg",
   "item.neomocreatures.piranha_spawn_egg": "Piranha Spawn Egg",
   "item.neomocreatures.jellyfish_spawn_egg": "Jellyfish Spawn Egg",
+  "item.neomocreatures.crab_spawn_egg": "Crab Spawn Egg",
   
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
@@ -336,6 +337,7 @@
   "entity.neomocreatures.moc_bass": "Medium Fish",
   "entity.neomocreatures.moc_small_fish": "Small Fish",
   "entity.neomocreatures.moc_jellyfish": "Jellyfish",
+  "entity.neomocreatures.moc_crab": "Crab",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }
