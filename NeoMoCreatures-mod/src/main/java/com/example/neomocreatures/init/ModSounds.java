@@ -153,6 +153,13 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_DEATH = register("moc_dolphin.death");
     public static final DeferredHolder<SoundEvent, SoundEvent> DOLPHIN_UPSET = register("moc_dolphin.upset");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_AMBIENT = register("moc_crocodile.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_DEATH = register("moc_crocodile.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_HURT = register("moc_crocodile.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_JAW_SNAP = register("moc_crocodile.jaw_snap");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_RESTING = register("moc_crocodile.resting");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_ROLL = register("moc_crocodile.roll");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

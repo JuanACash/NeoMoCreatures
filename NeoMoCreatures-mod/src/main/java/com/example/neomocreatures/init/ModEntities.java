@@ -35,6 +35,7 @@ import com.example.neomocreatures.entity.MoCBassEntity;
 import com.example.neomocreatures.entity.MoCSmallFishEntity;
 import com.example.neomocreatures.entity.MoCJellyfishEntity;
 import com.example.neomocreatures.entity.MoCCrabEntity;
+import com.example.neomocreatures.entity.MoCCrocodileEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -322,6 +323,13 @@ public class ModEntities {
                 .sized(0.45F, 0.3F)
                 .clientTrackingRange(8)
                 .build("moc_crab"));
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCCrocodileEntity>> MOC_CROCODILE =
+        ENTITY_TYPES.register("moc_crocodile", () -> EntityType.Builder
+                .of(MoCCrocodileEntity::new, MobCategory.CREATURE)
+                .sized(0.9F, 0.5F)
+                .eyeHeight(0.35F)
+                .clientTrackingRange(10)
+                .build("moc_crocodile"));
 
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
@@ -384,6 +392,7 @@ public class ModEntities {
                 event.put(MOC_SMALL_FISH.get(), MoCSmallFishEntity.createAttributes().build());
                 event.put(MOC_JELLYFISH.get(), MoCJellyfishEntity.createAttributes().build());
                 event.put(MOC_CRAB.get(), MoCCrabEntity.createAttributes().build());
+                event.put(MOC_CROCODILE.get(), MoCCrocodileEntity.createAttributes().build());
         });
         }
         
