@@ -389,6 +389,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerSmallFishSpawnPlacements);
         modEventBus.addListener(ModEntities::registerJellyfishSpawnPlacements);
         modEventBus.addListener(ModEntities::registerCrabSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerCrocodileSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

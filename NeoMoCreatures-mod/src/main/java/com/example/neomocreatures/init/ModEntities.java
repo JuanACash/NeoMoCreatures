@@ -323,9 +323,10 @@ public class ModEntities {
                 .sized(0.45F, 0.3F)
                 .clientTrackingRange(8)
                 .build("moc_crab"));
+                
     public static final DeferredHolder<EntityType<?>, EntityType<MoCCrocodileEntity>> MOC_CROCODILE =
         ENTITY_TYPES.register("moc_crocodile", () -> EntityType.Builder
-                .of(MoCCrocodileEntity::new, MobCategory.CREATURE)
+                .of(MoCCrocodileEntity::new, MobCategory.AMBIENT)
                 .sized(0.9F, 0.5F)
                 .eyeHeight(0.35F)
                 .clientTrackingRange(10)
@@ -779,6 +780,18 @@ public class ModEntities {
 
         public static void registerCrabSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_CRAB.get(), net.minecraft.world.entity.SpawnPlacementTypes.NO_RESTRICTIONS,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                boolean inWater = level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER);
+                                boolean onGround = level.getBlockState(pos.below()).isSolid()
+                                        && level.getBlockState(pos).isPathfindable(net.minecraft.world.level.pathfinder.PathComputationType.LAND);
+                                return inWater || onGround;
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerCrocodileSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_CROCODILE.get(), net.minecraft.world.entity.SpawnPlacementTypes.NO_RESTRICTIONS,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> {
                                 boolean inWater = level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER);

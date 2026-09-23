@@ -43,6 +43,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hunter.MoCEntityCrocodile}. Extends
@@ -174,6 +175,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, ATTACK_SPEED, true));
         this.goalSelector.addGoal(REST_PRIORITY, new RestGoal());
         this.goalSelector.addGoal(WANDER_PRIORITY, new RandomStrollGoal(this, WANDER_SPEED));
+        this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 8.0F));
         // Original: EntityAIFleeFromPlayer is registered too, but the crocodile's own isNotScared()
         // always returns true, and that goal's shouldExecute() bails out immediately whenever
         // isNotScared() is true — it is dead code in the original, and stays out here.
@@ -499,6 +501,12 @@ public class MoCCrocodileEntity extends TamableAnimal {
         return this.resting ? ModSounds.CROCODILE_RESTING.get() : ModSounds.CROCODILE_AMBIENT.get();
     }
 
+    /** Original: getTalkInterval() = 400, well above vanilla's own default. */
+    @Override
+    public int getAmbientSoundInterval() {
+        return 400;
+    }
+
     // ---------------------------------------------------------------------
     // Drops
     // ---------------------------------------------------------------------
@@ -523,9 +531,10 @@ public class MoCCrocodileEntity extends TamableAnimal {
         return 0;
     }
 
+    /** Original: a fixed experienceValue = 5, not a random range. */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return 5;
     }
 
     // ---------------------------------------------------------------------
