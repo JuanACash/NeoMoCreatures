@@ -407,5 +407,52 @@
     "sounds": [
       "neomocreatures:moc_ogre/ogre_dying"
     ]
+  },
+
+    "moc_werewolf.ambient": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werewolf_grunt1",
+      "neomocreatures:moc_werewolf/werewolf_grunt2",
+      "neomocreatures:moc_werewolf/werewolf_grunt3",
+      "neomocreatures:moc_werewolf/werewolf_grunt4"
+    ]
+  },
+  "moc_werewolf.hurt": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werewolf_hurt1",
+      "neomocreatures:moc_werewolf/werewolf_hurt2"
+    ]
+  },
+  "moc_werewolf.death": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werewolf_dying1",
+      "neomocreatures:moc_werewolf/werewolf_dying2"
+    ]
+  },
+  "moc_werewolf.transform": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werewolf_transform1",
+      "neomocreatures:moc_werewolf/werewolf_transform2",
+      "neomocreatures:moc_werewolf/werewolf_transform3"
+    ]
+  },
+    "moc_werewolf.werehuman_hurt": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werehuman_hurt_legacy1",
+      "neomocreatures:moc_werewolf/werehuman_hurt_legacy2"
+    ]
+  },
+  "moc_werewolf.werehuman_death": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werehuman_dying_legacy1",
+      "neomocreatures:moc_werewolf/werehuman_dying_legacy2"
+    ]
+  },
+  "moc_werewolf.werehuman_transform": {
+    "sounds": [
+      "neomocreatures:moc_werewolf/werewolf_transform_legacy1",
+      "neomocreatures:moc_werewolf/werewolf_transform_legacy2",
+      "neomocreatures:moc_werewolf/werewolf_transform_legacy3"
+    ]
   }
 }

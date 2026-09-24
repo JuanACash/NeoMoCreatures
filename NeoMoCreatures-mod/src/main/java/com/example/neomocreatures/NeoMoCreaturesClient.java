@@ -68,6 +68,8 @@ import com.example.neomocreatures.client.MoCCrocodileModel;
 import com.example.neomocreatures.client.MoCCrocodileRenderer;
 import com.example.neomocreatures.client.MoCOgreModel;
 import com.example.neomocreatures.client.MoCOgreRenderer;
+import com.example.neomocreatures.client.MoCWerewolfModel;
+import com.example.neomocreatures.client.MoCWerewolfRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -129,6 +131,12 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCCrabRenderer.MOC_CRAB_LAYER, MoCCrabModel::createBodyLayer);
                 event.registerLayerDefinition(MoCCrocodileRenderer.MOC_CROCODILE_LAYER, MoCCrocodileModel::createBodyLayer);
                 event.registerLayerDefinition(MoCOgreRenderer.MOC_OGRE_LAYER, MoCOgreModel::createBodyLayer);
+                event.registerLayerDefinition(MoCWerewolfRenderer.MOC_WEREWOLF_LAYER, MoCWerewolfModel::createBodyLayer);
+                event.registerLayerDefinition(MoCWerewolfRenderer.MOC_WEREHUMAN_LAYER,
+                        () -> net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                                net.minecraft.client.model.HumanoidModel.createMesh(
+                                        net.minecraft.client.model.geom.builders.CubeDeformation.NONE, 0.0F),
+                                64, 32));
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -172,6 +180,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_GREEN_OGRE.get(), MoCOgreRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_FIRE_OGRE.get(), MoCOgreRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_CAVE_OGRE.get(), MoCOgreRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_WEREWOLF.get(), MoCWerewolfRenderer::new);
         });
                 
     }

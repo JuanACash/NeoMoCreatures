@@ -39,6 +39,7 @@ import com.example.neomocreatures.entity.MoCCrocodileEntity;
 import com.example.neomocreatures.entity.MoCGreenOgreEntity;
 import com.example.neomocreatures.entity.MoCFireOgreEntity;
 import com.example.neomocreatures.entity.MoCCaveOgreEntity;
+import com.example.neomocreatures.entity.MoCWerewolfEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -359,6 +360,13 @@ public class ModEntities {
                 .clientTrackingRange(12)
                 .build("moc_cave_ogre"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWerewolfEntity>> MOC_WEREWOLF =
+        ENTITY_TYPES.register("moc_werewolf", () -> EntityType.Builder
+                .of(MoCWerewolfEntity::new, MobCategory.MONSTER)
+                .sized(1.2F, 2.4F)
+                .clientTrackingRange(10)
+                .build("moc_werewolf"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -424,6 +432,7 @@ public class ModEntities {
                 event.put(MOC_GREEN_OGRE.get(), MoCGreenOgreEntity.createAttributes().build());
                 event.put(MOC_FIRE_OGRE.get(), MoCFireOgreEntity.createAttributes().build());
                 event.put(MOC_CAVE_OGRE.get(), MoCCaveOgreEntity.createAttributes().build());
+                event.put(MOC_WEREWOLF.get(), MoCWerewolfEntity.createAttributes().build());
         });
         }
         
@@ -872,6 +881,31 @@ public class ModEntities {
                         (type, level, reason, pos, random) ->
                                 level.getBlockState(pos.below()).canOcclude()
                                         && pos.getY() <= 40 && !level.canSeeSky(pos),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerWerewolfSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_WEREWOLF.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                if (!level.getBlockState(pos.below()).canOcclude()) {
+                                        return false;
+                                }
+                                // Nether spawns ignore light level entirely, like the Fire Ogre.
+                                if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
+                                        return true;
+                                }
+                                return net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerWerewolfNetherSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_WEREWOLF.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }
