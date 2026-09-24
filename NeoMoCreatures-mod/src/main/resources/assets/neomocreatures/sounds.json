@@ -389,5 +389,23 @@
   "records.shuffling": {
     "sounds": ["neomocreatures:records/shuffling"],
     "subtitle": "record.neomocreatures.shuffling"
+  },
+
+  "moc_ogre.ambient": {
+    "sounds": [
+      "neomocreatures:moc_ogre/ogre_grunt1",
+      "neomocreatures:moc_ogre/ogre_grunt2",
+      "neomocreatures:moc_ogre/ogre_grunt3"
+    ]
+  },
+  "moc_ogre.hurt": {
+    "sounds": [
+      "neomocreatures:moc_ogre/ogre_hurt"
+    ]
+  },
+  "moc_ogre.death": {
+    "sounds": [
+      "neomocreatures:moc_ogre/ogre_dying"
+    ]
   }
 }

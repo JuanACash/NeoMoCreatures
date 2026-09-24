@@ -66,6 +66,8 @@ import com.example.neomocreatures.client.MoCCrabModel;
 import com.example.neomocreatures.client.MoCCrabRenderer;
 import com.example.neomocreatures.client.MoCCrocodileModel;
 import com.example.neomocreatures.client.MoCCrocodileRenderer;
+import com.example.neomocreatures.client.MoCOgreModel;
+import com.example.neomocreatures.client.MoCOgreRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -126,6 +128,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCJellyfishRenderer.MOC_JELLYFISH_LAYER, MoCJellyfishModel::createBodyLayer);
                 event.registerLayerDefinition(MoCCrabRenderer.MOC_CRAB_LAYER, MoCCrabModel::createBodyLayer);
                 event.registerLayerDefinition(MoCCrocodileRenderer.MOC_CROCODILE_LAYER, MoCCrocodileModel::createBodyLayer);
+                event.registerLayerDefinition(MoCOgreRenderer.MOC_OGRE_LAYER, MoCOgreModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -166,6 +169,9 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_JELLYFISH.get(), MoCJellyfishRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_CRAB.get(), MoCCrabRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_CROCODILE.get(), MoCCrocodileRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_GREEN_OGRE.get(), MoCOgreRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FIRE_OGRE.get(), MoCOgreRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_CAVE_OGRE.get(), MoCOgreRenderer::new);
         });
                 
     }

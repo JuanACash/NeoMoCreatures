@@ -94,7 +94,9 @@
   "item.neomocreatures.jellyfish_spawn_egg": "Jellyfish Spawn Egg",
   "item.neomocreatures.crab_spawn_egg": "Crab Spawn Egg",
   "item.neomocreatures.crocodile_spawn_egg": "Crocodile Spawn Egg",
-  
+  "item.neomocreatures.green_ogre_spawn_egg": "Green Ogre Spawn Egg",
+  "item.neomocreatures.fire_ogre_spawn_egg": "Fire Ogre Spawn Egg",
+  "item.neomocreatures.cave_ogre_spawn_egg": "Cave Ogre Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -340,6 +342,9 @@
   "entity.neomocreatures.moc_jellyfish": "Jellyfish",
   "entity.neomocreatures.moc_crab": "Crab",
   "entity.neomocreatures.moc_crocodile": "Crocodile",
+  "entity.neomocreatures.moc_green_ogre": "Green Ogre",
+  "entity.neomocreatures.moc_fire_ogre": "Fire Ogre",
+  "entity.neomocreatures.moc_cave_ogre": "Cave Ogre",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

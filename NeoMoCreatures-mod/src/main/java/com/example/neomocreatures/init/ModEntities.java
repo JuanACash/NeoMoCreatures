@@ -36,6 +36,9 @@ import com.example.neomocreatures.entity.MoCSmallFishEntity;
 import com.example.neomocreatures.entity.MoCJellyfishEntity;
 import com.example.neomocreatures.entity.MoCCrabEntity;
 import com.example.neomocreatures.entity.MoCCrocodileEntity;
+import com.example.neomocreatures.entity.MoCGreenOgreEntity;
+import com.example.neomocreatures.entity.MoCFireOgreEntity;
+import com.example.neomocreatures.entity.MoCCaveOgreEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -332,6 +335,30 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_crocodile"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCGreenOgreEntity>> MOC_GREEN_OGRE =
+        ENTITY_TYPES.register("moc_green_ogre", () -> EntityType.Builder
+                .of(MoCGreenOgreEntity::new, MobCategory.MONSTER)
+                .sized(1.8F, 3.05F)
+                .eyeHeight(2.7755F)
+                .clientTrackingRange(12)
+                .build("moc_green_ogre"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFireOgreEntity>> MOC_FIRE_OGRE =
+        ENTITY_TYPES.register("moc_fire_ogre", () -> EntityType.Builder
+                .of(MoCFireOgreEntity::new, MobCategory.MONSTER)
+                .sized(1.8F, 3.05F)
+                .eyeHeight(2.7755F)
+                .clientTrackingRange(12)
+                .build("moc_fire_ogre"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCCaveOgreEntity>> MOC_CAVE_OGRE =
+        ENTITY_TYPES.register("moc_cave_ogre", () -> EntityType.Builder
+                .of(MoCCaveOgreEntity::new, MobCategory.MONSTER)
+                .sized(1.8F, 3.05F)
+                .eyeHeight(2.7755F)
+                .clientTrackingRange(12)
+                .build("moc_cave_ogre"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -394,6 +421,9 @@ public class ModEntities {
                 event.put(MOC_JELLYFISH.get(), MoCJellyfishEntity.createAttributes().build());
                 event.put(MOC_CRAB.get(), MoCCrabEntity.createAttributes().build());
                 event.put(MOC_CROCODILE.get(), MoCCrocodileEntity.createAttributes().build());
+                event.put(MOC_GREEN_OGRE.get(), MoCGreenOgreEntity.createAttributes().build());
+                event.put(MOC_FIRE_OGRE.get(), MoCFireOgreEntity.createAttributes().build());
+                event.put(MOC_CAVE_OGRE.get(), MoCCaveOgreEntity.createAttributes().build());
         });
         }
         
@@ -799,6 +829,49 @@ public class ModEntities {
                                         && level.getBlockState(pos).isPathfindable(net.minecraft.world.level.pathfinder.PathComputationType.LAND);
                                 return inWater || onGround;
                         },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerGreenOgreSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                // Wiki: surface at night like a zombie, but also in caves — the same darkness check
+                // already covers both, since it doesn't care whether the darkness comes from being
+                // underground or from nighttime on the surface.
+                event.register(MOC_GREEN_OGRE.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerFireOgreSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_FIRE_OGRE.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                if (!level.getBlockState(pos.below()).canOcclude()) {
+                                return false;
+                                }
+                                if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
+                                // Wiki: "can be found at any light level" in the Nether.
+                                return true;
+                                }
+                                // Wiki: only a 25% chance to spawn in the Overworld at all.
+                                return random.nextFloat() < 0.25F
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random);
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerCaveOgreSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                // Same rule as the Cave Scorpion: genuinely underground, no light restriction.
+                event.register(MOC_CAVE_OGRE.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && pos.getY() <= 40 && !level.canSeeSky(pos),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

@@ -327,6 +327,9 @@ public class NeoMoCreatures {
                     output.accept(ModItems.CRAB_SPAWN_EGG.get());
                     output.accept(ModItems.MANTICORE_SPAWN_EGG.get());
                     output.accept(ModItems.SCORPION_SPAWN_EGG.get());
+                    output.accept(ModItems.GREEN_OGRE_SPAWN_EGG.get());
+                    output.accept(ModItems.FIRE_OGRE_SPAWN_EGG.get());
+                    output.accept(ModItems.CAVE_OGRE_SPAWN_EGG.get());
 
                 }).build());
 
@@ -390,6 +393,9 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerJellyfishSpawnPlacements);
         modEventBus.addListener(ModEntities::registerCrabSpawnPlacements);
         modEventBus.addListener(ModEntities::registerCrocodileSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerGreenOgreSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerFireOgreSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerCaveOgreSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

@@ -164,6 +164,15 @@ public class ModItems {
         public static final DeferredItem<Item> CROCODILE_SPAWN_EGG = ITEMS.register("crocodile_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_CROCODILE, 0x4A5D23, 0xD4C896, new Item.Properties()));
+        public static final DeferredItem<Item> GREEN_OGRE_SPAWN_EGG = ITEMS.register("green_ogre_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_GREEN_OGRE, 0x18874D, 0x1F0565, new Item.Properties()));
+        public static final DeferredItem<Item> FIRE_OGRE_SPAWN_EGG = ITEMS.register("fire_ogre_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_FIRE_OGRE, 0x690400, 0xFAB400, new Item.Properties()));
+        public static final DeferredItem<Item> CAVE_OGRE_SPAWN_EGG = ITEMS.register("cave_ogre_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_CAVE_OGRE, 0x4D81B8, 0xBFFAFF, new Item.Properties()));
 
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());

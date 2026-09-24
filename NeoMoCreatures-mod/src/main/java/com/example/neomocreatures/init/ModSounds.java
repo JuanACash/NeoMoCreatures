@@ -160,6 +160,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_RESTING = register("moc_crocodile.resting");
     public static final DeferredHolder<SoundEvent, SoundEvent> CROCODILE_ROLL = register("moc_crocodile.roll");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_AMBIENT = register("moc_ogre.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_HURT = register("moc_ogre.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_DEATH = register("moc_ogre.death");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));
