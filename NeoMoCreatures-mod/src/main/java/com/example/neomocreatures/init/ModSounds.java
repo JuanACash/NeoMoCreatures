@@ -173,6 +173,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> WEREHUMAN_DEATH = register("moc_werewolf.werehuman_death");
     public static final DeferredHolder<SoundEvent, SoundEvent> WEREHUMAN_TRANSFORM = register("moc_werewolf.werehuman_transform");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> WILD_WOLF_AMBIENT = register("moc_wild_wolf.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WILD_WOLF_HURT = register("moc_wild_wolf.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WILD_WOLF_DEATH = register("moc_wild_wolf.death");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

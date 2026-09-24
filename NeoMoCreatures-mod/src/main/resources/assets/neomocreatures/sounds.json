@@ -454,5 +454,23 @@
       "neomocreatures:moc_werewolf/werewolf_transform_legacy2",
       "neomocreatures:moc_werewolf/werewolf_transform_legacy3"
     ]
+  },
+    "moc_wild_wolf.ambient": {
+    "sounds": [
+      "neomocreatures:moc_wild_wolf/wild_wolf_grunt1",
+      "neomocreatures:moc_wild_wolf/wild_wolf_grunt2",
+      "neomocreatures:moc_wild_wolf/wild_wolf_grunt3"
+    ]
+  },
+  "moc_wild_wolf.hurt": {
+    "sounds": [
+      "neomocreatures:moc_wild_wolf/wild_wolf_hurt1",
+      "neomocreatures:moc_wild_wolf/wild_wolf_hurt2"
+    ]
+  },
+  "moc_wild_wolf.death": {
+    "sounds": [
+      "neomocreatures:moc_wild_wolf/wild_wolf_death"
+    ]
   }
 }

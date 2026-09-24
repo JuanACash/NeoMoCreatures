@@ -40,6 +40,7 @@ import com.example.neomocreatures.entity.MoCGreenOgreEntity;
 import com.example.neomocreatures.entity.MoCFireOgreEntity;
 import com.example.neomocreatures.entity.MoCCaveOgreEntity;
 import com.example.neomocreatures.entity.MoCWerewolfEntity;
+import com.example.neomocreatures.entity.MoCWildWolfEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -367,6 +368,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_werewolf"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWildWolfEntity>> MOC_WILD_WOLF =
+        ENTITY_TYPES.register("moc_wild_wolf", () -> EntityType.Builder
+                .of(MoCWildWolfEntity::new, MobCategory.MONSTER)
+                .sized(0.8F, 0.8F)
+                .clientTrackingRange(10)
+                .build("moc_wild_wolf"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -433,6 +441,7 @@ public class ModEntities {
                 event.put(MOC_FIRE_OGRE.get(), MoCFireOgreEntity.createAttributes().build());
                 event.put(MOC_CAVE_OGRE.get(), MoCCaveOgreEntity.createAttributes().build());
                 event.put(MOC_WEREWOLF.get(), MoCWerewolfEntity.createAttributes().build());
+                event.put(MOC_WILD_WOLF.get(), MoCWildWolfEntity.createAttributes().build());
         });
         }
         
@@ -906,6 +915,16 @@ public class ModEntities {
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+        
+        public static void registerWildWolfSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_WILD_WOLF.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }
