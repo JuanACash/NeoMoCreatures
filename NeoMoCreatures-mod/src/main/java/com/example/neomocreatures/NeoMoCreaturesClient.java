@@ -72,6 +72,8 @@ import com.example.neomocreatures.client.MoCWerewolfModel;
 import com.example.neomocreatures.client.MoCWerewolfRenderer;
 import com.example.neomocreatures.client.MoCWildWolfModel;
 import com.example.neomocreatures.client.MoCWildWolfRenderer;
+import com.example.neomocreatures.client.MoCBoarModel;
+import com.example.neomocreatures.client.MoCBoarRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -140,6 +142,7 @@ public class NeoMoCreaturesClient {
                                         net.minecraft.client.model.geom.builders.CubeDeformation.NONE, 0.0F),
                                 64, 32));
                 event.registerLayerDefinition(MoCWildWolfRenderer.MOC_WILD_WOLF_LAYER, MoCWildWolfModel::createBodyLayer);
+                event.registerLayerDefinition(MoCBoarRenderer.MOC_BOAR_LAYER, MoCBoarModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -185,6 +188,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_CAVE_OGRE.get(), MoCOgreRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_WEREWOLF.get(), MoCWerewolfRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_WILD_WOLF.get(), MoCWildWolfRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BOAR.get(), MoCBoarRenderer::new);
         });
                 
     }
