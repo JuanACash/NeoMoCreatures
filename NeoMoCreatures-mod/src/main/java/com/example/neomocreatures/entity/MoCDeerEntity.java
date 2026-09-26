@@ -33,6 +33,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityDeer}. Passive: never fights back, only
@@ -103,6 +105,28 @@ public class MoCDeerEntity extends TamableAnimal {
 
     private int getMocAge() {
         return this.entityData.get(DATA_MOC_AGE);
+    }
+
+
+    private static final String TAG_VARIANT = "DeerVariant";
+    private static final String TAG_MOC_AGE = "MocAge";
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt(TAG_VARIANT, this.getVariant().getId());
+        tag.putInt(TAG_MOC_AGE, this.getMocAge());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains(TAG_VARIANT, Tag.TAG_INT)) {
+            this.entityData.set(DATA_VARIANT, tag.getInt(TAG_VARIANT));
+        }
+        if (tag.contains(TAG_MOC_AGE, Tag.TAG_INT)) {
+            this.entityData.set(DATA_MOC_AGE, tag.getInt(TAG_MOC_AGE));
+        }
     }
 
     @Override
