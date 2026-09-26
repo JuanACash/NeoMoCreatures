@@ -409,6 +409,18 @@
     ]
   },
 
+  "moc_deer.ambient": {
+    "sounds": [ "neomocreatures:moc_deer/deer_grunt" ]
+  },
+  "moc_deer.ambient_baby": {
+    "sounds": [ "neomocreatures:moc_deer/deer_fawn_grunt" ]
+  },
+  "moc_deer.hurt": {
+    "sounds": [ "neomocreatures:moc_deer/deer_hurt" ]
+  },
+  "moc_deer.death": {
+    "sounds": [ "neomocreatures:moc_deer/deer_dying" ]
+  },
     "moc_werewolf.ambient": {
     "sounds": [
       "neomocreatures:moc_werewolf/werewolf_grunt1",

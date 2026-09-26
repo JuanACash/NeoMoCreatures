@@ -100,6 +100,7 @@
   "item.neomocreatures.werewolf_spawn_egg": "Werewolf Spawn Egg",
   "item.neomocreatures.wild_wolf_spawn_egg": "Wild Wolf Spawn Egg",
   "item.neomocreatures.boar_spawn_egg": "Boar Spawn Egg",
+  "item.neomocreatures.deer_spawn_egg": "Deer Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -351,6 +352,7 @@
   "entity.neomocreatures.moc_werewolf": "Werewolf",
   "entity.neomocreatures.moc_wild_wolf": "Wild Wolf",
   "entity.neomocreatures.moc_boar": "Boar",
+  "entity.neomocreatures.moc_deer": "Deer",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

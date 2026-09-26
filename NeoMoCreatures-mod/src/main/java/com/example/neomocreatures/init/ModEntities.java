@@ -42,6 +42,7 @@ import com.example.neomocreatures.entity.MoCCaveOgreEntity;
 import com.example.neomocreatures.entity.MoCWerewolfEntity;
 import com.example.neomocreatures.entity.MoCWildWolfEntity;
 import com.example.neomocreatures.entity.MoCBoarEntity;
+import com.example.neomocreatures.entity.MoCDeerEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -383,6 +384,14 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_boar"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCDeerEntity>> MOC_DEER =
+        ENTITY_TYPES.register("moc_deer", () -> EntityType.Builder
+                .of(MoCDeerEntity::new, MobCategory.CREATURE)
+                .sized(0.9F, 1.425F)
+                .clientTrackingRange(10)
+                .build("moc_deer"));
+
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -452,6 +461,7 @@ public class ModEntities {
                 event.put(MOC_WEREWOLF.get(), MoCWerewolfEntity.createAttributes().build());
                 event.put(MOC_WILD_WOLF.get(), MoCWildWolfEntity.createAttributes().build());
                 event.put(MOC_BOAR.get(), MoCBoarEntity.createAttributes().build());
+                event.put(MOC_DEER.get(), MoCDeerEntity.createAttributes().build());
         });
         }
         
@@ -940,6 +950,14 @@ public class ModEntities {
         
         public static void registerBoarSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_BOAR.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerDeerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_DEER.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
