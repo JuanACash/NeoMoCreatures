@@ -190,6 +190,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HELL_RAT_HURT = register("moc_hell_rat.hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> HELL_RAT_DEATH = register("moc_hell_rat.death");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOUSE_AMBIENT = register("moc_mouse.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOUSE_HURT = register("moc_mouse.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOUSE_DEATH = register("moc_mouse.death");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

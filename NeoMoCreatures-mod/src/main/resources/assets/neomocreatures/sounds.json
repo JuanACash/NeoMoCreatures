@@ -458,6 +458,26 @@
     "sounds": [
       "neomocreatures:moc_hell_rat/hell_rat_dying"
     ]
+  },
+  "moc_mouse.ambient": {
+    "sounds": [
+      "neomocreatures:moc_mouse/mice_grunt1",
+      "neomocreatures:moc_mouse/mice_grunt2",
+      "neomocreatures:moc_mouse/mice_grunt3"
+    ]
+  },
+  "moc_mouse.hurt": {
+    "sounds": [
+      "neomocreatures:moc_mouse/mice_hurt1",
+      "neomocreatures:moc_mouse/mice_hurt2",
+      "neomocreatures:moc_mouse/mice_hurt3"
+    ]
+  },
+  "moc_mouse.death": {
+    "sounds": [
+      "neomocreatures:moc_mouse/mice_dying1",
+      "neomocreatures:moc_mouse/mice_dying2"
+    ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [

@@ -45,6 +45,7 @@ import com.example.neomocreatures.entity.MoCBoarEntity;
 import com.example.neomocreatures.entity.MoCDeerEntity;
 import com.example.neomocreatures.entity.MoCRatEntity;
 import com.example.neomocreatures.entity.MoCHellRatEntity;
+import com.example.neomocreatures.entity.MoCMouseEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -407,6 +408,13 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_hell_rat"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCMouseEntity>> MOC_MOUSE =
+        ENTITY_TYPES.register("moc_mouse", () -> EntityType.Builder
+                .of(MoCMouseEntity::new, MobCategory.CREATURE)
+                .sized(0.45F, 0.3F)
+                .clientTrackingRange(6)
+                .build("moc_mouse"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -479,6 +487,7 @@ public class ModEntities {
                 event.put(MOC_DEER.get(), MoCDeerEntity.createAttributes().build());
                 event.put(MOC_RAT.get(), MoCRatEntity.createAttributes().build());
                 event.put(MOC_HELL_RAT.get(), MoCHellRatEntity.createAttributes().build());
+                event.put(MOC_MOUSE.get(), MoCMouseEntity.createAttributes().build());
         });
         }
         
@@ -993,6 +1002,14 @@ public class ModEntities {
 
         public static void registerHellRatSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_HELL_RAT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerMouseSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_MOUSE.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
