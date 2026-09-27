@@ -440,6 +440,25 @@
       "neomocreatures:moc_rat/rat_dying"
     ]
   },
+  "moc_hell_rat.ambient": {
+    "sounds": [
+      "neomocreatures:moc_hell_rat/hell_rat_grunt1",
+      "neomocreatures:moc_hell_rat/hell_rat_grunt2",
+      "neomocreatures:moc_hell_rat/hell_rat_grunt3",
+      "neomocreatures:moc_hell_rat/hell_rat_grunt4"
+    ]
+  },
+  "moc_hell_rat.hurt": {
+    "sounds": [
+      "neomocreatures:moc_hell_rat/hell_rat_hurt1",
+      "neomocreatures:moc_hell_rat/hell_rat_hurt2"
+    ]
+  },
+  "moc_hell_rat.death": {
+    "sounds": [
+      "neomocreatures:moc_hell_rat/hell_rat_dying"
+    ]
+  }, 
   "moc_werewolf.ambient": {
     "sounds": [
       "neomocreatures:moc_werewolf/werewolf_grunt1",

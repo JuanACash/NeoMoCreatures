@@ -78,6 +78,7 @@ import com.example.neomocreatures.client.MoCDeerModel;
 import com.example.neomocreatures.client.MoCDeerRenderer;
 import com.example.neomocreatures.client.MoCRatModel;
 import com.example.neomocreatures.client.MoCRatRenderer;
+import com.example.neomocreatures.client.MoCHellRatRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -197,6 +198,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_BOAR.get(), MoCBoarRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_DEER.get(), MoCDeerRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_RAT.get(), MoCRatRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_HELL_RAT.get(), MoCHellRatRenderer::new);
         });
                 
     }
