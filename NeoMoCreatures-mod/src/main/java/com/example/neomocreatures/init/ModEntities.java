@@ -46,6 +46,7 @@ import com.example.neomocreatures.entity.MoCDeerEntity;
 import com.example.neomocreatures.entity.MoCRatEntity;
 import com.example.neomocreatures.entity.MoCHellRatEntity;
 import com.example.neomocreatures.entity.MoCMouseEntity;
+import com.example.neomocreatures.entity.MoCMoleEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -415,6 +416,13 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_mouse"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCMoleEntity>> MOC_MOLE =
+        ENTITY_TYPES.register("moc_mole", () -> EntityType.Builder
+                .of(MoCMoleEntity::new, MobCategory.CREATURE)
+                .sized(1.0F, 0.5F)
+                .clientTrackingRange(6)
+                .build("moc_mole"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -488,6 +496,7 @@ public class ModEntities {
                 event.put(MOC_RAT.get(), MoCRatEntity.createAttributes().build());
                 event.put(MOC_HELL_RAT.get(), MoCHellRatEntity.createAttributes().build());
                 event.put(MOC_MOUSE.get(), MoCMouseEntity.createAttributes().build());
+                event.put(MOC_MOLE.get(), MoCMoleEntity.createAttributes().build());
         });
         }
         
@@ -1010,6 +1019,14 @@ public class ModEntities {
 
         public static void registerMouseSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_MOUSE.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerMoleSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_MOLE.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
