@@ -47,7 +47,9 @@ import com.example.neomocreatures.entity.MoCRatEntity;
 import com.example.neomocreatures.entity.MoCHellRatEntity;
 import com.example.neomocreatures.entity.MoCMouseEntity;
 import com.example.neomocreatures.entity.MoCMoleEntity;
+import com.example.neomocreatures.entity.MoCDuckEntity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityType;
@@ -423,6 +425,13 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_mole"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCDuckEntity>> MOC_DUCK =
+        ENTITY_TYPES.register("moc_duck", () -> EntityType.Builder
+                .of(MoCDuckEntity::new, MobCategory.CREATURE)
+                .sized(0.4F, 0.7F)
+                .clientTrackingRange(6)
+                .build("moc_duck"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -497,6 +506,7 @@ public class ModEntities {
                 event.put(MOC_HELL_RAT.get(), MoCHellRatEntity.createAttributes().build());
                 event.put(MOC_MOUSE.get(), MoCMouseEntity.createAttributes().build());
                 event.put(MOC_MOLE.get(), MoCMoleEntity.createAttributes().build());
+                event.put(MOC_DUCK.get(), MoCDuckEntity.createAttributes().build());
         });
         }
         
@@ -1033,4 +1043,22 @@ public class ModEntities {
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 
+        public static void registerDuckSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_DUCK.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> {
+                                if (!level.getBlockState(pos.below()).canOcclude()) {
+                                        return false;
+                                }
+                                // "near water" — checks a small radius around the spawn point.
+                                for (BlockPos checkPos : BlockPos.betweenClosed(pos.offset(-5, -2, -5), pos.offset(5, 2, 5))) {
+                                        if (level.getFluidState(checkPos).is(net.minecraft.tags.FluidTags.WATER)) {
+                                                return true;
+                                        }
+                                }
+                                return false;
+                        },
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
 }

@@ -478,6 +478,19 @@
       "neomocreatures:moc_mouse/mice_dying1",
       "neomocreatures:moc_mouse/mice_dying2"
     ]
+  },
+  "moc_duck.ambient": {
+    "sounds": [
+      "neomocreatures:moc_duck/duck_quack1",
+      "neomocreatures:moc_duck/duck_quack2",
+      "neomocreatures:moc_duck/duck_quack3"
+    ]
+  },
+  "moc_duck.hurt": {
+    "sounds": [
+      "neomocreatures:moc_duck/duck_hurt1",
+      "neomocreatures:moc_duck/duck_hurt2"
+    ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [

@@ -83,6 +83,8 @@ import com.example.neomocreatures.client.MoCMouseModel;
 import com.example.neomocreatures.client.MoCMouseRenderer;
 import com.example.neomocreatures.client.MoCMoleModel;
 import com.example.neomocreatures.client.MoCMoleRenderer;
+import com.example.neomocreatures.client.MoCDuckModel;
+import com.example.neomocreatures.client.MoCDuckRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -156,6 +158,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCRatRenderer.MOC_RAT_LAYER, MoCRatModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMouseRenderer.MOC_MOUSE_LAYER, MoCMouseModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMoleRenderer.MOC_MOLE_LAYER, MoCMoleModel::createBodyLayer);
+                event.registerLayerDefinition(MoCDuckRenderer.MOC_DUCK_LAYER, MoCDuckModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -207,6 +210,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_HELL_RAT.get(), MoCHellRatRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_MOUSE.get(), MoCMouseRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_MOLE.get(), MoCMoleRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_DUCK.get(), MoCDuckRenderer::new);
         });
                 
     }

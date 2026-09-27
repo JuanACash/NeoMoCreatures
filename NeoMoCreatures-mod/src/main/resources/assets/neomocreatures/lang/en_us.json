@@ -105,6 +105,7 @@
   "item.neomocreatures.hellrat_spawn_egg": "Hellrat Spawn Egg",
   "item.neomocreatures.mouse_spawn_egg": "Mouse Spawn Egg",
   "item.neomocreatures.mole_spawn_egg": "Mole Spawn Egg",
+  "item.neomocreatures.duck_spawn_egg": "Duck Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -361,6 +362,7 @@
   "entity.neomocreatures.moc_hell_rat": "Hellrat",
   "entity.neomocreatures.moc_mouse": "Mouse",
   "entity.neomocreatures.moc_mole": "Mole",
+  "entity.neomocreatures.moc_duck": "Duck",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }
