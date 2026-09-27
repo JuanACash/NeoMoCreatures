@@ -421,7 +421,26 @@
   "moc_deer.death": {
     "sounds": [ "neomocreatures:moc_deer/deer_dying" ]
   },
-    "moc_werewolf.ambient": {
+  "moc_rat.ambient": {
+    "sounds": [
+      "neomocreatures:moc_rat/rat_grunt1",
+      "neomocreatures:moc_rat/rat_grunt2",
+      "neomocreatures:moc_rat/rat_grunt3",
+      "neomocreatures:moc_rat/rat_grunt4"
+    ]
+  },
+  "moc_rat.hurt": {
+    "sounds": [
+      "neomocreatures:moc_rat/rat_hurt1",
+      "neomocreatures:moc_rat/rat_hurt2"
+    ]
+  },
+  "moc_rat.death": {
+    "sounds": [
+      "neomocreatures:moc_rat/rat_dying"
+    ]
+  },
+  "moc_werewolf.ambient": {
     "sounds": [
       "neomocreatures:moc_werewolf/werewolf_grunt1",
       "neomocreatures:moc_werewolf/werewolf_grunt2",

@@ -43,6 +43,7 @@ import com.example.neomocreatures.entity.MoCWerewolfEntity;
 import com.example.neomocreatures.entity.MoCWildWolfEntity;
 import com.example.neomocreatures.entity.MoCBoarEntity;
 import com.example.neomocreatures.entity.MoCDeerEntity;
+import com.example.neomocreatures.entity.MoCRatEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
@@ -391,6 +392,12 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_deer"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCRatEntity>> MOC_RAT =
+        ENTITY_TYPES.register("moc_rat", () -> EntityType.Builder
+                .of(MoCRatEntity::new, MobCategory.MONSTER)
+                .sized(0.58F, 0.455F)
+                .clientTrackingRange(8)
+                .build("moc_rat"));  
 
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
@@ -462,6 +469,7 @@ public class ModEntities {
                 event.put(MOC_WILD_WOLF.get(), MoCWildWolfEntity.createAttributes().build());
                 event.put(MOC_BOAR.get(), MoCBoarEntity.createAttributes().build());
                 event.put(MOC_DEER.get(), MoCDeerEntity.createAttributes().build());
+                event.put(MOC_RAT.get(), MoCRatEntity.createAttributes().build());
         });
         }
         
@@ -961,6 +969,16 @@ public class ModEntities {
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerRatSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_RAT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 

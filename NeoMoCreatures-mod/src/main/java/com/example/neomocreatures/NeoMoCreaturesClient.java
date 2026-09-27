@@ -76,6 +76,8 @@ import com.example.neomocreatures.client.MoCBoarModel;
 import com.example.neomocreatures.client.MoCBoarRenderer;
 import com.example.neomocreatures.client.MoCDeerModel;
 import com.example.neomocreatures.client.MoCDeerRenderer;
+import com.example.neomocreatures.client.MoCRatModel;
+import com.example.neomocreatures.client.MoCRatRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -146,6 +148,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCWildWolfRenderer.MOC_WILD_WOLF_LAYER, MoCWildWolfModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBoarRenderer.MOC_BOAR_LAYER, MoCBoarModel::createBodyLayer);
                 event.registerLayerDefinition(MoCDeerRenderer.MOC_DEER_LAYER, MoCDeerModel::createBodyLayer);
+                event.registerLayerDefinition(MoCRatRenderer.MOC_RAT_LAYER, MoCRatModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -193,6 +196,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_WILD_WOLF.get(), MoCWildWolfRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BOAR.get(), MoCBoarRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_DEER.get(), MoCDeerRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_RAT.get(), MoCRatRenderer::new);
         });
                 
     }
