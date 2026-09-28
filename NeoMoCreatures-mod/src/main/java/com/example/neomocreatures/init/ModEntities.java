@@ -48,6 +48,17 @@ import com.example.neomocreatures.entity.MoCHellRatEntity;
 import com.example.neomocreatures.entity.MoCMouseEntity;
 import com.example.neomocreatures.entity.MoCMoleEntity;
 import com.example.neomocreatures.entity.MoCDuckEntity;
+import com.example.neomocreatures.entity.MoCBeeEntity;
+import com.example.neomocreatures.entity.MoCButterflyEntity;
+import com.example.neomocreatures.entity.MoCDragonflyEntity;
+import com.example.neomocreatures.entity.MoCFireflyEntity;
+import com.example.neomocreatures.entity.MoCFlyEntity;
+import com.example.neomocreatures.entity.MoCAntEntity;
+import com.example.neomocreatures.entity.MoCCricketEntity;
+import com.example.neomocreatures.entity.MoCGrasshopperEntity;
+import com.example.neomocreatures.entity.MoCMaggotEntity;
+import com.example.neomocreatures.entity.MoCRoachEntity;
+import com.example.neomocreatures.entity.MoCSnailEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -432,6 +443,93 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_duck"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFlyEntity>> MOC_FLY =
+        ENTITY_TYPES.register("moc_fly", () -> EntityType.Builder
+                .of(MoCFlyEntity::new, MobCategory.AMBIENT)
+                .sized(0.2F, 0.2F)
+                .eyeHeight(0.2F)
+                .clientTrackingRange(6)
+                .build("moc_fly"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCButterflyEntity>> MOC_BUTTERFLY =
+        ENTITY_TYPES.register("moc_butterfly", () -> EntityType.Builder
+                .of(MoCButterflyEntity::new, MobCategory.AMBIENT)
+                .sized(0.5F, 0.3F)
+                .eyeHeight(0.1F)
+                .clientTrackingRange(6)
+                .build("moc_butterfly"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCDragonflyEntity>> MOC_DRAGONFLY =
+        ENTITY_TYPES.register("moc_dragonfly", () -> EntityType.Builder
+                .of(MoCDragonflyEntity::new, MobCategory.AMBIENT)
+                .sized(0.5F, 0.3F)
+                .eyeHeight(0.2F)
+                .clientTrackingRange(6)
+                .build("moc_dragonfly"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFireflyEntity>> MOC_FIREFLY =
+        ENTITY_TYPES.register("moc_firefly", () -> EntityType.Builder
+                .of(MoCFireflyEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.3F)
+                .eyeHeight(0.15F)
+                .clientTrackingRange(6)
+                .build("moc_firefly"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCBeeEntity>> MOC_BEE =
+        ENTITY_TYPES.register("moc_bee", () -> EntityType.Builder
+                .of(MoCBeeEntity::new, MobCategory.AMBIENT)
+                .sized(0.4F, 0.3F)
+                .eyeHeight(0.2F)
+                .clientTrackingRange(6)
+                .build("moc_bee"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSnailEntity>> MOC_SNAIL =
+        ENTITY_TYPES.register("moc_snail", () -> EntityType.Builder
+                .of(MoCSnailEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.3F)
+                .clientTrackingRange(6)
+                .build("moc_snail"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCRoachEntity>> MOC_ROACH =
+        ENTITY_TYPES.register("moc_roach", () -> EntityType.Builder
+                .of(MoCRoachEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.3F)
+                .eyeHeight(0.1F)
+                .clientTrackingRange(6)
+                .build("moc_roach"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCAntEntity>> MOC_ANT =
+        ENTITY_TYPES.register("moc_ant", () -> EntityType.Builder
+                .of(MoCAntEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.2F)
+                .eyeHeight(0.1F)
+                .clientTrackingRange(6)
+                .build("moc_ant"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCMaggotEntity>> MOC_MAGGOT =
+        ENTITY_TYPES.register("moc_maggot", () -> EntityType.Builder
+                .of(MoCMaggotEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.3F)
+                .eyeHeight(0.135F)
+                .clientTrackingRange(6)
+                .build("moc_maggot"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCCricketEntity>> MOC_CRICKET =
+        ENTITY_TYPES.register("moc_cricket", () -> EntityType.Builder
+                .of(MoCCricketEntity::new, MobCategory.AMBIENT)
+                .sized(0.3F, 0.3F)
+                .eyeHeight(0.15F)
+                .clientTrackingRange(6)
+                .build("moc_cricket"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCGrasshopperEntity>> MOC_GRASSHOPPER =
+        ENTITY_TYPES.register("moc_grasshopper", () -> EntityType.Builder
+                .of(MoCGrasshopperEntity::new, MobCategory.AMBIENT)
+                .sized(0.4F, 0.3F)
+                .eyeHeight(0.15F)
+                .clientTrackingRange(6)
+                .build("moc_grasshopper"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -507,6 +605,17 @@ public class ModEntities {
                 event.put(MOC_MOUSE.get(), MoCMouseEntity.createAttributes().build());
                 event.put(MOC_MOLE.get(), MoCMoleEntity.createAttributes().build());
                 event.put(MOC_DUCK.get(), MoCDuckEntity.createAttributes().build());
+                event.put(MOC_FLY.get(), MoCFlyEntity.createAttributes().build());
+                event.put(MOC_BUTTERFLY.get(), MoCButterflyEntity.createAttributes().build());
+                event.put(MOC_DRAGONFLY.get(), MoCDragonflyEntity.createAttributes().build());
+                event.put(MOC_FIREFLY.get(), MoCFireflyEntity.createAttributes().build());
+                event.put(MOC_BEE.get(), MoCBeeEntity.createAttributes().build());
+                event.put(MOC_SNAIL.get(), MoCSnailEntity.createAttributes().build());
+                event.put(MOC_ROACH.get(), MoCRoachEntity.createAttributes().build());
+                event.put(MOC_ANT.get(), MoCAntEntity.createAttributes().build());
+                event.put(MOC_MAGGOT.get(), MoCMaggotEntity.createAttributes().build());
+                event.put(MOC_CRICKET.get(), MoCCricketEntity.createAttributes().build());
+                event.put(MOC_GRASSHOPPER.get(), MoCGrasshopperEntity.createAttributes().build());
         });
         }
         

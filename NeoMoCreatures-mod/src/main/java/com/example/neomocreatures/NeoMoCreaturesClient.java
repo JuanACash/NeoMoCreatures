@@ -85,6 +85,28 @@ import com.example.neomocreatures.client.MoCMoleModel;
 import com.example.neomocreatures.client.MoCMoleRenderer;
 import com.example.neomocreatures.client.MoCDuckModel;
 import com.example.neomocreatures.client.MoCDuckRenderer;
+import com.example.neomocreatures.client.MoCBeeModel;
+import com.example.neomocreatures.client.MoCBeeRenderer;
+import com.example.neomocreatures.client.MoCButterflyModel;
+import com.example.neomocreatures.client.MoCButterflyRenderer;
+import com.example.neomocreatures.client.MoCDragonflyModel;
+import com.example.neomocreatures.client.MoCDragonflyRenderer;
+import com.example.neomocreatures.client.MoCFireflyModel;
+import com.example.neomocreatures.client.MoCFireflyRenderer;
+import com.example.neomocreatures.client.MoCFlyModel;
+import com.example.neomocreatures.client.MoCFlyRenderer;
+import com.example.neomocreatures.client.MoCAntModel;
+import com.example.neomocreatures.client.MoCAntRenderer;
+import com.example.neomocreatures.client.MoCCricketModel;
+import com.example.neomocreatures.client.MoCCricketRenderer;
+import com.example.neomocreatures.client.MoCGrasshopperModel;
+import com.example.neomocreatures.client.MoCGrasshopperRenderer;
+import com.example.neomocreatures.client.MoCMaggotModel;
+import com.example.neomocreatures.client.MoCMaggotRenderer;
+import com.example.neomocreatures.client.MoCRoachModel;
+import com.example.neomocreatures.client.MoCRoachRenderer;
+import com.example.neomocreatures.client.MoCSnailModel;
+import com.example.neomocreatures.client.MoCSnailRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -159,6 +181,17 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCMouseRenderer.MOC_MOUSE_LAYER, MoCMouseModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMoleRenderer.MOC_MOLE_LAYER, MoCMoleModel::createBodyLayer);
                 event.registerLayerDefinition(MoCDuckRenderer.MOC_DUCK_LAYER, MoCDuckModel::createBodyLayer);
+                event.registerLayerDefinition(MoCFlyRenderer.LAYER, MoCFlyModel::createBodyLayer);
+                event.registerLayerDefinition(MoCButterflyRenderer.LAYER, MoCButterflyModel::createBodyLayer);
+                event.registerLayerDefinition(MoCDragonflyRenderer.LAYER, MoCDragonflyModel::createBodyLayer);
+                event.registerLayerDefinition(MoCFireflyRenderer.LAYER, MoCFireflyModel::createBodyLayer);
+                event.registerLayerDefinition(MoCBeeRenderer.LAYER, MoCBeeModel::createBodyLayer);
+                event.registerLayerDefinition(MoCSnailRenderer.LAYER, MoCSnailModel::createBodyLayer);
+                event.registerLayerDefinition(MoCRoachRenderer.LAYER, MoCRoachModel::createBodyLayer);
+                event.registerLayerDefinition(MoCAntRenderer.LAYER, MoCAntModel::createBodyLayer);
+                event.registerLayerDefinition(MoCMaggotRenderer.LAYER, MoCMaggotModel::createBodyLayer);
+                event.registerLayerDefinition(MoCCricketRenderer.LAYER, MoCCricketModel::createBodyLayer);
+                event.registerLayerDefinition(MoCGrasshopperRenderer.LAYER, MoCGrasshopperModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -211,6 +244,17 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_MOUSE.get(), MoCMouseRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_MOLE.get(), MoCMoleRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_DUCK.get(), MoCDuckRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FLY.get(), MoCFlyRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BUTTERFLY.get(), MoCButterflyRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_DRAGONFLY.get(), MoCDragonflyRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FIREFLY.get(), MoCFireflyRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BEE.get(), MoCBeeRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_SNAIL.get(), MoCSnailRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_ROACH.get(), MoCRoachRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_ANT.get(), MoCAntRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_MAGGOT.get(), MoCMaggotRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_CRICKET.get(), MoCCricketRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_GRASSHOPPER.get(), MoCGrasshopperRenderer::new);
         });
                 
     }

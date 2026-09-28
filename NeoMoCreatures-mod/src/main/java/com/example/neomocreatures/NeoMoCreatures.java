@@ -328,6 +328,17 @@ public class NeoMoCreatures {
                     output.accept(ModItems.JELLYFISH_SPAWN_EGG.get());
                     output.accept(ModItems.CRAB_SPAWN_EGG.get());
                     output.accept(ModItems.DUCK_SPAWN_EGG.get());
+                    output.accept(ModItems.FLY_SPAWN_EGG.get());
+                    output.accept(ModItems.BUTTERFLY_SPAWN_EGG.get());
+                    output.accept(ModItems.DRAGONFLY_SPAWN_EGG.get());
+                    output.accept(ModItems.FIREFLY_SPAWN_EGG.get());
+                    output.accept(ModItems.BEE_SPAWN_EGG.get());
+                    output.accept(ModItems.SNAIL_SPAWN_EGG.get());
+                    output.accept(ModItems.ROACH_SPAWN_EGG.get());
+                    output.accept(ModItems.ANT_SPAWN_EGG.get());
+                    output.accept(ModItems.MAGGOT_SPAWN_EGG.get());
+                    output.accept(ModItems.CRICKET_SPAWN_EGG.get());
+                    output.accept(ModItems.GRASSHOPPER_SPAWN_EGG.get());
                     output.accept(ModItems.MOLE_SPAWN_EGG.get());
                     output.accept(ModItems.MOUSE_SPAWN_EGG.get());
                     output.accept(ModItems.RAT_SPAWN_EGG.get());

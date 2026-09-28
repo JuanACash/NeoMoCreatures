@@ -197,6 +197,21 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> DUCK_AMBIENT = register("moc_duck.ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> DUCK_HURT = register("moc_duck.hurt");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLY_BUZZ = register("moc_fly.buzz");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLY_HURT = register("moc_fly.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DRAGONFLY_BUZZ = register("moc_dragonfly.buzz");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DRAGONFLY_HURT = register("moc_dragonfly.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRASSHOPPER_FLY = register("moc_grasshopper.fly");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRASSHOPPER_HURT = register("moc_grasshopper.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEE_BUZZ = register("moc_bee.buzz");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEE_HURT = register("moc_bee.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEE_UPSET = register("moc_bee.upset");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET_AMBIENT = register("moc_cricket.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET_CHIRP = register("moc_cricket.chirp");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET_HURT = register("moc_cricket.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRASSHOPPER_CHIRP = register("moc_grasshopper.chirp");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FIREFLY_AMBIENT = register("moc_firefly.ambient");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

@@ -200,6 +200,49 @@ public class ModItems {
         public static final DeferredItem<Item> DUCK_SPAWN_EGG = ITEMS.register("duck_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_DUCK, 0x303D09, 0xD5CCAD, new Item.Properties()));
+        public static final DeferredItem<Item> FLY_SPAWN_EGG = ITEMS.register("fly_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_FLY, 0x3A3F47, 0xA31F1F, new Item.Properties()));
+
+        public static final DeferredItem<Item> BUTTERFLY_SPAWN_EGG = ITEMS.register("butterfly_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_BUTTERFLY, 0xE8791C, 0x1E1410, new Item.Properties()));
+
+        public static final DeferredItem<Item> DRAGONFLY_SPAWN_EGG = ITEMS.register("dragonfly_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_DRAGONFLY, 0x1FA89A, 0x2A4FA0, new Item.Properties()));
+
+        public static final DeferredItem<Item> FIREFLY_SPAWN_EGG = ITEMS.register("firefly_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_FIREFLY, 0x2B2118, 0xD4E64A, new Item.Properties()));
+
+        public static final DeferredItem<Item> BEE_SPAWN_EGG = ITEMS.register("bee_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_BEE, 0xF0B31A, 0x2A1E0C, new Item.Properties()));
+
+        public static final DeferredItem<Item> SNAIL_SPAWN_EGG = ITEMS.register("snail_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_SNAIL, 0x8A5A30, 0xD8C8A0, new Item.Properties()));
+
+        public static final DeferredItem<Item> ROACH_SPAWN_EGG = ITEMS.register("roach_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_ROACH, 0x7A2E14, 0xC98A3F, new Item.Properties()));
+
+        public static final DeferredItem<Item> ANT_SPAWN_EGG = ITEMS.register("ant_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_ANT, 0x1C1C1C, 0x9A2B1A, new Item.Properties()));
+
+        public static final DeferredItem<Item> MAGGOT_SPAWN_EGG = ITEMS.register("maggot_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_MAGGOT, 0xE8E0B8, 0xB7A365, new Item.Properties()));
+
+        public static final DeferredItem<Item> CRICKET_SPAWN_EGG = ITEMS.register("cricket_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_CRICKET, 0x2A1B10, 0x86602F, new Item.Properties()));
+
+        public static final DeferredItem<Item> GRASSHOPPER_SPAWN_EGG = ITEMS.register("grasshopper_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_GRASSHOPPER, 0x7CB82F, 0x3F5A1B, new Item.Properties()));
 
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());

@@ -491,6 +491,60 @@
       "neomocreatures:moc_duck/duck_hurt1",
       "neomocreatures:moc_duck/duck_hurt2"
     ]
+  },
+  "moc_fly.buzz": {
+    "sounds": [ "neomocreatures:moc_fly/fly_buzz" ]
+  },
+  "moc_fly.hurt": {
+    "sounds": [ "neomocreatures:moc_fly/fly_hurt" ]
+  },
+  "moc_dragonfly.buzz": {
+    "sounds": [ "neomocreatures:moc_dragonfly/dragonfly_buzz" ]
+  },
+  "moc_dragonfly.hurt": {
+    "sounds": [ "neomocreatures:moc_dragonfly/dragonfly_hurt" ]
+  },
+  "moc_grasshopper.fly": {
+    "sounds": [ "neomocreatures:moc_grasshopper/grasshopper_fly" ]
+  },
+  "moc_grasshopper.hurt": {
+    "sounds": [ "neomocreatures:moc_grasshopper/grasshopper_hurt" ]
+  },
+  "moc_bee.buzz": {
+    "sounds": [
+      "neomocreatures:moc_bee/bee_buzz1",
+      "neomocreatures:moc_bee/bee_buzz2",
+      "neomocreatures:moc_bee/bee_buzz3"
+    ]
+  },
+  "moc_bee.hurt": {
+    "sounds": [ "neomocreatures:moc_bee/bee_hurt" ]
+  },
+  "moc_bee.upset": {
+    "sounds": [ "neomocreatures:moc_bee/bee_upset" ]
+  },
+  "moc_cricket.ambient": {
+    "sounds": [ "neomocreatures:moc_cricket/cricket_ambient" ]
+  },
+  "moc_cricket.chirp": {
+    "sounds": [
+      "neomocreatures:moc_cricket/cricket_chirp1",
+      "neomocreatures:moc_cricket/cricket_chirp2",
+      "neomocreatures:moc_cricket/cricket_chirp3"
+    ]
+  },
+  "moc_cricket.hurt": {
+    "sounds": [ "neomocreatures:moc_cricket/cricket_hurt" ]
+  },
+  "moc_grasshopper.chirp": {
+    "sounds": [
+      "neomocreatures:moc_grasshopper/grasshopper_chirp1",
+      "neomocreatures:moc_grasshopper/grasshopper_chirp2",
+      "neomocreatures:moc_grasshopper/grasshopper_chirp3"
+    ]
+  },
+  "moc_firefly.ambient": {
+    "sounds": [ "neomocreatures:moc_firefly/firefly" ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [
