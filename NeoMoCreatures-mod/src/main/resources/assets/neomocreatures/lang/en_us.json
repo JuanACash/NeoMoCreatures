@@ -117,6 +117,7 @@
   "item.neomocreatures.maggot_spawn_egg": "Maggot Spawn Egg",
   "item.neomocreatures.cricket_spawn_egg": "Cricket Spawn Egg",
   "item.neomocreatures.grasshopper_spawn_egg": "Grasshopper Spawn Egg",
+  "item.neomocreatures.silverskeleton_spawn_egg": "Silver Skeleton Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -385,6 +386,7 @@
   "entity.neomocreatures.moc_maggot": "Maggot",
   "entity.neomocreatures.moc_cricket": "Cricket",
   "entity.neomocreatures.moc_grasshopper": "Grasshopper",
+  "entity.neomocreatures.moc_silver_skeleton": "Silver Skeleton",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

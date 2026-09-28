@@ -59,6 +59,7 @@ import com.example.neomocreatures.entity.MoCGrasshopperEntity;
 import com.example.neomocreatures.entity.MoCMaggotEntity;
 import com.example.neomocreatures.entity.MoCRoachEntity;
 import com.example.neomocreatures.entity.MoCSnailEntity;
+import com.example.neomocreatures.entity.MoCSilverSkeletonEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -531,6 +532,13 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_grasshopper"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSilverSkeletonEntity>> MOC_SILVER_SKELETON =
+        ENTITY_TYPES.register("moc_silver_skeleton", () -> EntityType.Builder
+                .of(MoCSilverSkeletonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(8)
+                .build("moc_silver_skeleton"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -617,6 +625,7 @@ public class ModEntities {
                 event.put(MOC_MAGGOT.get(), MoCMaggotEntity.createAttributes().build());
                 event.put(MOC_CRICKET.get(), MoCCricketEntity.createAttributes().build());
                 event.put(MOC_GRASSHOPPER.get(), MoCGrasshopperEntity.createAttributes().build());
+                event.put(MOC_SILVER_SKELETON.get(), MoCSilverSkeletonEntity.createAttributes().build());
         });
         }
         
@@ -1197,5 +1206,15 @@ public class ModEntities {
                 registerInsectPlacement(event, MOC_CRICKET.get(), true);
                 registerInsectPlacement(event, MOC_ROACH.get(), true);
                 registerInsectPlacement(event, MOC_GRASSHOPPER.get(), true);
+        }
+
+        public static void registerSilverSkeletonSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_SILVER_SKELETON.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }
