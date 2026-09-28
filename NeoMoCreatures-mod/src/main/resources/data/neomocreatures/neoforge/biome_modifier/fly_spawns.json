@@ -1,0 +1,19 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:forest",
+    "minecraft:swamp",
+    "minecraft:meadow",
+    "minecraft:taiga",
+    "minecraft:desert"
+  ],
+  "spawners": [
+    {
+      "type": "neomocreatures:moc_fly",
+      "weight": 15,
+      "minCount": 1,
+      "maxCount": 4
+    }
+  ]
+}

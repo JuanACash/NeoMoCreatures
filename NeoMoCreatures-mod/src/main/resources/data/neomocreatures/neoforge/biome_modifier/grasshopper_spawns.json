@@ -1,0 +1,18 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:savanna",
+    "minecraft:meadow",
+    "minecraft:desert",
+    "minecraft:badlands"
+  ],
+  "spawners": [
+    {
+      "type": "neomocreatures:moc_grasshopper",
+      "weight": 15,
+      "minCount": 3,
+      "maxCount": 4
+    }
+  ]
+}

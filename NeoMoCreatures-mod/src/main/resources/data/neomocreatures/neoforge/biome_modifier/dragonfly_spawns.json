@@ -1,0 +1,17 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    "minecraft:river",
+    "minecraft:meadow"
+  ],
+  "spawners": [
+    {
+      "type": "neomocreatures:moc_dragonfly",
+      "weight": 15,
+      "minCount": 3,
+      "maxCount": 4
+    }
+  ]
+}

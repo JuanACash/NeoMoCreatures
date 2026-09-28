@@ -1,0 +1,18 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:meadow",
+    "minecraft:savanna",
+    "minecraft:forest",
+    "minecraft:taiga"
+  ],
+  "spawners": [
+    {
+      "type": "neomocreatures:moc_cricket",
+      "weight": 15,
+      "minCount": 2,
+      "maxCount": 2
+    }
+  ]
+}

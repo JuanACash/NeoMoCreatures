@@ -59,6 +59,7 @@ import com.example.neomocreatures.entity.MoCGrasshopperEntity;
 import com.example.neomocreatures.entity.MoCMaggotEntity;
 import com.example.neomocreatures.entity.MoCRoachEntity;
 import com.example.neomocreatures.entity.MoCSnailEntity;
+import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -1169,5 +1170,32 @@ public class ModEntities {
                                 return false;
                         },
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        /** Any solid block qualifies: sand, red sand, every terracotta, coarse dirt, gravel, podzol,
+         *  mycelium, moss... Wiki: light 9+ and 2 free blocks above (the maggot only needs 1). */
+        private static <T extends Mob> void registerInsectPlacement(RegisterSpawnPlacementsEvent event,
+                        EntityType<T> type, boolean needsTwoBlocksOfSpace) {
+                event.register(type,
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (t, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude()
+                                && level.getRawBrightness(pos, 0) > 8
+                                && (!needsTwoBlocksOfSpace || level.isEmptyBlock(pos.above())),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerInsectSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                registerInsectPlacement(event, MOC_FLY.get(), true);
+                registerInsectPlacement(event, MOC_BUTTERFLY.get(), true);
+                registerInsectPlacement(event, MOC_DRAGONFLY.get(), true);
+                registerInsectPlacement(event, MOC_FIREFLY.get(), true);
+                registerInsectPlacement(event, MOC_BEE.get(), true);
+                registerInsectPlacement(event, MOC_SNAIL.get(), true);
+                registerInsectPlacement(event, MOC_ANT.get(), true);
+                registerInsectPlacement(event, MOC_MAGGOT.get(), false);
+                registerInsectPlacement(event, MOC_CRICKET.get(), true);
+                registerInsectPlacement(event, MOC_ROACH.get(), true);
+                registerInsectPlacement(event, MOC_GRASSHOPPER.get(), true);
         }
 }

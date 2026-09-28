@@ -833,6 +833,24 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
         dropSaddleAndArmor();
         dropCombatLoot(level, recentlyHitByPlayer);
+
+        // Requested: an undead wyvern spawns maggots on death, same as the tamed undead horse.
+        if (this.getVariant() == com.example.neomocreatures.entity.wyvern.WyvernVariant.MOTHER_UNDEAD) {
+            spawnMaggotsOnDeath(level);
+        }
+    }
+
+    /** Spawns 1-3 maggots at the death location. */
+    private void spawnMaggotsOnDeath(ServerLevel level) {
+        int count = 1 + this.random.nextInt(3);
+        for (int i = 0; i < count; i++) {
+            com.example.neomocreatures.entity.MoCMaggotEntity maggot =
+                    com.example.neomocreatures.init.ModEntities.MOC_MAGGOT.get().create(level);
+            if (maggot != null) {
+                maggot.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
+                level.addFreshEntity(maggot);
+            }
+        }
     }
 
     /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */

@@ -2349,6 +2349,24 @@ public class MoCHorseEntity extends AbstractHorse {
         dropChestAndSaddleContents();
 
         dropCombatLoot(recentlyHitByPlayer);
+
+        // Requested: a tamed undead horse spawns maggots on death, same as the undead wyvern.
+        if (this.isTamed() && this.isUndead()) {
+            spawnMaggotsOnDeath(level);
+        }
+    }
+
+    /** Spawns 1-3 maggots at the death location. */
+    private void spawnMaggotsOnDeath(ServerLevel level) {
+        int count = 1 + this.random.nextInt(3);
+        for (int i = 0; i < count; i++) {
+            com.example.neomocreatures.entity.MoCMaggotEntity maggot =
+                    com.example.neomocreatures.init.ModEntities.MOC_MAGGOT.get().create(level);
+            if (maggot != null) {
+                maggot.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
+                level.addFreshEntity(maggot);
+            }
+        }
     }
 
     /** Drops the chest (if it has one) with all its contents, and the saddle. */

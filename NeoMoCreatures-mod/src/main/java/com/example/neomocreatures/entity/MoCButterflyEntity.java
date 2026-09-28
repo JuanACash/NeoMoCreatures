@@ -22,6 +22,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.tags.ItemTags;
+import java.util.Set;
 /**
  * Port of {@code MoCEntityButterfly}. Silent and drop-less. Ten variants rolled uniformly, the last
  * three being moths (bigger, and attracted to light like a fly).
@@ -76,12 +77,35 @@ public class MoCButterflyEntity extends MoCInsectEntity {
         }
     }
 
-    /** Original: selectType() - uniform 1-10. */
+    private static final Set<String> BUTTERFLY_BIOMES = Set.of(
+            "plains", "flower_forest", "meadow", "forest", "birch_forest", "old_growth_birch_forest", "jungle");
+    private static final Set<String> MOTH_BIOMES = Set.of(
+            "forest", "birch_forest", "taiga", "dark_forest", "swamp", "mangrove_swamp", "snowy_taiga", "grove");
+
+    /** Original: selectType() - uniform 1-10. A natural spawn is narrowed by biome to butterflies only
+     *  (1-7) or moths only (8-10) where only one kind lives; where both do, it stays uniform. */
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
-        this.entityData.set(DATA_VARIANT, this.random.nextInt(10) + 1);
+        this.entityData.set(DATA_VARIANT, this.rollVariantId(level, spawnType));
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+    }
+
+    private int rollVariantId(ServerLevelAccessor level, MobSpawnType spawnType) {
+        boolean natural = spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION;
+        if (natural) {
+            String biome = level.getBiome(this.blockPosition()).unwrapKey()
+                    .map(key -> key.location().getPath()).orElse("");
+            boolean butterflies = BUTTERFLY_BIOMES.contains(biome);
+            boolean moths = MOTH_BIOMES.contains(biome);
+            if (butterflies && !moths) {
+                return this.random.nextInt(7) + 1;
+            }
+            if (moths && !butterflies) {
+                return this.random.nextInt(3) + 8;
+            }
+        }
+        return this.random.nextInt(10) + 1;
     }
 
     @Override

@@ -23,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import java.util.Set;
 
 /**
  * Port of {@code MoCEntitySnail}, which also covers the slugs (variants 5 and 6). A snail pulls into
@@ -89,11 +90,20 @@ public class MoCSnailEntity extends MoCCrawlerEntity {
         }
     }
 
-    /** Original: selectType() - uniform 1-6, so a third of them are slugs. */
+    private static final Set<String> SLUG_BIOMES = Set.of("swamp", "mangrove_swamp", "forest");
+
+    /** Original: selectType() - uniform 1-6, so a third of them are slugs. A natural spawn outside the
+     *  slug biomes is narrowed to snails only (1-4). */
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
-        this.entityData.set(DATA_VARIANT, this.random.nextInt(6) + 1);
+        boolean natural = spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION;
+        String biome = level.getBiome(this.blockPosition()).unwrapKey()
+                .map(key -> key.location().getPath()).orElse("");
+        int variant = natural && !SLUG_BIOMES.contains(biome)
+                ? this.random.nextInt(4) + 1
+                : this.random.nextInt(6) + 1;
+        this.entityData.set(DATA_VARIANT, variant);
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
