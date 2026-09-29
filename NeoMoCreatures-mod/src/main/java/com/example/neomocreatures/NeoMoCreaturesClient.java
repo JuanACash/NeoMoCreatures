@@ -113,6 +113,9 @@ import com.example.neomocreatures.client.MoCWraithModel;
 import com.example.neomocreatures.client.MoCWraithRenderer;
 import com.example.neomocreatures.client.MoCEntModel;
 import com.example.neomocreatures.client.MoCEntRenderer;
+import com.example.neomocreatures.client.MoCMiniGolemModel;
+import com.example.neomocreatures.client.MoCMiniGolemRenderer;
+import com.example.neomocreatures.client.MoCThrowableRockRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -205,6 +208,7 @@ public class NeoMoCreaturesClient {
                                         net.minecraft.client.model.geom.builders.CubeDeformation.NONE, 0.0F),
                                 64, 40));
                 event.registerLayerDefinition(MoCEntRenderer.MOC_ENT_LAYER, MoCEntModel::createBodyLayer);
+                event.registerLayerDefinition(MoCMiniGolemRenderer.MOC_MINI_GOLEM_LAYER, MoCMiniGolemModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -272,6 +276,8 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_WRAITH.get(), MoCWraithRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_FLAME_WRAITH.get(), (MoCWraithRenderer::new));
                 event.registerEntityRenderer(ModEntities.MOC_ENT.get(), MoCEntRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_MINI_GOLEM.get(), MoCMiniGolemRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_THROWABLE_ROCK.get(), MoCThrowableRockRenderer::new);
         });
                 
     }

@@ -11,6 +11,6 @@
     ]
   },
   "spawners": [
-    { "type": "neomocreatures:moc_wild_wolf", "weight": 100, "minCount": 1, "maxCount": 4 }
+    { "type": "neomocreatures:moc_mini_golem", "weight": 95, "minCount": 1, "maxCount": 3 }
   ]
 }

@@ -354,6 +354,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.GREEN_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.FIRE_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.CAVE_OGRE_SPAWN_EGG.get());
+                    output.accept(ModItems.MINI_GOLEM_SPAWN_EGG.get());
 
                 }).build());
 
@@ -434,6 +435,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerWraithSpawnPlacements);
         modEventBus.addListener(ModEntities::registerFlameWraithSpawnPlacements);
         modEventBus.addListener(ModEntities::registerEntSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerMiniGolemSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

@@ -63,6 +63,8 @@ import com.example.neomocreatures.entity.MoCSilverSkeletonEntity;
 import com.example.neomocreatures.entity.MoCWraithEntity;
 import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import com.example.neomocreatures.entity.MoCEntEntity;
+import com.example.neomocreatures.entity.MoCMiniGolemEntity;
+import com.example.neomocreatures.entity.MoCThrowableRockEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -73,6 +75,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -564,6 +567,14 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_ent"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCMiniGolemEntity>> MOC_MINI_GOLEM =
+        ENTITY_TYPES.register("moc_mini_golem", () -> EntityType.Builder
+                .of(MoCMiniGolemEntity::new, MobCategory.MONSTER)
+                .sized(0.9F, 1.2F)
+                .eyeHeight(1.1F)
+                .clientTrackingRange(8)
+                .build("moc_mini_golem"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -587,6 +598,13 @@ public class ModEntities {
                 .clientTrackingRange(6)
                 .build("moc_litter_box"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCThrowableRockEntity>> MOC_THROWABLE_ROCK =
+        ENTITY_TYPES.register("moc_throwable_rock", () -> EntityType.Builder
+                .<MoCThrowableRockEntity>of(MoCThrowableRockEntity::new, MobCategory.MISC)
+                .sized(1.0F, 1.0F)
+                .clientTrackingRange(4)
+                .updateInterval(10)
+                .build("moc_throwable_rock"));
 
     public static void registerAttributes(IEventBus modEventBus) {
         modEventBus.addListener((EntityAttributeCreationEvent event) -> {
@@ -654,6 +672,7 @@ public class ModEntities {
                 event.put(MOC_WRAITH.get(), MoCWraithEntity.createAttributes().build());
                 event.put(MOC_FLAME_WRAITH.get(), MoCFlameWraithEntity.createAttributes().build());
                 event.put(MOC_ENT.get(), MoCEntEntity.createAttributes().build());
+                event.put(MOC_MINI_GOLEM.get(), MoCMiniGolemEntity.createAttributes().build());
         });
         }
         
@@ -1273,4 +1292,13 @@ public class ModEntities {
                                         && level.getRawBrightness(pos, 0) > 8,
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
+        
+        public static void registerMiniGolemSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_MINI_GOLEM.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        Monster::checkMonsterSpawnRules,
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
 }

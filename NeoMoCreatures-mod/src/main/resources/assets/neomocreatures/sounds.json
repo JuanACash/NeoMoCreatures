@@ -561,6 +561,21 @@
   },
   "moc_wraith.death": {
     "sounds": [ "neomocreatures:moc_wraith/wraith_dying" ]
+  },
+  "moc_golem.ambient": {
+    "sounds": [
+      "neomocreatures:moc_golem/golem_grunt1",
+      "neomocreatures:moc_golem/golem_grunt2"
+    ]
+  },
+  "moc_golem.hurt": {
+    "sounds": [ "neomocreatures:moc_golem/golem_hurt" ]
+  },
+  "moc_golem.death": {
+    "sounds": [ "neomocreatures:moc_golem/golem_dying" ]
+  },
+  "moc_golem.step": {
+    "sounds": [ "neomocreatures:moc_golem/golem_step" ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [

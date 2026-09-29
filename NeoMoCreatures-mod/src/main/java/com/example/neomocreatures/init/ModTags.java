@@ -4,6 +4,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Block;
 
 public class ModTags {
 
@@ -22,4 +24,11 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_HIDE = tag("repairs_hide_armor");
     public static final TagKey<Item> RAW_FISHES = tag("raw_fishes");
     public static final TagKey<Item> COOKED_FISHES = tag("cooked_fishes");
+
+    private static TagKey<Block> blockTag(String name) {
+        return BlockTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
+    }
+
+    /** Blocks no golem may tear out of the world, on top of the built-in safety rules in GolemBlockPicker. */
+    public static final TagKey<Block> GOLEM_CANNOT_LIFT = blockTag("golem_cannot_lift");
 }
