@@ -118,6 +118,8 @@
   "item.neomocreatures.cricket_spawn_egg": "Cricket Spawn Egg",
   "item.neomocreatures.grasshopper_spawn_egg": "Grasshopper Spawn Egg",
   "item.neomocreatures.silverskeleton_spawn_egg": "Silver Skeleton Spawn Egg",
+  "item.neomocreatures.wraith_spawn_egg": "Wraith Spawn Egg",
+  "item.neomocreatures.flamewraith_spawn_egg": "Flame Wraith Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -387,6 +389,8 @@
   "entity.neomocreatures.moc_cricket": "Cricket",
   "entity.neomocreatures.moc_grasshopper": "Grasshopper",
   "entity.neomocreatures.moc_silver_skeleton": "Silver Skeleton",
+  "entity.neomocreatures.moc_wraith": "Wraith",
+  "entity.neomocreatures.moc_flame_wraith": "Flame Wraith",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

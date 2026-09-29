@@ -60,6 +60,8 @@ import com.example.neomocreatures.entity.MoCMaggotEntity;
 import com.example.neomocreatures.entity.MoCRoachEntity;
 import com.example.neomocreatures.entity.MoCSnailEntity;
 import com.example.neomocreatures.entity.MoCSilverSkeletonEntity;
+import com.example.neomocreatures.entity.MoCWraithEntity;
+import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -539,6 +541,20 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_silver_skeleton"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCWraithEntity>> MOC_WRAITH =
+        ENTITY_TYPES.register("moc_wraith", () -> EntityType.Builder
+                .of(MoCWraithEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.3F)
+                .clientTrackingRange(8)
+                .build("moc_wraith"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFlameWraithEntity>> MOC_FLAME_WRAITH =
+        ENTITY_TYPES.register("moc_flame_wraith", () -> EntityType.Builder
+                .of(MoCFlameWraithEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.3F)
+                .clientTrackingRange(8)
+                .build("moc_flame_wraith"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -626,6 +642,8 @@ public class ModEntities {
                 event.put(MOC_CRICKET.get(), MoCCricketEntity.createAttributes().build());
                 event.put(MOC_GRASSHOPPER.get(), MoCGrasshopperEntity.createAttributes().build());
                 event.put(MOC_SILVER_SKELETON.get(), MoCSilverSkeletonEntity.createAttributes().build());
+                event.put(MOC_WRAITH.get(), MoCWraithEntity.createAttributes().build());
+                event.put(MOC_FLAME_WRAITH.get(), MoCFlameWraithEntity.createAttributes().build());
         });
         }
         
@@ -1215,6 +1233,24 @@ public class ModEntities {
                         (type, level, reason, pos, random) ->
                                 level.getBlockState(pos.below()).canOcclude()
                                         && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerWraithSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_WRAITH.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerFlameWraithSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_FLAME_WRAITH.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

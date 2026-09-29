@@ -212,6 +212,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GRASSHOPPER_CHIRP = register("moc_grasshopper.chirp");
     public static final DeferredHolder<SoundEvent, SoundEvent> FIREFLY_AMBIENT = register("moc_firefly.ambient");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_AMBIENT = register("moc_wraith.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_HURT = register("moc_wraith.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_DEATH = register("moc_wraith.death");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

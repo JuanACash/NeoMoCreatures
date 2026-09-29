@@ -545,6 +545,22 @@
   },
   "moc_firefly.ambient": {
     "sounds": [ "neomocreatures:moc_firefly/firefly" ]
+  },
+  "moc_wraith.ambient": {
+    "sounds": [
+      "neomocreatures:moc_wraith/wraith_haunt1",
+      "neomocreatures:moc_wraith/wraith_haunt2",
+      "neomocreatures:moc_wraith/wraith_haunt3"
+    ]
+  },
+  "moc_wraith.hurt": {
+    "sounds": [
+      "neomocreatures:moc_wraith/wraith_hurt1",
+      "neomocreatures:moc_wraith/wraith_hurt2"
+    ]
+  },
+  "moc_wraith.death": {
+    "sounds": [ "neomocreatures:moc_wraith/wraith_dying" ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [

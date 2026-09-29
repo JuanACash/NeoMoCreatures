@@ -109,6 +109,8 @@ import com.example.neomocreatures.client.MoCSnailModel;
 import com.example.neomocreatures.client.MoCSnailRenderer;
 import com.example.neomocreatures.client.MoCSilverSkeletonModel;
 import com.example.neomocreatures.client.MoCSilverSkeletonRenderer;
+import com.example.neomocreatures.client.MoCWraithModel;
+import com.example.neomocreatures.client.MoCWraithRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -195,6 +197,11 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCCricketRenderer.LAYER, MoCCricketModel::createBodyLayer);
                 event.registerLayerDefinition(MoCGrasshopperRenderer.LAYER, MoCGrasshopperModel::createBodyLayer);
                 event.registerLayerDefinition(MoCSilverSkeletonRenderer.MOC_SILVER_SKELETON_LAYER, MoCSilverSkeletonModel::createBodyLayer);
+                event.registerLayerDefinition(MoCWraithRenderer.MOC_WRAITH_LAYER,
+                        () -> net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                                net.minecraft.client.model.HumanoidModel.createMesh(
+                                        net.minecraft.client.model.geom.builders.CubeDeformation.NONE, 0.0F),
+                                64, 40));
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -259,6 +266,8 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_CRICKET.get(), MoCCricketRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_GRASSHOPPER.get(), MoCGrasshopperRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SILVER_SKELETON.get(), MoCSilverSkeletonRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_WRAITH.get(), MoCWraithRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FLAME_WRAITH.get(), (MoCWraithRenderer::new));
         });
                 
     }

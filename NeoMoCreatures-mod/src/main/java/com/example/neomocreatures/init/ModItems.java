@@ -236,7 +236,13 @@ public class ModItems {
         public static final DeferredItem<Item> SILVER_SKELETON_SPAWN_EGG = ITEMS.register("silverskeleton_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_SILVER_SKELETON, 0xD3D3D3, 0xEEEEEE, new Item.Properties()));
-
+        public static final DeferredItem<Item> WRAITH_SPAWN_EGG = ITEMS.register("wraith_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_WRAITH, 0x2A2F26, 0xB0B0B0, new Item.Properties()));
+        public static final DeferredItem<Item> FLAME_WRAITH_SPAWN_EGG = ITEMS.register("flamewraith_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_FLAME_WRAITH, 0x000000, 0xFF7E80, new Item.Properties()));
+                
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_DARKNESS = ITEMS.registerSimpleItem("heart_of_darkness", new Item.Properties());

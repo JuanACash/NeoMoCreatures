@@ -348,6 +348,8 @@ public class NeoMoCreatures {
                     output.accept(ModItems.WEREWOLF_SPAWN_EGG.get());
                     output.accept(ModItems.WILD_WOLF_SPAWN_EGG.get());
                     output.accept(ModItems.SILVER_SKELETON_SPAWN_EGG.get());
+                    output.accept(ModItems.WRAITH_SPAWN_EGG.get());
+                    output.accept(ModItems.FLAME_WRAITH_SPAWN_EGG.get());
                     output.accept(ModItems.GREEN_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.FIRE_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.CAVE_OGRE_SPAWN_EGG.get());
@@ -428,6 +430,8 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerDuckSpawnPlacements);
         modEventBus.addListener(ModEntities::registerInsectSpawnPlacements);
         modEventBus.addListener(ModEntities::registerSilverSkeletonSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerWraithSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerFlameWraithSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {
