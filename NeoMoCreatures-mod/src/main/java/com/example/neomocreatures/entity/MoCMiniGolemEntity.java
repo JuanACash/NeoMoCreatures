@@ -190,7 +190,6 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
 
     /** Original: attackWithTRock() — stands still holding it, then throws it at the target or drops it if out of range. */
     private void tickHeldRock() {
-        this.getNavigation().stop();
         if (++this.holdTicks < HOLD_TICKS_BEFORE_THROW) {
             return;
         }
@@ -358,6 +357,20 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
                 return false;
             }
             return super.canContinueToUse();
+        }
+
+        /** Original: attackWithTRock() clears its path every tick — it stands still, facing its target, while holding a rock. */
+        @Override
+        public void tick() {
+            if (this.golem.isHoldingRock()) {
+                this.golem.getNavigation().stop();
+                LivingEntity target = this.golem.getTarget();
+                if (target != null) {
+                    this.golem.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                }
+                return;
+            }
+            super.tick();
         }
     }
 
