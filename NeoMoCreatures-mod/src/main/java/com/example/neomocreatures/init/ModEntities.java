@@ -62,6 +62,7 @@ import com.example.neomocreatures.entity.MoCSnailEntity;
 import com.example.neomocreatures.entity.MoCSilverSkeletonEntity;
 import com.example.neomocreatures.entity.MoCWraithEntity;
 import com.example.neomocreatures.entity.MoCFlameWraithEntity;
+import com.example.neomocreatures.entity.MoCEntEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -554,6 +555,14 @@ public class ModEntities {
                 .sized(0.6F, 1.3F)
                 .clientTrackingRange(8)
                 .build("moc_flame_wraith"));
+                
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCEntEntity>> MOC_ENT =
+        ENTITY_TYPES.register("moc_ent", () -> EntityType.Builder
+                .of(MoCEntEntity::new, MobCategory.CREATURE)
+                .sized(1.4F, 7.0F)
+                .eyeHeight(5.11F)
+                .clientTrackingRange(10)
+                .build("moc_ent"));
 
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
@@ -644,6 +653,7 @@ public class ModEntities {
                 event.put(MOC_SILVER_SKELETON.get(), MoCSilverSkeletonEntity.createAttributes().build());
                 event.put(MOC_WRAITH.get(), MoCWraithEntity.createAttributes().build());
                 event.put(MOC_FLAME_WRAITH.get(), MoCFlameWraithEntity.createAttributes().build());
+                event.put(MOC_ENT.get(), MoCEntEntity.createAttributes().build());
         });
         }
         
@@ -1251,6 +1261,16 @@ public class ModEntities {
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> level.getBlockState(pos.below()).canOcclude(),
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerEntSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_ENT.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && level.getRawBrightness(pos, 0) > 8,
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 }

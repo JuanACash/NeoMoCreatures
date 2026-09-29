@@ -350,6 +350,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SILVER_SKELETON_SPAWN_EGG.get());
                     output.accept(ModItems.WRAITH_SPAWN_EGG.get());
                     output.accept(ModItems.FLAME_WRAITH_SPAWN_EGG.get());
+                    output.accept(ModItems.ENT_SPAWN_EGG.get());
                     output.accept(ModItems.GREEN_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.FIRE_OGRE_SPAWN_EGG.get());
                     output.accept(ModItems.CAVE_OGRE_SPAWN_EGG.get());
@@ -432,6 +433,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerSilverSkeletonSpawnPlacements);
         modEventBus.addListener(ModEntities::registerWraithSpawnPlacements);
         modEventBus.addListener(ModEntities::registerFlameWraithSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerEntSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

@@ -111,6 +111,8 @@ import com.example.neomocreatures.client.MoCSilverSkeletonModel;
 import com.example.neomocreatures.client.MoCSilverSkeletonRenderer;
 import com.example.neomocreatures.client.MoCWraithModel;
 import com.example.neomocreatures.client.MoCWraithRenderer;
+import com.example.neomocreatures.client.MoCEntModel;
+import com.example.neomocreatures.client.MoCEntRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -202,6 +204,7 @@ public class NeoMoCreaturesClient {
                                 net.minecraft.client.model.HumanoidModel.createMesh(
                                         net.minecraft.client.model.geom.builders.CubeDeformation.NONE, 0.0F),
                                 64, 40));
+                event.registerLayerDefinition(MoCEntRenderer.MOC_ENT_LAYER, MoCEntModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -268,6 +271,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_SILVER_SKELETON.get(), MoCSilverSkeletonRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_WRAITH.get(), MoCWraithRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_FLAME_WRAITH.get(), (MoCWraithRenderer::new));
+                event.registerEntityRenderer(ModEntities.MOC_ENT.get(), MoCEntRenderer::new);
         });
                 
     }

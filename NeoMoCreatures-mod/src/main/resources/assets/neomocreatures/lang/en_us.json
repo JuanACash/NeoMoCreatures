@@ -120,6 +120,7 @@
   "item.neomocreatures.silverskeleton_spawn_egg": "Silver Skeleton Spawn Egg",
   "item.neomocreatures.wraith_spawn_egg": "Wraith Spawn Egg",
   "item.neomocreatures.flamewraith_spawn_egg": "Flame Wraith Spawn Egg",
+  "item.neomocreatures.ent_spawn_egg": "Ent Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -391,6 +392,7 @@
   "entity.neomocreatures.moc_silver_skeleton": "Silver Skeleton",
   "entity.neomocreatures.moc_wraith": "Wraith",
   "entity.neomocreatures.moc_flame_wraith": "Flame Wraith",
+  "entity.neomocreatures.moc_ent": "Ent",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

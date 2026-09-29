@@ -242,6 +242,10 @@ public class ModItems {
         public static final DeferredItem<Item> FLAME_WRAITH_SPAWN_EGG = ITEMS.register("flamewraith_spawn_egg",
         () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
                 com.example.neomocreatures.init.ModEntities.MOC_FLAME_WRAITH, 0x000000, 0xFF7E80, new Item.Properties()));
+        public static final DeferredItem<Item> ENT_SPAWN_EGG = ITEMS.register("ent_spawn_egg",
+        () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(
+                com.example.neomocreatures.init.ModEntities.MOC_ENT, 0x957546, 0x58823D, new Item.Properties()));
+
                 
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
