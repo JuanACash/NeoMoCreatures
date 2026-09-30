@@ -37,6 +37,8 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.level.LevelAccessor;
 
 public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, net.minecraft.world.entity.PlayerRideableJumping,
         net.minecraft.world.entity.monster.Enemy {
@@ -140,6 +142,28 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.ATTACK_DAMAGE, 3.0D)
                 .add(Attributes.SCALE, 1.0D);
+    }
+
+    /**
+     * Animal's own spawn check only accepts grass, or spots bright enough to walk on — which is why wild
+     * scorpions never spawned at night on sand (deserts) or stone. Its darkness and ground rules already
+     * live in its spawn placement (ModEntities), so nothing else is needed here.
+     */
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        return true;
+    }
+
+    /** Animal never despawns; a wild scorpion should, like any other monster, once no player is near. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isTame() && !this.isPersistenceRequired();
+    }
+
+    /** Wild ones vanish on Peaceful like other monsters; tamed ones stay. */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return !this.isTame();
     }
 
     @Override

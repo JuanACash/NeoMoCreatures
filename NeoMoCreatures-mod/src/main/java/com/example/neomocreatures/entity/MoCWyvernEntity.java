@@ -121,7 +121,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         }
         setTier(tier);
         boolean isMotherTier = tier == WyvernTier.MOTHER || tier == WyvernTier.MOTHER_TAMED;
-        setVariant(isMotherTier ? WyvernVariant.MOTHER : WyvernVariant.randomWild(this.random));
+        // Only the server rolls the wild variant: a client-side roll could stick whenever the server's
+        // pick equals the synced default (SUN), since default values aren't sent to clients.
+        if (isMotherTier) {
+            setVariant(WyvernVariant.MOTHER);
+        } else if (!level.isClientSide) {
+            setVariant(WyvernVariant.randomWild(this.random));
+        }
 
         // 50/50 ground or air at spawn — only actually lands if there's solid
         // ground right below it; otherwise it just starts flying regardless.

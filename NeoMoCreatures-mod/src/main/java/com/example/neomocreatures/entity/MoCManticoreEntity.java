@@ -37,6 +37,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.LevelAccessor;
 
 public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
         net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.monster.Enemy {
@@ -131,6 +132,28 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, c
                 .add(Attributes.FLYING_SPEED, 0.35D)
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
                 .add(Attributes.SCALE, 1.0D);
+    }
+
+    /**
+     * Animal's own spawn check only accepts grass, or spots bright enough to walk on — which is why wild
+     * manticores never spawned at night on sand (deserts) or stone. Its darkness and ground rules already
+     * live in its spawn placement (ModEntities), so nothing else is needed here.
+     */
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        return true;
+    }
+
+    /** Animal never despawns; a wild manticore should, like any other monster, once no player is near. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isTame() && !this.isPersistenceRequired();
+    }
+
+    /** Wild ones vanish on Peaceful like other monsters; tamed ones stay. */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return !this.isTame();
     }
 
     @Nullable
@@ -576,6 +599,10 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, c
             }
             this.setDeltaMovement(delta);
             this.fallDistance = 0.0F;
+            // Vanilla updates the walk animation at the end of LivingEntity.travel(), which this branch
+            // skips — without it the legs freeze in whatever pose they had on take-off. Horizontal speed
+            // only, so the legs keep "walking" while it flies forward and settle while it just rises.
+            this.calculateEntityAnimation(false);
             return;
         }
         super.travel(travelVector);

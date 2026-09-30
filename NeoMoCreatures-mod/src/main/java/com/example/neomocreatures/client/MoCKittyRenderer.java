@@ -26,6 +26,23 @@ public class MoCKittyRenderer extends MobRenderer<MoCKittyEntity, MoCKittyModel>
                 "textures/entity/moc_kitty/" + entity.getVariant().getTextureName() + ".png");
     }
 
+    /**
+     * The bed's food bowl sits on its side, not its front (and the litter box is longer along that axis).
+     * A passenger's body is drawn with its vehicle's rotation, so the quarter turn that lines the kitty up
+     * with the bowl has to happen here, not on the entity.
+     */
+    private static final float VEHICLE_FACING_OFFSET = 90.0F;
+
+    @Override
+    protected void setupRotations(MoCKittyEntity kitty, PoseStack poseStack, float bob, float yBodyRot,
+                                  float partialTick, float scale) {
+        if (kitty.getVehicle() instanceof com.example.neomocreatures.entity.MoCKittyBedEntity
+                || kitty.getVehicle() instanceof com.example.neomocreatures.entity.MoCLitterBoxEntity) {
+            yBodyRot += VEHICLE_FACING_OFFSET;
+        }
+        super.setupRotations(kitty, poseStack, bob, yBodyRot, partialTick, scale);
+    }
+
     @Override
     protected void renderNameTag(MoCKittyEntity entity, Component displayName, PoseStack poseStack,
                                 MultiBufferSource buffer, int packedLight, float partialTick) {

@@ -120,7 +120,9 @@ public class MoCCrocodileEntity extends TamableAnimal {
     private static final EntityDataAccessor<Float> DATA_ROLL_ANGLE =
             SynchedEntityData.defineId(MoCCrocodileEntity.class, EntityDataSerializers.FLOAT);
 
-    private boolean resting;
+    /** Synced so clients can show the resting pose (it used to be a server-only field). */
+    private static final EntityDataAccessor<Boolean> DATA_RESTING =
+            SynchedEntityData.defineId(MoCCrocodileEntity.class, EntityDataSerializers.BOOLEAN);
     private boolean biting;
     /** Dragging a caught victim overland toward the nearest water. */
     private boolean waterbound;
@@ -162,6 +164,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
         builder.define(DATA_BITE_PROGRESS, 0.0F);
         builder.define(DATA_HAS_CAUGHT_PREY, false);
         builder.define(DATA_ROLL_ANGLE, 0.0F);
+        builder.define(DATA_RESTING, false);
     }
 
     /** Degrees, wrapped 0-360: rotates the model around its own body axis in the renderer — a real
@@ -189,7 +192,11 @@ public class MoCCrocodileEntity extends TamableAnimal {
     }
 
     public boolean isResting() {
-        return this.resting;
+        return this.entityData.get(DATA_RESTING);
+    }
+
+    private void setResting(boolean resting) {
+        this.entityData.set(DATA_RESTING, resting);
     }
 
 
@@ -269,7 +276,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
 
         this.setTarget(null);
         this.entityData.set(DATA_BITE_PROGRESS, CLAMPED_BITE_PROGRESS);
-        this.resting = false;
+        this.setResting(false);
 
         if (!this.isSwimmingDeep()) {
             this.waterbound = true;
@@ -498,7 +505,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return this.resting ? ModSounds.CROCODILE_RESTING.get() : ModSounds.CROCODILE_AMBIENT.get();
+        return this.isResting() ? ModSounds.CROCODILE_RESTING.get() : ModSounds.CROCODILE_AMBIENT.get();
     }
 
     /** Original: getTalkInterval() = 400, well above vanilla's own default. */
@@ -566,13 +573,13 @@ public class MoCCrocodileEntity extends TamableAnimal {
 
         @Override
         public void start() {
-            MoCCrocodileEntity.this.resting = true;
+            MoCCrocodileEntity.this.setResting(true);
             MoCCrocodileEntity.this.getNavigation().stop();
         }
 
         @Override
         public void stop() {
-            MoCCrocodileEntity.this.resting = false;
+            MoCCrocodileEntity.this.setResting(false);
         }
     }
 

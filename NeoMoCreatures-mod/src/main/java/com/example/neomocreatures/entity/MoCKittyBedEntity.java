@@ -34,8 +34,9 @@ public class MoCKittyBedEntity extends Mob {
     private static final EntityDataAccessor<Integer> DATA_SHEET_COLOR =
             SynchedEntityData.defineId(MoCKittyBedEntity.class, EntityDataSerializers.INT);
 
-    /** Rises as a kitty feeds from it; wiring the actual tick-up is a later step. */
-    private float milkLevel;
+    /** How far the food/milk has been eaten (0 to 2); synced so the bowl visibly empties on clients. */
+    private static final EntityDataAccessor<Float> DATA_MILK_LEVEL =
+            SynchedEntityData.defineId(MoCKittyBedEntity.class, EntityDataSerializers.FLOAT);
 
     public MoCKittyBedEntity(EntityType<? extends MoCKittyBedEntity> type, Level level) {
         super(type, level);
@@ -49,10 +50,17 @@ public class MoCKittyBedEntity extends Mob {
         builder.define(DATA_HAS_FOOD, false);
         builder.define(DATA_PICKED_UP, false);
         builder.define(DATA_SHEET_COLOR, 0);
+        builder.define(DATA_MILK_LEVEL, 0.0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0D);
+    }
+
+    /** Placed furniture, not a wild mob: it must never despawn when players wander off. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
     }
 
     @Override
@@ -93,7 +101,11 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     public float getMilkLevel() {
-        return this.milkLevel;
+        return this.entityData.get(DATA_MILK_LEVEL);
+    }
+
+    private void setMilkLevel(float level) {
+        this.entityData.set(DATA_MILK_LEVEL, level);
     }
 
     @Override
@@ -195,9 +207,9 @@ public class MoCKittyBedEntity extends Mob {
         if (!this.level().isClientSide && (hasFood() || hasMilk()) && this.isVehicle()
                 && this.getFirstPassenger() instanceof MoCKittyEntity kitty
                 && kitty.getKittyState() != 12) {
-            this.milkLevel += 0.003F;
-            if (this.milkLevel > 2.0F) {
-                this.milkLevel = 0.0F;
+            this.setMilkLevel(this.getMilkLevel() + 0.003F);
+            if (this.getMilkLevel() > 2.0F) {
+                this.setMilkLevel(0.0F);
                 setHasMilk(false);
                 setHasFood(false);
             }
@@ -210,7 +222,7 @@ public class MoCKittyBedEntity extends Mob {
         tag.putBoolean("HasMilk", hasMilk());
         tag.putBoolean("HasFood", hasFood());
         tag.putInt("SheetColor", getSheetColor());
-        tag.putFloat("MilkLevel", this.milkLevel);
+        tag.putFloat("MilkLevel", this.getMilkLevel());
     }
 
     @Override
@@ -221,6 +233,6 @@ public class MoCKittyBedEntity extends Mob {
         if (tag.contains("SheetColor")) {
             setSheetColor(tag.getInt("SheetColor"));
         }
-        this.milkLevel = tag.getFloat("MilkLevel");
+        this.setMilkLevel(tag.getFloat("MilkLevel"));
     }
 }

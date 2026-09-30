@@ -1,7 +1,7 @@
 {
-  "type": "minecraft:smelting",
+  "type": "minecraft:smoking",
   "ingredient": { "tag": "neomocreatures:omelet_eggs" },
   "result": { "id": "neomocreatures:omelet", "count": 1 },
   "experience": 0.35,
-  "cookingtime": 200
+  "cookingtime": 100
 }

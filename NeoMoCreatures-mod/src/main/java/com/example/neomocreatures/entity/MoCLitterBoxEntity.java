@@ -51,6 +51,12 @@ public class MoCLitterBoxEntity extends Mob {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0D);
     }
 
+    /** Placed furniture, not a wild mob: it must never despawn when players wander off. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
+    }
+
     @Override
     protected void registerGoals() {
         // No AI — it never moves on its own.

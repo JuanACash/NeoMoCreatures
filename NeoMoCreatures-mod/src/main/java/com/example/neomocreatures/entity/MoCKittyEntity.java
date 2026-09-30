@@ -758,6 +758,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     private void tickSleeping() {
         setSitting(true);
+        // Like eating: keep its rotation locked to the bed, or its look-around AI turns it and the
+        // renderer drags the whole sleeping body along (a passenger's body follows a head turned past 50°).
+        if (this.getVehicle() != null) {
+            lockRotationToVehicle(this.getVehicle());
+        }
         if (this.random.nextInt(100) == 0) {
             this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
         }

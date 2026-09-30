@@ -758,6 +758,15 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
         return level.isUnobstructed(this);
     }
 
+    /**
+     * Like vanilla water animals: no preference for light. Animal's version only accepts bright spots,
+     * so it barely spawned at night or in deep, dark water.
+     */
+    @Override
+    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+        return 0.0F;
+    }
+
     /** A tamed dolphin never despawns and must not count against the spawn cap of wild ones. */
     @Override
     public void setTame(boolean tame, boolean applyTamingSideEffects) {

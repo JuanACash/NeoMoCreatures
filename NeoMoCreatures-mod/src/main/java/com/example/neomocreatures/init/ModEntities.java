@@ -857,19 +857,22 @@ public class ModEntities {
 
         public static void registerBearSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_BEAR.get(),
-                        SpawnPlacementTypes.ON_GROUND,
+                        // NO_RESTRICTIONS, not ON_GROUND: vanilla ice only accepts the vanilla polar bear as a
+                        // spawn, so ON_GROUND always refused ours on frozen oceans. The rule below does every check.
+                        SpawnPlacementTypes.NO_RESTRICTIONS,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (type, level, reason, pos, random) -> {
-                                var biome = level.getBiome(pos);
-                                boolean onFrozenOceanIce = (biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
-                                        || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN))
-                                        && level.getBlockState(pos.below()).is(net.minecraft.world.level.block.Blocks.ICE);
-
-                                // Covers grass_block, snow layers, snow_block and packed_ice for
-                                // black/grizzly/panda and most polar bear terrain; the frozen-ocean
-                                // check above adds plain ICE, which isn't in that tag.
-                                boolean groundOk = onFrozenOceanIce
-                                        || level.getBlockState(pos.below()).is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON);
+                                // #minecraft:animals_spawnable_on is just grass; ModTags.BEAR_SPAWNABLE_ON adds
+                                // every kind of ice and snow blocks, so polar bears spawn on ice spikes and icebergs.
+                                // What ON_GROUND used to check: open, dry space to stand in.
+                                boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                                        && level.getFluidState(pos).isEmpty();
+                                if (!spaceOk) {
+                                        return false;
+                                }
+                                net.minecraft.world.level.block.state.BlockState ground = level.getBlockState(pos.below());
+                                boolean groundOk = ground.is(net.minecraft.tags.BlockTags.ANIMALS_SPAWNABLE_ON)
+                                        || ground.is(ModTags.BEAR_SPAWNABLE_ON);
 
                                 return groundOk && level.getRawBrightness(pos, 0) >= 9;
                         },

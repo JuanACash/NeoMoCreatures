@@ -353,6 +353,15 @@ public class MoCFishyEntity extends TamableAnimal {
         return level.isUnobstructed(this);
     }
 
+    /**
+     * Like vanilla water animals: no preference for light. Animal's version only accepts bright spots,
+     * so it barely spawned at night or in deep, dark water.
+     */
+    @Override
+    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+        return 0.0F;
+    }
+
     /** Wild fishies despawn like other water creatures instead of filling the mob cap forever. */
     @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {

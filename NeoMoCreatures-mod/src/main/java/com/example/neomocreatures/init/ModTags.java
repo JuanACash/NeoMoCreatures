@@ -33,4 +33,7 @@ public class ModTags {
 
     /** Blocks no golem may tear out of the world, on top of the built-in safety rules in GolemBlockPicker. */
     public static final TagKey<Block> GOLEM_CANNOT_LIFT = blockTag("golem_cannot_lift");
+    
+    /** Ground bears can spawn on besides grass (#minecraft:animals_spawnable_on): ice and snow blocks for polar bears. */
+    public static final TagKey<Block> BEAR_SPAWNABLE_ON = blockTag("bear_spawnable_on");
 }

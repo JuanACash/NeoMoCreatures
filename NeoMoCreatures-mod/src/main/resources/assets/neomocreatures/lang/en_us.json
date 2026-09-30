@@ -353,6 +353,8 @@
   "entity.neomocreatures.moc_komodo_dragon": "Komodo Dragon",
   "entity.neomocreatures.moc_goat": "Goat",
   "entity.neomocreatures.moc_kitty": "Kitty",
+  "entity.neomocreatures.moc_kitty_bed": "Kitty Bed",
+  "entity.neomocreatures.moc_litter_box": "Litter Box",
   "entity.neomocreatures.moc_snake": "Snake",
   "entity.neomocreatures.moc_bunny": "Bunny",
   "entity.neomocreatures.moc_bird": "Bird",
@@ -401,6 +403,9 @@
   "entity.neomocreatures.moc_big_golem": "Big Golem",
   "entity.neomocreatures.moc_summoned_rock": "Rock",
   "entity.neomocreatures.moc_filch_lizard": "Filch Lizard",
+  "entity.neomocreatures.wyvern_tier2": "Wyvern",
+  "entity.neomocreatures.wyvern_mother": "Mother Wyvern",
+  "entity.neomocreatures.wyvern_mother_tamed": "Mother Wyvern",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }
