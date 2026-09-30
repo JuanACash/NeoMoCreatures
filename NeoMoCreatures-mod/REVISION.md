@@ -1,1 +1,0 @@
-Cosas que se van a tener que probar con todos los mobs usar scrolls, que con click con libro se pueda renombrar, shears para quitar las cosas,que les aparezca su barra de vida y nombre y que se pueda usar pet amulet
