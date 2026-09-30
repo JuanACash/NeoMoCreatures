@@ -3,14 +3,13 @@ package com.example.neomocreatures;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Config común del mod. Vacío por ahora — agrega aquí valores reales
- * cuando necesites que algo sea ajustable sin recompilar
- * (ej. spawn rates, daño de armaduras, si cría con caballos vanilla, etc).
+ * Common mod config. Empty for now — add real values here whenever something needs to be tweakable
+ * without recompiling (e.g. spawn rates, armour damage, breeding with vanilla horses, etc).
  *
- * Ejemplo de cómo se vería un valor real, para no tener que buscar la sintaxis:
+ * Example of what a real value looks like, so the syntax doesn't have to be looked up:
  *
  * public static final ModConfigSpec.BooleanValue ALLOW_VANILLA_BREEDING = BUILDER
- *         .comment("Si los caballos de Mo'Creatures pueden criar con caballos/burros vanilla")
+ *         .comment("Whether Mo' Creatures horses can breed with vanilla horses/donkeys")
  *         .define("allowVanillaBreeding", false);
  */
 public class Config {

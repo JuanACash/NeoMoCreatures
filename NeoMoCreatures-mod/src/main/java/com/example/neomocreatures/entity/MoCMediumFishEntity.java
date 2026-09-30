@@ -63,7 +63,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
  * {@link #MAX_GROWN_SCALE} (the wiki's "2 to 2.5 blocks long"); a wild-caught adult keeps the fixed
  * wild size instead, since it was never a growing pet.
  */
-public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHatchable {
+public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHatchable, GrowthScaled {
 
     /** Original: age 100 with a size factor of age * 0.0081 gives a model scale of 0.81. */
     private static final double SCALE = 0.81D;
@@ -217,6 +217,11 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
             this.lastAppliedScale = current;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** An adult keeps its rolled size (or the fixed wild size if it was never a growing pet). A baby

@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
  * same as the original), healing. Dolphin-hunting is also not ported yet —
  * there's no MoCDolphinEntity in this project to target.
  */
-public class MoCSharkEntity extends TamableAnimal implements EggHatchable {
+public class MoCSharkEntity extends TamableAnimal implements EggHatchable, GrowthScaled {
 
     private static final net.minecraft.resources.ResourceLocation ATTACK_SPEED_MODIFIER_ID =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
@@ -82,16 +82,16 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable {
 
         
     /**
-     * Mob.checkSpawnObstruction() rechaza cualquier posición con líquido en la hitbox.
-     * El original extendía WaterAnimal, que lo sobreescribe para permitir agua; con
-     * TamableAnimal, sin esto el spawn natural en el océano siempre falla.
+     * Mob.checkSpawnObstruction() rejects any position with liquid inside the hitbox.
+     * The original extended WaterAnimal, which overrides it to allow water; as a
+     * TamableAnimal, natural spawning in the ocean would always fail without this.
      */
     @Override
     public boolean checkSpawnObstruction(net.minecraft.world.level.LevelReader level) {
         return level.isUnobstructed(this);
     }
 
-    /** Animal.removeWhenFarAway() devuelve false: sin esto los tiburones salvajes nunca despawnean. */
+    /** Animal.removeWhenFarAway() returns false: without this, wild sharks would never despawn. */
     @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return !this.isTame() && !this.isPersistenceRequired();
@@ -168,6 +168,11 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable {
             this.lastAppliedScale = current;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickBabyScale();
     }
 
     /** Wiki: "like other mobs that live in water, sharks will suffocate and die when out of water." */

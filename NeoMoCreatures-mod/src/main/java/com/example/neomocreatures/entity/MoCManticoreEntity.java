@@ -38,7 +38,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCManticoreEntity extends TamableAnimal implements com.example.neomocreatures.entity.egg.EggHatchable,
+public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
         net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.monster.Enemy {
 
     private static final int STING_CHANCE = 5;
@@ -818,6 +818,11 @@ public class MoCManticoreEntity extends TamableAnimal implements com.example.neo
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     @Override

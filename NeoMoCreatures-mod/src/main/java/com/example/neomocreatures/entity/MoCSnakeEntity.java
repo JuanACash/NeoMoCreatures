@@ -66,7 +66,7 @@ import javax.annotation.Nullable;
  * happens via {@link #onHatchedFromEgg}, not feeding.
  */
 public class MoCSnakeEntity extends TamableAnimal
-        implements com.example.neomocreatures.entity.egg.EggHatchable, CarriedPet {
+        implements com.example.neomocreatures.entity.egg.EggHatchable, CarriedPet, GrowthScaled {
 
     private static final double NEAR_PLAYER_RANGE = 5.0D;
     private static final double SEARCH_RADIUS = 12.0D;
@@ -321,6 +321,11 @@ public class MoCSnakeEntity extends TamableAnimal
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     public float getTongueOff() {

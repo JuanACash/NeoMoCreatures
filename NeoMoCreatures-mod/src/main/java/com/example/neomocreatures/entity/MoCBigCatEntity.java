@@ -44,7 +44,7 @@ import net.minecraft.world.level.Level;
  * then go neutral for a while after a kill until hungry again. Taming,
  * saddle, and chest still come in later steps.
  */
-public class MoCBigCatEntity extends TamableAnimal implements net.minecraft.world.entity.PlayerRideableJumping,
+public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.PlayerRideableJumping,
         net.minecraft.world.entity.HasCustomInventoryScreen {
 
     private static final float BABY_SCALE = 0.5F;
@@ -582,10 +582,9 @@ protected void registerGoals() {
         }
 
         // Never forward our own custom SpawnGroupData into AgeableMob's finalizeSpawn —
-        // internamente lo convierte sin comprobar el tipo y revienta con cualquier otra
-        // cosa. Le dejamos manejar su propia lógica de "probabilidad de cría" con datos
-        // frescos (null), y devolvemos LA NUESTRA aparte para que el resto de la manada
-        // siga recibiendo la familia correcta.
+        // it casts it internally without checking the type and crashes on anything else.
+        // Let it run its own "baby chance" logic on fresh data (null), and return OURS
+        // separately so the rest of the pack keeps getting the right family.
         super.finalizeSpawn(level, difficulty, spawnReason, null);
         return resultGroupData;
     }
@@ -966,7 +965,7 @@ protected void registerGoals() {
         }
     }
 
-    /** 25% de que un big cat tameado deje un ghost translúcido de su misma variante al morir. */
+    /** 25% chance that a tamed big cat leaves a translucent ghost of its own variant when it dies. */
     private void trySpawnGhost() {
         if (!this.isTame() || isGhost() || hasWings() || this.random.nextInt(4) != 0) {
             return;
@@ -1086,6 +1085,11 @@ protected void registerGoals() {
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     @Override

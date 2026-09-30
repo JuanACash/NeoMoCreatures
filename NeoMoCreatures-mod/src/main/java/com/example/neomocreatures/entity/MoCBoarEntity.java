@@ -33,6 +33,11 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import java.util.EnumSet;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.neutral.MoCEntityBoar}. Neutral: never starts a fight
@@ -68,7 +73,12 @@ public class MoCBoarEntity extends Animal {
      *  makes this occasional rather than constant. */
     private static final int SMALL_MOB_RECHECK_TICKS = 200;
 
-    private int mocAge = GROWN_AGE;
+    /** Original: a baby grows one step with a 1-in-300 chance per tick (about 10 minutes from 60 to 100). */
+    private static final int GROWTH_CHANCE = 300;
+    private static final String TAG_MOC_AGE = "MocAge";
+    /** Synced so clients render babies at their real size (it used to be a server-only field). */
+    private static final EntityDataAccessor<Integer> DATA_MOC_AGE =
+            SynchedEntityData.defineId(MoCBoarEntity.class, EntityDataSerializers.INT);
     /** True once a player's hit sets its target — as long as this is true, it fights normally
      *  instead of the hit-and-run pattern; cleared once it no longer has a target at all. */
     private boolean retaliating;
@@ -77,8 +87,8 @@ public class MoCBoarEntity extends Animal {
         super(type, level);
         // Original: a straight 75%/25% roll, independent of any breeding — it's simply how it spawns.
         boolean adult = this.random.nextInt(4) != 0;
-        if (!adult) {
-            this.mocAge = BABY_START_AGE;
+        if (!adult && !level.isClientSide) {
+            this.setMocAge(BABY_START_AGE);
         }
     }
 
@@ -112,8 +122,22 @@ public class MoCBoarEntity extends Animal {
         this.targetSelector.addGoal(3, new AdultOnlyTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true));
     }
 
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_MOC_AGE, GROWN_AGE);
+    }
+
+    public int getMocAge() {
+        return this.entityData.get(DATA_MOC_AGE);
+    }
+
+    private void setMocAge(int age) {
+        this.entityData.set(DATA_MOC_AGE, Math.min(age, GROWN_AGE));
+    }
+
     public boolean isGrownAdult() {
-        return this.mocAge >= GROWN_AGE;
+        return this.getMocAge() >= GROWN_AGE;
     }
 
     @Override
@@ -123,20 +147,35 @@ public class MoCBoarEntity extends Animal {
 
     @Override
     public void setBaby(boolean baby) {
-        this.mocAge = baby ? BABY_START_AGE : GROWN_AGE;
+        this.setMocAge(baby ? BABY_START_AGE : GROWN_AGE);
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!this.level().isClientSide && this.mocAge < GROWN_AGE) {
-            this.mocAge++;
+        if (!this.level().isClientSide && !this.isGrownAdult() && this.random.nextInt(GROWTH_CHANCE) == 0) {
+            this.setMocAge(this.getMocAge() + 1);
         }
     }
 
     @Override
     public float getAgeScale() {
-        return this.isGrownAdult() ? 1.0F : this.mocAge * 0.01F;
+        return this.isGrownAdult() ? 1.0F : this.getMocAge() * 0.01F;
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt(TAG_MOC_AGE, this.getMocAge());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        // Boars saved before this fix have no age stored; they keep whatever they rolled when created.
+        if (tag.contains(TAG_MOC_AGE, Tag.TAG_INT)) {
+            this.setMocAge(tag.getInt(TAG_MOC_AGE));
+        }
     }
 
     /** Original: attackEntityFrom() — an adult fights back against whoever hit it (unless it's

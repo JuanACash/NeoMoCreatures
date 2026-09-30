@@ -80,7 +80,7 @@ import net.minecraft.world.effect.MobEffects;
  * <p>
  * Neutral: an adult dolphin fights back when hurt, a calf flees.
 **/
-public class MoCDolphinEntity extends TamableAnimal {
+public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
 
     // ---- Size and growth ----
     /** Original: a wild dolphin is created with age 120, which renders the model at 1.2x. */
@@ -310,6 +310,11 @@ public class MoCDolphinEntity extends TamableAnimal {
             this.lastAppliedScale = current;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** An adult is full size; a calf grows linearly from {@link #CALF_SCALE} over {@link #GROWTH_TICKS}. */

@@ -34,7 +34,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCOstrichEntity extends TamableAnimal implements com.example.neomocreatures.entity.egg.EggHatchable,
+public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
         net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.PlayerRideableJumping {
 
     private static final int HIDE_TICKS = 60;
@@ -1144,6 +1144,11 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
     }
 
     @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
+    }
+
+    @Override
     protected net.minecraft.world.phys.AABB makeBoundingBox() {
         if (this.isBaby()) {
             net.minecraft.world.entity.EntityDimensions babyHitbox =
@@ -1223,14 +1228,14 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
                 lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(lootingHolder, killer);
             }
 
-            // Raw ostrich meat: 0-2 base, afectado por looting. Se suelta siempre en crudo,
-            // incluso si murió en fuego (no hay lógica de "cooked on fire" aquí).
+            // Raw ostrich meat: 0-2 base, affected by Looting. Always dropped raw,
+            // even if it died on fire (there's no "cooked on fire" logic here).
             int meatCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
             for (int i = 0; i < meatCount; i++) {
                 this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.OSTRICH_RAW.get()));
             }
 
-            // Essence hearts / unicorn horn según la esencia del avestruz, 25% base + looting.
+            // Essence hearts / unicorn horn depending on the ostrich's essence, 25% base + Looting.
             net.minecraft.world.item.Item essenceHeartItem = switch (getEssence()) {
                 case ESSENCE_WYVERN -> com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get();
                 case ESSENCE_FIRE -> com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get();
@@ -1248,7 +1253,7 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
                 }
             }
 
-            // Saddle equipada (la real o la crafteada, según saddleItemId).
+            // Equipped saddle (the real one or the crafted one, depending on saddleItemId).
             if (isSaddled()) {
                 net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
                         ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
@@ -1256,12 +1261,12 @@ public class MoCOstrichEntity extends TamableAnimal implements com.example.neomo
                 this.spawnAtLocation(new ItemStack(saddleItem));
             }
 
-            // Helmet equipado.
+            // Equipped helmet.
             if (getHelmet() != HELMET_NONE) {
                 this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
             }
 
-            // Chest + contenido + wool de la bandera (igual que antes).
+            // Chest + contents + the flag's wool (same as before).
             if (hasChest()) {
                 this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
                 for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {

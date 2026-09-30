@@ -80,7 +80,7 @@ import net.minecraft.world.level.LevelReader;
  * model by hand. Here size is the vanilla {@link Attributes#SCALE} attribute,
  * so the hitbox, shadow and name tag follow it and it is saved/synced for free.
  */
-public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
+public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, GrowthScaled {
 
     /** NBT flag that marks a Pet Amulet as holding a turtle. */
     public static final String AMULET_KEY = "Turtle";
@@ -258,6 +258,11 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet {
             this.lastAppliedScale = current;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     // ---------------------------------------------------------------------

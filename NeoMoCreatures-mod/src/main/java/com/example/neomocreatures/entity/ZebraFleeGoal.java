@@ -9,9 +9,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 /**
- * Porta isZebraRunning() del original: una zebra salvaje (no tamed) huye del
- * jugador mas cercano dentro de 8 bloques, salvo que ese jugador vaya montado
- * en Horse Tier4, Zebra o Zorse (ver MoCHorseEntity.isExemptZebraRider).
+ * Port of the original's isZebraRunning(): a wild (untamed) zebra flees from the
+ * nearest player within 8 blocks, unless that player is riding a Tier 4 horse,
+ * a Zebra or a Zorse (see MoCHorseEntity.isExemptZebraRider).
  */
 public class ZebraFleeGoal extends Goal {
 

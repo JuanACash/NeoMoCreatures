@@ -523,17 +523,17 @@ public class MoCHorseEntity extends AbstractHorse {
         this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 0.7F);
     }
 
-    /** Especie que puede ser capturada por cada tipo de amuleto (vacío). */
+    /** Which species each kind of (empty) amulet can capture. */
     private boolean matchesAmulet(ItemStack amulet) {
         if (amulet.is(ModItems.PET_AMULET.get())) {
-            boolean excluded = isUndead() // cubre tambien skeleton, ya que isSkeletonStage() implica isUndead()
+            boolean excluded = isUndead() // also covers skeletons, since isSkeletonStage() implies isUndead()
                     || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS
                     || getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED
                     || getSpecies() == Species.FAIRY_HORSE;
             return !excluded;
         }
-        // Los amuletos de plantilla (bone/fairy/pegasus/ghost) no aplican a
-        // potros; solo el amuleto de mascota puede capturar uno.
+        // The template amulets (bone/fairy/pegasus/ghost) don't work on
+        // foals; only the pet amulet can capture one.
         if (this.isBaby()) {
             return false;
         }
@@ -2477,7 +2477,7 @@ public class MoCHorseEntity extends AbstractHorse {
         }
         if (this.level().isClientSide) {
             net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
-            return player != null && this.distanceToSqr(player) < 64.0D; // 8 bloques
+            return player != null && this.distanceToSqr(player) < 64.0D;
         }
         return super.shouldShowName();
     }

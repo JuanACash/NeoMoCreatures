@@ -64,10 +64,6 @@ public class WyvernNestFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     private boolean isValidGround(net.minecraft.world.level.block.Block block) {
-        // Nota: el original comparaba contra 6 bloques vanilla identificados solo por
-        // su nombre de campo ofuscado (f_49992_, f_49993_, f_50069_, f_152550_, f_50440_, f_50493_),
-        // que no pude resolver con certeza desde el bytecode. Usé este set de "suelo natural"
-        // como equivalente razonable; ajústalo si en el juego ves que el nido no aparece donde debería.
         return block == ModBlocks.WYVGRASS.get()
                 || block == ModBlocks.SILVER_SAND.get()
                 || block == Blocks.DIRT

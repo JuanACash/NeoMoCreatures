@@ -30,7 +30,6 @@ public class ScrollOfSaleItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        // Queda sin dueño: el próximo jugador que lo renombre (con un libro)
         // Ends up ownerless: the next player who renames it (with a book)
         // becomes the new owner — see the "adopt" hook in ModNetworking
         // and MoCHorseEntity#mobInteract. Doesn't have much use in

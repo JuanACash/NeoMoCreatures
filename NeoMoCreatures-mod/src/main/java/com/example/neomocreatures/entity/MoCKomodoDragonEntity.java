@@ -57,7 +57,7 @@ import net.minecraft.world.level.Level;
  * itself is intentionally NOT implemented yet — {@link #isFood} always
  * returns false and {@link #getBreedOffspring} always returns null.
  */
-public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.neomocreatures.entity.egg.EggHatchable,
+public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
         net.minecraft.world.entity.PlayerRideableJumping {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
@@ -386,6 +386,11 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements com.example.
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     @Nullable

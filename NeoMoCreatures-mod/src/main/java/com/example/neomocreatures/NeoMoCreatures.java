@@ -375,6 +375,7 @@ public class NeoMoCreatures {
         NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.ScorpionHoldReleaseHandler.class);
         NeoForge.EVENT_BUS.register(new com.example.neomocreatures.entity.CaveScorpionSpawner());
         NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.KittyVillageSpawner.class);
+        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.GrowthScaleJoinHandler.class);
     }
 
     private void registerDeferredRegistries(IEventBus modEventBus) {

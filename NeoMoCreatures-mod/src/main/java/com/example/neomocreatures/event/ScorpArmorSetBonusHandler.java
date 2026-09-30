@@ -11,11 +11,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
- * Bonus de set: si el jugador trae puestas las 4 piezas del MISMO bioma de
- * armadura de escorpion, recibe un efecto pasivo mientras la tenga puesta.
- * Se re-aplica cada 60 ticks con duracion 400 para que nunca se note el
- * parpadeo del icono de efecto, similar a como vanilla maneja el set de
- * Turtle Shell / regeneracion por comida.
+ * Set bonus: a player wearing all 4 pieces of scorpion armour from the SAME
+ * biome gets a passive effect for as long as they wear it. It is re-applied
+ * every 60 ticks with a 400-tick duration so the effect icon never flickers,
+ * similar to how vanilla handles the Turtle Shell / food regeneration.
  */
 public class ScorpArmorSetBonusHandler {
 

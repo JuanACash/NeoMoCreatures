@@ -56,7 +56,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
  * require re-registering the entity type or migrating saved data — taming
  * itself is intentionally NOT implemented yet.
  */
-public class MoCFoxEntity extends TamableAnimal {
+public class MoCFoxEntity extends TamableAnimal implements GrowthScaled {
 
     /** Wiki: "It takes at least one full Minecraft 'day' or more for fox cubs to mature." */
     private static final int GROWTH_TICKS = 24000;
@@ -317,6 +317,11 @@ public class MoCFoxEntity extends TamableAnimal {
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** Carries the whole group's species to every member, same fix MoCBearEntity uses for its cub groups. */

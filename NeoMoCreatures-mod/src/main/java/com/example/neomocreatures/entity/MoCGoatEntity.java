@@ -56,7 +56,7 @@ import net.minecraft.world.phys.Vec3;
  * eating, and male dueling are all core WILD behaviour per the wiki, so
  * they're implemented now rather than deferred.
  */
-public class MoCGoatEntity extends TamableAnimal {
+public class MoCGoatEntity extends TamableAnimal implements GrowthScaled {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -261,6 +261,11 @@ public class MoCGoatEntity extends TamableAnimal {
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** Wiki: "usually stay out of water" — no swim animation needed since it never enters deep water on its own. */

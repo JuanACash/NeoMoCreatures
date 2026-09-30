@@ -46,7 +46,7 @@ import java.util.Optional;
  * player's head), healed/bred with (golden) carrots, and boosts any mount
  * the holding player is riding while carried.
  */
-public class MoCBunnyEntity extends TamableAnimal implements CarriedPet {
+public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthScaled {
 
     /** Wiki: "Baby rabbits take 3-5 days to mature" — using 4 in-game days as a fixed middle value. */
     private static final int GROWTH_TICKS = 96000;
@@ -250,6 +250,11 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet {
             this.lastAppliedScale = current;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     private float getGrowthFraction() {

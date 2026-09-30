@@ -45,7 +45,7 @@ import net.minecraft.world.entity.Entity;
  * bespoke 0-100 age/temper scale) for consistency with the rest of this
  * codebase — see MoCWyvernEntity's tickGrowth() for the same pattern.
  */
-public class MoCElephantEntity extends TamableAnimal implements net.minecraft.world.entity.PlayerRideableJumping,
+public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.PlayerRideableJumping,
         net.minecraft.world.entity.HasCustomInventoryScreen {
 
     private static final float BABY_SCALE = 0.5F;
@@ -1133,6 +1133,11 @@ public class MoCElephantEntity extends TamableAnimal implements net.minecraft.wo
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     @Override

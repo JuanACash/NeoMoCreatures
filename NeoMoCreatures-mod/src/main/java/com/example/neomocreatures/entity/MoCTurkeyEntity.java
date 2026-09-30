@@ -31,7 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 
-public class MoCTurkeyEntity extends TamableAnimal {
+public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -114,6 +114,11 @@ public class MoCTurkeyEntity extends TamableAnimal {
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     @Override

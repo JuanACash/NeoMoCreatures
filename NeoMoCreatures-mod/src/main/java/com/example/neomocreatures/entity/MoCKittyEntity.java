@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * kitty bed, taming, or the original's ~20-state AI yet — those come in
  * later steps.
  */
-public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet {
+public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet, GrowthScaled {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -492,6 +492,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** Wild kitty eating dropped cooked fish, same "throw it and step back" pattern as Bear. */

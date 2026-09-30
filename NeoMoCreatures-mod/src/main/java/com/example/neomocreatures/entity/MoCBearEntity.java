@@ -39,7 +39,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 
 import javax.annotation.Nullable;
 
-public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.entity.HasCustomInventoryScreen,
+public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.HasCustomInventoryScreen,
         net.minecraft.world.entity.PlayerRideableJumping {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
@@ -229,10 +229,9 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
     }
 
     /**
-     * Aplicado DESPUÉS de super.travel() a propósito: la física de agua/lava
-     * de LivingEntity ya corrió y aplicó su propia gravedad/drag, así que si
-     * empujáramos antes, esa lógica interna lo atenuaría. Empujando después
-     * garantizamos que el oso realmente flote en vez de hundirse.
+     * Applied AFTER super.travel() on purpose: LivingEntity's water/lava physics has already run and
+     * applied its own gravity/drag, so pushing before it would get damped by that logic. Pushing after
+     * guarantees the bear really floats instead of sinking.
      */
     private void applyFluidBuoyancy() {
         double fluidTop = this.blockPosition().getY()
@@ -357,7 +356,7 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
 
         java.util.UUID ownerUUID = this.getOwnerUUID();
         Player nearbyOwner = ownerUUID != null ? level.getPlayerByUUID(ownerUUID) : null;
-        if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= 1000.0D) { // ~10 bloques
+        if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= 1000.0D) { // squared distance: ~31 blocks
             baby.setOwnerUUID(nearbyOwner.getUUID());
             baby.setTame(true, true);
             com.example.neomocreatures.util.NamingHelper.promptRename(baby, nearbyOwner.getUUID());
@@ -504,6 +503,11 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     // ---------------------------------------------------------------
@@ -655,11 +659,11 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
         }
     }
 
-        // ---------------------------------------------------------------
-    // Drops: 0-2 hide (+1 por nivel de Looting, tope 5), silla exacta
-    // que tenía puesta, cofre + contenido si tenía. El XP (1-3) se
-    // otorga vía shouldDropExperience()/lastHurtByPlayerTime, que
-    // vanilla ya activa tanto con jugador como con lobo domesticado.
+    // ---------------------------------------------------------------
+    // Drops: 0-2 hide (+1 per Looting level, capped at 5), the exact saddle
+    // it was wearing, and its chest plus contents if it had one. XP (1-3) is
+    // granted through shouldDropExperience()/lastHurtByPlayerTime, which
+    // vanilla already triggers for both players and tamed wolves.
     // ---------------------------------------------------------------
     @Override
     protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
@@ -673,7 +677,7 @@ public class MoCBearEntity extends TamableAnimal implements net.minecraft.world.
                     attacker);
         }
 
-        int hide = Math.min(this.random.nextInt(3) + lootingLevel, 5); // 0-2 base, +1 por nivel, tope 5
+        int hide = Math.min(this.random.nextInt(3) + lootingLevel, 5);
         if (hide > 0) {
             this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hide));
         }

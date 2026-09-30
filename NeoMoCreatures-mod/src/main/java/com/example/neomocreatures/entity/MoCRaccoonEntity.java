@@ -53,7 +53,7 @@ import net.minecraft.world.level.Level;
  * require re-registering the entity type or migrating saved data — taming
  * itself is intentionally NOT implemented yet.
  */
-public class MoCRaccoonEntity extends TamableAnimal {
+public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -166,6 +166,11 @@ public class MoCRaccoonEntity extends TamableAnimal {
             this.lastAppliedScale = currentScale;
             this.refreshDimensions();
         }
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.tickGrowth();
     }
 
     /** Wiki: "tamed by giving them any edible item (including... vanilla and
