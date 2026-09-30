@@ -118,6 +118,8 @@ import com.example.neomocreatures.client.MoCMiniGolemRenderer;
 import com.example.neomocreatures.client.MoCThrowableRockRenderer;
 import com.example.neomocreatures.client.MoCBigGolemModel;
 import com.example.neomocreatures.client.MoCBigGolemRenderer;
+import com.example.neomocreatures.client.MoCFilchLizardModel;
+import com.example.neomocreatures.client.MoCFilchLizardRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -212,6 +214,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCEntRenderer.MOC_ENT_LAYER, MoCEntModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMiniGolemRenderer.MOC_MINI_GOLEM_LAYER, MoCMiniGolemModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBigGolemRenderer.MOC_BIG_GOLEM_LAYER, MoCBigGolemModel::createBodyLayer);
+                event.registerLayerDefinition(MoCFilchLizardRenderer.MOC_FILCH_LIZARD_LAYER, MoCFilchLizardModel::createBodyLayer);
     });
 
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
@@ -283,6 +286,7 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_THROWABLE_ROCK.get(), MoCThrowableRockRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BIG_GOLEM.get(), MoCBigGolemRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SUMMONED_ROCK.get(), MoCThrowableRockRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_FILCH_LIZARD.get(), MoCFilchLizardRenderer::new);
         });
                 
     }

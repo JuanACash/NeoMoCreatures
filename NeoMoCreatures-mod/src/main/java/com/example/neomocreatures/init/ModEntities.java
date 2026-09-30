@@ -67,6 +67,7 @@ import com.example.neomocreatures.entity.MoCMiniGolemEntity;
 import com.example.neomocreatures.entity.MoCThrowableRockEntity;
 import com.example.neomocreatures.entity.MoCBigGolemEntity;
 import com.example.neomocreatures.entity.MoCSummonedRockEntity;
+import com.example.neomocreatures.entity.MoCFilchLizardEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -585,6 +586,13 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .build("moc_big_golem"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCFilchLizardEntity>> MOC_FILCH_LIZARD =
+        ENTITY_TYPES.register("moc_filch_lizard", () -> EntityType.Builder
+                .of(MoCFilchLizardEntity::new, MobCategory.CREATURE)
+                .sized(0.6F, 0.5F)
+                .clientTrackingRange(8)
+                .build("moc_filch_lizard"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -692,6 +700,7 @@ public class ModEntities {
                 event.put(MOC_ENT.get(), MoCEntEntity.createAttributes().build());
                 event.put(MOC_MINI_GOLEM.get(), MoCMiniGolemEntity.createAttributes().build());
                 event.put(MOC_BIG_GOLEM.get(), MoCBigGolemEntity.createAttributes().build());
+                event.put(MOC_FILCH_LIZARD.get(), MoCFilchLizardEntity.createAttributes().build());
         });
         }
         
@@ -1325,6 +1334,17 @@ public class ModEntities {
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         Monster::checkMonsterSpawnRules,
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerFilchLizardSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_FILCH_LIZARD.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        // Original MoCEntityAnimal rule: solid ground (sand included, not just grass) and light above 8.
+                        (type, level, reason, pos, random) ->
+                                level.getBlockState(pos.below()).canOcclude()
+                                        && level.getRawBrightness(pos, 0) > 8,
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
 

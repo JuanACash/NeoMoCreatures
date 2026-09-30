@@ -309,6 +309,7 @@ public class NeoMoCreatures {
                     output.accept(ModItems.TURTLE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
                     output.accept(ModItems.CROCODILE_SPAWN_EGG.get());
+                    output.accept(ModItems.FILCH_LIZARD_SPAWN_EGG.get());
                     output.accept(ModItems.DOLPHIN_SPAWN_EGG.get());
                     output.accept(ModItems.SHARK_SPAWN_EGG.get());
                     output.accept(ModItems.MANTA_RAY_SPAWN_EGG.get());
@@ -438,6 +439,7 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerEntSpawnPlacements);
         modEventBus.addListener(ModEntities::registerMiniGolemSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBigGolemSpawnPlacements);
+        modEventBus.addListener(ModEntities::registerFilchLizardSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

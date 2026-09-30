@@ -24,6 +24,8 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_HIDE = tag("repairs_hide_armor");
     public static final TagKey<Item> RAW_FISHES = tag("raw_fishes");
     public static final TagKey<Item> COOKED_FISHES = tag("cooked_fishes");
+    /** Items the Filch Lizard steals from players and picks up off the ground. */
+    public static final TagKey<Item> FILCH_LIZARD_STEALS = tag("filch_lizard_steals");
 
     private static TagKey<Block> blockTag(String name) {
         return BlockTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
