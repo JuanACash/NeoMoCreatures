@@ -29,7 +29,7 @@ import net.minecraft.world.phys.HitResult;
  * as soon as it hits something and drops the block itself as an item — but only when the block
  * was really taken out of the world, so a rock thrown with mobGriefing off never duplicates.
  */
-public class MoCThrowableRockEntity extends ThrowableProjectile {
+public class MoCThrowableRockEntity extends ThrowableProjectile implements CarriedBlockEntity {
 
     /** Original: MoCEntityThrowableRock hits for 4. */
     private static final float IMPACT_DAMAGE = 4.0F;

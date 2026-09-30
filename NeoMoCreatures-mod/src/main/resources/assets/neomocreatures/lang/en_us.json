@@ -122,6 +122,7 @@
   "item.neomocreatures.flamewraith_spawn_egg": "Flame Wraith Spawn Egg",
   "item.neomocreatures.ent_spawn_egg": "Ent Spawn Egg",
   "item.neomocreatures.minigolem_spawn_egg": "Mini Golem Spawn Egg",
+  "item.neomocreatures.biggolem_spawn_egg": "Big Golem Spawn Egg",
 
   "item.neomocreatures.heart_of_darkness": "Heart of Darkness",
   "item.neomocreatures.heart_of_fire": "Heart of Fire",
@@ -396,6 +397,8 @@
   "entity.neomocreatures.moc_ent": "Ent",
   "entity.neomocreatures.moc_mini_golem": "Mini Golem",
   "entity.neomocreatures.moc_throwable_rock": "Rock",
+  "entity.neomocreatures.moc_big_golem": "Big Golem",
+  "entity.neomocreatures.moc_summoned_rock": "Rock",
   "key.neomocreatures.descend": "Descend",
   "key.categories.neomocreatures": "Mo' Creatures"
 }

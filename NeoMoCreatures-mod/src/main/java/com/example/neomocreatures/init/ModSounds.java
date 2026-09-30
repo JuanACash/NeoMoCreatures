@@ -221,6 +221,10 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_DEATH = register("moc_golem.death");
     public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_STEP = register("moc_golem.step");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_ATTACH = register("moc_golem.attach");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_SHOOT = register("moc_golem.shoot");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_EXPLODE = register("moc_golem.explode");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

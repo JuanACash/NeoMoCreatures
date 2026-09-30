@@ -42,6 +42,14 @@ public final class GolemBlockPicker {
     }
 
     public static boolean isLiftable(Level level, BlockPos pos) {
+        return isLiftable(level, pos, false);
+    }
+
+    /**
+     * @param allowReplaceableAbove also accept blocks topped by something that just gets knocked off
+     *                              (short grass, snow layers) — used when pulling blocks off the surface
+     */
+    public static boolean isLiftable(Level level, BlockPos pos, boolean allowReplaceableAbove) {
         BlockState state = level.getBlockState(pos);
         if (state.isAir() || !state.getFluidState().isEmpty() || state.hasBlockEntity()) {
             return false;
@@ -53,7 +61,8 @@ public final class GolemBlockPicker {
             return false;
         }
         // Original: only blocks with open air above them, so it never tears out something holding up another block.
-        return level.getBlockState(pos.above()).isAir();
+        BlockState above = level.getBlockState(pos.above());
+        return above.isAir() || (allowReplaceableAbove && above.canBeReplaced() && above.getFluidState().isEmpty());
     }
 
     private static boolean isMultiPartBlock(BlockState state) {

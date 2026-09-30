@@ -576,6 +576,18 @@
   },
   "moc_golem.step": {
     "sounds": [ "neomocreatures:moc_golem/golem_step" ]
+  },
+  "moc_golem.attach": {
+    "sounds": [ "neomocreatures:moc_golem/golem_attach" ]
+  },
+  "moc_golem.shoot": {
+    "sounds": [
+      "neomocreatures:moc_golem/golem_shoot1",
+      "neomocreatures:moc_golem/golem_shoot2"
+    ]
+  },
+  "moc_golem.explode": {
+    "sounds": [ "neomocreatures:moc_golem/golem_explode" ]
   }, 
   "moc_werewolf.ambient": {
     "sounds": [

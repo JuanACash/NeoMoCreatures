@@ -1,6 +1,9 @@
 package com.example.neomocreatures.client;
 
+import com.example.neomocreatures.entity.CarriedBlockEntity;
 import com.example.neomocreatures.entity.MoCThrowableRockEntity;
+
+import net.minecraft.world.entity.Entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -14,8 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Port of {@code MoCRenderTRock}: draws the carried block itself, tumbling around its vertical axis. */
-public class MoCThrowableRockRenderer extends EntityRenderer<MoCThrowableRockEntity> {
+/** Port of {@code MoCRenderTRock}: draws the carried block itself, tumbling around its vertical axis. Shared by thrown and summoned rocks. */
+public class MoCThrowableRockRenderer<T extends Entity & CarriedBlockEntity> extends EntityRenderer<T> {
 
     private static final float SHADOW_RADIUS = 0.5F;
     private static final float SPIN_DEGREES_PER_TICK = 18.0F;
@@ -29,7 +32,7 @@ public class MoCThrowableRockRenderer extends EntityRenderer<MoCThrowableRockEnt
     }
 
     @Override
-    public void render(MoCThrowableRockEntity entity, float entityYaw, float partialTick,
+    public void render(T entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         BlockState state = entity.getBlockState();
         if (state.getRenderShape() == RenderShape.MODEL) {
@@ -45,7 +48,7 @@ public class MoCThrowableRockRenderer extends EntityRenderer<MoCThrowableRockEnt
     }
 
     @Override
-    public ResourceLocation getTextureLocation(MoCThrowableRockEntity entity) {
+    public ResourceLocation getTextureLocation(T entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 }

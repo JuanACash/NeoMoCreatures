@@ -1,0 +1,16 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": {
+    "type": "neoforge:and",
+    "values": [
+      "#minecraft:is_overworld",
+      {
+        "type": "neoforge:not",
+        "value": "#neomocreatures:no_hostile_spawns"
+      }
+    ]
+  },
+  "spawners": [
+    { "type": "neomocreatures:moc_big_golem", "weight": 70, "minCount": 1, "maxCount": 1 }
+  ]
+}

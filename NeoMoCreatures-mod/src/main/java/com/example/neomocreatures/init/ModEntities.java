@@ -65,6 +65,8 @@ import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import com.example.neomocreatures.entity.MoCEntEntity;
 import com.example.neomocreatures.entity.MoCMiniGolemEntity;
 import com.example.neomocreatures.entity.MoCThrowableRockEntity;
+import com.example.neomocreatures.entity.MoCBigGolemEntity;
+import com.example.neomocreatures.entity.MoCSummonedRockEntity;
 import net.minecraft.world.entity.Mob;
 
 import net.minecraft.core.BlockPos;
@@ -575,6 +577,14 @@ public class ModEntities {
                 .clientTrackingRange(8)
                 .build("moc_mini_golem"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCBigGolemEntity>> MOC_BIG_GOLEM =
+        ENTITY_TYPES.register("moc_big_golem", () -> EntityType.Builder
+                .of(MoCBigGolemEntity::new, MobCategory.MONSTER)
+                .sized(1.8F, 4.3F)
+                .eyeHeight(4.02F)
+                .clientTrackingRange(10)
+                .build("moc_big_golem"));
+
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
     public static final DeferredHolder<EntityType<?>, EntityType<MoCEggEntity>> MOC_EGG =
@@ -605,6 +615,14 @@ public class ModEntities {
                 .clientTrackingRange(4)
                 .updateInterval(10)
                 .build("moc_throwable_rock"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCSummonedRockEntity>> MOC_SUMMONED_ROCK =
+        ENTITY_TYPES.register("moc_summoned_rock", () -> EntityType.Builder
+                .<MoCSummonedRockEntity>of(MoCSummonedRockEntity::new, MobCategory.MISC)
+                .sized(1.0F, 1.0F)
+                .clientTrackingRange(8)
+                .updateInterval(2)
+                .build("moc_summoned_rock"));
 
     public static void registerAttributes(IEventBus modEventBus) {
         modEventBus.addListener((EntityAttributeCreationEvent event) -> {
@@ -673,6 +691,7 @@ public class ModEntities {
                 event.put(MOC_FLAME_WRAITH.get(), MoCFlameWraithEntity.createAttributes().build());
                 event.put(MOC_ENT.get(), MoCEntEntity.createAttributes().build());
                 event.put(MOC_MINI_GOLEM.get(), MoCMiniGolemEntity.createAttributes().build());
+                event.put(MOC_BIG_GOLEM.get(), MoCBigGolemEntity.createAttributes().build());
         });
         }
         
@@ -1295,6 +1314,14 @@ public class ModEntities {
         
         public static void registerMiniGolemSpawnPlacements(RegisterSpawnPlacementsEvent event) {
                 event.register(MOC_MINI_GOLEM.get(),
+                        SpawnPlacementTypes.ON_GROUND,
+                        Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        Monster::checkMonsterSpawnRules,
+                        RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+
+        public static void registerBigGolemSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+                event.register(MOC_BIG_GOLEM.get(),
                         SpawnPlacementTypes.ON_GROUND,
                         Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         Monster::checkMonsterSpawnRules,
