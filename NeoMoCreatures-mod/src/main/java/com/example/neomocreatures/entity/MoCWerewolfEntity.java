@@ -5,20 +5,19 @@ import javax.annotation.Nullable;
 import com.example.neomocreatures.entity.werewolf.WerewolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCLootUtil;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -34,12 +33,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityWerewolf}. Two forms sharing one
@@ -395,7 +390,7 @@ public class MoCWerewolfEntity extends Monster {
     /** Wiki: 0-2 of each wooden tool (all independent rolls, scaled by Looting), plus a 50% chance
      *  of 1 leather, that chance boosted by Looting. */
     private void dropHumanLoot(ServerLevel level, DamageSource damageSource) {
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         this.dropCount(Items.STICK, lootingLevel);
         this.dropCount(Items.WOODEN_AXE, lootingLevel);
         this.dropCount(Items.WOODEN_HOE, lootingLevel);
@@ -411,7 +406,7 @@ public class MoCWerewolfEntity extends Monster {
      *  a 50% chance of 1 diamond (boosted by Looting) only for the black/white/brown variants; a
      *  50% chance of 1 netherite scrap (boosted by Looting) only for the fire variant. */
     private void dropWolfLoot(ServerLevel level, DamageSource damageSource) {
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         this.dropCount(Items.GOLDEN_APPLE, lootingLevel);
         this.dropCount(Items.IRON_AXE, lootingLevel);
         this.dropCount(Items.IRON_HOE, lootingLevel);
@@ -434,14 +429,5 @@ public class MoCWerewolfEntity extends Monster {
         if (count > 0) {
             this.spawnAtLocation(new ItemStack(item, count));
         }
-    }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 }

@@ -1,13 +1,13 @@
 package com.example.neomocreatures.entity;
 
-import net.minecraft.core.BlockPos;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
@@ -74,7 +74,7 @@ public class MoCFlameWraithEntity extends MoCWraithEntity {
     /** Wiki: 0-2 redstone dust only (the real loot table also has blaze powder, but the wiki doesn't). */
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         int redstone = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
         if (redstone > 0) {
             this.spawnAtLocation(new ItemStack(Items.REDSTONE, redstone));

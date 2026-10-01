@@ -1,12 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import java.util.EnumSet;
+
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.EnumSet;
 
 /**
  * Port of the original's isZebraRunning(): a wild (untamed) zebra flees from the

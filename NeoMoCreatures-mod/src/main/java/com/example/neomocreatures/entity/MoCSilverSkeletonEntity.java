@@ -1,19 +1,20 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCLootUtil;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -24,20 +25,10 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.server.level.ServerLevel;
-import com.example.neomocreatures.entity.MoCManticoreEntity;
-import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.phys.AABB;
 
 /**
@@ -224,7 +215,7 @@ public class MoCSilverSkeletonEntity extends Monster {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
         int scrap = this.random.nextInt(3) - 1 + this.random.nextInt(lootingLevel + 1);
         if (scrap > 0) {
@@ -238,15 +229,6 @@ public class MoCSilverSkeletonEntity extends Monster {
                 && this.random.nextFloat() < 0.015F + 0.01F * lootingLevel) {
             this.spawnAtLocation(new ItemStack(ModItems.SILVER_SWORD.get()));
         }
-    }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 
     // ---------------------------------------------------------------------

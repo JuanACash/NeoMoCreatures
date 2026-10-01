@@ -1,10 +1,19 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -26,20 +35,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-
-import com.example.neomocreatures.entity.golem.GolemBlockPicker;
-
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.world.level.GameRules;
 import net.neoforged.neoforge.common.CommonHooks;
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityMiniGolem}. A small stone golem that
@@ -308,7 +306,7 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         this.dropUpToOne(ModItems.ANCIENT_SILVER_SCRAP.get(), lootingLevel);
         this.dropUpToOne(Items.REDSTONE, lootingLevel);
     }
@@ -321,15 +319,6 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
         if (count > 0) {
             this.spawnAtLocation(new ItemStack(item, count));
         }
-    }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 
     @Override

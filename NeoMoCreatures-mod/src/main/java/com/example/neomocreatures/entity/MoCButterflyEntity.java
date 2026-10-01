@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Set;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.butterfly.ButterflyVariant;
@@ -9,6 +11,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -19,10 +23,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.tags.ItemTags;
-import java.util.Set;
 /**
  * Port of {@code MoCEntityButterfly}. Silent and drop-less. Ten variants rolled uniformly, the last
  * three being moths (bigger, and attracted to light like a fly).

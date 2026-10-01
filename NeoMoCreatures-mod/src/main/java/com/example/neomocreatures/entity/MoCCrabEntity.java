@@ -1,9 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import java.util.function.Predicate;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.crab.CrabVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 
 import net.minecraft.core.component.DataComponents;
@@ -21,9 +24,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -36,15 +37,14 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.neoforged.neoforge.fluids.FluidType;
-import java.util.function.Predicate;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.ambient.MoCEntityCrab}, built on {@link TamableAnimal}
@@ -232,21 +232,11 @@ public class MoCCrabEntity extends TamableAnimal {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
         if (count > 0) {
             this.spawnAtLocation(new ItemStack(ModItems.CRAB_RAW.get(), count));
         }
-    }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */

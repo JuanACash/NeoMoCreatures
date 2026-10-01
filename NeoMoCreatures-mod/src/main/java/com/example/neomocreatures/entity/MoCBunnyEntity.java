@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.bunny.BunnyVariant;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
@@ -30,13 +34,10 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-
-import javax.annotation.Nullable;
-import java.util.Optional;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityBunny}: a small,

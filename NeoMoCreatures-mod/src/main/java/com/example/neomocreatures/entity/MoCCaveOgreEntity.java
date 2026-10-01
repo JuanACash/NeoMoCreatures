@@ -1,17 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 /** Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityCaveOgre}. */
@@ -71,7 +69,7 @@ public class MoCCaveOgreEntity extends MoCOgreEntity {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         int diamonds = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
         if (diamonds > 0) {
             this.spawnAtLocation(new ItemStack(Items.DIAMOND, diamonds));
@@ -85,14 +83,5 @@ public class MoCCaveOgreEntity extends MoCOgreEntity {
         if (scraps > 0) {
             this.spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, scraps));
         }
-    }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 }

@@ -1,11 +1,14 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.mouse.MouseVariant;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCLootUtil;
 
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -18,7 +21,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -32,17 +34,11 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
-
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityMouse}. Fully passive: flees the
@@ -270,22 +266,12 @@ public class MoCMouseEntity extends TamableAnimal {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
         if (count > 0) {
             this.spawnAtLocation(new ItemStack(Items.WHEAT_SEEDS, count));
         }
     }
-
-    private int getLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
-    }
-
 
     @Override
     protected int getBaseExperienceReward() {

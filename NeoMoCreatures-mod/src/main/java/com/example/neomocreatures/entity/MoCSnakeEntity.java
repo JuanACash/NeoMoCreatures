@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.snake.SnakeVariant;
 import com.example.neomocreatures.init.ModSounds;
 
@@ -43,8 +45,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
-import javax.annotation.Nullable;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hunter.MoCEntitySnake}: a
