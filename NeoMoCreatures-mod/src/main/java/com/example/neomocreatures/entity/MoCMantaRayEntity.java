@@ -1,13 +1,26 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
+import javax.annotation.Nullable;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
@@ -15,29 +28,16 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.util.NamingHelper;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.aquatic.MoCEntityMantaRay} (and its {@code MoCEntityRay}
@@ -50,7 +50,7 @@ import net.minecraft.world.item.component.CustomData;
  * <p>
  * Like the original it makes no sounds of its own, never flees and never attacks, and drops nothing.
  */
-public class MoCMantaRayEntity extends TamableAnimal {
+public class MoCMantaRayEntity extends TamableAnimal implements StorablePet {
 
     /** Original: age 180 gives a size factor of 1.5 (capped), which scales the whole model. */
     private static final double SCALE = 1.5D;
@@ -255,10 +255,7 @@ public class MoCMantaRayEntity extends TamableAnimal {
 
     private InteractionResult interactAsOwner(Player player, InteractionHand hand, ItemStack stack) {
         if (stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         if (stack.is(ModItems.FISH_NET.get()) && !this.isVehicle()) {
             return this.captureInFishNet(player, hand, stack);
@@ -339,17 +336,7 @@ public class MoCMantaRayEntity extends TamableAnimal {
     /** Turns one empty net into a filled one holding this manta ray, and removes it from the world. */
     private InteractionResult captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         if (!this.level().isClientSide) {
-            ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-            filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-            if (!player.getAbilities().instabuild) {
-                emptyNet.shrink(1);
-            }
-            if (emptyNet.isEmpty()) {
-                player.setItemInHand(hand, filled);
-            } else if (!player.getInventory().add(filled)) {
-                player.drop(filled, false);
-            }
-            this.discard();
+            PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
         }
         return InteractionResult.SUCCESS;
     }
@@ -364,7 +351,8 @@ public class MoCMantaRayEntity extends TamableAnimal {
     }
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created manta ray. */
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

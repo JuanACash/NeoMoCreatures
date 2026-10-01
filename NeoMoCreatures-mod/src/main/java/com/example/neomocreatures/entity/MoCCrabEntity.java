@@ -5,12 +5,12 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -41,7 +41,6 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -61,7 +60,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * That same trick is also the original's known quirk: a crab that climbs into a gap under a ceiling
  * can get stuck and suffocate there — normal block-suffocation damage, nothing special to add.
  */
-public class MoCCrabEntity extends TamableAnimal {
+public class MoCCrabEntity extends TamableAnimal implements StorablePet {
 
     /** Original: age is a per-individual size roll (50-99) rather than a growth stage; ported as a
      *  fixed random SCALE rolled once, not something that changes over the crab's life. */
@@ -257,10 +256,7 @@ public class MoCCrabEntity extends TamableAnimal {
             return this.captureInFishNet(player, hand, stack);
         }
         if (this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         return super.mobInteract(player, hand);
     }
@@ -279,17 +275,7 @@ public class MoCCrabEntity extends TamableAnimal {
 
     private InteractionResult captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         if (!this.level().isClientSide) {
-            ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-            filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-            if (!player.getAbilities().instabuild) {
-                emptyNet.shrink(1);
-            }
-            if (emptyNet.isEmpty()) {
-                player.setItemInHand(hand, filled);
-            } else if (!player.getInventory().add(filled)) {
-                player.drop(filled, false);
-            }
-            this.discard();
+            PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
         }
         return InteractionResult.SUCCESS;
     }
@@ -305,7 +291,8 @@ public class MoCCrabEntity extends TamableAnimal {
         return tag;
     }
 
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

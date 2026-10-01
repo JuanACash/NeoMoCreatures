@@ -1,10 +1,14 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.kitty.KittyVariant;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -46,7 +50,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
  * kitty bed, taming, or the original's ~20-state AI yet — those come in
  * later steps.
  */
-public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet, GrowthScaled {
+public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet, GrowthScaled, StorablePet {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -152,12 +156,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
-        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override
@@ -1168,10 +1167,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         ItemStack stack = player.getItemInHand(hand);
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
@@ -1262,5 +1258,28 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         }
 
         return super.mobInteract(player, hand);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setVariant(com.example.neomocreatures.entity.kitty.KittyVariant.byId(tag.getInt("KittyVariant")));
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }

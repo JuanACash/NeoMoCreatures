@@ -9,6 +9,7 @@ import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.List;
 
@@ -16,7 +17,6 @@ import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -60,7 +60,6 @@ import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -81,7 +80,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * <p>
  * Neutral: an adult dolphin fights back when hurt, a calf flees.
 **/
-public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
+public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, StorablePet {
 
     // ---- Size and growth ----
     /** Original: a wild dolphin is created with age 120, which renders the model at 1.2x. */
@@ -408,10 +407,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
 
     private InteractionResult interactAsOwner(Player player, InteractionHand hand, ItemStack stack) {
         if (stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         if (stack.is(ModItems.FISH_NET.get()) && !this.isVehicle()) {
             if (!this.level().isClientSide) {
@@ -612,17 +608,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
 
     /** Turns one empty net into a filled one holding this dolphin, and removes it from the world. */
     private void captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
-        ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-        filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-        if (!player.getAbilities().instabuild) {
-            emptyNet.shrink(1);
-        }
-        if (emptyNet.isEmpty()) {
-            player.setItemInHand(hand, filled);
-        } else if (!player.getInventory().add(filled)) {
-            player.drop(filled, false);
-        }
-        this.discard();
+        PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
     }
 
     private CompoundTag createNetTag(Player owner) {
@@ -637,7 +623,8 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
     }
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created dolphin. */
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

@@ -9,6 +9,7 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -52,7 +52,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -74,7 +73,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * suffocates out of water and, only for the piranha, attacks players on sight and sticks to its
  * group. Not implemented yet: taming with a fish net or a hatched egg, natural spawning and drops.
  */
-public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
+public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, StorablePet {
 
     /** Original: age 100 with a size factor of age * 0.01 gives a model scale of 1.0 — no shrinking needed. */
     private static final double SCALE = 1.0D;
@@ -441,10 +440,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
             return this.captureInFishNet(player, hand, stack);
         }
         if (this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         return super.mobInteract(player, hand);
     }
@@ -465,17 +461,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
     /** Turns one empty net into a filled one holding this fish, and removes it from the world. */
     private InteractionResult captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         if (!this.level().isClientSide) {
-            ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-            filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-            if (!player.getAbilities().instabuild) {
-                emptyNet.shrink(1);
-            }
-            if (emptyNet.isEmpty()) {
-                player.setItemInHand(hand, filled);
-            } else if (!player.getInventory().add(filled)) {
-                player.drop(filled, false);
-            }
-            this.discard();
+            PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
         }
         return InteractionResult.SUCCESS;
     }
@@ -492,7 +478,8 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created fish, and tames it: the
      *  wiki tames on release from a net regardless of whether it was tame when caught. */
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

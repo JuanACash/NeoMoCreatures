@@ -6,6 +6,7 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -17,7 +18,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -52,7 +52,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -80,7 +79,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * model by hand. Here size is the vanilla {@link Attributes#SCALE} attribute,
  * so the hitbox, shadow and name tag follow it and it is saved/synced for free.
  */
-public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, GrowthScaled {
+public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, GrowthScaled, StorablePet {
 
     /** NBT flag that marks a Pet Amulet as holding a turtle. */
     public static final String AMULET_KEY = "Turtle";
@@ -544,10 +543,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
 
     private InteractionResult interactAsOwner(Player player, InteractionHand hand, ItemStack stack) {
         if (stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         if (stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
@@ -600,10 +596,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
         tag.putUUID("OwnerUUID", player.getUUID());
 
-        ItemStack filled = new ItemStack(ModItems.PET_AMULET_FULL.get());
-        filled.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), tag);
     }
 
     // ---------------------------------------------------------------------
@@ -985,6 +978,26 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
                 }
             }
             return null;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #captureIntoAmulet} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth(tag.getFloat("Health"));
+        if (tag.contains("Scale")) {
+            this.setGrowthScale(tag.getFloat("Scale"));
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
         }
     }
 }

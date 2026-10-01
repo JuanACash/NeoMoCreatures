@@ -7,10 +7,10 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -39,7 +39,6 @@ import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -60,7 +59,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * Like the original it is passive, makes no sounds of its own and cannot be bred (the original's
  * breeding code is disabled).
  */
-public class MoCFishyEntity extends TamableAnimal {
+public class MoCFishyEntity extends TamableAnimal implements StorablePet {
 
     /** Original: age 100 with a size factor of age * 0.006 gives a model scale of 0.6. */
     private static final double SCALE = 0.6D;
@@ -276,10 +275,7 @@ public class MoCFishyEntity extends TamableAnimal {
             return this.captureInFishNet(player, hand, stack);
         }
         if (this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         return super.mobInteract(player, hand);
     }
@@ -291,17 +287,7 @@ public class MoCFishyEntity extends TamableAnimal {
     /** Turns one empty net into a filled one holding this fishy, and removes it from the world. */
     private InteractionResult captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         if (!this.level().isClientSide) {
-            ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-            filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-            if (!player.getAbilities().instabuild) {
-                emptyNet.shrink(1);
-            }
-            if (emptyNet.isEmpty()) {
-                player.setItemInHand(hand, filled);
-            } else if (!player.getInventory().add(filled)) {
-                player.drop(filled, false);
-            }
-            this.discard();
+            PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
         }
         return InteractionResult.SUCCESS;
     }
@@ -318,7 +304,8 @@ public class MoCFishyEntity extends TamableAnimal {
     }
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created fishy. */
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

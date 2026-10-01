@@ -1,12 +1,16 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -35,6 +39,7 @@ import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 /**
@@ -53,7 +58,7 @@ import net.minecraft.world.level.Level;
  * same as the original), healing. Dolphin-hunting is also not ported yet —
  * there's no MoCDolphinEntity in this project to target.
  */
-public class MoCSharkEntity extends TamableAnimal implements EggHatchable, GrowthScaled {
+public class MoCSharkEntity extends TamableAnimal implements EggHatchable, GrowthScaled, StorablePet {
 
     private static final net.minecraft.resources.ResourceLocation ATTACK_SPEED_MODIFIER_ID =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
@@ -256,11 +261,8 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
+            return NamingHelper.renameWithBook(this, player);
         }
 
         // Wiki: "a tamed shark can be moved with the use of a fish net."
@@ -288,12 +290,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     }
 
     private void capturePetInstant(Player player, InteractionHand hand) {
-        net.minecraft.nbt.CompoundTag tag = buildNetTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.FISH_NET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.FISH_NET_FULL.get(), buildNetTag(player.getUUID()));
     }
 
     @Nullable
@@ -379,6 +376,24 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
             } else {
                 this.shark.setSpeed(0.0F);
             }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildNetTag} when a Fish Net releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        this.setBaby(!tag.getBoolean("Adult"));
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

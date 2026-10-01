@@ -1,6 +1,7 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
+import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.init.ModEntities;
@@ -9,6 +10,8 @@ import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.List;
 
@@ -17,12 +20,14 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -51,12 +56,13 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 
-public class MoCHorseEntity extends AbstractHorse {
+public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     private static final EntityDataAccessor<Integer> DATA_SPECIES =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
@@ -626,12 +632,7 @@ public class MoCHorseEntity extends AbstractHorse {
     private void capturePetInstant(Player player, InteractionHand hand) {
         dropSaddleAndArmor();
         dropChestAndContents();
-        CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     private void completeAmuletCapture() {
@@ -2667,5 +2668,68 @@ public class MoCHorseEntity extends AbstractHorse {
             return wantsHorseArmor();
         }
         return super.canUseSlot(slot);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setSpecies(Species.valueOf(tag.getString("Species")));
+        this.setTamed(true);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Coat")) {
+            this.setCoat(com.example.neomocreatures.breeding.MoCHorseGenetics.Coat.valueOf(tag.getString("Coat")));
+        }
+        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) != null && tag.contains("MaxHealth")) {
+            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(tag.getDouble("MaxHealth"));
+        }
+        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) != null && tag.contains("MovementSpeed")) {
+            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(tag.getDouble("MovementSpeed"));
+        }
+        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH) != null && tag.contains("JumpStrength")) {
+            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH).setBaseValue(tag.getDouble("JumpStrength"));
+        }
+        if (tag.contains("UndeadStage")) {
+            this.setUndeadStagePublic(tag.getInt("UndeadStage"));
+            this.setUndeadLockedPublic(tag.getBoolean("UndeadLocked"));
+            this.setUndeadDecayTicksPublic(tag.getInt("UndeadDecayTicks"));
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
+        if (tag.contains("FairyColor")) {
+            this.setFairyColor(FairyColor.valueOf(tag.getString("FairyColor")));
+            this.setFairyColorLocked(true);
+        }
+        if (tag.contains("SaddleItem")) {
+            Item saddleItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(tag.getString("SaddleItem")));
+            this.setSaddle(new ItemStack(saddleItem));
+        }
+        if (tag.contains("ArmorItem")) {
+            Item armorItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(tag.getString("ArmorItem")));
+            this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.BODY, new ItemStack(armorItem));
+        }
+        if (tag.getBoolean("HasChest")) {
+            this.setHasChestPublic(true);
+            if (tag.contains("ChestItems")) {
+                net.minecraft.nbt.ListTag items = tag.getList("ChestItems", net.minecraft.nbt.Tag.TAG_COMPOUND);
+                for (int i = 0; i < items.size(); i++) {
+                    CompoundTag itemTag = items.getCompound(i);
+                    int slot = itemTag.getInt("Slot");
+                    ItemStack.parse(this.level().registryAccess(), itemTag).ifPresent(is -> this.setChestSlotPublic(slot, is));
+                }
+            }
+        }
     }
 }

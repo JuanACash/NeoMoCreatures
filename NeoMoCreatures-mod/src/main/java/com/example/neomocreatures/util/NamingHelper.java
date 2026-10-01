@@ -1,12 +1,15 @@
 package com.example.neomocreatures.util;
 
-import java.util.UUID;
-
 import com.example.neomocreatures.network.OpenNamingScreenPayload;
+
+import java.util.UUID;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -28,6 +31,17 @@ public final class NamingHelper {
         if (owner != null) {
             PacketDistributor.sendToPlayer(owner, new OpenNamingScreenPayload(entity.getId()));
         }
+    }
+
+    /**
+     * Owner right-clicked the pet with a book: opens the naming screen (server side only).
+     * Callers check ownership first, since each pet has its own rule.
+     */
+    public static InteractionResult renameWithBook(Entity pet, Player player) {
+        if (!pet.level().isClientSide) {
+            promptRename(pet, player.getUUID());
+        }
+        return InteractionResult.SUCCESS;
     }
 
     /** For a tamed-but-ownerless mob (Scroll of Sale / Reset Owner): opens the

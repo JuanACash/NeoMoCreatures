@@ -1,14 +1,18 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
@@ -34,6 +38,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 /**
@@ -52,7 +57,7 @@ import net.minecraft.world.level.Level;
  * require re-registering the entity type or migrating saved data — taming
  * itself is intentionally NOT implemented yet.
  */
-public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled {
+public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, StorablePet {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -206,11 +211,8 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled {
     public net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-            }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
+            return NamingHelper.renameWithBook(this, player);
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
@@ -279,16 +281,33 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled {
 
     /** Captures this tamed raccoon into a Pet Amulet and removes it from the world. */
     private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
-        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override
     protected int getBaseExperienceReward() {
         return MoCExperienceUtil.rollStandardXp(this.random);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }

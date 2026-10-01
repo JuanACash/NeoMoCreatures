@@ -1,12 +1,16 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -40,6 +44,7 @@ import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
@@ -57,7 +62,7 @@ import net.minecraft.world.phys.Vec3;
  * returns false and {@link #getBreedOffspring} always returns null.
  */
 public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
-        net.minecraft.world.entity.PlayerRideableJumping {
+        net.minecraft.world.entity.PlayerRideableJumping, StorablePet {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
     private static final int MOUTH_TICKS_MAX = 20;
@@ -463,11 +468,8 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
+            return NamingHelper.renameWithBook(this, player);
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
@@ -675,12 +677,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     /** Captures this tamed dragon into a Pet Amulet and removes it from the world. */
     private void capturePetInstant(Player player, InteractionHand hand) {
         dropAllEquipment();
-        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override
@@ -692,5 +689,30 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null; // no breeding
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        if (tag.contains("IndividualAdultScale")) {
+            this.setIndividualAdultScale(tag.getFloat("IndividualAdultScale"));
+        }
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }

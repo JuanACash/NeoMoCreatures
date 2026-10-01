@@ -1,13 +1,14 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -34,11 +35,11 @@ import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 /**
@@ -55,7 +56,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * </ul>
  * Not implemented yet: taming and natural spawning.
  */
-public class MoCStingrayEntity extends TamableAnimal {
+public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
 
 
     /** NBT flag that marks a filled fish net as holding a stingray. */
@@ -194,10 +195,7 @@ public class MoCStingrayEntity extends TamableAnimal {
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         // A wild stingray can be caught by anyone; a tame one only by its owner.
         if (stack.is(ModItems.FISH_NET.get()) && (!this.isTame() || this.isOwnedBy(player))) {
@@ -217,17 +215,7 @@ public class MoCStingrayEntity extends TamableAnimal {
         tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
         tag.putUUID("OwnerUUID", player.getUUID());
 
-        ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-        filled.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-        if (!player.getAbilities().instabuild) {
-            emptyNet.shrink(1);
-        }
-        if (emptyNet.isEmpty()) {
-            player.setItemInHand(hand, filled);
-        } else if (!player.getInventory().add(filled)) {
-            player.drop(filled, false);
-        }
-        this.discard();
+        PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), tag);
     }
 
     /**
@@ -418,6 +406,24 @@ public class MoCStingrayEntity extends TamableAnimal {
                 this.ray.setYRot(this.rotlerp(this.ray.getYRot(), targetYaw, SWIM_MAX_TURN_DEGREES));
                 this.ray.yBodyRot = this.ray.getYRot();
             }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #captureInFishNet} when a Fish Net releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth(tag.getFloat("Health"));
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(Component.literal(tag.getString("Name")));
+            this.setCustomNameVisible(true);
         }
     }
 }

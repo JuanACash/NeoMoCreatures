@@ -1,10 +1,12 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.bird.BirdVariant;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -60,7 +63,7 @@ import net.minecraft.world.phys.Vec3;
  * fall damage) and a massive speed boost to any mount the holder is riding,
  * same idea as {@code MoCBunnyEntity}.
  */
-public class MoCBirdEntity extends TamableAnimal implements CarriedPet {
+public class MoCBirdEntity extends TamableAnimal implements CarriedPet, StorablePet {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBirdEntity.class, EntityDataSerializers.INT);
@@ -267,10 +270,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet {
         ItemStack stack = player.getItemInHand(hand);
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
 
         // Wiki: "Tamed birds can be healed with seeds... by right-clicking it."
@@ -328,12 +328,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet {
     }
 
     private void capturePetInstant(Player player, InteractionHand hand) {
-        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     // ---- CarriedPet (pickup onto the player's head) ----
@@ -588,6 +583,27 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet {
         @Override
         public void stop() {
             this.target = null;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        try {
+            this.setVariant(com.example.neomocreatures.entity.bird.BirdVariant.valueOf(tag.getString("BirdVariant")));
+        } catch (IllegalArgumentException ignored) {
+        }
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
         }
     }
 }

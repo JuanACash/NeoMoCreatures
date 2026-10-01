@@ -1,14 +1,17 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.bunny.BunnyVariant;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageUtil;
+
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.entity.bunny.BunnyVariant;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetCarryUtil;
-
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -47,7 +50,7 @@ import net.minecraft.world.phys.Vec3;
  * player's head), healed/bred with (golden) carrots, and boosts any mount
  * the holding player is riding while carried.
  */
-public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthScaled {
+public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthScaled, StorablePet {
 
     /** Wiki: "Baby rabbits take 3-5 days to mature" — using 4 in-game days as a fixed middle value. */
     private static final int GROWTH_TICKS = 96000;
@@ -155,12 +158,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     }
 
     private void capturePetInstant(Player player, InteractionHand hand) {
-        net.minecraft.nbt.CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override
@@ -458,10 +456,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         ItemStack stack = player.getItemInHand(hand);
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
 
         // Wiki: "healed by feeding them carrots".
@@ -523,5 +518,31 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
 
         return super.mobInteract(player, hand);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        try {
+            this.setVariant(com.example.neomocreatures.entity.bunny.BunnyVariant.valueOf(tag.getString("BunnyVariant")));
+        } catch (IllegalArgumentException ignored) {
+        }
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setBaby(!tag.getBoolean("Adult"));
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }

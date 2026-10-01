@@ -7,10 +7,10 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -37,7 +37,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -63,7 +62,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * {@link #MAX_GROWN_SCALE} (the wiki's "2 to 2.5 blocks long"); a wild-caught adult keeps the fixed
  * wild size instead, since it was never a growing pet.
  */
-public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHatchable, GrowthScaled {
+public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHatchable, GrowthScaled, StorablePet {
 
     /** Original: age 100 with a size factor of age * 0.0081 gives a model scale of 0.81. */
     private static final double SCALE = 0.81D;
@@ -375,10 +374,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
             return this.captureInFishNet(player, hand, stack);
         }
         if (this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+            return NamingHelper.renameWithBook(this, player);
         }
         return super.mobInteract(player, hand);
     }
@@ -399,17 +395,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
     /** Turns one empty net into a filled one holding this fish, and removes it from the world. */
     private InteractionResult captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         if (!this.level().isClientSide) {
-            ItemStack filled = new ItemStack(ModItems.FISH_NET_FULL.get());
-            filled.set(DataComponents.CUSTOM_DATA, CustomData.of(this.createNetTag(player)));
-            if (!player.getAbilities().instabuild) {
-                emptyNet.shrink(1);
-            }
-            if (emptyNet.isEmpty()) {
-                player.setItemInHand(hand, filled);
-            } else if (!player.getInventory().add(filled)) {
-                player.drop(filled, false);
-            }
-            this.discard();
+            PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), this.createNetTag(player));
         }
         return InteractionResult.SUCCESS;
     }
@@ -429,7 +415,8 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created fish, and tames it: the
      *  wiki tames on release from a net regardless of whether it was tame when caught. */
-    public void restoreFromNet(CompoundTag tag) {
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));

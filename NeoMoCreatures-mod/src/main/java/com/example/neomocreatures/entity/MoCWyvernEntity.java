@@ -5,9 +5,12 @@ import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
 import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.EnumSet;
 
@@ -59,7 +62,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.HasCustomInventoryScreen, GrowthScaled {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.HasCustomInventoryScreen, GrowthScaled, StorablePet {
 
     private static final double AGGRO_RADIUS = 14.0D;
     private static final int POISON_DURATION_TICKS = 200;
@@ -769,11 +772,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (this.isTame() && this.isOwnedBy(player)) {
             ItemStack stack = player.getItemInHand(hand);
-            if (stack.is(net.minecraft.world.item.Items.BOOK)) {
-                if (!this.level().isClientSide) {
-                    com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-                }
-                return InteractionResult.SUCCESS;
+            if (stack.is(Items.BOOK)) {
+                return NamingHelper.renameWithBook(this, player);
             }
             if (stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
                 if (!this.level().isClientSide) {
@@ -1063,12 +1063,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     private void capturePetInstant(Player player, InteractionHand hand) {
         dropSaddleAndArmor();
         dropChestAndContents();
-        CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     /**
@@ -1476,5 +1471,28 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setVariant(com.example.neomocreatures.entity.wyvern.WyvernVariant.valueOf(tag.getString("WyvernVariant")));
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }

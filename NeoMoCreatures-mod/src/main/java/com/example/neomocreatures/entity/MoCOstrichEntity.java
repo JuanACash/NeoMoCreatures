@@ -1,7 +1,10 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
@@ -32,11 +35,12 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
-        net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.PlayerRideableJumping {
+        net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.PlayerRideableJumping, StorablePet {
 
     private static final int HIDE_TICKS = 60;
     private static final int MOUTH_TICKS_MAX = 20;
@@ -686,12 +690,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     /** Pet Amulet capture: instant, no vanish animation. Saddle/helmet/chest drop on the ground, not saved. */
     private void capturePetInstant(Player player, InteractionHand hand) {
         dropAllEquipment();
-        CompoundTag tag = buildAmuletTag(player.getUUID());
-        ItemStack filled = new ItemStack(com.example.neomocreatures.init.ModItems.PET_AMULET_FULL.get());
-        filled.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
-        player.setItemInHand(hand, filled);
-        this.discard();
+        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     private void tickUnihornedCharge() {
@@ -711,11 +710,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(net.minecraft.world.item.Items.BOOK)) {
-            if (!this.level().isClientSide) {
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-            }
-            return InteractionResult.SUCCESS;
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
+            return NamingHelper.renameWithBook(this, player);
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
@@ -1303,5 +1299,31 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setVariant(com.example.neomocreatures.entity.ostrich.OstrichVariant.valueOf(tag.getString("OstrichVariant")));
+        if (tag.contains("OstrichEssence")) {
+            this.setEssence(tag.getInt("OstrichEssence"));
+        }
+        this.setTame(true, false);
+        if (tag.hasUUID("OwnerUUID")) {
+            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
+        }
+        this.setHealth((float) tag.getFloat("Health"));
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
+        } else {
+            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+        }
+        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
+            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+        }
     }
 }
