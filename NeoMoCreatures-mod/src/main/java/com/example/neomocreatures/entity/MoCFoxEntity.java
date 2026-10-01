@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
@@ -372,13 +373,10 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     private boolean pickSnowForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.GROVE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)) {
+        if (biome.is(ModTags.FOX_SNOW_BIOMES)) {
             return true;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.TAIGA)) {
+        if (biome.is(ModTags.FOX_NORMAL_BIOMES)) {
             return false;
         }
 

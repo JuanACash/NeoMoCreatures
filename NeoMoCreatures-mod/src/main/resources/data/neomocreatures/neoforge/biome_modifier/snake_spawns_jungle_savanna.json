@@ -1,7 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": ["minecraft:jungle", "minecraft:sparse_jungle", "minecraft:savanna", "minecraft:savanna_plateau"],
+  "biomes": "#neomocreatures:spawns/snake_jungle_savanna",
   "spawners": [
-    { "type": "neomocreatures:moc_snake", "weight": 14, "minCount": 2, "maxCount": 4 }
+    {
+      "type": "neomocreatures:moc_snake",
+      "weight": 14,
+      "minCount": 2,
+      "maxCount": 4
+    }
   ]
 }

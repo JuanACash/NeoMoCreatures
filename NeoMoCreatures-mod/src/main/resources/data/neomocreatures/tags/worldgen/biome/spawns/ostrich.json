@@ -1,0 +1,61 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:desert",
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:windswept_savanna",
+    {
+      "id": "biomesoplenty:dryland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_desert",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:cold_desert",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:scrubland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland_steppe",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:mojave_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:atacama_outback",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:windswept_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:baobab_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:araucaria_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:rugged_badlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:sierra_badlands",
+      "required": false
+    }
+  ]
+}

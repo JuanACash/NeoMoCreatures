@@ -1,7 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": ["minecraft:grove", "minecraft:snowy_taiga"],
+  "biomes": "#neomocreatures:spawns/fox_snow",
   "spawners": [
-    { "type": "neomocreatures:moc_fox", "weight": 24, "minCount": 3, "maxCount": 5 }
+    {
+      "type": "neomocreatures:moc_fox",
+      "weight": 24,
+      "minCount": 3,
+      "maxCount": 5
+    }
   ]
 }

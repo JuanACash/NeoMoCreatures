@@ -3,6 +3,7 @@ package com.example.neomocreatures.entity;
 import com.example.neomocreatures.entity.snake.SnakeVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
@@ -589,41 +590,32 @@ public class MoCSnakeEntity extends TamableAnimal
     private SnakeVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.DESERT)
-                || biome.is(net.minecraft.world.level.biome.Biomes.BADLANDS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.ERODED_BADLANDS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.WOODED_BADLANDS)) {
+        if (biome.is(ModTags.SNAKE_RATTLE_OR_WOLF_BIOMES)) {
             return this.random.nextBoolean() ? SnakeVariant.RATTLE : SnakeVariant.WOLF;
         }
 
         // Wiki: "cobras also spawn in savannas" — savanna is cobra-only,
         // unlike the jungle biomes it shares with python/green.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU)) {
+        if (biome.is(ModTags.SNAKE_COBRA_BIOMES)) {
             return SnakeVariant.COBRA;
         }
 
-        // Wiki: pythons can also spawn in mangrove swamps, including right
-        // on the water surface (see the custom spawn placement predicate).
-        if (biome.is(net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP)) {
+        // Wiki: pythons can also spawn in mangrove swamps (and other swamps/marshes),
+        // including right on the water surface (see the custom spawn placement predicate).
+        if (biome.is(ModTags.SNAKE_PYTHON_BIOMES)) {
             return SnakeVariant.PYTHON;
         }
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.JUNGLE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SPARSE_JUNGLE)) {
+        if (biome.is(ModTags.SNAKE_JUNGLE_BIOMES)) {
             SnakeVariant[] options = {SnakeVariant.COBRA, SnakeVariant.PYTHON, SnakeVariant.GREEN_BRIGHT};
             return options[this.random.nextInt(options.length)];
         }
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.BIRCH_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_BIRCH_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.DARK_FOREST)) {
+        if (biome.is(ModTags.SNAKE_CORAL_BIOMES)) {
             return SnakeVariant.CORAL;
         }
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.PLAINS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SUNFLOWER_PLAINS)) {
+        if (biome.is(ModTags.SNAKE_ORANGE_BIOMES)) {
             return SnakeVariant.ORANGE;
         }
 

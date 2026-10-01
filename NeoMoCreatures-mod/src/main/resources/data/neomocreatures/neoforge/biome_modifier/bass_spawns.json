@@ -1,11 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:river",
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp"
-  ],
+  "biomes": "#neomocreatures:spawns/bass",
   "spawners": [
-    { "type": "neomocreatures:moc_bass", "weight": 11, "minCount": 1, "maxCount": 4 }
+    {
+      "type": "neomocreatures:moc_bass",
+      "weight": 11,
+      "minCount": 1,
+      "maxCount": 4
+    }
   ]
 }

@@ -1,0 +1,34 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:sparse_jungle",
+    {
+      "id": "biomesoplenty:fungal_jungle",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rainforest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rocky_rainforest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:tropics",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:fragment_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:jacaranda_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:tropical_rainforest",
+      "required": false
+    }
+  ]
+}

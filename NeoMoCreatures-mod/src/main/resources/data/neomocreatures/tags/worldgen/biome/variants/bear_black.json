@@ -1,0 +1,31 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    {
+      "id": "biomesoplenty:aspen_glade",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:woodland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:maple_woods",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cika_woods",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:zelkova_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:aspen_boreal",
+      "required": false
+    }
+  ]
+}

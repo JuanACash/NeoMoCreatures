@@ -1,0 +1,56 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    "minecraft:jungle",
+    {
+      "id": "biomesoplenty:marsh",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wetland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:bayou",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:fungal_jungle",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rainforest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:tropics",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cypress_wetlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cypress_swamplands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:white_mangrove_marshes",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:fragment_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:jacaranda_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:tropical_rainforest",
+      "required": false
+    }
+  ]
+}

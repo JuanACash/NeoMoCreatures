@@ -1,16 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:warm_ocean",
-    "minecraft:frozen_ocean",
-    "minecraft:deep_frozen_ocean",
-    "minecraft:deep_cold_ocean",
-    "minecraft:lukewarm_ocean",
-    "minecraft:beach",
-    "minecraft:snowy_beach",
-    "minecraft:stony_shore"
-  ],
+  "biomes": "#neomocreatures:spawns/crab",
   "spawners": [
-    { "type": "neomocreatures:moc_crab", "weight": 11, "minCount": 1, "maxCount": 4 }
+    {
+      "type": "neomocreatures:moc_crab",
+      "weight": 11,
+      "minCount": 1,
+      "maxCount": 4
+    }
   ]
 }

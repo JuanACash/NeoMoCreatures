@@ -1,8 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": ["minecraft:snowy_plains", "minecraft:ice_spikes",
-             "minecraft:frozen_ocean", "minecraft:deep_frozen_ocean"],
+  "biomes": "#neomocreatures:spawns/bear_polar",
   "spawners": [
-    { "type": "neomocreatures:moc_bear", "weight": 12, "minCount": 2, "maxCount": 4 }
+    {
+      "type": "neomocreatures:moc_bear",
+      "weight": 12,
+      "minCount": 2,
+      "maxCount": 4
+    }
   ]
 }

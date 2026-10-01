@@ -1,0 +1,34 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_badlands",
+    {
+      "id": "biomesoplenty:wasteland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland_steppe",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:scrubland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:rugged_badlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:sierra_badlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:red_rock_valley",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:red_rock_peaks",
+      "required": false
+    }
+  ]
+}

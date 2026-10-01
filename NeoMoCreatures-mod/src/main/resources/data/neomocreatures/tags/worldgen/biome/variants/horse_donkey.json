@@ -1,0 +1,50 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:savanna_plateau",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    {
+      "id": "biomesoplenty:field",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:grassland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:old_growth_woodland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:amaranth_grassland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:coconino_meadow",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:baobab_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:araucaria_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:maple_taiga",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:shrubland",
+      "required": false
+    }
+  ]
+}

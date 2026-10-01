@@ -1,19 +1,19 @@
 package com.example.neomocreatures;
 
-import org.slf4j.Logger;
-
 import com.example.neomocreatures.client.ModKeyMappings;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.ModEntityAttributes;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModSpawnPlacements;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
 import com.example.neomocreatures.network.ModNetworking;
-import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -24,6 +24,10 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import com.mojang.logging.LogUtils;
+
+import org.slf4j.Logger;
 
 
 @Mod(NeoMoCreatures.MODID)
@@ -390,56 +394,9 @@ public class NeoMoCreatures {
 
     private void registerEntitiesAndSounds(IEventBus modEventBus) {
         ModEntities.ENTITY_TYPES.register(modEventBus);
-        ModEntities.registerAttributes(modEventBus);
+        modEventBus.addListener(ModEntityAttributes::register);
         ModSounds.SOUND_EVENTS.register(modEventBus);
-        modEventBus.addListener(ModEntities::registerSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerHorseMobSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerWyvernSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerManticoreSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerElephantSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBigCatSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerScorpionSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerOstrichSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBearSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerKomodoSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFoxSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerRaccoonSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerTurkeySpawnPlacements);
-        modEventBus.addListener(ModEntities::registerGoatSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerSnakeSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBunnySpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBirdSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerSharkSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerTurtleSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerStingraySpawnPlacements);
-        modEventBus.addListener(ModEntities::registerDolphinSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerMantaRaySpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFishySpawnPlacements);
-        modEventBus.addListener(ModEntities::registerMediumFishSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerSmallFishSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerJellyfishSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerCrabSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerCrocodileSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerGreenOgreSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFireOgreSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerCaveOgreSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerWerewolfSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerWildWolfSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBoarSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerDeerSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerRatSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerHellRatSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerMouseSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerMoleSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerDuckSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerInsectSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerSilverSkeletonSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerWraithSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFlameWraithSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerEntSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerMiniGolemSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerBigGolemSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFilchLizardSpawnPlacements);
+        modEventBus.addListener(ModSpawnPlacements::register);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

@@ -1,11 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:forest",
-    "minecraft:dark_forest"
-  ],
+  "biomes": "#neomocreatures:spawns/maggot",
   "spawners": [
     {
       "type": "neomocreatures:moc_maggot",

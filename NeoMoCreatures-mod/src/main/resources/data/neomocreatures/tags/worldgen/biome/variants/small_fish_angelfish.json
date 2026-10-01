@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:warm_ocean",
+    {
+      "id": "biomesoplenty:tropics",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rainforest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:tropical_rainforest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:rainbow_beach",
+      "required": false
+    }
+  ]
+}

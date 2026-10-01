@@ -1,0 +1,54 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:snowy_plains",
+    "minecraft:snowy_slopes",
+    "minecraft:jagged_peaks",
+    "minecraft:frozen_peaks",
+    "minecraft:ice_spikes",
+    {
+      "id": "biomesoplenty:tundra",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:snowy_coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:snowy_fir_clearing",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:snowy_maple_woods",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:highland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:crag",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:crimson_tundra",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:frosted_taiga",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:frosted_coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:shattered_glacier",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:howling_peaks",
+      "required": false
+    }
+  ]
+}

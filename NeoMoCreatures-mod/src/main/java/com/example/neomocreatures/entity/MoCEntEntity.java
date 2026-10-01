@@ -1,11 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ent.EntVariant;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
+
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.entity.ent.EntVariant;
-import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -45,7 +46,6 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoublePlantBlock;
@@ -283,10 +283,10 @@ public class MoCEntEntity extends Animal {
     /** Flower forests only grow oak ents and birch forests only birch ones; anywhere else it's the original 50/50. */
     private EntVariant pickVariantFor(ServerLevelAccessor level) {
         Holder<Biome> biome = level.getBiome(this.blockPosition());
-        if (biome.is(Biomes.FLOWER_FOREST)) {
+        if (biome.is(ModTags.ENT_OAK_BIOMES)) {
             return EntVariant.OAK;
         }
-        if (biome.is(Biomes.BIRCH_FOREST) || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)) {
+        if (biome.is(ModTags.ENT_BIRCH_BIOMES)) {
             return EntVariant.BIRCH;
         }
         return EntVariant.random(this.random);

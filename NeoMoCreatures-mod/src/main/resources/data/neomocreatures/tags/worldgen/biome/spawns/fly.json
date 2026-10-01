@@ -1,0 +1,87 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:plains",
+    "minecraft:forest",
+    "minecraft:swamp",
+    "minecraft:meadow",
+    "minecraft:taiga",
+    "minecraft:desert",
+    {
+      "id": "biomesoplenty:field",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:grassland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:woodland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:marsh",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wetland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:prairie",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:cold_desert",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:amaranth_grassland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:prairie",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:coconino_meadow",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:zelkova_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cypress_wetlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:pale_bog",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:maple_taiga",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:mojave_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:atacama_outback",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:moor",
+      "required": false
+    }
+  ]
+}

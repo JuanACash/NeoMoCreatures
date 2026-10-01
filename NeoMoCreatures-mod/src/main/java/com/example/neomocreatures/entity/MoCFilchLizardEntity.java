@@ -1,15 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.filchlizard.FilchLizardVariant;
+import com.example.neomocreatures.init.ModDimensions;
+import com.example.neomocreatures.init.ModTags;
+
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.filchlizard.FilchLizardVariant;
-import com.example.neomocreatures.init.ModDimensions;
-import com.example.neomocreatures.init.ModTags;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -23,7 +23,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
@@ -56,7 +55,6 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.neoforged.neoforge.common.Tags;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityFilchLizard}. A small, silent lizard that
@@ -166,10 +164,10 @@ public class MoCFilchLizardEntity extends Animal {
             return FilchLizardVariant.SILVER;
         }
         Holder<Biome> biome = level.getBiome(this.blockPosition());
-        if (biome.is(BiomeTags.IS_BADLANDS)) {
+        if (biome.is(ModTags.FILCH_LIZARD_RED_BIOMES)) {
             return FilchLizardVariant.RED_SAND;
         }
-        if (biome.is(Tags.Biomes.IS_SANDY)) {
+        if (biome.is(ModTags.FILCH_LIZARD_SANDY_BIOMES)) {
             return FilchLizardVariant.SAND;
         }
         return FilchLizardVariant.NORMAL;

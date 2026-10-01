@@ -1,7 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": ["minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga", "minecraft:taiga"],
+  "biomes": "#neomocreatures:spawns/fox_normal",
   "spawners": [
-    { "type": "neomocreatures:moc_fox", "weight": 24, "minCount": 3, "maxCount": 5 }
+    {
+      "type": "neomocreatures:moc_fox",
+      "weight": 24,
+      "minCount": 3,
+      "maxCount": 5
+    }
   ]
 }

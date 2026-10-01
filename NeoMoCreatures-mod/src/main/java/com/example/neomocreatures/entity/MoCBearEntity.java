@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
@@ -411,37 +412,20 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     private BearVariant pickVariantForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
 
-        // Same biomes vanilla's own polar bear spawns in — always POLAR, no roll.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES)
-                || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
-                || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN)) {
+        // Checked in order; each tag holds vanilla biomes plus optional modded ones.
+        if (biome.is(ModTags.BEAR_POLAR_BIOMES)) {
             return BearVariant.POLAR;
         }
-
-        // Same biomes vanilla's own panda spawns in — always PANDA, no roll.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.BAMBOO_JUNGLE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.CHERRY_GROVE)) {
+        if (biome.is(ModTags.BEAR_PANDA_BIOMES)) {
             return BearVariant.PANDA;
         }
-
-        // Grizzly-only forest.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.DARK_FOREST)) {
+        if (biome.is(ModTags.BEAR_GRIZZLY_BIOMES)) {
             return BearVariant.GRIZZLY;
         }
-
-        // Black-only forest.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.BIRCH_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_BIRCH_FOREST)) {
+        if (biome.is(ModTags.BEAR_BLACK_BIOMES)) {
             return BearVariant.BLACK;
         }
-
-        // Shared forest/taiga — either black or grizzly.
-        if (biome.is(net.minecraft.world.level.biome.Biomes.FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA)) {
+        if (biome.is(ModTags.BEAR_BLACK_OR_GRIZZLY_BIOMES)) {
             return this.random.nextBoolean() ? BearVariant.BLACK : BearVariant.GRIZZLY;
         }
 
