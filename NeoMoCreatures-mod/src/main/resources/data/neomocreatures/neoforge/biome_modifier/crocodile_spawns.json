@@ -1,11 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:river"
-  ],
+  "biomes": "#neomocreatures:spawns/crocodile",
   "spawners": [
-    { "type": "neomocreatures:moc_crocodile", "weight": 8, "minCount": 1, "maxCount": 2 }
+    {
+      "type": "neomocreatures:moc_crocodile",
+      "weight": 8,
+      "minCount": 1,
+      "maxCount": 2
+    }
   ]
 }

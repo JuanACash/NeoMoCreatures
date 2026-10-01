@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
@@ -593,30 +595,19 @@ protected void registerGoals() {
     private WildFamily pickFamilyForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.GROVE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_SLOPES)
-                || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_PEAKS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.JAGGED_PEAKS)) {
+        if (biome.is(ModTags.BIGCAT_SNOW_LEOPARD_BIOMES)) {
             return WildFamily.SNOW_LEOPARD;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.JUNGLE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SPARSE_JUNGLE)) {
+        if (biome.is(ModTags.BIGCAT_JUNGLE_BIOMES)) {
             int roll = this.random.nextInt(38); // 14 + 10 + 14
             if (roll < 14) return WildFamily.LEOPARD;
             if (roll < 24) return WildFamily.PANTHER;
             return WildFamily.TIGER;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.BIRCH_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_FOREST)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_BIRCH_FOREST)) {
+        if (biome.is(ModTags.BIGCAT_FOREST_BIOMES)) {
             return this.random.nextInt(24) < 14 ? WildFamily.LEOPARD : WildFamily.PANTHER; // 14 vs 10
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU)
-                || biome.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_SAVANNA)) {
+        if (biome.is(ModTags.BIGCAT_LION_BIOMES)) {
             return WildFamily.LION;
         }
 

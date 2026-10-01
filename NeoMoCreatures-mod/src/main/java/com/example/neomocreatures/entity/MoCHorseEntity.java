@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -174,20 +176,6 @@ public class MoCHorseEntity extends AbstractHorse {
 
     private float nightmareFleeYaw = 0F;
 
-    private static final java.util.Set<net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome>> TIER1_BIOMES = java.util.Set.of(
-        net.minecraft.world.level.biome.Biomes.PLAINS, net.minecraft.world.level.biome.Biomes.SUNFLOWER_PLAINS,
-        net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS, net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA,
-        net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA, net.minecraft.world.level.biome.Biomes.MEADOW);
-
-    private static final java.util.Set<net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome>> ZEBRA_BIOMES = java.util.Set.of(
-            net.minecraft.world.level.biome.Biomes.SAVANNA, net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU,
-            net.minecraft.world.level.biome.Biomes.WINDSWEPT_SAVANNA);
-
-    private static final java.util.Set<net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome>> DONKEY_BIOMES = java.util.Set.of(
-            net.minecraft.world.level.biome.Biomes.PLAINS, net.minecraft.world.level.biome.Biomes.SUNFLOWER_PLAINS,
-            net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU, net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA,
-            net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA);
-
     private static final java.util.Map<net.minecraft.world.item.DyeColor, MoCHorseGenetics.FairyColor> DYE_TO_FAIRY_COLOR = java.util.Map.ofEntries(
             java.util.Map.entry(net.minecraft.world.item.DyeColor.WHITE, MoCHorseGenetics.FairyColor.WHITE),
             java.util.Map.entry(net.minecraft.world.item.DyeColor.ORANGE, MoCHorseGenetics.FairyColor.ORANGE),
@@ -209,11 +197,11 @@ public class MoCHorseEntity extends AbstractHorse {
             @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
         if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
         || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
-            var biomeKey = level.getBiome(this.blockPosition()).unwrapKey().orElse(null);
+            var biome = level.getBiome(this.blockPosition());
             java.util.List<Species> options = new java.util.ArrayList<>();
-            if (biomeKey != null && TIER1_BIOMES.contains(biomeKey)) options.add(Species.HORSE);
-            if (biomeKey != null && ZEBRA_BIOMES.contains(biomeKey)) options.add(Species.ZEBRA);
-            if (biomeKey != null && DONKEY_BIOMES.contains(biomeKey)) options.add(Species.DONKEY);
+            if (biome.is(ModTags.HORSE_TIER1_BIOMES)) options.add(Species.HORSE);
+            if (biome.is(ModTags.HORSE_ZEBRA_BIOMES)) options.add(Species.ZEBRA);
+            if (biome.is(ModTags.HORSE_DONKEY_BIOMES)) options.add(Species.DONKEY);
             if (!options.isEmpty()) {
                 Species chosen = options.get(this.random.nextInt(options.size()));
                 setSpecies(chosen);

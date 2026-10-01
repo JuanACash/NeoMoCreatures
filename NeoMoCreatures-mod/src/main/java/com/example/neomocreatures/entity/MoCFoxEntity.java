@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
@@ -367,13 +369,10 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled {
     private boolean pickSnowForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
 
-        if (biome.is(net.minecraft.world.level.biome.Biomes.GROVE)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)) {
+        if (biome.is(ModTags.FOX_SNOW_BIOMES)) {
             return true;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_PINE_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.OLD_GROWTH_SPRUCE_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.TAIGA)) {
+        if (biome.is(ModTags.FOX_NORMAL_BIOMES)) {
             return false;
         }
 

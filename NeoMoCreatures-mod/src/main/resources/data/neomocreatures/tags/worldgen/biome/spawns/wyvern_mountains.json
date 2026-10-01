@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "biomesoplenty:crag",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:jade_cliffs",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:highland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:volcano",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:howling_peaks",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:red_rock_peaks",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:dacite_ridges",
+      "required": false
+    }
+  ]
+}

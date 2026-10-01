@@ -167,10 +167,10 @@ public class MoCFilchLizardEntity extends Animal {
             return FilchLizardVariant.SILVER;
         }
         Holder<Biome> biome = level.getBiome(this.blockPosition());
-        if (biome.is(BiomeTags.IS_BADLANDS)) {
+        if (biome.is(ModTags.FILCH_LIZARD_RED_BIOMES)) {
             return FilchLizardVariant.RED_SAND;
         }
-        if (biome.is(Tags.Biomes.IS_SANDY)) {
+        if (biome.is(ModTags.FILCH_LIZARD_SANDY_BIOMES)) {
             return FilchLizardVariant.SAND;
         }
         return FilchLizardVariant.NORMAL;

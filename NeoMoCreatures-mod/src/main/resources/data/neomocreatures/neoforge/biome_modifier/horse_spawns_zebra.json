@@ -1,7 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": ["minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna"],
+  "biomes": "#neomocreatures:spawns/horse_zebra",
   "spawners": [
-    { "type": "neomocreatures:moc_horse", "weight": 12, "minCount": 2, "maxCount": 6 }
+    {
+      "type": "neomocreatures:moc_horse",
+      "weight": 12,
+      "minCount": 2,
+      "maxCount": 6
+    }
   ]
 }

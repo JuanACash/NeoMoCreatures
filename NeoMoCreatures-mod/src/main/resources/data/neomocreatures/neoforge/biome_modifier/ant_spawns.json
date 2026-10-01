@@ -1,12 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:forest",
-    "minecraft:birch_forest",
-    "minecraft:jungle",
-    "minecraft:savanna"
-  ],
+  "biomes": "#neomocreatures:spawns/ant",
   "spawners": [
     {
       "type": "neomocreatures:moc_ant",

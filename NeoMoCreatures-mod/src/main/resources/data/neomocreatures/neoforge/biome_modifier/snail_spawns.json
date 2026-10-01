@@ -1,12 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:forest",
-    "minecraft:dark_forest",
-    "minecraft:meadow"
-  ],
+  "biomes": "#neomocreatures:spawns/snail",
   "spawners": [
     {
       "type": "neomocreatures:moc_snail",

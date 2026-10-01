@@ -1,15 +1,12 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:lukewarm_ocean",
-    "minecraft:warm_ocean",
-    "minecraft:deep_ocean",
-    "minecraft:deep_lukewarm_ocean",
-    "minecraft:river",
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp"
-  ],
+  "biomes": "#neomocreatures:spawns/small_fish",
   "spawners": [
-    { "type": "neomocreatures:moc_small_fish", "weight": 17, "minCount": 4, "maxCount": 7 }
+    {
+      "type": "neomocreatures:moc_small_fish",
+      "weight": 17,
+      "minCount": 4,
+      "maxCount": 7
+    }
   ]
 }

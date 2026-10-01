@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
@@ -169,17 +171,10 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, c
                 }
             } else {
                 var biome = level.getBiome(this.blockPosition());
-                boolean snowy = biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.GROVE)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_SLOPES)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_PEAKS)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.JAGGED_PEAKS)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_OCEAN)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_RIVER)
-                        || biome.is(net.minecraft.world.level.biome.Biomes.DEEP_FROZEN_OCEAN);
-                if (snowy) {
+                if (biome.is(ModTags.FIRE_VARIANT_BIOMES)) {
+                    // Volcanic overworld biomes (from biome mods) get the Nether's fire variant.
+                    setVariant(ManticoreVariant.FIRE);
+                } else if (biome.is(ModTags.FROST_VARIANT_BIOMES)) {
                     setVariant(ManticoreVariant.FROST);
                 } else {
                     int roll = this.random.nextInt(3);

@@ -1,11 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:flower_forest",
-    "minecraft:meadow"
-  ],
+  "biomes": "#neomocreatures:spawns/bee",
   "spawners": [
     {
       "type": "neomocreatures:moc_bee",

@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import com.example.neomocreatures.entity.bunny.BunnyVariant;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
@@ -322,11 +324,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     /** Wiki: "Bunnies always spawn white in taiga, cold taiga, ice mountains or ice plains biomes." */
     private BunnyVariant pickVariantForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
-        if (biome.is(net.minecraft.world.level.biome.Biomes.TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_SLOPES)
-                || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_PEAKS)) {
+        if (biome.is(ModTags.BUNNY_WHITE_BIOMES)) {
             return BunnyVariant.WHITE;
         }
         return BunnyVariant.random(this.random);

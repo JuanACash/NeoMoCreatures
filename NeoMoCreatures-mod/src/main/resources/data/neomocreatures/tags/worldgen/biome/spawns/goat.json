@@ -1,0 +1,162 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:dark_forest",
+    "minecraft:flower_forest",
+    "minecraft:old_growth_birch_forest",
+    "minecraft:windswept_forest",
+    "minecraft:taiga",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:plains",
+    "minecraft:windswept_hills",
+    "minecraft:wooded_badlands",
+    "minecraft:meadow",
+    {
+      "id": "biomesoplenty:woodland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:maple_woods",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:aspen_glade",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:old_growth_woodland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:ominous_woods",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:seasonal_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:snowy_coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:field",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:grassland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:pasture",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:prairie",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:highland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:crag",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rocky_shrubland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:zelkova_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cika_woods",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:black_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:ebony_woods",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:forgotten_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:overgrowth_woodlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:aspen_boreal",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:maple_taiga",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:frosted_taiga",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:amaranth_grassland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:prairie",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:howling_peaks",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:red_rock_peaks",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:baobab_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:araucaria_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:mediterranean_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:moor",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:dacite_ridges",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:skyris_vale",
+      "required": false
+    }
+  ]
+}

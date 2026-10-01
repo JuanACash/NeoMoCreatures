@@ -1,0 +1,35 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:bamboo_jungle",
+    "minecraft:cherry_grove",
+    {
+      "id": "biomesoplenty:fungal_jungle",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rainforest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:mystic_grove",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:fragment_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:jacaranda_jungle",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:tropical_rainforest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:sakura_grove",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    {
+      "id": "biomesoplenty:lush_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:dryland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:scrubland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:baobab_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:araucaria_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:atacama_outback",
+      "required": false
+    }
+  ]
+}

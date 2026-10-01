@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ent.EntVariant;
@@ -283,10 +285,10 @@ public class MoCEntEntity extends Animal {
     /** Flower forests only grow oak ents and birch forests only birch ones; anywhere else it's the original 50/50. */
     private EntVariant pickVariantFor(ServerLevelAccessor level) {
         Holder<Biome> biome = level.getBiome(this.blockPosition());
-        if (biome.is(Biomes.FLOWER_FOREST)) {
+        if (biome.is(ModTags.ENT_OAK_BIOMES)) {
             return EntVariant.OAK;
         }
-        if (biome.is(Biomes.BIRCH_FOREST) || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)) {
+        if (biome.is(ModTags.ENT_BIRCH_BIOMES)) {
             return EntVariant.BIRCH;
         }
         return EntVariant.random(this.random);

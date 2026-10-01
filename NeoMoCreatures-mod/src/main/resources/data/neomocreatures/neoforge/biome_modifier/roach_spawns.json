@@ -1,11 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:jungle",
-    "minecraft:dark_forest"
-  ],
+  "biomes": "#neomocreatures:spawns/roach",
   "spawners": [
     {
       "type": "neomocreatures:moc_roach",

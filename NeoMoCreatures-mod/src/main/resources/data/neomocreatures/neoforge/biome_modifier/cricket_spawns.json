@@ -1,12 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:meadow",
-    "minecraft:savanna",
-    "minecraft:forest",
-    "minecraft:taiga"
-  ],
+  "biomes": "#neomocreatures:spawns/cricket",
   "spawners": [
     {
       "type": "neomocreatures:moc_cricket",

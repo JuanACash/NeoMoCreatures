@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
@@ -135,15 +137,16 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
     private static final String VARIANT_TAG = "SmallFishVariant";
 
     /** Where each species is allowed to spawn naturally; the piranha's own biomes never overlap the rest. */
-    private static final Map<SmallFishVariant, Set<ResourceKey<Biome>>> SPAWN_BIOMES = Map.ofEntries(
-            Map.entry(SmallFishVariant.ANCHOVY, Set.of(Biomes.LUKEWARM_OCEAN, Biomes.WARM_OCEAN)),
-            Map.entry(SmallFishVariant.ANGELFISH, Set.of(Biomes.WARM_OCEAN)),
-            Map.entry(SmallFishVariant.ANGLER, Set.of(Biomes.DEEP_OCEAN, Biomes.DEEP_LUKEWARM_OCEAN)),
-            Map.entry(SmallFishVariant.CLOWNFISH, Set.of(Biomes.WARM_OCEAN)),
-            Map.entry(SmallFishVariant.GOLDFISH, Set.of(Biomes.LUKEWARM_OCEAN)),
-            Map.entry(SmallFishVariant.HIPPOTANG, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(SmallFishVariant.MANDARIN, Set.of(Biomes.WARM_OCEAN)),
-            Map.entry(SmallFishVariant.PIRANHA, Set.of(Biomes.RIVER, Biomes.SWAMP, Biomes.MANGROVE_SWAMP)));
+    /** Biomes each species can spawn in, as tags (vanilla plus optional modded biomes). */
+    private static final Map<SmallFishVariant, net.minecraft.tags.TagKey<Biome>> SPAWN_BIOMES = Map.ofEntries(
+            Map.entry(SmallFishVariant.ANCHOVY, ModTags.SMALL_FISH_ANCHOVY_BIOMES),
+            Map.entry(SmallFishVariant.ANGELFISH, ModTags.SMALL_FISH_ANGELFISH_BIOMES),
+            Map.entry(SmallFishVariant.ANGLER, ModTags.SMALL_FISH_ANGLER_BIOMES),
+            Map.entry(SmallFishVariant.CLOWNFISH, ModTags.SMALL_FISH_CLOWNFISH_BIOMES),
+            Map.entry(SmallFishVariant.GOLDFISH, ModTags.SMALL_FISH_GOLDFISH_BIOMES),
+            Map.entry(SmallFishVariant.HIPPOTANG, ModTags.SMALL_FISH_HIPPOTANG_BIOMES),
+            Map.entry(SmallFishVariant.MANDARIN, ModTags.SMALL_FISH_MANDARIN_BIOMES),
+            Map.entry(SmallFishVariant.PIRANHA, ModTags.SMALL_FISH_PIRANHA_BIOMES));
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCSmallFishEntity.class, EntityDataSerializers.INT);
@@ -270,7 +273,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
     private SmallFishVariant pickVariantForBiome(ServerLevelAccessor level) {
         Holder<Biome> biome = level.getBiome(this.blockPosition());
         List<SmallFishVariant> eligible = SPAWN_BIOMES.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(biome::is))
+                .filter(entry -> biome.is(entry.getValue()))
                 .map(Map.Entry::getKey)
                 .toList();
         if (eligible.isEmpty()) {

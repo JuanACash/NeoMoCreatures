@@ -1,11 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:river",
-    "minecraft:meadow"
-  ],
+  "biomes": "#neomocreatures:spawns/dragonfly",
   "spawners": [
     {
       "type": "neomocreatures:moc_dragonfly",

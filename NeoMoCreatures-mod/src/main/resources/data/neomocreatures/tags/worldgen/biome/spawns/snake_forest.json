@@ -1,0 +1,49 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    "minecraft:dark_forest",
+    {
+      "id": "biomesoplenty:woodland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:maple_woods",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:aspen_glade",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:seasonal_forest",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:zelkova_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:cika_woods",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:aspen_boreal",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:coniferous_forest",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:maple_taiga",
+      "required": false
+    }
+  ]
+}

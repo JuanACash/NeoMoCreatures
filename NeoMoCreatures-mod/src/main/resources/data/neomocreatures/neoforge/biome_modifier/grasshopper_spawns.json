@@ -1,12 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:savanna",
-    "minecraft:meadow",
-    "minecraft:desert",
-    "minecraft:badlands"
-  ],
+  "biomes": "#neomocreatures:spawns/grasshopper",
   "spawners": [
     {
       "type": "neomocreatures:moc_grasshopper",

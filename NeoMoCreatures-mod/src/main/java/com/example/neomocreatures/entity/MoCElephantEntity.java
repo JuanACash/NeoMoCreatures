@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModTags;
+
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
@@ -564,17 +566,13 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
      */
     private ElephantVariant variantForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
         var biome = level.getBiome(pos);
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SPARSE_JUNGLE)) {
+        if (biome.is(ModTags.ELEPHANT_ASIAN_BIOMES)) {
             return ElephantVariant.ASIAN;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU)) {
+        if (biome.is(ModTags.ELEPHANT_AFRICAN_BIOMES)) {
             return ElephantVariant.AFRICAN;
         }
-        if (biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.SNOWY_SLOPES)
-                || biome.is(net.minecraft.world.level.biome.Biomes.JAGGED_PEAKS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.FROZEN_PEAKS)
-                || biome.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES)) {
+        if (biome.is(ModTags.ELEPHANT_MAMMOTH_BIOMES)) {
             return this.random.nextBoolean() ? ElephantVariant.MAMMOTH_WOOLLY : ElephantVariant.MAMMOTH_SONGHUA;
         }
 

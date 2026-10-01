@@ -1,13 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:forest",
-    "minecraft:swamp",
-    "minecraft:meadow",
-    "minecraft:taiga",
-    "minecraft:desert"
-  ],
+  "biomes": "#neomocreatures:spawns/fly",
   "spawners": [
     {
       "type": "neomocreatures:moc_fly",

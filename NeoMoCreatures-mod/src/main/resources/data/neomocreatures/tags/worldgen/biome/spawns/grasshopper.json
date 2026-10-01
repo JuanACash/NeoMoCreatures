@@ -1,0 +1,102 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:plains",
+    "minecraft:savanna",
+    "minecraft:meadow",
+    "minecraft:desert",
+    "minecraft:badlands",
+    {
+      "id": "biomesoplenty:field",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:grassland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:prairie",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:dryland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:scrubland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland_steppe",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:lush_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:amaranth_grassland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:coconino_meadow",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:prairie",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:baobab_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:araucaria_savanna",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:atacama_outback",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:mojave_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:windswept_desert",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:rugged_badlands",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:sierra_badlands",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:shrubland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:allium_shrubland",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:firecracker_chaparral",
+      "required": false
+    },
+    {
+      "id": "biomeswevegone:red_rock_valley",
+      "required": false
+    }
+  ]
+}
