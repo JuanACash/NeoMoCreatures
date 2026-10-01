@@ -42,7 +42,7 @@ logoFile="neomocreatures.png" #optional
 credits="Based on Mo' Creatures by DrZhark and Mo' Creatures Nostalgia Edition. All original creatures, models, textures and sounds belong to their authors."
 
 # The authors of the mod, displayed in the mod UI (optional)
-authors="J."
+authors="JCasH"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
