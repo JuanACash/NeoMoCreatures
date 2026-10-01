@@ -1,13 +1,13 @@
 package com.example.neomocreatures.entity;
 
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -38,6 +38,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+
 import net.neoforged.neoforge.common.CommonHooks;
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityMiniGolem}. A small stone golem that
@@ -312,14 +313,10 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
     }
 
     private void dropUpToOne(Item item, int lootingLevel) {
-        int count = this.random.nextInt(2);
-        for (int i = 0; i < lootingLevel; i++) {
-            count += this.random.nextInt(2);
-        }
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(item, count));
-        }
+        int count = this.random.nextInt(2) + MoCLootUtil.rollLootingExtras(this.random, lootingLevel);
+        MoCLootUtil.dropItems(this, item, count);
     }
+
 
     @Override
     protected int getBaseExperienceReward() {

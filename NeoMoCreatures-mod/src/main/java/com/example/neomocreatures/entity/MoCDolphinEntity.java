@@ -1,17 +1,18 @@
 package com.example.neomocreatures.entity;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.breeding.MoCDolphinGenetics;
 import com.example.neomocreatures.entity.dolphin.DolphinVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -65,6 +66,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -793,12 +795,12 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int cod = this.random.nextInt(MAX_COD_DROP + 1) + this.random.nextInt(MoCLootUtil.getLootingLevel(level, damageSource) + 1);
-        if (cod > 0) {
-            // Like vanilla mobs, a dolphin that dies on fire drops its meat cooked.
-            this.spawnAtLocation(new ItemStack(this.isOnFire() ? Items.COOKED_COD : Items.COD, cod));
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
+        // Like vanilla mobs, a dolphin that dies on fire drops its meat cooked.
+        MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, Items.COD, Items.COOKED_COD),
+                MoCLootUtil.rollWithLootingBonus(this.random, MAX_COD_DROP + 1, lootingLevel));
     }
+
 
     @Override
     public boolean isFood(ItemStack stack) {
@@ -814,7 +816,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled {
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     // ---------------------------------------------------------------------

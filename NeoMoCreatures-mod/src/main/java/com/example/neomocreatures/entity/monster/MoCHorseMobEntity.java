@@ -1,11 +1,11 @@
 package com.example.neomocreatures.entity.monster;
 
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.init.ModSounds;
-
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -31,8 +31,6 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 
@@ -250,22 +248,16 @@ public class MoCHorseMobEntity extends Monster {
     protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource damageSource, boolean recentlyHitByPlayer) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
 
-        boolean killedByPlayerOrWolf = recentlyHitByPlayer || this.getLastHurtByMob() instanceof net.minecraft.world.entity.animal.Wolf;
-        if (!killedByPlayerOrWolf) {
+        net.minecraft.world.entity.LivingEntity killer = this.getLastHurtByMob();
+        // Any wolf counts here (tamed or not), unlike the rest of the mod.
+        if (!recentlyHitByPlayer && !(killer instanceof net.minecraft.world.entity.animal.Wolf)) {
             return;
         }
 
-        net.minecraft.world.entity.LivingEntity killer = this.getLastHurtByMob();
-            int lootingLevel = 0;
-            if (killer != null) {
-                Holder<Enchantment> looting = killer.level().registryAccess()
-                        .lookupOrThrow(Registries.ENCHANTMENT)
-                        .getOrThrow(Enchantments.LOOTING);
-                lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
-            }
+        int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
         // Base 0-2, Looting raises the max (same as vanilla: +1 to the cap per level).
-        int commonDropCount = this.random.nextInt(3 + lootingLevel);
+        int commonDropCount = MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel);
         // Base 25% (1 in 4), Looting reduces the denominator to make it more likely, floored at 1 (100%).
         int rareChanceDenominator = Math.max(1, 4 - lootingLevel);
         boolean heartDrops = this.random.nextInt(rareChanceDenominator) == 0;
@@ -273,19 +265,19 @@ public class MoCHorseMobEntity extends Monster {
 
         switch (getVariant()) {
             case BATHORSE -> {
-                for (int i = 0; i < commonDropCount; i++) this.spawnAtLocation(net.minecraft.world.item.Items.LEATHER);
-                for (int i = 0; i < heartCount; i++) this.spawnAtLocation(com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get());
+                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.LEATHER, commonDropCount);
+                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get(), heartCount);
             }
             case NIGHTMARE -> {
-                for (int i = 0; i < commonDropCount; i++) this.spawnAtLocation(net.minecraft.world.item.Items.LEATHER);
-                for (int i = 0; i < heartCount; i++) this.spawnAtLocation(com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get());
+                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.LEATHER, commonDropCount);
+                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get(), heartCount);
             }
             case SKELETON -> {
-                for (int i = 0; i < commonDropCount; i++) this.spawnAtLocation(net.minecraft.world.item.Items.BONE);
+                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.BONE, commonDropCount);
             }
             case UNDEAD -> {
-                for (int i = 0; i < commonDropCount; i++) this.spawnAtLocation(net.minecraft.world.item.Items.ROTTEN_FLESH);
-                for (int i = 0; i < heartCount; i++) this.spawnAtLocation(com.example.neomocreatures.init.ModItems.HEART_OF_UNDEAD.get());
+                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.ROTTEN_FLESH, commonDropCount);
+                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_UNDEAD.get(), heartCount);
             }
         }
     }

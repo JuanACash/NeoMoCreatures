@@ -1,9 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -870,28 +872,15 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
 
         LivingEntity killer = this.getLastHurtByMob();
-        boolean killedByPlayerOrWolf = recentlyHitByPlayer
-                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
-        if (!killedByPlayerOrWolf) {
+        if (!MoCLootUtil.isKilledByPlayerOrTamedWolf(recentlyHitByPlayer, killer)) {
             return;
         }
 
-        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
-                level, this.getX(), this.getY(), this.getZ(), 1 + this.random.nextInt(3)));
+        MoCExperienceUtil.dropExperienceOrb(level, this, MoCExperienceUtil.rollStandardXp(this.random));
 
-        int lootingLevel = 0;
-        if (killer != null) {
-            net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> looting =
-                    killer.level().registryAccess()
-                            .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        int hideCount = Math.min(this.random.nextInt(3) + lootingLevel, 5); // 0-2 base, +1 per Looting level, capped at 5
-        if (hideCount > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hideCount));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
     private void dropChestsAndContents() {

@@ -10,7 +10,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -75,10 +74,7 @@ public class MoCFlameWraithEntity extends MoCWraithEntity {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int redstone = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (redstone > 0) {
-            this.spawnAtLocation(new ItemStack(Items.REDSTONE, redstone));
-        }
+        MoCLootUtil.dropItems(this, Items.REDSTONE, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
     @Override

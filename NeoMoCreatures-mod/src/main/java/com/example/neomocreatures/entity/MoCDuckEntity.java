@@ -1,10 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +23,6 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -173,10 +172,9 @@ public class MoCDuckEntity extends TamableAnimal {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        Item duckItem = this.isOnFire() ? ModItems.DUCK_COOKED.get() : ModItems.DUCK_RAW.get();
-        this.spawnAtLocation(new ItemStack(duckItem, 1 + this.random.nextInt(lootingLevel + 1)));
-
-        int feathers = 1 + this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
-        this.spawnAtLocation(new ItemStack(Items.FEATHER, feathers));
+        MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, ModItems.DUCK_RAW.get(), ModItems.DUCK_COOKED.get()),
+                1 + this.random.nextInt(lootingLevel + 1));
+        MoCLootUtil.dropItems(this, Items.FEATHER, 1 + MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
     }
+
 }

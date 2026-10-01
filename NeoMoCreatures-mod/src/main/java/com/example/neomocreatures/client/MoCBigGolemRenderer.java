@@ -3,12 +3,12 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCBigGolemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
-import com.mojang.math.Axis;
 
 /** Port of {@code MoCRenderGolem}: the block body drawn 1.8x bigger, with its glowing state overlay on top. */
 public class MoCBigGolemRenderer extends MobRenderer<MoCBigGolemEntity, MoCBigGolemModel<MoCBigGolemEntity>> {

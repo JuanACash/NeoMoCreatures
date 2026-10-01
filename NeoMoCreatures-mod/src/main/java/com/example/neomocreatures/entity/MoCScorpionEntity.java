@@ -1,9 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -812,29 +813,16 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, source, recentlyHit);
 
-        int lootingLevel = 0;
-        if (source.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().holderOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, source);
 
         if (this.isBaby()) {
             // Babies only ever drop string — no chitin, no stings.
-            int stringCount = this.random.nextInt(3 + lootingLevel); // 0-2 base, extended by looting
-            for (int i = 0; i < stringCount; i++) {
-                this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.STRING));
-            }
+            // 0-2 base, extended by looting
+            MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.STRING, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
         } else {
-            int chitinCount = this.random.nextInt(2 + lootingLevel); // 0-1 base, extended by looting
-            for (int i = 0; i < chitinCount; i++) {
-                this.spawnAtLocation(new ItemStack(chitinItemFor(getVariant())));
-            }
-
-            int stingCount = this.random.nextInt(2 + lootingLevel); // 0-1 base, extended by looting
-            for (int i = 0; i < stingCount; i++) {
-                this.spawnAtLocation(new ItemStack(stingItemFor(getVariant())));
-            }
+            // 0-1 base each, extended by looting
+            MoCLootUtil.dropItems(this, chitinItemFor(getVariant()), MoCLootUtil.rollWithLootingRange(this.random, 2, lootingLevel));
+            MoCLootUtil.dropItems(this, stingItemFor(getVariant()), MoCLootUtil.rollWithLootingRange(this.random, 2, lootingLevel));
         }
 
         if (isSaddled()) {

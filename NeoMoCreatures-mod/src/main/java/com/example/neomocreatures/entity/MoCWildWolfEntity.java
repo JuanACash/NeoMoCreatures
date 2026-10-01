@@ -1,11 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.wildwolf.WildWolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -30,7 +30,6 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
@@ -227,11 +226,9 @@ public class MoCWildWolfEntity extends Monster {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(ModItems.FUR.get(), count));
-        }
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
 
     // ---------------------------------------------------------------------
     // Darkness-gated goals (attacks on sight, but only while it's dark)

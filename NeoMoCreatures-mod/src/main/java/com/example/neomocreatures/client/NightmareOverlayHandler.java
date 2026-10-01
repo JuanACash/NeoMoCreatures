@@ -3,8 +3,8 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
-import com.example.neomocreatures.entity.manticore.ManticoreVariant;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.manticore.ManticoreVariant;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 
 import net.minecraft.client.Minecraft;

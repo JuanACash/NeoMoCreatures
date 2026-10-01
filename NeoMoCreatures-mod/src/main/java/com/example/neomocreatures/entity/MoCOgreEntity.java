@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCExperienceUtil;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -280,7 +282,7 @@ public abstract class MoCOgreEntity extends Monster {
     /** Wiki/original loot tables give 1-3 experience for every ogre kill regardless of species. */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     // ---------------------------------------------------------------------

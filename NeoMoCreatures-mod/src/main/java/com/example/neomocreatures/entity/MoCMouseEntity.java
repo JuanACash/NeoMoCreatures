@@ -1,13 +1,14 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.mouse.MouseVariant;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.entity.mouse.MouseVariant;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -267,15 +268,14 @@ public class MoCMouseEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(Items.WHEAT_SEEDS, count));
-        }
+        MoCLootUtil.dropItems(this, Items.WHEAT_SEEDS, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
+
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
 }

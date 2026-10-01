@@ -1,13 +1,14 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -41,6 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -329,20 +331,15 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int fishCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (fishCount > 0) {
-            this.spawnAtLocation(new ItemStack(this.getRawFishItem(), fishCount));
-        }
-        int eggCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (eggCount > 0) {
-            this.spawnAtLocation(new ItemStack(this.getEggItem(), eggCount));
-        }
+        MoCLootUtil.dropItems(this, this.getRawFishItem(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        MoCLootUtil.dropItems(this, this.getEggItem(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
 
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     // ---------------------------------------------------------------------

@@ -1,8 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -680,41 +682,21 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, c
 
     private void dropCombatLoot(ServerLevel level, boolean recentlyHitByPlayer) {
         LivingEntity killer = this.getLastHurtByMob();
-        boolean killedByPlayerOrWolf = recentlyHitByPlayer
-                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
-        if (!killedByPlayerOrWolf) {
+        if (!MoCLootUtil.isKilledByPlayerOrTamedWolf(recentlyHitByPlayer, killer)) {
             return;
         }
 
-        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
-                level, this.getX(), this.getY(), this.getZ(), 5));
+        MoCExperienceUtil.dropExperienceOrb(level, this, 5);
 
-        int lootingLevel = 0;
-        if (killer != null) {
-            net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> looting =
-                    killer.level().registryAccess()
-                            .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        int clawCount = Math.min(this.random.nextInt(3) + (lootingLevel > 0 ? this.random.nextInt(lootingLevel + 1) : 0), 2 + lootingLevel);
-        if (clawCount > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.BIG_CAT_CLAW.get(), clawCount));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.BIG_CAT_CLAW.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
 
-        int chitinCount = Math.min(this.random.nextInt(3) + (lootingLevel > 0 ? this.random.nextInt(lootingLevel + 1) : 0), 2 + lootingLevel);
-        if (chitinCount > 0) {
-            this.spawnAtLocation(new ItemStack(chitinItemFor(getVariant()), chitinCount));
-        }
+        MoCLootUtil.dropItems(this, chitinItemFor(getVariant()), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
 
-        int stingCount = Math.min(this.random.nextInt(3) + (lootingLevel > 0 ? this.random.nextInt(lootingLevel + 1) : 0), 2 + lootingLevel);
-        if (stingCount > 0) {
-            this.spawnAtLocation(new ItemStack(stingItemFor(getVariant()), stingCount));
-        }
+        MoCLootUtil.dropItems(this, stingItemFor(getVariant()), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
 
-        float eggChance = 0.25F + lootingLevel * 0.05F;
-        if (this.random.nextFloat() < eggChance) {
+        if (MoCLootUtil.rollChance(this.random, 0.25F, 0.05F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
         }
     }

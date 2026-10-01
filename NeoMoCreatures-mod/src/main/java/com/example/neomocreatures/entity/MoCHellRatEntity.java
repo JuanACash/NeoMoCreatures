@@ -1,7 +1,8 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
@@ -12,8 +13,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 /**
@@ -110,13 +109,10 @@ public class MoCHellRatEntity extends MoCRatEntity {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int lootingLevel = this.getHellRatLootingLevel(level, damageSource);
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        int redstone = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (redstone > 0) {
-            this.spawnAtLocation(new ItemStack(Items.REDSTONE, redstone));
-        }
-        if (this.random.nextFloat() < 0.5F + 0.05F * lootingLevel) {
+        MoCLootUtil.dropItems(this, Items.REDSTONE, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        if (MoCLootUtil.rollChance(this.random, 0.5F, 0.05F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(Items.COAL));
         }
     }
@@ -125,14 +121,5 @@ public class MoCHellRatEntity extends MoCRatEntity {
     @Override
     protected int getBaseExperienceReward() {
         return 5;
-    }
-
-    private int getHellRatLootingLevel(ServerLevel level, DamageSource damageSource) {
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            return EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        return 0;
     }
 }

@@ -1,7 +1,6 @@
 package com.example.neomocreatures.entity.ai;
 
 import java.util.List;
-
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.Mob;

@@ -1,11 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import java.util.EnumSet;
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -648,23 +650,14 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        int leather = Math.min(this.random.nextInt(3) + lootingLevel, 5); // 0-2 base, +1 per Looting level
-        if (leather > 0) {
-            this.spawnAtLocation(new ItemStack(Items.LEATHER, leather));
-        }
+        MoCLootUtil.dropItems(this, Items.LEATHER, MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3); // 1-3
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     /** Builds the NBT payload stored inside a filled Pet Amulet for this goat. */

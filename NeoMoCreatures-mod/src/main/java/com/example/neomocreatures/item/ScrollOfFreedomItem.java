@@ -1,14 +1,14 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCHorseEntity;
-import com.example.neomocreatures.entity.MoCWyvernEntity;
-import com.example.neomocreatures.entity.MoCElephantEntity;
-import com.example.neomocreatures.entity.MoCBigCatEntity;
-import com.example.neomocreatures.entity.MoCManticoreEntity;
-import com.example.neomocreatures.entity.MoCScorpionEntity;
-import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCBearEntity;
+import com.example.neomocreatures.entity.MoCBigCatEntity;
+import com.example.neomocreatures.entity.MoCElephantEntity;
+import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
+import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.MoCWyvernEntity;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;

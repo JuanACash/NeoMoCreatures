@@ -1,6 +1,7 @@
 package com.example.neomocreatures.network;
 
 import com.example.neomocreatures.NeoMoCreatures;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;

@@ -1,6 +1,7 @@
 package com.example.neomocreatures.network;
 
 import com.example.neomocreatures.NeoMoCreatures;
+
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;

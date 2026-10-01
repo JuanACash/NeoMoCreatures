@@ -1,12 +1,13 @@
 package com.example.neomocreatures.util;
 
+import java.util.UUID;
+
 import com.example.neomocreatures.network.OpenNamingScreenPayload;
+
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
-
-import java.util.UUID;
 
 /**
  * Not creature-specific — anything that just got tamed/born-tamed (bred

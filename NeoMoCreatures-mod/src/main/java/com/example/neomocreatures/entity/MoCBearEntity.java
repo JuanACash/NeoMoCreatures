@@ -1,8 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.bear.BearVariant;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -349,8 +351,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         partner.resetLove();
         level.broadcastEntityEvent(this, (byte) 18);
         if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
-            level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
-                    level, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
+            MoCExperienceUtil.dropExperienceOrb(level, this, this.getRandom().nextInt(7) + 1);
         }
 
         java.util.UUID ownerUUID = this.getOwnerUUID();
@@ -668,18 +669,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        int hide = Math.min(this.random.nextInt(3) + lootingLevel, 5);
-        if (hide > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hide));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
 
         dropAllEquipment();
     }
@@ -738,7 +730,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3); // 1-3
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     // ---------------------------------------------------------------

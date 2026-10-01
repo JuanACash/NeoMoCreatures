@@ -1,5 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
+
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -9,14 +16,8 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetCarryUtil;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -52,12 +53,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -735,7 +735,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     /** Drops raw turtle (cooked if it dies burning), plus the weapon when it is a Ninja Turtle. */
@@ -743,19 +743,10 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         // Original loot table: 1 piece, plus 0-1 more per level of looting.
-        int meatCount = 1;
-        for (int i = 0; i < lootingLevel; i++) {
-            meatCount += this.random.nextInt(2);
-        }
-        Item meat = this.isOnFire() ? ModItems.TURTLE_COOKED.get() : ModItems.TURTLE_RAW.get();
-        this.spawnAtLocation(new ItemStack(meat, meatCount));
+        int meatCount = 1 + MoCLootUtil.rollLootingExtras(this.random, lootingLevel);
+        MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, ModItems.TURTLE_RAW.get(), ModItems.TURTLE_COOKED.get()), meatCount);
 
         TmntBrother brother = this.getTmntBrother();
         if (brother != null) {

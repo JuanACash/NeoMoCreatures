@@ -1,10 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -19,6 +19,7 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -518,12 +520,10 @@ public class MoCCrocodileEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(ModItems.REPTILE_HIDE.get(), count));
-        }
+        MoCLootUtil.dropItems(this, ModItems.REPTILE_HIDE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
-    
+
+
     /** Original: a fixed experienceValue = 5, not a random range. */
     @Override
     protected int getBaseExperienceReward() {

@@ -1,9 +1,5 @@
 package com.example.neomocreatures.entity;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.entity.golem.GolemBody;
@@ -12,6 +8,10 @@ import com.example.neomocreatures.entity.golem.GolemState;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -50,6 +50,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+
 import net.neoforged.neoforge.common.CommonHooks;
 
 /**
@@ -811,12 +812,9 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
     }
 
     private void dropWithLooting(Item item, int baseCount, int lootingLevel) {
-        int count = baseCount;
-        for (int i = 0; i < lootingLevel; i++) {
-            count += this.random.nextInt(2);
-        }
-        this.spawnAtLocation(new ItemStack(item, count));
+        MoCLootUtil.dropItems(this, item, baseCount + MoCLootUtil.rollLootingExtras(this.random, lootingLevel));
     }
+
 
     // ---------------------------------------------------------------------
     // Sounds

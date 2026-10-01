@@ -1,7 +1,6 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCTurtleEntity;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 

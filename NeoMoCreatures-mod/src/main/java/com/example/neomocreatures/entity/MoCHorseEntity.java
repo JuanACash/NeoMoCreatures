@@ -1,22 +1,22 @@
 package com.example.neomocreatures.entity;
 
-import java.util.List;
-
-import javax.annotation.Nullable;
-
-import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -53,9 +53,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 
@@ -2352,22 +2349,11 @@ public class MoCHorseEntity extends AbstractHorse {
 
         // Requested: a tamed undead horse spawns maggots on death, same as the undead wyvern.
         if (this.isTamed() && this.isUndead()) {
-            spawnMaggotsOnDeath(level);
+            MoCLootUtil.spawnMaggots(level, this, this.random);
         }
     }
 
     /** Spawns 1-3 maggots at the death location. */
-    private void spawnMaggotsOnDeath(ServerLevel level) {
-        int count = 1 + this.random.nextInt(3);
-        for (int i = 0; i < count; i++) {
-            com.example.neomocreatures.entity.MoCMaggotEntity maggot =
-                    com.example.neomocreatures.init.ModEntities.MOC_MAGGOT.get().create(level);
-            if (maggot != null) {
-                maggot.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
-                level.addFreshEntity(maggot);
-            }
-        }
-    }
 
     /** Drops the chest (if it has one) with all its contents, and the saddle. */
     private void dropChestAndSaddleContents() {
@@ -2395,38 +2381,23 @@ public class MoCHorseEntity extends AbstractHorse {
     * undead/fire/darkness hearts).
     */
     private void dropCombatLoot(boolean recentlyHitByPlayer) {
-        boolean killedByPlayerOrWolf = recentlyHitByPlayer || this.getLastHurtByMob() instanceof Wolf;
-        if (!killedByPlayerOrWolf) {
+        LivingEntity killer = this.getLastHurtByMob();
+        // Any wolf counts here (tamed or not), unlike the rest of the mod.
+        if (!recentlyHitByPlayer && !(killer instanceof Wolf)) {
             return;
         }
 
-        LivingEntity killer = this.getLastHurtByMob();
-        int lootingLevel = 0;
-        if (killer != null) {
-            Holder<Enchantment> looting = killer.level().registryAccess()
-                    .lookupOrThrow(Registries.ENCHANTMENT)
-                    .getOrThrow(Enchantments.LOOTING);
-            lootingLevel = EnchantmentHelper.getEnchantmentLevel(looting, killer);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
         boolean isGhostSpecies = getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED;
         if (!isUndead() && !isGhostSpecies) {
-            int leatherCount = this.random.nextInt(3 + lootingLevel);
-            for (int i = 0; i < leatherCount; i++) {
-                this.spawnAtLocation(Items.LEATHER);
-            }
+            MoCLootUtil.dropItems(this, Items.LEATHER, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
         }
 
         if (isSkeletonStage()) {
-            int boneCount = this.random.nextInt(3 + lootingLevel);
-            for (int i = 0; i < boneCount; i++) {
-                this.spawnAtLocation(Items.BONE);
-            }
+            MoCLootUtil.dropItems(this, Items.BONE, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
         } else if (isUndead()) {
-            int fleshCount = this.random.nextInt(3 + lootingLevel);
-            for (int i = 0; i < fleshCount; i++) {
-                this.spawnAtLocation(Items.ROTTEN_FLESH);
-            }
+            MoCLootUtil.dropItems(this, Items.ROTTEN_FLESH, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
         }
 
         if (getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) {
@@ -2456,7 +2427,7 @@ public class MoCHorseEntity extends AbstractHorse {
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     @Override

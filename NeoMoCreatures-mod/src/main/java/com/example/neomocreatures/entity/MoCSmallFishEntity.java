@@ -1,19 +1,20 @@
 package com.example.neomocreatures.entity;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.entity.ai.HerdFollowGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.smallfish.SmallFishVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -59,6 +60,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -389,14 +391,8 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int fishCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (fishCount > 0) {
-            this.spawnAtLocation(new ItemStack(Items.TROPICAL_FISH, fishCount));
-        }
-        int eggCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (eggCount > 0) {
-            this.spawnAtLocation(new ItemStack(this.getEggItemForVariant(), eggCount));
-        }
+        MoCLootUtil.dropItems(this, Items.TROPICAL_FISH, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        MoCLootUtil.dropItems(this, this.getEggItemForVariant(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
     private net.minecraft.world.item.Item getEggItemForVariant() {
@@ -412,10 +408,11 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable {
         };
     }
 
+
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
         // ---------------------------------------------------------------------

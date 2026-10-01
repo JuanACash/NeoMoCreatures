@@ -1,8 +1,9 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -270,14 +271,12 @@ public class MoCMoleEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int count = this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.FUR.get(), count));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
     }
+
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 }

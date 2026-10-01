@@ -1,11 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.werewolf.WerewolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -397,7 +397,7 @@ public class MoCWerewolfEntity extends Monster {
         this.dropCount(Items.WOODEN_PICKAXE, lootingLevel);
         this.dropCount(Items.WOODEN_SHOVEL, lootingLevel);
         this.dropCount(Items.WOODEN_SWORD, lootingLevel);
-        if (this.random.nextFloat() < 0.5F + 0.05F * lootingLevel) {
+        if (MoCLootUtil.rollChance(this.random, 0.5F, 0.05F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(Items.LEATHER));
         }
     }
@@ -414,20 +414,14 @@ public class MoCWerewolfEntity extends Monster {
         this.dropCount(Items.IRON_SHOVEL, lootingLevel);
         this.dropCount(Items.IRON_SWORD, lootingLevel);
 
-        float chance = 0.5F + 0.05F * lootingLevel;
-        if (this.getVariant() == WerewolfVariant.FIRE) {
-            if (this.random.nextFloat() < chance) {
-                this.spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP));
-            }
-        } else if (this.random.nextFloat() < chance) {
-            this.spawnAtLocation(new ItemStack(Items.DIAMOND));
+        if (MoCLootUtil.rollChance(this.random, 0.5F, 0.05F, lootingLevel)) {
+            Item rareDrop = this.getVariant() == WerewolfVariant.FIRE ? Items.NETHERITE_SCRAP : Items.DIAMOND;
+            this.spawnAtLocation(new ItemStack(rareDrop));
         }
     }
 
     private void dropCount(Item item, int lootingLevel) {
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(item, count));
-        }
+        MoCLootUtil.dropItems(this, item, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
 }

@@ -1,13 +1,14 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.crab.CrabVariant;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.entity.crab.CrabVariant;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.util.MoCLootUtil;
-import com.example.neomocreatures.util.NamingHelper;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -24,6 +25,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -44,6 +46,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
+
 import net.neoforged.neoforge.fluids.FluidType;
 
 /**
@@ -233,16 +236,14 @@ public class MoCCrabEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(ModItems.CRAB_RAW.get(), count));
-        }
+        MoCLootUtil.dropItems(this, ModItems.CRAB_RAW.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
 
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     // ---------------------------------------------------------------------

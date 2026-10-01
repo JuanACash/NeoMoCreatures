@@ -1,10 +1,11 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import java.util.EnumSet;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -32,6 +33,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
@@ -256,22 +258,16 @@ public class MoCBoarEntity extends Animal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int porkCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (porkCount > 0) {
-            net.minecraft.world.item.Item porkItem = this.isOnFire()
-                    ? net.minecraft.world.item.Items.COOKED_PORKCHOP
-                    : net.minecraft.world.item.Items.PORKCHOP;
-            this.spawnAtLocation(new ItemStack(porkItem, porkCount));
-        }
-        int hide = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (hide > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HIDE.get(), hide));
-        }
+        MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, Items.PORKCHOP, Items.COOKED_PORKCHOP),
+                MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
+
+
     
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     /** Original: EntityAIFleeFromPlayer gated by isNotScared() (true only when grown up) — so this

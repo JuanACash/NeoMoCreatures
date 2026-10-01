@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -217,19 +218,15 @@ public class MoCSilverSkeletonEntity extends Monster {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        int scrap = this.random.nextInt(3) - 1 + this.random.nextInt(lootingLevel + 1);
-        if (scrap > 0) {
-            this.spawnAtLocation(new ItemStack(ModItems.ANCIENT_SILVER_SCRAP.get(), scrap));
-        }
-        int bone = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (bone > 0) {
-            this.spawnAtLocation(new ItemStack(Items.BONE, bone));
-        }
+        // -1 shifts the base roll to [-1, 1], so plain kills often drop no scrap
+        MoCLootUtil.dropItems(this, ModItems.ANCIENT_SILVER_SCRAP.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel) - 1);
+        MoCLootUtil.dropItems(this, Items.BONE, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
         if (damageSource.getEntity() instanceof Player
-                && this.random.nextFloat() < 0.015F + 0.01F * lootingLevel) {
+                && MoCLootUtil.rollChance(this.random, 0.015F, 0.01F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(ModItems.SILVER_SWORD.get()));
         }
     }
+
 
     // ---------------------------------------------------------------------
     // Darkness-gated goals

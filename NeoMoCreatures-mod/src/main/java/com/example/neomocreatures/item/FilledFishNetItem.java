@@ -1,14 +1,16 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCSharkEntity;
-import com.example.neomocreatures.entity.MoCStingrayEntity;
-import com.example.neomocreatures.entity.MoCDolphinEntity;
-import com.example.neomocreatures.entity.MoCMantaRayEntity;
-import com.example.neomocreatures.entity.MoCFishyEntity;
-import com.example.neomocreatures.entity.MoCMediumFishEntity;
-import com.example.neomocreatures.entity.MoCSmallFishEntity;
-import com.example.neomocreatures.entity.MoCJellyfishEntity;
+import java.util.List;
+
 import com.example.neomocreatures.entity.MoCCrabEntity;
+import com.example.neomocreatures.entity.MoCDolphinEntity;
+import com.example.neomocreatures.entity.MoCFishyEntity;
+import com.example.neomocreatures.entity.MoCJellyfishEntity;
+import com.example.neomocreatures.entity.MoCMantaRayEntity;
+import com.example.neomocreatures.entity.MoCMediumFishEntity;
+import com.example.neomocreatures.entity.MoCSharkEntity;
+import com.example.neomocreatures.entity.MoCSmallFishEntity;
+import com.example.neomocreatures.entity.MoCStingrayEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
 
@@ -26,12 +28,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-
-import java.util.List;
 
 /** A fish net holding a caught tamed aquatic pet — same "use anywhere in front of you" pattern as FilledAmuletItem. Extend the if-chain in use() for future sea creatures beyond Shark. */
 public class FilledFishNetItem extends Item {

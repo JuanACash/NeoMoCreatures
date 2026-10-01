@@ -44,12 +44,10 @@ public class MoCGreenOgreEntity extends MoCOgreEntity {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int obsidian = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (obsidian > 0) {
-            this.spawnAtLocation(new ItemStack(Items.OBSIDIAN, obsidian));
-        }
-        if (this.random.nextFloat() < 0.05F + 0.01F * lootingLevel) {
+        MoCLootUtil.dropItems(this, Items.OBSIDIAN, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        if (MoCLootUtil.rollChance(this.random, 0.05F, 0.01F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(Items.DIAMOND));
         }
     }
+
 }

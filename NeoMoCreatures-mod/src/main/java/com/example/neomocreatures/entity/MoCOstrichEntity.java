@@ -1,8 +1,9 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -1220,20 +1221,12 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     @Override
     public void die(DamageSource source) {
         if (!this.level().isClientSide) {
-            int lootingLevel = 0;
-            if (source.getEntity() instanceof LivingEntity killer) {
-                var lootingHolder = killer.level().registryAccess()
-                        .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                        .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
-                lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(lootingHolder, killer);
-            }
+            int lootingLevel = MoCLootUtil.getLootingLevel(source.getEntity());
 
             // Raw ostrich meat: 0-2 base, affected by Looting. Always dropped raw,
             // even if it died on fire (there's no "cooked on fire" logic here).
-            int meatCount = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-            for (int i = 0; i < meatCount; i++) {
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.OSTRICH_RAW.get()));
-            }
+            MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.OSTRICH_RAW.get(),
+                    MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
 
             // Essence hearts / unicorn horn depending on the ostrich's essence, 25% base + Looting.
             net.minecraft.world.item.Item essenceHeartItem = switch (getEssence()) {
@@ -1244,12 +1237,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 default -> null;
             };
             if (essenceHeartItem != null) {
-                float chance = 0.25F + lootingLevel * 0.1F;
-                if (this.random.nextFloat() < chance) {
-                    int heartCount = 1 + this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
-                    for (int i = 0; i < heartCount; i++) {
-                        this.spawnAtLocation(new ItemStack(essenceHeartItem));
-                    }
+                if (MoCLootUtil.rollChance(this.random, 0.25F, 0.1F, lootingLevel)) {
+                    MoCLootUtil.dropItems(this, essenceHeartItem, 1 + MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
                 }
             }
 

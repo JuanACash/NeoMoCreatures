@@ -1,17 +1,16 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import javax.annotation.Nullable;
 
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
@@ -79,7 +78,7 @@ public abstract class MoCCrawlerEntity extends PathfinderMob {
     /** Wiki: every insect gives 1-3 experience when killed by a player or a tamed wolf. */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     /** Species that drop slimeballs (snail, maggot) override this to true. */
@@ -94,15 +93,7 @@ public abstract class MoCCrawlerEntity extends PathfinderMob {
         if (!this.dropsSlimeballs()) {
             return;
         }
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOOTING),
-                    attacker);
-        }
-        int count = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(Items.SLIME_BALL, count));
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
+        MoCLootUtil.dropItems(this, Items.SLIME_BALL, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 }

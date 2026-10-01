@@ -1,10 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.deer.DeerVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -28,7 +29,6 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -271,17 +271,14 @@ public class MoCDeerEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int venisonCount = 1 + this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
-        Item venisonItem = this.isOnFire() ? ModItems.VENISON_COOKED.get() : ModItems.VENISON_RAW.get();
-        this.spawnAtLocation(new ItemStack(venisonItem, venisonCount));
-        int fur = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (fur > 0) {
-            this.spawnAtLocation(new ItemStack(ModItems.FUR.get(), fur));
-        }
+        MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, ModItems.VENISON_RAW.get(), ModItems.VENISON_COOKED.get()),
+                1 + MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
+
 }

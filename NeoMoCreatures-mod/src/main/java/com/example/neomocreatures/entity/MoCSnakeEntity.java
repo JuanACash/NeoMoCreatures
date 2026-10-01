@@ -1,9 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.snake.SnakeVariant;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -637,21 +639,16 @@ public class MoCSnakeEntity extends TamableAnimal
         // Wiki: "when killed by a player or tamed wolf" — anything else
         // (falling, lava, another wild mob) drops nothing.
         Entity killer = damageSource.getEntity();
-        boolean validKiller = killer instanceof Player
-                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
+        boolean validKiller = killer instanceof Player || MoCLootUtil.isTamedWolf(killer);
         if (!validKiller) {
             return;
         }
 
         // Wiki: 0-2 eggs of its own variant, not affected by Fortune/Looting.
-        int eggCount = this.random.nextInt(3);
-        if (eggCount > 0) {
-            this.spawnAtLocation(new ItemStack(getEggItem(), eggCount));
-        }
+        MoCLootUtil.dropItems(this, getEggItem(), this.random.nextInt(3));
 
         // Wiki: 1-3 experience.
-        int xp = 1 + this.random.nextInt(3);
-        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(level, this.getX(), this.getY(), this.getZ(), xp));
+        MoCExperienceUtil.dropExperienceOrb(level, this, MoCExperienceUtil.rollStandardXp(this.random));
     }
 
     @Override

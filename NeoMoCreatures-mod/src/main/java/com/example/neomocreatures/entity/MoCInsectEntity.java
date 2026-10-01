@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCExperienceUtil;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -120,6 +122,6 @@ public abstract class MoCInsectEntity extends PathfinderMob {
     /** Wiki: every insect gives 1-3 experience when killed by a player or a tamed wolf. */
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 }

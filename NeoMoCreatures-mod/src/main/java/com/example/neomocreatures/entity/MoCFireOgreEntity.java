@@ -7,7 +7,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 /** Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityFireOgre}. */
@@ -62,9 +61,7 @@ public class MoCFireOgreEntity extends MoCOgreEntity {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        int count = this.random.nextInt(3) + this.random.nextInt(MoCLootUtil.getLootingLevel(level, damageSource)+ 1);
-        if (count > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get(), count));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, MoCLootUtil.getLootingLevel(level, damageSource)));
     }
+
 }

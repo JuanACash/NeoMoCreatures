@@ -1,8 +1,9 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.kitty.KittyVariant;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -161,7 +162,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     @Override

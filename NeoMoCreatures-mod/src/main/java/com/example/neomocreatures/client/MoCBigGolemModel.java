@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCBigGolemEntity;
 import com.example.neomocreatures.entity.golem.GolemBody;
+import com.example.neomocreatures.entity.golem.GolemState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -13,7 +14,6 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
-import com.example.neomocreatures.entity.golem.GolemState;
 
 /**
  * Port of {@code drzhark.mocreatures.client.model.MoCModelGolem}. Each of the 23 body slots is a single

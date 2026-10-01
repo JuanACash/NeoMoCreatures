@@ -1,9 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -316,28 +318,20 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     // already only grants it when killed by a player or a tamed wolf.
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3);
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
         // Wiki: "0-3 shark teeth (60% chance)... Looting does affect the chance... making it more common."
         double toothChance = Math.min(1.0D, 0.6D + lootingLevel * 0.1D);
         if (this.random.nextDouble() < toothChance) {
-            int teeth = this.random.nextInt(4 + lootingLevel);
-            if (teeth > 0) {
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.SHARK_TEETH.get(), teeth));
-            }
+            MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.SHARK_TEETH.get(),
+                    MoCLootUtil.rollWithLootingRange(this.random, 4, lootingLevel));
         }
 
         // Wiki: "10% chance to drop an egg... only if difficulty is Easy or higher."

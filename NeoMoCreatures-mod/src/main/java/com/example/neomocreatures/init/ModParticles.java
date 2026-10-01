@@ -1,5 +1,8 @@
 package com.example.neomocreatures.init;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 
@@ -8,9 +11,6 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-import java.util.EnumMap;
-import java.util.Map;
 
 public class ModParticles {
 

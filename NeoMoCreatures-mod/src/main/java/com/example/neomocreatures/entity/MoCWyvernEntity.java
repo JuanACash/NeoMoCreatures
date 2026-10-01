@@ -1,15 +1,17 @@
 package com.example.neomocreatures.entity;
 
-import java.util.EnumSet;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
 import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import java.util.EnumSet;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -1004,22 +1006,11 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
         // Requested: an undead wyvern spawns maggots on death, same as the tamed undead horse.
         if (this.getVariant() == com.example.neomocreatures.entity.wyvern.WyvernVariant.MOTHER_UNDEAD) {
-            spawnMaggotsOnDeath(level);
+            MoCLootUtil.spawnMaggots(level, this, this.random);
         }
     }
 
     /** Spawns 1-3 maggots at the death location. */
-    private void spawnMaggotsOnDeath(ServerLevel level) {
-        int count = 1 + this.random.nextInt(3);
-        for (int i = 0; i < count; i++) {
-            com.example.neomocreatures.entity.MoCMaggotEntity maggot =
-                    com.example.neomocreatures.init.ModEntities.MOC_MAGGOT.get().create(level);
-            if (maggot != null) {
-                maggot.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
-                level.addFreshEntity(maggot);
-            }
-        }
-    }
 
     /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
     public void dropSaddleAndArmor() {
@@ -1086,26 +1077,15 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
      */
     private void dropCombatLoot(ServerLevel level, boolean recentlyHitByPlayer) {
         LivingEntity killer = this.getLastHurtByMob();
-        boolean killedByPlayerOrWolf = recentlyHitByPlayer
-                || (killer instanceof net.minecraft.world.entity.animal.Wolf wolf && wolf.isTame());
-        if (!killedByPlayerOrWolf) {
+        if (!MoCLootUtil.isKilledByPlayerOrTamedWolf(recentlyHitByPlayer, killer)) {
             return;
         }
 
-        level.addFreshEntity(new net.minecraft.world.entity.ExperienceOrb(
-                level, this.getX(), this.getY(), this.getZ(), 5));
+        MoCExperienceUtil.dropExperienceOrb(level, this, 5);
 
-        int lootingLevel = 0;
-        if (killer != null) {
-            net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> looting =
-                    killer.level().registryAccess()
-                            .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING);
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        float eggChance = 0.10F + lootingLevel * 0.03F;
-        if (this.random.nextFloat() < eggChance) {
+        if (MoCLootUtil.rollChance(this.random, 0.10F, 0.03F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
         }
     }

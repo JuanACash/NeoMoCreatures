@@ -1,9 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -630,22 +632,12 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
-        int lootingLevel = 0;
-        if (damageSource.getEntity() instanceof LivingEntity attacker) {
-            lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(
-                    level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
-                            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.LOOTING),
-                    attacker);
-        }
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        int hide = Math.min(this.random.nextInt(2) + lootingLevel, 4); // 0-1 base, +1 per Looting level
-        if (hide > 0) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.REPTILE_HIDE.get(), hide));
-        }
+        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.REPTILE_HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 2, lootingLevel, 4));
 
         if (!this.isBaby() && this.individualAdultScale >= LARGE_ADULT_EGG_SCALE_THRESHOLD) {
-            float eggChance = 0.25F + (0.10F * lootingLevel);
-            if (this.random.nextFloat() < eggChance) {
+            if (MoCLootUtil.rollChance(this.random, 0.25F, 0.10F, lootingLevel)) {
                 this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.KOMODO_DRAGON_EGG.get()));
             }
         }
@@ -693,7 +685,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     @Override
     protected int getBaseExperienceReward() {
-        return 1 + this.random.nextInt(3); // 1-3
+        return MoCExperienceUtil.rollStandardXp(this.random);
     }
 
     @Nullable

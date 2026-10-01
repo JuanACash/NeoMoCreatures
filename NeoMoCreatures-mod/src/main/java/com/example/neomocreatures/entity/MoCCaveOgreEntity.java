@@ -8,7 +8,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
@@ -70,18 +69,14 @@ public class MoCCaveOgreEntity extends MoCOgreEntity {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        int diamonds = this.random.nextInt(3) + this.random.nextInt(lootingLevel + 1);
-        if (diamonds > 0) {
-            this.spawnAtLocation(new ItemStack(Items.DIAMOND, diamonds));
-        }
+        MoCLootUtil.dropItems(this, Items.DIAMOND, MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
         int scraps = 0;
         for (int i = 0; i < 2; i++) {
             if (this.random.nextFloat() < NETHERITE_SCRAP_CHANCE) {
                 scraps++;
             }
         }
-        if (scraps > 0) {
-            this.spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, scraps));
-        }
+        MoCLootUtil.dropItems(this, Items.NETHERITE_SCRAP, scraps);
     }
+
 }
