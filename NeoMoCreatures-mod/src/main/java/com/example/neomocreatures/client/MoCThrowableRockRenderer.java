@@ -1,7 +1,6 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.CarriedBlockEntity;
-import com.example.neomocreatures.entity.MoCThrowableRockEntity;
 
 import net.minecraft.world.entity.Entity;
 import com.mojang.blaze3d.vertex.PoseStack;
