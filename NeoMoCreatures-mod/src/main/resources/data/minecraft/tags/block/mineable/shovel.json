@@ -3,6 +3,8 @@
   "values": [
     "neomocreatures:wyvdirt",
     "neomocreatures:wyvgrass",
-    "neomocreatures:silver_sand"
+    "neomocreatures:silver_sand",
+    "neomocreatures:dirt_ogre_lair",
+    "neomocreatures:grass_ogre_lair"
   ]
 }

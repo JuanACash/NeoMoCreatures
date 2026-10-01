@@ -450,6 +450,7 @@ public class NeoMoCreatures {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(com.example.neomocreatures.init.ModBlocks::registerFlammability);
         LOGGER.info("neomocreatures common setup complete");
     }
 

@@ -1,10 +1,6 @@
 {
   "replace": false,
   "values": [
-    "neomocreatures:cobbled_wyvstone",
-    "neomocreatures:cobbled_deep_wyvstone",
-    "neomocreatures:mossy_cobbled_wyvstone",
-    "neomocreatures:mossy_cobbled_deep_wyvstone",
     "neomocreatures:wyvern_iron_ore",
     "neomocreatures:wyvern_lapis_ore",
     "neomocreatures:ancient_silver_block"

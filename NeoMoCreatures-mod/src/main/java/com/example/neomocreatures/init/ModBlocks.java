@@ -76,7 +76,7 @@ public class ModBlocks {
     public static final DeferredBlock<WyvTallGrassBlock> TALL_WYVGRASS = BLOCKS.registerBlock("tall_wyvgrass",
             props -> new WyvTallGrassBlock(props),
             BlockBehaviour.Properties.of().mapColor(MapColor.PLANT).sound(SoundType.GRASS)
-                    .noCollission().instabreak().pushReaction(PushReaction.DESTROY));
+                    .noCollission().instabreak().replaceable().pushReaction(PushReaction.DESTROY));
 
     public static final DeferredBlock<WyvSaplingBlock> WYVWOOD_SAPLING = BLOCKS.registerBlock("wyvwood_sapling",
             props -> new WyvSaplingBlock(props),
@@ -141,7 +141,7 @@ public class ModBlocks {
         public static final DeferredBlock<OgreLairTallGrassBlock> TALL_GRASS_OGRE_LAIR = BLOCKS.registerBlock("tall_grass_ogre_lair",
             props -> new OgreLairTallGrassBlock(props),
             BlockBehaviour.Properties.of().mapColor(MapColor.PLANT).sound(SoundType.GRASS)
-                    .noCollission().instabreak().pushReaction(PushReaction.DESTROY));
+                    .noCollission().instabreak().replaceable().pushReaction(PushReaction.DESTROY));
 
     public static final DeferredBlock<Block> LOG_OGRE_LAIR = BLOCKS.registerBlock("log_ogre_lair",
             props -> new RotatedPillarBlock(props),
@@ -211,5 +211,24 @@ public class ModBlocks {
     public static final DeferredBlock<WyvernNestBlock> BLOCK_WYVERN_NEST = BLOCKS.registerBlock("block_wyvern_nest",
             props -> new WyvernNestBlock(props),
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).sound(SoundType.GRASS).strength(0.5F, 0.5F));
+
+
+    /**
+     * Makes the mod's wood, leaves and grass burn and spread fire like their vanilla counterparts
+     * (ignitedByLava() alone only lets lava light them). Same values vanilla uses.
+     * Must run inside FMLCommonSetupEvent#enqueueWork: FireBlock's flammability map isn't thread-safe.
+     */
+    public static void registerFlammability() {
+        net.minecraft.world.level.block.FireBlock fire =
+                (net.minecraft.world.level.block.FireBlock) net.minecraft.world.level.block.Blocks.FIRE;
+        fire.setFlammable(WYVWOOD_LOG.get(), 5, 5);
+        fire.setFlammable(LOG_OGRE_LAIR.get(), 5, 5);
+        fire.setFlammable(WYVWOOD_PLANKS.get(), 5, 20);
+        fire.setFlammable(WOOD_PLANKS_OGRE_LAIR.get(), 5, 20);
+        fire.setFlammable(WYVWOOD_LEAVES.get(), 30, 60);
+        fire.setFlammable(LEAVES_OGRE_LAIR.get(), 30, 60);
+        fire.setFlammable(TALL_WYVGRASS.get(), 60, 100);
+        fire.setFlammable(TALL_GRASS_OGRE_LAIR.get(), 60, 100);
+    }
 
 }

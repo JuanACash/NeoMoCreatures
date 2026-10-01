@@ -1,0 +1,9 @@
+{
+  "values": {
+    "neomocreatures:wyvwood_leaves": { "chance": 0.3 },
+    "neomocreatures:leaves_ogre_lair": { "chance": 0.3 },
+    "neomocreatures:wyvwood_sapling": { "chance": 0.3 },
+    "neomocreatures:tall_wyvgrass": { "chance": 0.3 },
+    "neomocreatures:tall_grass_ogre_lair": { "chance": 0.3 }
+  }
+}
