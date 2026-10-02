@@ -1,25 +1,43 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.kitty.KittyVariant;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -44,6 +62,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Step 1+2 port of drzhark.mocreatures.entity.neutral.MoCEntityKitty: walks,
@@ -51,7 +71,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
  * kitty bed, taming, or the original's ~20-state AI yet — those come in
  * later steps.
  */
-public class MoCKittyEntity extends TamableAnimal implements com.example.neomocreatures.entity.CarriedPet, GrowthScaled, StorablePet {
+public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthScaled, StorablePet {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -96,14 +116,14 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             SynchedEntityData.defineId(MoCKittyEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SHOW_EMOTE_ICON =
             SynchedEntityData.defineId(MoCKittyEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<java.util.Optional<java.util.UUID>> DATA_HELD_BY =
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCKittyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     @Nullable
     private Player heldBy;
 
     @Nullable
-    private net.minecraft.core.BlockPos treeTarget;
+    private BlockPos treeTarget;
     private boolean onTree;
 
     public MoCKittyEntity(EntityType<? extends MoCKittyEntity> type, Level level) {
@@ -119,7 +139,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         builder.define(DATA_SITTING, false);
         builder.define(DATA_KITTY_CARE_STATE, STATE_IDLE);
         builder.define(DATA_SHOW_EMOTE_ICON, false);
-        builder.define(DATA_HELD_BY, java.util.Optional.empty());
+        builder.define(DATA_HELD_BY, Optional.empty());
     }
 
     @Nullable
@@ -142,8 +162,8 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         this.entityData.set(DATA_VARIANT, variant.getId());
     }
 
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Kitty", true);
         tag.putInt("KittyVariant", getVariant().getId());
         tag.putFloat("Health", this.getHealth());
@@ -156,7 +176,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         return tag;
     }
 
-    private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
+    private void capturePetInstant(Player player, InteractionHand hand) {
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
@@ -166,10 +186,10 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Override
-    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHitByPlayer) {
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHitByPlayer) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
         if (this.isTame()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MEDALLION.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.MEDALLION.get()));
         }
     }
 
@@ -194,9 +214,9 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Override
-    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+    protected AABB makeBoundingBox() {
         if (this.isBaby()) {
-            net.minecraft.world.entity.EntityDimensions babyDimensions =
+            EntityDimensions babyDimensions =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
             return babyDimensions.makeBoundingBox(this.position());
         }
@@ -219,23 +239,23 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     private void setKittyCareState(int state) {
         if (state == STATE_AGGRESSIVE && getKittyState() != STATE_AGGRESSIVE) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_UPSET.get(), 1.0F, 1.0F);
+            this.playSound(ModSounds.KITTY_UPSET.get(), 1.0F, 1.0F);
         }
         this.entityData.set(DATA_KITTY_CARE_STATE, state);
         this.careTimer = 0;
     }
 
     @Nullable
-    private net.minecraft.world.entity.item.ItemEntity playTarget;
+    private ItemEntity playTarget;
 
     @Override
-    public boolean isFood(net.minecraft.world.item.ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return false; // taming/breeding come in a later step
     }
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.AgeableMob otherParent) {
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null; // taming/breeding come in a later step
     }
 
@@ -315,7 +335,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
         ProtectKittenGoal(MoCKittyEntity kitty) {
             this.kitty = kitty;
-            this.setFlags(java.util.EnumSet.of(Flag.TARGET));
+            this.setFlags(EnumSet.of(Flag.TARGET));
         }
 
         @Override
@@ -344,7 +364,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
         FollowNearestAdultKittyGoal(MoCKittyEntity kitten) {
             this.kitten = kitten;
-            this.setFlags(java.util.EnumSet.of(Flag.MOVE));
+            this.setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
@@ -352,7 +372,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             if (!this.kitten.isBaby() || !this.kitten.isTame()) {
                 return false;
             }
-            java.util.List<MoCKittyEntity> nearby = this.kitten.level().getEntitiesOfClass(MoCKittyEntity.class,
+            List<MoCKittyEntity> nearby = this.kitten.level().getEntitiesOfClass(MoCKittyEntity.class,
                     this.kitten.getBoundingBox().inflate(8.0D, 4.0D, 8.0D), k -> !k.isBaby());
             if (nearby.isEmpty()) {
                 return false;
@@ -390,11 +410,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
      *  if none nearby but a player is close, does a harmless playful pounce instead. */
     private static class KittenPlayfulGoal extends Goal {
         private final MoCKittyEntity kitten;
-        private net.minecraft.world.entity.item.ItemEntity chasedItem;
+        private ItemEntity chasedItem;
 
         KittenPlayfulGoal(MoCKittyEntity kitten) {
             this.kitten = kitten;
-            this.setFlags(java.util.EnumSet.of(Flag.MOVE));
+            this.setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
@@ -402,7 +422,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             if (!this.kitten.isBaby()) {
                 return false;
             }
-            this.chasedItem = this.kitten.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+            this.chasedItem = this.kitten.level().getEntitiesOfClass(ItemEntity.class,
                             this.kitten.getBoundingBox().inflate(10.0D, 4.0D, 10.0D))
                     .stream().findFirst().orElse(null);
             if (this.chasedItem != null) {
@@ -530,7 +550,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         if (nearestFood.getItem().isEmpty()) {
             nearestFood.discard();
         }
-        this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_EATING_FISH.get(), 1.0F, 1.0F);
+        this.playSound(ModSounds.KITTY_EATING_FISH.get(), 1.0F, 1.0F);
         this.entityData.set(DATA_HAS_EATEN, true);
         this.fleeImmuneTicks = FLEE_IMMUNITY_TICKS;
     }
@@ -567,7 +587,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     private void tickIdleCare() {
         if (!this.level().isDay() && this.random.nextInt(500) == 0) {
-            com.example.neomocreatures.entity.MoCKittyBedEntity bed = findAnyBed(18.0D);
+            MoCKittyBedEntity bed = findAnyBed(18.0D);
             if (bed == null) {
                 setKittyCareState(STATE_SLEEPING);
             } else {
@@ -582,7 +602,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         }
         if (this.random.nextInt(20) == 0) {
             Player nearby = this.level().getNearestPlayer(this, 12D);
-            if (nearby != null && nearby.getMainHandItem().is(com.example.neomocreatures.init.ModItems.WOOL_BALL.get())) {
+            if (nearby != null && nearby.getMainHandItem().is(ModItems.WOOL_BALL.get())) {
                 setKittyCareState(STATE_CURIOUS);
                 return;
             }
@@ -615,7 +635,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     private void tickInBed() {
-        if (!(this.getVehicle() instanceof com.example.neomocreatures.entity.MoCKittyBedEntity bed)) {
+        if (!(this.getVehicle() instanceof MoCKittyBedEntity bed)) {
             setKittyCareState(STATE_IDLE);
             return;
         }
@@ -634,7 +654,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     private void tickAggressive() {
-        com.example.neomocreatures.entity.MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
+        MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
         if (bed != null) {
             this.setTarget(null);
             double dist = bed.distanceTo(this);
@@ -659,7 +679,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
                             this.getBoundingBox().inflate(16.0D, 6.0D, 16.0D),
                             k -> k != this && k.getKittyState() == STATE_LOOKING_FOR_MATE)
                     .stream()
-                    .min(java.util.Comparator.comparingDouble(this::distanceToSqr))
+                    .min(Comparator.comparingDouble(this::distanceToSqr))
                     .orElse(null);
             if (candidate != null) {
                 if (this.distanceToSqr(candidate) < 4.0D) {
@@ -699,7 +719,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         if (this.random.nextInt(20) != 0) {
             return;
         }
-        com.example.neomocreatures.entity.MoCKittyBedEntity bed = findAnyBed(CARE_SEARCH_RADIUS);
+        MoCKittyBedEntity bed = findAnyBed(CARE_SEARCH_RADIUS);
         if (bed == null) {
             return;
         }
@@ -725,7 +745,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         }
         int litterSize = this.random.nextInt(3) + 1;
         for (int i = 0; i < litterSize; i++) {
-            MoCKittyEntity kitten = com.example.neomocreatures.init.ModEntities.MOC_KITTY.get().create((net.minecraft.server.level.ServerLevel) this.level());
+            MoCKittyEntity kitten = ModEntities.MOC_KITTY.get().create((ServerLevel) this.level());
             if (kitten == null) {
                 continue;
             }
@@ -734,11 +754,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             kitten.moveTo(this.getX(), this.getY(), this.getZ(), 0F, 0F);
             kitten.setBaby(true);
             this.level().addFreshEntity(kitten);
-            this.playSound(net.minecraft.sounds.SoundEvents.CHICKEN_EGG, 1.0F, 1.0F);
+            this.playSound(SoundEvents.CHICKEN_EGG, 1.0F, 1.0F);
             if (this.getOwnerUUID() != null) {
                 kitten.setOwnerUUID(this.getOwnerUUID());
                 kitten.setTame(true, true);
-                com.example.neomocreatures.util.NamingHelper.promptRename(kitten, this.getOwnerUUID());
+                NamingHelper.promptRename(kitten, this.getOwnerUUID());
             }
         }
         this.stopRiding();
@@ -766,7 +786,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             lockRotationToVehicle(this.getVehicle());
         }
         if (this.random.nextInt(100) == 0) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
+            this.playSound(ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
         }
         this.careTimer++;
         if (this.level().isDay() || (this.careTimer > 500 && this.random.nextInt(500) == 0)) {
@@ -818,15 +838,15 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Nullable
-    private net.minecraft.core.BlockPos findNearbyTreeTop(int radius) {
-        net.minecraft.core.BlockPos base = this.blockPosition();
+    private BlockPos findNearbyTreeTop(int radius) {
+        BlockPos base = this.blockPosition();
         for (int i = 0; i < 10; i++) {
             int dx = this.random.nextInt(radius * 2 + 1) - radius;
             int dz = this.random.nextInt(radius * 2 + 1) - radius;
-            net.minecraft.core.BlockPos.MutableBlockPos pos = base.offset(dx, 10, dz).mutable();
+            BlockPos.MutableBlockPos pos = base.offset(dx, 10, dz).mutable();
             for (int y = base.getY() + 10; y > base.getY() - 5; y--) {
                 pos.setY(y);
-                if (this.level().getBlockState(pos).is(net.minecraft.tags.BlockTags.LEAVES)) {
+                if (this.level().getBlockState(pos).is(BlockTags.LEAVES)) {
                     return pos.immutable();
                 }
             }
@@ -835,11 +855,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Nullable
-    private com.example.neomocreatures.entity.MoCKittyBedEntity findAnyBed(double radius) {
-        com.example.neomocreatures.entity.MoCKittyBedEntity best = null;
+    private MoCKittyBedEntity findAnyBed(double radius) {
+        MoCKittyBedEntity best = null;
         double bestDistSqr = radius * radius;
-        for (com.example.neomocreatures.entity.MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
-                com.example.neomocreatures.entity.MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
+        for (MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
+                MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
             if (bed.isVehicle()) {
                 continue;
             }
@@ -874,15 +894,15 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     private void startHolding(Player player) {
         this.heldBy = player;
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.of(player.getUUID()));
+        this.entityData.set(DATA_HELD_BY, Optional.of(player.getUUID()));
         this.setNoAi(true);
         this.setNoGravity(true);
         this.noPhysics = true;
-        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
     }
 
     private void stopHolding() {
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.empty());
+        this.entityData.set(DATA_HELD_BY, Optional.empty());
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
@@ -912,7 +932,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             return;
         }
 
-        net.minecraft.world.phys.Vec3 targetPos = this.isBaby()
+        Vec3 targetPos = this.isBaby()
                 ? holder.getEyePosition().add(0.0D, 0.2D, 0.0D)
                 : holder.getEyePosition().add(0.0D, 0.2D, 0.0D);
         this.moveTo(targetPos.x, targetPos.y, targetPos.z, holder.getYRot(), 0.0F);
@@ -920,7 +940,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         this.yo = targetPos.y;
         this.zo = targetPos.z;
         this.yRotO = holder.getYRot();
-        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
     }
 
     @Override
@@ -942,7 +962,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     private void approachAndUseBed() {
-        com.example.neomocreatures.entity.MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
+        MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
         if (bed == null) {
             return;
         }
@@ -965,7 +985,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         if (this.random.nextInt(20) != 0) {
             return;
         }
-        com.example.neomocreatures.entity.MoCLitterBoxEntity box = findCleanLitterBox(CARE_SEARCH_RADIUS);
+        MoCLitterBoxEntity box = findCleanLitterBox(CARE_SEARCH_RADIUS);
         if (box == null) {
             return;
         }
@@ -984,7 +1004,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     if (nearby == null || this.random.nextInt(10) != 0) {
         return;
     }
-    if (!nearby.getMainHandItem().is(com.example.neomocreatures.init.ModItems.WOOL_BALL.get())) {
+    if (!nearby.getMainHandItem().is(ModItems.WOOL_BALL.get())) {
         setKittyCareState(STATE_IDLE);
         return;
     }
@@ -1008,7 +1028,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         if (dist < 1.5D) {
             this.entityData.set(DATA_SWING_TICKS, SWING_TICKS_MAX);
             if (this.random.nextInt(10) == 0) {
-                net.minecraft.world.phys.Vec3 push = this.playTarget.position().subtract(this.position()).normalize().scale(0.3D);
+                Vec3 push = this.playTarget.position().subtract(this.position()).normalize().scale(0.3D);
                 this.playTarget.setDeltaMovement(push.x, 0.15D, push.z);
             }
         } else {
@@ -1017,7 +1037,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     private void tickInLitter() {
-        if (!(this.getVehicle() instanceof com.example.neomocreatures.entity.MoCLitterBoxEntity box)) {
+        if (!(this.getVehicle() instanceof MoCLitterBoxEntity box)) {
             setKittyCareState(STATE_IDLE);
             return;
         }
@@ -1025,11 +1045,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         this.careTimer++;
         if (this.careTimer <= 300) {
             if (this.random.nextInt(40) == 0) {
-                this.playSound(net.minecraft.sounds.SoundEvents.SAND_BREAK, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SAND_BREAK, 1.0F, 1.0F);
             }
             return;
         }
-        this.playSound(net.minecraft.sounds.SoundEvents.SLIME_BLOCK_PLACE, 1.0F, 1.0F);
+        this.playSound(SoundEvents.SLIME_BLOCK_PLACE, 1.0F, 1.0F);
         box.setUsedLitter(true);
         this.stopRiding();
         setKittyCareState(STATE_IDLE);
@@ -1043,11 +1063,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Nullable
-    private com.example.neomocreatures.entity.MoCLitterBoxEntity findCleanLitterBox(double radius) {
-        com.example.neomocreatures.entity.MoCLitterBoxEntity best = null;
+    private MoCLitterBoxEntity findCleanLitterBox(double radius) {
+        MoCLitterBoxEntity best = null;
         double bestDistSqr = radius * radius;
-        for (com.example.neomocreatures.entity.MoCLitterBoxEntity box : this.level().getEntitiesOfClass(
-                com.example.neomocreatures.entity.MoCLitterBoxEntity.class, this.getBoundingBox().inflate(radius))) {
+        for (MoCLitterBoxEntity box : this.level().getEntitiesOfClass(
+                MoCLitterBoxEntity.class, this.getBoundingBox().inflate(radius))) {
             if (box.isVehicle() || box.isUsedLitter()) {
                 continue;
             }
@@ -1061,11 +1081,11 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Nullable
-    private com.example.neomocreatures.entity.MoCKittyBedEntity findFilledBed(double radius) {
-        com.example.neomocreatures.entity.MoCKittyBedEntity best = null;
+    private MoCKittyBedEntity findFilledBed(double radius) {
+        MoCKittyBedEntity best = null;
         double bestDistSqr = radius * radius;
-        for (com.example.neomocreatures.entity.MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
-                com.example.neomocreatures.entity.MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
+        for (MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
+                MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
             if (bed.isVehicle() || (!bed.hasFood() && !bed.hasMilk())) {
                 continue;
             }
@@ -1088,7 +1108,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
             return false;
         }
         return super.hurt(source, amount);
@@ -1105,22 +1125,22 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     @Override
     protected SoundEvent getAmbientSound() {
         return this.isBaby()
-                ? com.example.neomocreatures.init.ModSounds.KITTY_AMBIENT_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.KITTY_AMBIENT.get();
+                ? ModSounds.KITTY_AMBIENT_BABY.get()
+                : ModSounds.KITTY_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
         return this.isBaby()
-                ? com.example.neomocreatures.init.ModSounds.KITTY_HURT_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.KITTY_HURT.get();
+                ? ModSounds.KITTY_HURT_BABY.get()
+                : ModSounds.KITTY_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
         return this.isBaby()
-                ? com.example.neomocreatures.init.ModSounds.KITTY_DEATH_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.KITTY_DEATH.get();
+                ? ModSounds.KITTY_DEATH_BABY.get()
+                : ModSounds.KITTY_DEATH.get();
     }
 
     @Override
@@ -1129,17 +1149,17 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+    public void travel(Vec3 travelVector) {
         if (isKittySitting()) {
             this.getNavigation().stop();
-            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            super.travel(Vec3.ZERO);
             return;
         }
         super.travel(travelVector);
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("KittyVariant", getVariant().getId());
         tag.putBoolean("KittySitting", isKittySitting());
@@ -1147,7 +1167,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("KittyVariant")) {
             setVariant(KittyVariant.byId(tag.getInt("KittyVariant")));
@@ -1162,7 +1182,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.empty());
+        this.entityData.set(DATA_HELD_BY, Optional.empty());
     }
 
     @Override
@@ -1173,33 +1193,33 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && isWhipable() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+        if (this.isTame() && isWhipable() && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setSitting(!isKittySitting());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && getKittyState() == STATE_CURIOUS && stack.is(com.example.neomocreatures.init.ModItems.WOOL_BALL.get())) {
+        if (this.isTame() && getKittyState() == STATE_CURIOUS && stack.is(ModItems.WOOL_BALL.get())) {
             if (!this.level().isClientSide) {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                net.minecraft.world.entity.item.ItemEntity ball = new net.minecraft.world.entity.item.ItemEntity(
+                ItemEntity ball = new ItemEntity(
                         this.level(), this.getX(), this.getY() + 1.0D, this.getZ(),
-                        new ItemStack(com.example.neomocreatures.init.ModItems.WOOL_BALL.get()));
+                        new ItemStack(ModItems.WOOL_BALL.get()));
                 ball.setPickUpDelay(30);
                 ball.setUnlimitedLifetime();
                 ball.setDeltaMovement(
@@ -1216,7 +1236,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         if (this.isTame() && getKittyState() == STATE_IDLE
                 && (stack.is(Items.CAKE) || stack.is(Items.COOKED_COD) || stack.is(Items.COOKED_SALMON))) {
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -1227,7 +1247,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
         }
 
         if (this.isTame() && this.pickupCooldown <= 0 && canBePickedUp() && stack.isEmpty()
-                && !com.example.neomocreatures.util.PetCarryUtil.isAlreadyCarryingAPet(player)) {
+                && !PetCarryUtil.isAlreadyCarryingAPet(player)) {
             if (!this.level().isClientSide) {
                 startHolding(player);
                 setKittyCareState(STATE_HELD_PLAYER);
@@ -1236,7 +1256,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.isTame() && hasEaten() && stack.is(com.example.neomocreatures.init.ModItems.MEDALLION.get())) {
+        if (!this.isTame() && hasEaten() && stack.is(ModItems.MEDALLION.get())) {
             if (!this.level().isClientSide) {
                 this.tame(player);
                 this.entityData.set(DATA_HAS_EATEN, false);
@@ -1244,14 +1264,14 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                NamingHelper.promptRename(this, player.getUUID());
             }
             return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && isHealFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -1270,7 +1290,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.kitty.KittyVariant.byId(tag.getInt("KittyVariant")));
+        this.setVariant(KittyVariant.byId(tag.getInt("KittyVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -1282,7 +1302,7 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

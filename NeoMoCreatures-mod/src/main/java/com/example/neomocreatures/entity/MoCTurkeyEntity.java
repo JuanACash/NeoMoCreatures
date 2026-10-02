@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -7,19 +8,28 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -32,10 +42,13 @@ import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, StorablePet {
 
@@ -154,21 +167,21 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
         setMale(this.random.nextBoolean());
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Male", isMale());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("Male")) {
             setMale(tag.getBoolean("Male"));
@@ -197,7 +210,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        MoCTurkeyEntity baby = com.example.neomocreatures.init.ModEntities.MOC_TURKEY.get().create(level);
+        MoCTurkeyEntity baby = ModEntities.MOC_TURKEY.get().create(level);
         if (baby != null) {
             baby.setMale(this.random.nextBoolean());
         }
@@ -219,11 +232,11 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
         this.resetLove();
         partner.resetLove();
         level.broadcastEntityEvent(this, (byte) 18);
-        if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+        if (level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             MoCExperienceUtil.dropExperienceOrb(level, this, this.getRandom().nextInt(7) + 1);
         }
 
-        java.util.UUID ownerUUID = this.getOwnerUUID();
+        UUID ownerUUID = this.getOwnerUUID();
         if (ownerUUID != null) {
             baby.setOwnerUUID(ownerUUID);
             baby.setTame(true, true);
@@ -236,16 +249,16 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
 
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        net.minecraft.world.item.Item turkeyItem = this.isOnFire()
-                ? com.example.neomocreatures.init.ModItems.TURKEY_COOKED.get()
-                : com.example.neomocreatures.init.ModItems.TURKEY_RAW.get();
+        Item turkeyItem = this.isOnFire()
+                ? ModItems.TURKEY_COOKED.get()
+                : ModItems.TURKEY_RAW.get();
         MoCLootUtil.dropItems(this, turkeyItem, MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
 
         MoCLootUtil.dropItems(this, Items.FEATHER, MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Turkey", true);
         tag.putBoolean("Male", isMale());
         tag.putFloat("Health", this.getHealth());
@@ -258,7 +271,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
         return tag;
     }
 
-    private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
+    private void capturePetInstant(Player player, InteractionHand hand) {
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
@@ -268,41 +281,41 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
     }
 
     @Override
-    public net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (!this.isTame() && stack.is(Items.MELON_SEEDS)) {
             if (!this.level().isClientSide) {
                 this.tame(player);
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-                this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+                NamingHelper.promptRename(this, player.getUUID());
+                this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.PUMPKIN_SEEDS) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.heal(this.getMaxHealth());
-                this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+                this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         return super.mobInteract(player, hand);
@@ -327,7 +340,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

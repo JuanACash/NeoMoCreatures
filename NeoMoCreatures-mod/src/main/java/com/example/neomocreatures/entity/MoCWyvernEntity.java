@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
@@ -7,39 +8,54 @@ import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.EnumSet;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -55,6 +71,9 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -62,7 +81,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.minecraft.world.entity.HasCustomInventoryScreen, GrowthScaled, StorablePet {
+import net.neoforged.neoforge.network.PacketDistributor;
+
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet {
 
     private static final double AGGRO_RADIUS = 14.0D;
     private static final int POISON_DURATION_TICKS = 200;
@@ -158,7 +179,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         if (tamer != null) {
             this.tame(tamer);
             this.setSitting(false);
-            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+            NamingHelper.promptRename(this, tamer.getUUID());
         }
     }
 
@@ -317,29 +338,29 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     // Diamond 11) — wyvern armor is a literal horse armor item, so it should
     // give literally the same defense.
     private static final double[] ARMOR_TIER_POINTS = {0.0D, 5.0D, 7.0D, 11.0D};
-    private static final net.minecraft.resources.ResourceLocation ARMOR_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "wyvern_armor");
+    private static final ResourceLocation ARMOR_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "wyvern_armor");
 
     public void setArmorTier(int tier) {
         this.entityData.set(DATA_ARMOR_TIER, tier);
-        net.minecraft.world.entity.ai.attributes.AttributeInstance armorAttr = this.getAttribute(Attributes.ARMOR);
+        AttributeInstance armorAttr = this.getAttribute(Attributes.ARMOR);
         if (armorAttr == null) {
             return;
         }
         armorAttr.removeModifier(ARMOR_MODIFIER_ID);
         if (tier > 0) {
-            armorAttr.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+            armorAttr.addPermanentModifier(new AttributeModifier(
                     ARMOR_MODIFIER_ID, ARMOR_TIER_POINTS[tier],
-                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+                    AttributeModifier.Operation.ADD_VALUE));
         }
     }
 
     // 18 slots (2 rows), every tier can carry one, shears can never remove it.
-    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
+    private final SimpleContainer chestInventory = new SimpleContainer(18);
     /** Which exact item to give back when the saddle is removed with shears — vanilla Saddle vs our HORSE_SADDLE. */
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
 
     public boolean hasChest() {
         return this.entityData.get(DATA_HAS_CHEST);
@@ -350,13 +371,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     }
 
     private void openChestMenu(Player player) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.minecraft.network.chat.Component title = this.hasCustomName()
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
                     ? this.getDisplayName().copy().append(" Storage")
-                    : net.minecraft.network.chat.Component.literal("Wyvern Storage");
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
-                            net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    : Component.literal("Wyvern Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(
+                            MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
                     title));
         }
     }
@@ -375,9 +396,9 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             openChestMenu(player);
             return;
         }
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -385,7 +406,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         if (!hasChest()) {
             return;
         }
-        this.spawnAtLocation(net.minecraft.world.item.Items.CHEST);
+        this.spawnAtLocation(Items.CHEST);
         for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
             this.spawnAtLocation(chestInventory.getItem(slot));
         }
@@ -447,17 +468,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         tag.putInt("WyvernArmorTier", getArmorTier());
         tag.putBoolean("WyvernHasChest", hasChest());
         if (hasChest()) {
-            net.minecraft.nbt.ListTag chestItems = new net.minecraft.nbt.ListTag();
-            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                ItemStack stack = chestInventory.getItem(slot);
-                if (!stack.isEmpty()) {
-                    CompoundTag itemTag = new CompoundTag();
-                    itemTag.putInt("Slot", slot);
-                    itemTag.put("Item", stack.save(this.registryAccess(), new CompoundTag()));
-                    chestItems.add(itemTag);
-                }
-            }
-            tag.put("WyvernChestItems", chestItems);
+            tag.put("WyvernChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
         }
     }
 
@@ -489,7 +500,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             setSaddled(tag.getBoolean("WyvernSaddled"));
         }
         if (tag.contains("WyvernSaddleItem", 8)) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("WyvernSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("WyvernSaddleItem"));
         }
         if (tag.contains("WyvernArmorTier")) {
             setArmorTier(tag.getInt("WyvernArmorTier"));
@@ -498,16 +509,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             setHasChest(true);
         }
         if (tag.contains("WyvernChestItems", 9)) {
-            net.minecraft.nbt.ListTag chestItems = tag.getList("WyvernChestItems", 10);
-            for (int i = 0; i < chestItems.size(); i++) {
-                CompoundTag itemTag = chestItems.getCompound(i);
-                int slot = itemTag.getInt("Slot");
-                ItemStack stack = ItemStack.parse(this.registryAccess(), itemTag.getCompound("Item"))
-                        .orElse(ItemStack.EMPTY);
-                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
-                    chestInventory.setItem(slot, stack);
-                }
-            }
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("WyvernChestItems", 10), this.registryAccess());
         }
     }
 
@@ -764,8 +766,8 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get());
+        return stack.is(ModItems.RAT_RAW.get())
+                || stack.is(ModItems.TURKEY_RAW.get());
     }
 
     @Override
@@ -775,21 +777,21 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             if (stack.is(Items.BOOK)) {
                 return NamingHelper.renameWithBook(this, player);
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+            if (stack.is(ModItems.WHIP.get())) {
                 if (!this.level().isClientSide) {
                     this.setSitting(!this.isSittingSynced());
                     this.setTarget(null);
                     this.getNavigation().stop();
                     this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
-                            net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                            SoundSource.NEUTRAL, 0.5F,
                             0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                     if (!player.getAbilities().instabuild) {
-                        stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                        stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                     }
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (stack.is(ModItems.PET_AMULET.get())) {
                 if (!this.level().isClientSide) {
                     capturePetInstant(player, hand);
                 }
@@ -807,7 +809,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 return InteractionResult.SUCCESS;
             }
             
-            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_DARKNESS.get())
+            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
                     && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
                 if (!this.level().isClientSide) {
                     startTransform(WyvernVariant.MOTHER_DARK);
@@ -815,7 +817,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_UNDEAD.get())
+            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
                     && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
                 if (!this.level().isClientSide) {
                     startTransform(WyvernVariant.MOTHER_UNDEAD);
@@ -823,7 +825,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get())
+            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
                     && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
                 if (!this.level().isClientSide) {
                     startTransform(WyvernVariant.MOTHER_LIGHT);
@@ -831,7 +833,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get())
+            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
                     && !getVariant().isMother()) {
                 if (!this.level().isClientSide) {
                     this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
@@ -839,22 +841,22 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_FIRE.get())
+            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_FIRE.get())
                     && getVariant().isMother()) {
                 if (!this.level().isClientSide) {
-                    this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MOTHER_WYVERN_EGG.get()));
+                    this.spawnAtLocation(new ItemStack(ModItems.MOTHER_WYVERN_EGG.get()));
                 }
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
 
             if (!this.isBaby() && !this.isSaddled()
-                    && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                        || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+                    && (stack.is(Items.SADDLE)
+                        || stack.is(ModItems.HORSE_SADDLE.get()))) {
                 if (!this.level().isClientSide) {
                     this.setSaddled(true);
-                    this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -862,11 +864,11 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 return InteractionResult.SUCCESS;
             }
             if (!this.isBaby() && this.getArmorTier() == 0
-                    && (stack.is(net.minecraft.world.item.Items.IRON_HORSE_ARMOR)
-                        || stack.is(net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR)
-                        || stack.is(net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR))) {
-                int newArmorTier = stack.is(net.minecraft.world.item.Items.IRON_HORSE_ARMOR) ? 1
-                        : stack.is(net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR) ? 2 : 3;
+                    && (stack.is(Items.IRON_HORSE_ARMOR)
+                        || stack.is(Items.GOLDEN_HORSE_ARMOR)
+                        || stack.is(Items.DIAMOND_HORSE_ARMOR))) {
+                int newArmorTier = stack.is(Items.IRON_HORSE_ARMOR) ? 1
+                        : stack.is(Items.GOLDEN_HORSE_ARMOR) ? 2 : 3;
                 if (!this.level().isClientSide) {
                     this.setArmorTier(newArmorTier);
                     this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
@@ -876,10 +878,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (!this.isBaby() && !hasChest() && stack.is(net.minecraft.world.item.Items.CHEST)) {
+            if (!this.isBaby() && !hasChest() && stack.is(Items.CHEST)) {
                 if (!this.level().isClientSide) {
                     setHasChest(true);
-                    this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                    this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -888,12 +890,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             }
             // Shears: armor first, then saddle — same order as the horse.
             // The chest is NOT removable by shears — no branch for it here.
-            if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && this.getArmorTier() > 0) {
+            if (this.isTame() && stack.is(Items.SHEARS) && this.getArmorTier() > 0) {
                 if (!this.level().isClientSide) {
-                    net.minecraft.world.item.Item armorItem = switch (this.getArmorTier()) {
-                        case 1 -> net.minecraft.world.item.Items.IRON_HORSE_ARMOR;
-                        case 2 -> net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR;
-                        default -> net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR;
+                    Item armorItem = switch (this.getArmorTier()) {
+                        case 1 -> Items.IRON_HORSE_ARMOR;
+                        case 2 -> Items.GOLDEN_HORSE_ARMOR;
+                        default -> Items.DIAMOND_HORSE_ARMOR;
                     };
                     this.setArmorTier(0);
                     this.spawnAtLocation(new ItemStack(armorItem));
@@ -901,16 +903,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && this.isSaddled()) {
+            if (this.isTame() && stack.is(Items.SHEARS) && this.isSaddled()) {
                 if (!this.level().isClientSide) {
                     this.setSaddled(false);
                     this.ejectPassengers();
-                    net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                            ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                            : net.minecraft.world.item.Items.SADDLE;
+                    Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                     this.saddleItemId = null;
                     this.spawnAtLocation(new ItemStack(saddleItem));
-                    this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                    this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
                 }
                 return InteractionResult.SUCCESS;
             }
@@ -995,7 +995,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         ghost.setAge(0);
         this.level().addFreshEntity(ghost);
         ghost.playSound(ModSounds.WYVERN_GRUNT.get(), 1.0F, 1.0F);
-        com.example.neomocreatures.util.NamingHelper.promptRename(ghost, this.getOwnerUUID());
+        NamingHelper.promptRename(ghost, this.getOwnerUUID());
     }
 
     @Override
@@ -1005,7 +1005,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
         dropCombatLoot(level, recentlyHitByPlayer);
 
         // Requested: an undead wyvern spawns maggots on death, same as the tamed undead horse.
-        if (this.getVariant() == com.example.neomocreatures.entity.wyvern.WyvernVariant.MOTHER_UNDEAD) {
+        if (this.getVariant() == WyvernVariant.MOTHER_UNDEAD) {
             MoCLootUtil.spawnMaggots(level, this, this.random);
         }
     }
@@ -1015,16 +1015,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
     public void dropSaddleAndArmor() {
         if (this.isSaddled()) {
-            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem));
         }
         if (this.getArmorTier() > 0) {
-            net.minecraft.world.item.Item armorItem = switch (this.getArmorTier()) {
-                case 1 -> net.minecraft.world.item.Items.IRON_HORSE_ARMOR;
-                case 2 -> net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR;
-                default -> net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR;
+            Item armorItem = switch (this.getArmorTier()) {
+                case 1 -> Items.IRON_HORSE_ARMOR;
+                case 2 -> Items.GOLDEN_HORSE_ARMOR;
+                default -> Items.DIAMOND_HORSE_ARMOR;
             };
             this.spawnAtLocation(new ItemStack(armorItem));
         }
@@ -1045,7 +1043,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     }
 
     /** Snapshot used to restore this wyvern later from a filled Pet Amulet. */
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("WyvernVariant", getVariant().name());
         tag.putString("WyvernTier", getTier().name());
@@ -1086,18 +1084,18 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     }
 
     /** Each variant only drops its own egg; every mother form shares the mother egg. */
-    private static net.minecraft.world.item.Item eggItemFor(WyvernVariant variant) {
+    private static Item eggItemFor(WyvernVariant variant) {
         return switch (variant) {
-            case JUNGLE -> com.example.neomocreatures.init.ModItems.JUNGLE_WYVERN_EGG.get();
-            case SWAMP -> com.example.neomocreatures.init.ModItems.SWAMP_WYVERN_EGG.get();
-            case SAND -> com.example.neomocreatures.init.ModItems.SAND_WYVERN_EGG.get();
-            case SUN -> com.example.neomocreatures.init.ModItems.SUN_WYVERN_EGG.get();
-            case ARCTIC -> com.example.neomocreatures.init.ModItems.ARCTIC_WYVERN_EGG.get();
-            case CAVE -> com.example.neomocreatures.init.ModItems.CAVE_WYVERN_EGG.get();
-            case MOUNTAIN -> com.example.neomocreatures.init.ModItems.MOUNTAIN_WYVERN_EGG.get();
-            case SEA -> com.example.neomocreatures.init.ModItems.SEA_WYVERN_EGG.get();
+            case JUNGLE -> ModItems.JUNGLE_WYVERN_EGG.get();
+            case SWAMP -> ModItems.SWAMP_WYVERN_EGG.get();
+            case SAND -> ModItems.SAND_WYVERN_EGG.get();
+            case SUN -> ModItems.SUN_WYVERN_EGG.get();
+            case ARCTIC -> ModItems.ARCTIC_WYVERN_EGG.get();
+            case CAVE -> ModItems.CAVE_WYVERN_EGG.get();
+            case MOUNTAIN -> ModItems.MOUNTAIN_WYVERN_EGG.get();
+            case SEA -> ModItems.SEA_WYVERN_EGG.get();
             case MOTHER, MOTHER_UNDEAD, MOTHER_LIGHT, MOTHER_DARK, MOTHER_CORRUPT ->
-                    com.example.neomocreatures.init.ModItems.MOTHER_WYVERN_EGG.get();
+                    ModItems.MOTHER_WYVERN_EGG.get();
         };
     }
 
@@ -1201,7 +1199,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
     private void applyWaterBuoyancy() {
         if (this.isInWater() && !getIsFlying()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            double submergedFraction = this.getFluidHeight(FluidTags.WATER);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
@@ -1210,7 +1208,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
 
     private void applyLavaBuoyancy() {
         if (this.isInLava() && !getIsFlying()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            double submergedFraction = this.getFluidHeight(FluidTags.LAVA);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
@@ -1480,7 +1478,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.wyvern.WyvernVariant.valueOf(tag.getString("WyvernVariant")));
+        this.setVariant(WyvernVariant.valueOf(tag.getString("WyvernVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -1492,7 +1490,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

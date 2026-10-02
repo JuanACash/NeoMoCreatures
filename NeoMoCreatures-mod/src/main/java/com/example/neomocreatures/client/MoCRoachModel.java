@@ -135,7 +135,7 @@ public class MoCRoachModel<T extends MoCRoachEntity> extends HierarchicalModel<T
                           float netHeadYaw, float headPitch) {
         this.flying = roach.isFlying() || roach.getDeltaMovement().y < -0.1D;
 
-        this.head.xRot = -2.171231F + headPitch / 57.29578F;
+        this.head.xRot = -2.171231F + headPitch / ModelAnimations.DEGREES_PER_RADIAN;
         float antennaMove = 0.08726646F + limbSwingAmount * 1.5F;
         this.lAntenna.zRot = -antennaMove;
         this.rAntenna.zRot = antennaMove;

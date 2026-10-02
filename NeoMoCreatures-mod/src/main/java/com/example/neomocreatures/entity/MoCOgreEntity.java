@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 
 import javax.annotation.Nullable;
@@ -12,6 +13,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
@@ -32,6 +34,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityOgre}. Shared behaviour of the 3
@@ -221,7 +224,7 @@ public abstract class MoCOgreEntity extends Monster {
         int intRadius = (int) Math.ceil(radius);
         // Only in front of it, roughly at standing height — not a sphere that also digs down or
         // reaches behind it.
-        net.minecraft.world.phys.Vec3 forward = net.minecraft.world.phys.Vec3.directionFromRotation(0F, this.getYRot());
+        Vec3 forward = Vec3.directionFromRotation(0F, this.getYRot());
         // Original centers its blast at posY + 1 (roughly chest height), never at the ogre's own
         // feet — this range starts at feet level and goes up, so it can never dig into the floor.
         for (BlockPos pos : BlockPos.betweenClosed(
@@ -250,7 +253,7 @@ public abstract class MoCOgreEntity extends Monster {
     /** Original: startArmSwingAttack() — single-headed ogres always swing their right arm (they
      *  have no weapon to hold in the other); two-headed ones pick either arm at random. */
     @Override
-    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+    public boolean doHurtTarget(Entity target) {
         this.attackCounter = 1;
         this.armToAnimate = (this.getOgreType() == 2 && this.random.nextInt(2) == 0) ? 1 : 2;
         return super.doHurtTarget(target);
@@ -262,17 +265,17 @@ public abstract class MoCOgreEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return com.example.neomocreatures.init.ModSounds.OGRE_AMBIENT.get();
+        return ModSounds.OGRE_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.OGRE_HURT.get();
+        return ModSounds.OGRE_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.OGRE_DEATH.get();
+        return ModSounds.OGRE_DEATH.get();
     }
 
     // ---------------------------------------------------------------------

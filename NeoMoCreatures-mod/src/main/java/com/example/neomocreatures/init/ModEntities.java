@@ -222,7 +222,7 @@ public class ModEntities {
 
     public static final DeferredHolder<EntityType<?>, EntityType<MoCKittyEntity>> MOC_KITTY =
         ENTITY_TYPES.register("moc_kitty", () -> EntityType.Builder
-                .of(com.example.neomocreatures.entity.MoCKittyEntity::new, MobCategory.CREATURE)
+                .of(MoCKittyEntity::new, MobCategory.CREATURE)
                 .sized(0.5F, 0.6F)
                 .clientTrackingRange(8)
                 .build("moc_kitty"));
@@ -599,9 +599,9 @@ public class ModEntities {
                         .clientTrackingRange(6)
                         .build("moc_kitty_bed"));
 
-    public static final DeferredHolder<EntityType<?>, EntityType<com.example.neomocreatures.entity.MoCLitterBoxEntity>> MOC_LITTER_BOX =
+    public static final DeferredHolder<EntityType<?>, EntityType<MoCLitterBoxEntity>> MOC_LITTER_BOX =
         ENTITY_TYPES.register("moc_litter_box", () -> EntityType.Builder
-                .of(com.example.neomocreatures.entity.MoCLitterBoxEntity::new, MobCategory.MISC)
+                .of(MoCLitterBoxEntity::new, MobCategory.MISC)
                 .sized(1.0F, 0.4F)
                 .clientTrackingRange(6)
                 .build("moc_litter_box"));

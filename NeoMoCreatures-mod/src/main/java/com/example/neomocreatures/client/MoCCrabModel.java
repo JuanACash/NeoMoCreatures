@@ -257,7 +257,7 @@ public class MoCCrabModel extends HierarchicalModel<MoCCrabEntity> {
     private static float idleTwitch(float ageInTicks, float period, float windowStart, float windowEnd) {
         float phase = ageInTicks % period;
         if (phase > windowStart && phase < windowEnd) {
-            return (phase - windowStart) * 2F / 57.29578F;
+            return (phase - windowStart) * 2F / ModelAnimations.DEGREES_PER_RADIAN;
         }
         return 0F;
     }

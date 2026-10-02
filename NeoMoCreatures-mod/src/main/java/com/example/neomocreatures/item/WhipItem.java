@@ -1,5 +1,6 @@
 package com.example.neomocreatures.item;
 
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
@@ -63,10 +64,10 @@ public class WhipItem extends Item {
 
             for (MoCHorseEntity horse : level.getEntitiesOfClass(MoCHorseEntity.class, player.getBoundingBox().inflate(RADIUS))) {
                 if (horse.isTamed() && horse.isVehicle()) {
-                    if (horse.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.NIGHTMARE) {
+                    if (horse.getSpecies() == MoCHorseGenetics.Species.NIGHTMARE) {
                         horse.setNightmareTicks(200);
-                    } else if (horse.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.UNICORN
-                            || horse.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.FAIRY_HORSE) {
+                    } else if (horse.getSpecies() == MoCHorseGenetics.Species.UNICORN
+                            || horse.getSpecies() == MoCHorseGenetics.Species.FAIRY_HORSE) {
                         horse.startUnicornCharge();
                     } else {
                         horse.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, SPEED_DURATION_TICKS, SPEED_AMPLIFIER, false, true));

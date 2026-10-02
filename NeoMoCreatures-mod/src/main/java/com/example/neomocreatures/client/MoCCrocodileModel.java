@@ -24,7 +24,7 @@ public class MoCCrocodileModel extends HierarchicalModel<MoCCrocodileEntity> {
     private static final float THIN = 0.05F;
 
     // ---- Walking cycle ----
-    private static final float LEG_SWING_SPEED = 0.6662F;
+    private static final float LEG_SWING_SPEED = ModelAnimations.WALK_FREQUENCY;
     private static final float LEG_SWING_AMOUNT = 1.4F;
     private static final float LEG_SWAY_PERIOD = 1.919107651F;
     private static final float LEG_SWAY_AMOUNT = 0.261799387799149F * 5F;

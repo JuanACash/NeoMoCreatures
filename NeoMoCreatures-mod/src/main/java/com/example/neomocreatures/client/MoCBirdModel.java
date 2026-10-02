@@ -20,7 +20,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCBirdModel extends HierarchicalModel<MoCBirdEntity> {
 
-    private static final float DEG_TO_RAD = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -84,8 +84,8 @@ public class MoCBirdModel extends HierarchicalModel<MoCBirdEntity> {
     @Override
     public void setupAnim(MoCBirdEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        this.head.xRot = -(headPitch * 0.5F) / DEG_TO_RAD;
-        this.beak.yRot = this.head.yRot = netHeadYaw / DEG_TO_RAD;
+        this.head.xRot = -(headPitch * 0.5F) / RADIAN;
+        this.beak.yRot = this.head.yRot = netHeadYaw / RADIAN;
 
         // While carried, the bird isn't flying on its own, but should still
         // flap if the player wearing it is currently falling — read from the
@@ -97,8 +97,8 @@ public class MoCBirdModel extends HierarchicalModel<MoCBirdEntity> {
             this.leftLeg.xRot = 1.4F;
             this.rightLeg.xRot = 1.4F;
         } else {
-            this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F) * limbSwingAmount;
-            this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * limbSwingAmount;
+            this.leftLeg.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.0F);
+            this.rightLeg.xRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.0F);
         }
 
         if (flying) {

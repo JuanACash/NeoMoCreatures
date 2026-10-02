@@ -85,8 +85,8 @@ public class MoCDuckModel<T extends MoCDuckEntity> extends HierarchicalModel<T> 
         this.chin.yRot = this.head.yRot;
         this.body.xRot = Mth.HALF_PI;
 
-        this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;
+        this.rightLeg.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
+        this.leftLeg.xRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.4F);
 
         if (!duck.onGround()) {
             float wingRot = Mth.cos(ageInTicks * 1.4F + Mth.PI) * 0.6F;

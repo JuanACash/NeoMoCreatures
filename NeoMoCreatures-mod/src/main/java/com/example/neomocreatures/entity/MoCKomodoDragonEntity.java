@@ -1,22 +1,33 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -25,9 +36,15 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -43,11 +60,16 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * 1:1 behavioural port of drzhark.mocreatures.entity.hunter.MoCEntityKomodo,
@@ -61,8 +83,8 @@ import net.minecraft.world.phys.Vec3;
  * itself is intentionally NOT implemented yet — {@link #isFood} always
  * returns false and {@link #getBreedOffspring} always returns null.
  */
-public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
-        net.minecraft.world.entity.PlayerRideableJumping, StorablePet {
+public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
+        PlayerRideableJumping, StorablePet {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
     private static final int MOUTH_TICKS_MAX = 20;
@@ -109,7 +131,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     /** Which item to give back when the saddle is sheared off — vanilla saddle vs the mod's crafted one. */
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
 
     public MoCKomodoDragonEntity(EntityType<? extends MoCKomodoDragonEntity> type, Level level) {
         super(type, level);
@@ -143,7 +165,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             } else {
                 // KomodoSwimMoveControl already computes the desired deltaMovement
                 // each tick — just apply it and let drag settle it.
-                this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+                this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
             }
         } else {
@@ -182,7 +204,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
                 Mth.lerp(0.2D, current.x, desired.x),
                 newY,
                 Mth.lerp(0.2D, current.z, desired.z)));
-        this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+        this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
     /** Moves smoothly toward the nav target on all three axes instead of jumping to correct height. */
@@ -239,7 +261,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
      *  in ankle-deep water at the shore, which is where isInWater() gets noisy
      *  and was causing the swim/land movement models to fight each other. */
     public boolean isSwimmingDeep() {
-        return this.isEyeInFluid(net.minecraft.tags.FluidTags.WATER);
+        return this.isEyeInFluid(FluidTags.WATER);
     }
 
     @Override
@@ -251,10 +273,10 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     }
 
     @Override
-    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+    public boolean canDrownInFluidType(FluidType type) {
         // NeoForge's replacement for the now-final canBreatheUnderwater() — same
         // intent as the original mod's MoCEntityKomodo.canBreatheUnderwater().
-        if (type == net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value()) {
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
             return false;
         }
         return super.canDrownInFluidType(type);
@@ -375,7 +397,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     private float lastAppliedScale = -1F;
 
     private void tickGrowth() {
-        net.minecraft.world.entity.ai.attributes.AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
+        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
         if (scaleAttr == null) {
             return;
         }
@@ -399,12 +421,12 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if (spawnType == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnType == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION
-                || spawnType == net.minecraft.world.entity.MobSpawnType.SPAWN_EGG) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION
+                || spawnType == MobSpawnType.SPAWN_EGG) {
             // Rolled once per individual and kept for life — egg-hatched dragons
             // (onHatchedFromEgg) deliberately skip this and keep the flat ADULT_SCALE.
             this.individualAdultScale = ADULT_SCALE
@@ -414,7 +436,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putFloat("IndividualAdultScale", this.individualAdultScale);
         tag.putBoolean("KomodoSaddled", isSaddled());
@@ -424,7 +446,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("IndividualAdultScale")) {
             this.individualAdultScale = tag.getFloat("IndividualAdultScale");
@@ -433,7 +455,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             setSaddled(tag.getBoolean("KomodoSaddled"));
         }
         if (tag.contains("KomodoSaddleItem", 8)) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("KomodoSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("KomodoSaddleItem"));
         }
     }
 
@@ -461,8 +483,8 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     private boolean isHealingFood(ItemStack stack) {
         // Wiki: "Tamed Komodo dragons can be healed with raw turkey or raw rat."
-        return stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get());
+        return stack.is(ModItems.TURKEY_RAW.get())
+                || stack.is(ModItems.RAT_RAW.get());
     }
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -472,22 +494,22 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 this.setOrderedToSit(!this.isOrderedToSit());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                 if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -496,7 +518,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -508,12 +530,12 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         // Wiki: "After a Komodo dragon reaches its full size, it can be equipped
         // with a saddle" — gated on adulthood (!isBaby()), same as the tame check.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                    || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+                && (stack.is(Items.SADDLE)
+                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
-                this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -521,16 +543,14 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
             if (!this.level().isClientSide) {
                 setSaddled(false);
                 this.ejectPassengers();
-                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                        : net.minecraft.world.item.Items.SADDLE;
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                 this.saddleItemId = null;
                 this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
@@ -626,7 +646,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);
-            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+            NamingHelper.promptRename(this, tamer.getUUID());
         }
     }
 
@@ -636,11 +656,11 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.REPTILE_HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 2, lootingLevel, 4));
+        MoCLootUtil.dropItems(this, ModItems.REPTILE_HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 2, lootingLevel, 4));
 
         if (!this.isBaby() && this.individualAdultScale >= LARGE_ADULT_EGG_SCALE_THRESHOLD) {
             if (MoCLootUtil.rollChance(this.random, 0.25F, 0.10F, lootingLevel)) {
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.KOMODO_DRAGON_EGG.get()));
+                this.spawnAtLocation(new ItemStack(ModItems.KOMODO_DRAGON_EGG.get()));
             }
         }
 
@@ -651,17 +671,15 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         if (!isSaddled()) {
             return;
         }
-        net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                : net.minecraft.world.item.Items.SADDLE;
+        Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
         this.spawnAtLocation(new ItemStack(saddleItem));
         this.saddleItemId = null;
         setSaddled(false);
     }
 
     /** Builds the NBT payload stored inside a filled Pet Amulet for this dragon. */
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("KomodoDragon", true);
         tag.putFloat("IndividualAdultScale", this.individualAdultScale);
         tag.putFloat("Health", this.getHealth());
@@ -712,7 +730,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

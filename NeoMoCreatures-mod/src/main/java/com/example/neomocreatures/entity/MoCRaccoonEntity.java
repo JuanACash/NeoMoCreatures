@@ -7,20 +7,27 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -40,6 +47,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 /**
  * 1:1 behavioural port of drzhark.mocreatures.entity.hunter.MoCEntityRaccoon,
@@ -187,11 +195,11 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if (spawnType == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnType == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION) {
             // Wiki: "Cubs may also spawn with adults." No per-species variant to
             // share across the group (unlike Fox/Bear), so no custom
             // SpawnGroupData is needed — just an independent roll per individual.
@@ -208,42 +216,42 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
     }
 
     @Override
-    public net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (!this.isTame() && isTamingItem(stack)) {
             if (!this.level().isClientSide) {
                 this.tame(player);
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                NamingHelper.promptRename(this, player.getUUID());
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
 
         if (this.isTame() && this.isOwnedBy(player) && isTamingItem(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.heal(this.getMaxHealth());
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         return super.mobInteract(player, hand);
@@ -262,12 +270,12 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
         // Wiki: "0-2 fur... +1 per level of looting... 1 to 5 fur with Looting III."
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.FUR.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
     /** Builds the NBT payload stored inside a filled Pet Amulet for this raccoon. */
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Raccoon", true);
         tag.putFloat("Health", this.getHealth());
         tag.putBoolean("Adult", !this.isBaby());
@@ -280,7 +288,7 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
     }
 
     /** Captures this tamed raccoon into a Pet Amulet and removes it from the world. */
-    private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
+    private void capturePetInstant(Player player, InteractionHand hand) {
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
@@ -307,7 +315,7 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

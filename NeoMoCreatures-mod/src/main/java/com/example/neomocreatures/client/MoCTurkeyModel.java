@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCTurkeyEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -108,9 +107,9 @@ public class MoCTurkeyModel extends HierarchicalModel<MoCTurkeyEntity> {
     @Override
     public void setupAnim(MoCTurkeyEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        float leftLegRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        float leftLegRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
         float rightLegRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;
-        float wingFlap = (Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount) / 4F;
+        float wingFlap = (ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F)) / 4F;
 
         this.head.xRot = 0.4833219F + headPitch * ((float) Math.PI / 180F);
         this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
@@ -140,7 +139,7 @@ public class MoCTurkeyModel extends HierarchicalModel<MoCTurkeyEntity> {
             this.chest.xScale = 1F;
             this.chest.yScale = 1F;
         } else {
-            this.tail.xRot = wingFlap - (110F / 57.29578F);
+            this.tail.xRot = wingFlap - (110F / ModelAnimations.DEGREES_PER_RADIAN);
             this.tail.y = 17F;
             this.tail.z = 7F;
             this.chest.y = 16F * 0.8F;
@@ -152,10 +151,5 @@ public class MoCTurkeyModel extends HierarchicalModel<MoCTurkeyEntity> {
             this.chest.xScale = 0.8F;
             this.chest.yScale = 0.8F;
         }
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

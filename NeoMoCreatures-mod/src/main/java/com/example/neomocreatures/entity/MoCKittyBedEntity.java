@@ -1,17 +1,24 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -107,7 +114,7 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         return false;
     }
 
@@ -126,12 +133,12 @@ public class MoCKittyBedEntity extends Mob {
         ItemStack stack = player.getItemInHand(hand);
 
         if (!stack.isEmpty() && !hasFood() && !hasMilk()) {
-            if (stack.is(com.example.neomocreatures.init.ModItems.PET_FOOD.get())) {
+            if (stack.is(ModItems.PET_FOOD.get())) {
                 if (!this.level().isClientSide) {
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
-                    this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_BED_POURING_FOOD.get(), 1.0F, 1.0F);
+                    this.playSound(ModSounds.KITTY_BED_POURING_FOOD.get(), 1.0F, 1.0F);
                     setHasMilk(false);
                     setHasFood(true);
                 }
@@ -140,7 +147,7 @@ public class MoCKittyBedEntity extends Mob {
             if (stack.is(Items.MILK_BUCKET)) {
                 if (!this.level().isClientSide) {
                     player.setItemInHand(hand, new ItemStack(Items.BUCKET));
-                    this.playSound(com.example.neomocreatures.init.ModSounds.KITTY_BED_POURING_MILK.get(), 1.0F, 1.0F);
+                    this.playSound(ModSounds.KITTY_BED_POURING_MILK.get(), 1.0F, 1.0F);
                     setHasMilk(true);
                     setHasFood(false);
                 }
@@ -153,9 +160,9 @@ public class MoCKittyBedEntity extends Mob {
                 if (!this.level().isClientSide) {
                     player.getInventory().add(new ItemStack(itemForSheetColor(getSheetColor())));
                     if (hasFood()) {
-                        player.getInventory().add(new ItemStack(com.example.neomocreatures.init.ModItems.PET_FOOD.get()));
+                        player.getInventory().add(new ItemStack(ModItems.PET_FOOD.get()));
                     }
-                    this.playSound(net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 1.4F + 2.0F) * 1.0F);
+                    this.playSound(SoundEvents.ITEM_PICKUP, 0.2F, ((this.random.nextFloat() - this.random.nextFloat()) * 1.4F + 2.0F) * 1.0F);
                     this.discard();
                 }
                 return InteractionResult.SUCCESS;
@@ -163,7 +170,7 @@ public class MoCKittyBedEntity extends Mob {
             if (!this.level().isClientSide) {
                 this.setYRot(Math.round(this.getYRot() / 90.0F) * 90.0F + 90.0F);
                 this.setYHeadRot(this.getYRot());
-                this.playSound(net.minecraft.sounds.SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.playSound(SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
@@ -171,31 +178,31 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     @Override
-    protected void positionRider(net.minecraft.world.entity.Entity passenger, Entity.MoveFunction moveFunction) {
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (!this.hasPassenger(passenger)) {
             return;
         }
         moveFunction.accept(passenger, this.getX(), this.getY() + 0.2D, this.getZ());
     }
 
-    private static net.minecraft.world.item.Item itemForSheetColor(int colorId) {
+    private static Item itemForSheetColor(int colorId) {
         return switch (colorId) {
-            case 1 -> com.example.neomocreatures.init.ModItems.KITTY_BED_ORANGE.get();
-            case 2 -> com.example.neomocreatures.init.ModItems.KITTY_BED_MAGENTA.get();
-            case 3 -> com.example.neomocreatures.init.ModItems.KITTY_BED_LIGHT_BLUE.get();
-            case 4 -> com.example.neomocreatures.init.ModItems.KITTY_BED_YELLOW.get();
-            case 5 -> com.example.neomocreatures.init.ModItems.KITTY_BED_LIME.get();
-            case 6 -> com.example.neomocreatures.init.ModItems.KITTY_BED_PINK.get();
-            case 7 -> com.example.neomocreatures.init.ModItems.KITTY_BED_GRAY.get();
-            case 8 -> com.example.neomocreatures.init.ModItems.KITTY_BED_SILVER.get();
-            case 9 -> com.example.neomocreatures.init.ModItems.KITTY_BED_CYAN.get();
-            case 10 -> com.example.neomocreatures.init.ModItems.KITTY_BED_PURPLE.get();
-            case 11 -> com.example.neomocreatures.init.ModItems.KITTY_BED_BLUE.get();
-            case 12 -> com.example.neomocreatures.init.ModItems.KITTY_BED_BROWN.get();
-            case 13 -> com.example.neomocreatures.init.ModItems.KITTY_BED_GREEN.get();
-            case 14 -> com.example.neomocreatures.init.ModItems.KITTY_BED_RED.get();
-            case 15 -> com.example.neomocreatures.init.ModItems.KITTY_BED_BLACK.get();
-            default -> com.example.neomocreatures.init.ModItems.KITTY_BED_WHITE.get();
+            case 1 -> ModItems.KITTY_BED_ORANGE.get();
+            case 2 -> ModItems.KITTY_BED_MAGENTA.get();
+            case 3 -> ModItems.KITTY_BED_LIGHT_BLUE.get();
+            case 4 -> ModItems.KITTY_BED_YELLOW.get();
+            case 5 -> ModItems.KITTY_BED_LIME.get();
+            case 6 -> ModItems.KITTY_BED_PINK.get();
+            case 7 -> ModItems.KITTY_BED_GRAY.get();
+            case 8 -> ModItems.KITTY_BED_SILVER.get();
+            case 9 -> ModItems.KITTY_BED_CYAN.get();
+            case 10 -> ModItems.KITTY_BED_PURPLE.get();
+            case 11 -> ModItems.KITTY_BED_BLUE.get();
+            case 12 -> ModItems.KITTY_BED_BROWN.get();
+            case 13 -> ModItems.KITTY_BED_GREEN.get();
+            case 14 -> ModItems.KITTY_BED_RED.get();
+            case 15 -> ModItems.KITTY_BED_BLACK.get();
+            default -> ModItems.KITTY_BED_WHITE.get();
         };
     }
 
@@ -215,7 +222,7 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("HasMilk", hasMilk());
         tag.putBoolean("HasFood", hasFood());
@@ -224,7 +231,7 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setHasMilk(tag.getBoolean("HasMilk"));
         setHasFood(tag.getBoolean("HasFood"));

@@ -193,6 +193,8 @@ idea {
 
 // Only removes unused imports, does not reformat any code
 spotless {
+    // Never fail the build over formatting (e.g. LF vs CRLF line endings); run spotlessApply when needed
+    enforceCheck false
     java {
         target 'src/main/java/**/*.java'
         removeUnusedImports()

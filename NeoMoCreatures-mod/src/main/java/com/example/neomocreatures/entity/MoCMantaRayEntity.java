@@ -8,6 +8,7 @@ import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -477,7 +478,7 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet {
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 

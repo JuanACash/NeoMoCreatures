@@ -18,7 +18,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCOgreModel<T extends MoCOgreEntity> extends HierarchicalModel<T> {
 
-    private static final float RADIAN = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     // ---- Type 1: single head ----
     private final ModelPart head;
@@ -502,8 +502,8 @@ public class MoCOgreModel<T extends MoCOgreEntity> extends HierarchicalModel<T> 
         float headYawRad = netHeadYaw / RADIAN;
         float headPitchRad = headPitch / RADIAN;
 
-        float rightLegSwing = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;
-        float leftLegSwing = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float rightLegSwing = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
+        float leftLegSwing = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
         float clothSway = Mth.cos(limbSwing * 0.9F) * 0.6F * limbSwingAmount;
 
         float rightLegSwingNext = Mth.cos((limbSwing + 0.1F) * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;

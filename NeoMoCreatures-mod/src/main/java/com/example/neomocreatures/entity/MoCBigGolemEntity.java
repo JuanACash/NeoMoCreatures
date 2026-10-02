@@ -9,6 +9,7 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -420,13 +421,13 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
 
     /** Original: getRandomMissingCube() — any missing chest plate first, then any other missing slot. */
     private int pickEmptySlot() {
-        java.util.List<Integer> chest = new java.util.ArrayList<>();
+        List<Integer> chest = new ArrayList<>();
         for (int slot = GolemBody.CHEST_FIRST; slot <= GolemBody.CHEST_LAST; slot++) {
             if (this.body.isEmpty(slot)) {
                 chest.add(slot);
             }
         }
-        java.util.List<Integer> candidates = chest.isEmpty() ? this.body.emptySlots() : chest;
+        List<Integer> candidates = chest.isEmpty() ? this.body.emptySlots() : chest;
         return candidates.isEmpty() ? -1 : candidates.get(this.random.nextInt(candidates.size()));
     }
 
@@ -601,7 +602,7 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
     }
 
     private List<Integer> armCubeSlots() {
-        List<Integer> arms = new java.util.ArrayList<>();
+        List<Integer> arms = new ArrayList<>();
         for (int slot = GolemBody.LEFT_SHOULDER; slot <= GolemBody.RIGHT_HAND; slot++) {
             if (!this.body.isEmpty(slot)) {
                 arms.add(slot);

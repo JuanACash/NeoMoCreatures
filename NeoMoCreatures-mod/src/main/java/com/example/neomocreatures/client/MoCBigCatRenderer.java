@@ -3,7 +3,6 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -11,6 +10,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MoCBigCatRenderer extends MobRenderer<MoCBigCatEntity, MoCBigCatModel> {
 
@@ -42,7 +43,7 @@ public class MoCBigCatRenderer extends MobRenderer<MoCBigCatEntity, MoCBigCatMod
         }
         int alphaInt = (int) (0.35F * 255F);
         MultiBufferSource alphaBuffer = renderType ->
-                new com.example.neomocreatures.client.AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
+                new AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
         super.render(entity, entityYaw, partialTicks, poseStack, alphaBuffer, packedLight);
     }
 

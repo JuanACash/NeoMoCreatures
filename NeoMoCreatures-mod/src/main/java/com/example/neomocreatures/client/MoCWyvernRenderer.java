@@ -5,11 +5,13 @@ import com.example.neomocreatures.entity.MoCWyvernEntity;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.network.chat.Component;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernModel> {
 
@@ -49,7 +51,7 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
     }
 
     @Override
-    protected net.minecraft.client.renderer.RenderType getRenderType(MoCWyvernEntity entity, boolean bodyVisible, boolean translucent, boolean showOutline) {
+    protected RenderType getRenderType(MoCWyvernEntity entity, boolean bodyVisible, boolean translucent, boolean showOutline) {
         return super.getRenderType(entity, bodyVisible, translucent || entity.isGhost(), showOutline);
     }
 
@@ -61,7 +63,7 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
         }
         int alphaInt = (int) (0.35F * 255F);
         MultiBufferSource alphaBuffer = renderType ->
-                new com.example.neomocreatures.client.AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
+                new AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
         super.render(entity, entityYaw, partialTicks, poseStack, alphaBuffer, packedLight);
     }
 

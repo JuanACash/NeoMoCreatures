@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity.kitty;
 
+import net.minecraft.util.RandomSource;
+
 /** The 11 coat colors a wild/spawn-egg kitty can roll, plus the default "cream". */
 public enum KittyVariant {
 
@@ -34,7 +36,7 @@ public enum KittyVariant {
 
     /** Matches the original's selectType(): CREAM is the "default" value, never rolled directly —
      *  a fresh spawn rolls uniformly among the other 10 named colors instead. */
-    public static KittyVariant rollNatural(net.minecraft.util.RandomSource random) {
+    public static KittyVariant rollNatural(RandomSource random) {
         KittyVariant[] rollable = {GRAY, BLACK, CALICO, TUXEDO, WHITE_BLACK, WHITE,
                 ORANGE_TABBY, CREAM_DARK, GRAY_TABBY, YELLOW_TABBY, CALICO_ALT};
         return rollable[random.nextInt(rollable.length)];

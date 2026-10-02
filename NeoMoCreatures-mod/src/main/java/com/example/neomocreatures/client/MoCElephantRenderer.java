@@ -2,14 +2,16 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCElephantEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.example.neomocreatures.entity.elephant.ElephantVariant;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MoCElephantRenderer extends MobRenderer<MoCElephantEntity, MoCElephantModel> {
 
@@ -27,9 +29,9 @@ public class MoCElephantRenderer extends MobRenderer<MoCElephantEntity, MoCEleph
         // The garment alone re-skins an Asian to the decorated texture. The howdah is
         // a separate physical throne sitting on top (see MoCElephantModel) — it doesn't
         // affect which texture is used.
-        String textureName = entity.getVariant() == com.example.neomocreatures.entity.elephant.ElephantVariant.ASIAN
+        String textureName = entity.getVariant() == ElephantVariant.ASIAN
                 && entity.hasGarment()
-                ? com.example.neomocreatures.entity.elephant.ElephantVariant.ASIAN_DECORATED.getTextureName()
+                ? ElephantVariant.ASIAN_DECORATED.getTextureName()
                 : entity.getVariant().getTextureName();
         return TEXTURE_CACHE.get(textureName);
     }

@@ -8,6 +8,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+
 /** Port of the Deer's renderer registration (shadow 0.7). */
 public class MoCDeerRenderer extends MobRenderer<MoCDeerEntity, MoCDeerModel<MoCDeerEntity>> {
 
@@ -30,7 +33,7 @@ public class MoCDeerRenderer extends MobRenderer<MoCDeerEntity, MoCDeerModel<MoC
     }
 
     @Override
-    protected void scale(MoCDeerEntity entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+    protected void scale(MoCDeerEntity entity, PoseStack poseStack, float partialTick) {
         float scale = entity.getAgeScale();
         poseStack.scale(scale, scale, scale);
 
@@ -39,7 +42,7 @@ public class MoCDeerRenderer extends MobRenderer<MoCDeerEntity, MoCDeerModel<MoC
         // cleanly to 0 on the ground.
         float tilt = entity.getLeapTiltDegrees();
         if (tilt != 0.0F) {
-            poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(tilt));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(tilt));
         }
     }
 }

@@ -31,7 +31,7 @@ public class MoCEntModel<T extends MoCEntEntity> extends HierarchicalModel<T> {
 
     private static final float ARM_REST_ROLL = 10.0F * Mth.DEG_TO_RAD;
     private static final float FOOT_REST_PITCH = 15.0F * Mth.DEG_TO_RAD;
-    private static final float WALK_FREQUENCY = 0.6662F;
+    private static final float WALK_FREQUENCY = ModelAnimations.WALK_FREQUENCY;
     private static final float WRIST_SWAY_SPEED = 0.09F;
     private static final float WRIST_SWAY_AMOUNT = 0.05F;
 

@@ -1,11 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+
 import java.util.EnumSet;
 
 import javax.annotation.Nullable;
-
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -17,6 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -220,7 +222,7 @@ public class MoCBoarEntity extends Animal {
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.AgeableMob getBreedOffspring(ServerLevel level, net.minecraft.world.entity.AgeableMob otherParent) {
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null;
     }
 
@@ -260,7 +262,7 @@ public class MoCBoarEntity extends Animal {
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
         MoCLootUtil.dropItems(this, MoCLootUtil.rawOrCooked(this, Items.PORKCHOP, Items.COOKED_PORKCHOP),
                 MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+        MoCLootUtil.dropItems(this, ModItems.HIDE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
 

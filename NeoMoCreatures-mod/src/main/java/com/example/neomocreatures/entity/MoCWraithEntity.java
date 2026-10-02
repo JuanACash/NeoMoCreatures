@@ -1,16 +1,23 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
@@ -27,6 +34,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityWraith}. Flies like the insects (no
@@ -103,8 +111,8 @@ public class MoCWraithEntity extends Monster {
             // damage instead of igniteForSeconds(): fire-type so a fire-immune Flame Wraith is
             // correctly exempt from it, but no actual fire texture/particles like real burning.
             this.hurt(this.damageSources().onFire(), SUNBURN_DAMAGE);
-            if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.SMOKE,
                         this.getX(), this.getY() + this.getBbHeight() * 0.5D, this.getZ(),
                         4, 0.2D, 0.3D, 0.2D, 0.02D);
             }
@@ -136,8 +144,8 @@ public class MoCWraithEntity extends Monster {
     }
 
     @Override
-    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
-        return effect.getEffect() != net.minecraft.world.effect.MobEffects.POISON.value() && super.canBeAffected(effect);
+    public boolean canBeAffected(MobEffectInstance effect) {
+        return effect.getEffect() != MobEffects.POISON.value() && super.canBeAffected(effect);
     }
 
     /** Original: never takes fall damage — matches its flying ability. */
@@ -161,17 +169,17 @@ public class MoCWraithEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_AMBIENT.get();
+        return ModSounds.WRAITH_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_HURT.get();
+        return ModSounds.WRAITH_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_DEATH.get();
+        return ModSounds.WRAITH_DEATH.get();
     }
 
     // ---------------------------------------------------------------------
@@ -195,10 +203,10 @@ public class MoCWraithEntity extends Monster {
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-                                        net.minecraft.world.DifficultyInstance difficulty,
-                                        net.minecraft.world.entity.MobSpawnType spawnType,
-                                        @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
+                                        @Nullable SpawnGroupData spawnGroupData) {
         this.rollScratchEasterEgg();
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }

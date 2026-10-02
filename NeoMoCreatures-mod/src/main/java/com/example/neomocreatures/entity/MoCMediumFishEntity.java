@@ -11,6 +11,8 @@ import com.example.neomocreatures.util.PetStorageUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -304,7 +306,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 
@@ -404,7 +406,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(NET_KEY, true);
         // Which of the 3 species this is, so a single "release" path can spawn the right one back.
-        tag.putString("EntityId", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(this.getType()).toString());
+        tag.putString("EntityId", BuiltInRegistries.ENTITY_TYPE.getKey(this.getType()).toString());
         tag.putFloat("Health", this.getHealth());
         tag.putInt("Age", this.getAge());
         tag.putFloat("GrownScale", this.entityData.get(DATA_GROWN_SCALE));

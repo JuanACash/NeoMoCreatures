@@ -1,10 +1,6 @@
 package com.example.neomocreatures.client;
 
-import org.joml.Matrix4f;
-
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -12,6 +8,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import org.joml.Matrix4f;
 
 /**
  * Draws a small green/red health bar above a tamed creature's name tag,
@@ -67,8 +68,8 @@ public final class TameableOverlayRenderer {
         float r = ((argb >> 16) & 0xFF) / 255F;
         float g = ((argb >> 8) & 0xFF) / 255F;
         float b = (argb & 0xFF) / 255F;
-        int lightU = net.minecraft.client.renderer.LightTexture.block(packedLight);
-        int lightV = net.minecraft.client.renderer.LightTexture.sky(packedLight);
+        int lightU = LightTexture.block(packedLight);
+        int lightV = LightTexture.sky(packedLight);
         vc.addVertex(matrix, x0, y1, z).setColor(r, g, b, a).setUv(0F, 1F).setUv2(lightU, lightV);
         vc.addVertex(matrix, x1, y1, z).setColor(r, g, b, a).setUv(1F, 1F).setUv2(lightU, lightV);
         vc.addVertex(matrix, x1, y0, z).setColor(r, g, b, a).setUv(1F, 0F).setUv2(lightU, lightV);

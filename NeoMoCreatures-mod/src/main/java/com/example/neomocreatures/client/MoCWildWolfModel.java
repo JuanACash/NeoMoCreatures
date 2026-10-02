@@ -16,7 +16,7 @@ import net.minecraft.util.Mth;
  *  always following the walk cycle. */
 public class MoCWildWolfModel<T extends MoCWildWolfEntity> extends HierarchicalModel<T> {
 
-    private static final float RADIAN = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart head;
     private final ModelPart mouthB;
@@ -222,8 +222,8 @@ public class MoCWildWolfModel<T extends MoCWildWolfEntity> extends HierarchicalM
         this.head.xRot = headPitch / RADIAN;
         this.head.yRot = netHeadYaw / RADIAN;
 
-        float lLegX = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
-        float rLegX = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;
+        float lLegX = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
+        float rLegX = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
 
         for (ModelPart part : new ModelPart[] { this.mouth, this.mouthB, this.nose2, this.uTeeth, this.rEar, this.lEar }) {
             part.xRot = this.head.xRot;

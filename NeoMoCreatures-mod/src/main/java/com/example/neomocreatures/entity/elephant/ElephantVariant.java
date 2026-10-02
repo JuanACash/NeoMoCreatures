@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity.elephant;
 
+import net.minecraft.util.RandomSource;
+
 /**
  * The 5 elephant/mammoth species from the original mod. ASIAN_DECORATED is
  * never picked at spawn — it's only reached by equipping a garment on a
@@ -82,7 +84,7 @@ public enum ElephantVariant {
         return AFRICAN;
     }
 
-    public static ElephantVariant randomSpawnable(net.minecraft.util.RandomSource random) {
+    public static ElephantVariant randomSpawnable(RandomSource random) {
         return SPAWNABLE[random.nextInt(SPAWNABLE.length)];
     }
 }

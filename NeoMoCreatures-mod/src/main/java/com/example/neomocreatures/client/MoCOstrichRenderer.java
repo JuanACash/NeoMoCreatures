@@ -2,11 +2,16 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrichModel> {
 
@@ -39,7 +44,7 @@ public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrich
         return TEXTURE_CACHE.get(textureName);
     }
 
-    private static String essenceTextureName(int essence, com.example.neomocreatures.entity.ostrich.OstrichVariant variant) {
+    private static String essenceTextureName(int essence, OstrichVariant variant) {
         return switch (essence) {
             case MoCOstrichEntity.ESSENCE_WYVERN -> "ostrich_dark";
             case MoCOstrichEntity.ESSENCE_FIRE -> "ostrich_fire";
@@ -50,9 +55,9 @@ public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrich
     }
 
     @Override
-    protected void renderNameTag(MoCOstrichEntity entity, net.minecraft.network.chat.Component displayName,
-                                com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight, float partialTick) {
+    protected void renderNameTag(MoCOstrichEntity entity, Component displayName,
+                                PoseStack poseStack,
+                                MultiBufferSource buffer, int packedLight, float partialTick) {
         if (this.entityRenderDispatcher.distanceToSqr(entity) > TameableOverlayRenderer.NAME_AND_HEALTH_SHOW_DISTANCE_SQR) {
             return;
         }

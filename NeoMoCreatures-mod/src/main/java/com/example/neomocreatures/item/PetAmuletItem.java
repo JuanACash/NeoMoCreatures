@@ -1,9 +1,11 @@
 package com.example.neomocreatures.item;
 
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -43,7 +45,7 @@ public class PetAmuletItem extends Item {
         }
 
         CompoundTag tag = new CompoundTag();
-        tag.putString("EntityType", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(target.getType()).toString());
+        tag.putString("EntityType", BuiltInRegistries.ENTITY_TYPE.getKey(target.getType()).toString());
         tag.putFloat("Health", target.getHealth());
         tag.putBoolean("Adult", !target.isBaby());
         if (target.hasCustomName()) {
@@ -52,7 +54,7 @@ public class PetAmuletItem extends Item {
         tag.putUUID("OwnerUUID", player.getUUID());
         if (target instanceof MoCHorseEntity horse) {
             tag.putString("Species", horse.getSpecies().name());
-            if (horse.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.FAIRY_HORSE) {
+            if (horse.getSpecies() == MoCHorseGenetics.Species.FAIRY_HORSE) {
                 tag.putString("FairyColor", horse.getFairyColor().name());
             }
         }

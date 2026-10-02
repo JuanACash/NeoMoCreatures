@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.particles.ParticleTypes;
@@ -79,6 +80,6 @@ public class MoCFlameWraithEntity extends MoCWraithEntity {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_AMBIENT.get();
+        return ModSounds.WRAITH_AMBIENT.get();
     }
 }

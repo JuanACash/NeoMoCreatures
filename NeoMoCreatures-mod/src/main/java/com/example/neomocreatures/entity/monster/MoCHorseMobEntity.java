@@ -1,22 +1,29 @@
 package com.example.neomocreatures.entity.monster;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -27,11 +34,17 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Aggressive, untameable horse variant — ported from MoCEntityHorseMob.
@@ -94,7 +107,7 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     @Override
-    protected void positionRider(net.minecraft.world.entity.Entity passenger, MoveFunction moveFunction) {
+    protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (!this.hasPassenger(passenger)) {
             return;
         }
@@ -109,7 +122,7 @@ public class MoCHorseMobEntity extends Monster {
         // turn its head/body independently of which way the horse is facing.
         passenger.setYRot(this.getYRot());
         passenger.setXRot(this.getXRot());
-        if (passenger instanceof net.minecraft.world.entity.LivingEntity livingPassenger) {
+        if (passenger instanceof LivingEntity livingPassenger) {
             livingPassenger.yBodyRot = this.getYRot();
             livingPassenger.yHeadRot = this.getYRot();
         }
@@ -122,7 +135,7 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     @Override
-    protected SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource damageSource) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         openMouth();
         return ModSounds.HORSE_MOB_HURT.get();
     }
@@ -159,9 +172,9 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     @Override
-    public void die(net.minecraft.world.damagesource.DamageSource damageSource) {
+    public void die(DamageSource damageSource) {
         if (!this.level().isClientSide && getVariant() == Variant.UNDEAD) {
-            Slime slime = net.minecraft.world.entity.EntityType.SLIME.create(this.level());
+            Slime slime = EntityType.SLIME.create(this.level());
             if (slime != null) {
                 slime.setSize(1, true);
                 slime.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
@@ -180,14 +193,14 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("MoCVariant", getVariant().name());
         tag.putInt("MoCDecayStage", getDecayStage());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("MoCVariant")) {
             setVariant(Variant.valueOf(tag.getString("MoCVariant")));
@@ -206,8 +219,8 @@ public class MoCHorseMobEntity extends Monster {
 
     /** Zombified piglins are neutral — a nightmare they're riding shouldn't
      * chase the player proactively, only react if the player gets close. */
-    private boolean canTargetPlayer(net.minecraft.world.entity.LivingEntity target) {
-        if (this.getFirstPassenger() instanceof net.minecraft.world.entity.monster.ZombifiedPiglin) {
+    private boolean canTargetPlayer(LivingEntity target) {
+        if (this.getFirstPassenger() instanceof ZombifiedPiglin) {
             return this.distanceTo(target) <= 4.0F;
         }
         return true;
@@ -240,16 +253,16 @@ public class MoCHorseMobEntity extends Monster {
 
     @Override
     public boolean shouldDropExperience() {
-        return super.shouldDropExperience() || this.getLastHurtByMob() instanceof net.minecraft.world.entity.animal.Wolf;
+        return super.shouldDropExperience() || this.getLastHurtByMob() instanceof Wolf;
     }
 
     @Override
-    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, net.minecraft.world.damagesource.DamageSource damageSource, boolean recentlyHitByPlayer) {
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHitByPlayer) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHitByPlayer);
 
-        net.minecraft.world.entity.LivingEntity killer = this.getLastHurtByMob();
+        LivingEntity killer = this.getLastHurtByMob();
         // Any wolf counts here (tamed or not), unlike the rest of the mod.
-        if (!recentlyHitByPlayer && !(killer instanceof net.minecraft.world.entity.animal.Wolf)) {
+        if (!recentlyHitByPlayer && !(killer instanceof Wolf)) {
             return;
         }
 
@@ -264,19 +277,19 @@ public class MoCHorseMobEntity extends Monster {
 
         switch (getVariant()) {
             case BATHORSE -> {
-                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.LEATHER, commonDropCount);
-                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get(), heartCount);
+                MoCLootUtil.dropItems(this, Items.LEATHER, commonDropCount);
+                MoCLootUtil.dropItems(this, ModItems.HEART_OF_DARKNESS.get(), heartCount);
             }
             case NIGHTMARE -> {
-                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.LEATHER, commonDropCount);
-                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get(), heartCount);
+                MoCLootUtil.dropItems(this, Items.LEATHER, commonDropCount);
+                MoCLootUtil.dropItems(this, ModItems.HEART_OF_FIRE.get(), heartCount);
             }
             case SKELETON -> {
-                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.BONE, commonDropCount);
+                MoCLootUtil.dropItems(this, Items.BONE, commonDropCount);
             }
             case UNDEAD -> {
-                MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.ROTTEN_FLESH, commonDropCount);
-                MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_UNDEAD.get(), heartCount);
+                MoCLootUtil.dropItems(this, Items.ROTTEN_FLESH, commonDropCount);
+                MoCLootUtil.dropItems(this, ModItems.HEART_OF_UNDEAD.get(), heartCount);
             }
         }
     }
@@ -298,7 +311,7 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     private void updateFlight() {
-        net.minecraft.world.entity.LivingEntity target = this.getTarget();
+        LivingEntity target = this.getTarget();
         boolean hunting = target != null && target.getY() > this.getY() + 1.5;
 
         this.setNoGravity(hunting);
@@ -311,13 +324,13 @@ public class MoCHorseMobEntity extends Monster {
             this.yBodyRot = yaw;
             this.yHeadRot = yaw;
             
-            net.minecraft.world.phys.Vec3 toTarget = new net.minecraft.world.phys.Vec3(
+            Vec3 toTarget = new Vec3(
                     target.getX() - this.getX(),
                     (target.getY() + target.getBbHeight() * 0.5) - this.getY(),
                     target.getZ() - this.getZ());
             double dist = toTarget.length();
             if (dist > 0.5) {
-                net.minecraft.world.phys.Vec3 dir = toTarget.normalize().scale(0.06);
+                Vec3 dir = toTarget.normalize().scale(0.06);
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.9).add(dir));
             }
         } else if (!this.onGround()) {
@@ -340,7 +353,7 @@ public class MoCHorseMobEntity extends Monster {
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnReason,
                                         @Nullable SpawnGroupData spawnGroupData) {
-        if (level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER) {
+        if (level.getLevel().dimension() == Level.NETHER) {
             setVariant(Variant.NIGHTMARE);
             if (this.random.nextFloat() < 0.3F) {
                 spawnRider(level, pickNightmareRiderType(level));
@@ -367,9 +380,9 @@ public class MoCHorseMobEntity extends Monster {
     /** Wither skeletons only if this nightmare is inside a nether fortress;
      * otherwise zombified piglin, skeleton, or a normal piglin. */
     private EntityType<?> pickNightmareRiderType(ServerLevelAccessor level) {
-        net.minecraft.world.level.levelgen.structure.Structure fortress = level.getLevel().registryAccess()
-                .registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
-                .get(net.minecraft.world.level.levelgen.structure.BuiltinStructures.FORTRESS);
+        Structure fortress = level.getLevel().registryAccess()
+                .registryOrThrow(Registries.STRUCTURE)
+                .get(BuiltinStructures.FORTRESS);
 
         boolean nearFortress = fortress != null && level.getLevel().structureManager()
                 .getStructureWithPieceAt(this.blockPosition(), fortress)
@@ -386,8 +399,8 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     private void spawnRider(ServerLevelAccessor level, EntityType<?> riderType) {
-        net.minecraft.world.entity.Entity rider = riderType.create(level.getLevel());
-        if (rider instanceof net.minecraft.world.entity.Mob mob) {
+        Entity rider = riderType.create(level.getLevel());
+        if (rider instanceof Mob mob) {
             mob.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
             level.getLevel().addFreshEntity(mob);
             mob.startRiding(this);
@@ -395,7 +408,7 @@ public class MoCHorseMobEntity extends Monster {
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (getVariant() == Variant.BATHORSE) {
             return false;
         }

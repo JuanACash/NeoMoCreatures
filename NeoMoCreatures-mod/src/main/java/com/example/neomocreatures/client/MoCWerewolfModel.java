@@ -22,7 +22,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCWerewolfModel<T extends MoCWerewolfEntity> extends HierarchicalModel<T> {
 
-    private static final float RADIAN = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -277,8 +277,8 @@ public class MoCWerewolfModel<T extends MoCWerewolfEntity> extends HierarchicalM
         }
 
         boolean hunched = werewolf.isHunched();
-        float rLegXRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;
-        float lLegXRot = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float rLegXRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
+        float lLegXRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
 
         this.head.yRot = netHeadYaw / RADIAN;
 

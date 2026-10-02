@@ -1,46 +1,87 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.entity.egg.MoCEggEntity;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com.example.neomocreatures.entity.egg.EggHatchable,
-        net.minecraft.world.entity.HasCustomInventoryScreen, net.minecraft.world.entity.PlayerRideableJumping, StorablePet {
+import net.neoforged.neoforge.network.PacketDistributor;
+
+public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
+        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet {
 
     private static final int HIDE_TICKS = 60;
     private static final int MOUTH_TICKS_MAX = 20;
@@ -108,9 +149,9 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     private static final EntityDataAccessor<Integer> DATA_UNIHORNED_CHARGE_TICKS =
             SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
 
-    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
+    private final SimpleContainer chestInventory = new SimpleContainer(18);
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
 
     private int hidingCounter;
     private float lastAppliedScale = -1F;
@@ -121,11 +162,11 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     private boolean jumpPending;
 
     @Nullable
-    private java.util.UUID feederUUID;
+    private UUID feederUUID;
     @Nullable
-    private java.util.UUID partnerUUID;
+    private UUID partnerUUID;
     @Nullable
-    private java.util.UUID grudgeTargetUUID;
+    private UUID grudgeTargetUUID;
 
     public MoCOstrichEntity(EntityType<? extends MoCOstrichEntity> type, Level level) {
         super(type, level);
@@ -179,10 +220,10 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.WHEAT)
-                || stack.is(net.minecraft.world.item.Items.WHEAT_SEEDS)
-                || stack.is(net.minecraft.world.item.Items.APPLE)
-                || stack.is(net.minecraft.world.item.Items.GOLDEN_APPLE);
+        return stack.is(Items.WHEAT)
+                || stack.is(Items.WHEAT_SEEDS)
+                || stack.is(Items.APPLE)
+                || stack.is(Items.GOLDEN_APPLE);
     }
 
     public OstrichVariant getVariant() {
@@ -316,11 +357,11 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         return getEssence() == ESSENCE_FIRE || super.fireImmune();
     }
 
-    private static int essenceIdFor(net.minecraft.world.item.Item item) {
-        if (item == com.example.neomocreatures.init.ModItems.ESSENCE_OF_DARKNESS.get()) return ESSENCE_WYVERN;
-        if (item == com.example.neomocreatures.init.ModItems.ESSENCE_OF_FIRE.get()) return ESSENCE_FIRE;
-        if (item == com.example.neomocreatures.init.ModItems.ESSENCE_OF_UNDEAD.get()) return ESSENCE_UNDEAD;
-        if (item == com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get()) return ESSENCE_UNIHORNED;
+    private static int essenceIdFor(Item item) {
+        if (item == ModItems.ESSENCE_OF_DARKNESS.get()) return ESSENCE_WYVERN;
+        if (item == ModItems.ESSENCE_OF_FIRE.get()) return ESSENCE_FIRE;
+        if (item == ModItems.ESSENCE_OF_UNDEAD.get()) return ESSENCE_UNDEAD;
+        if (item == ModItems.ESSENCE_OF_LIGHT.get()) return ESSENCE_UNIHORNED;
         return ESSENCE_NONE;
     }
 
@@ -361,17 +402,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             tag.putUUID("OstrichGrudge", grudgeTargetUUID);
         }
         if (hasChest()) {
-            net.minecraft.nbt.ListTag chestItems = new net.minecraft.nbt.ListTag();
-            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                ItemStack chestStack = chestInventory.getItem(slot);
-                if (!chestStack.isEmpty()) {
-                    CompoundTag itemTag = new CompoundTag();
-                    itemTag.putInt("Slot", slot);
-                    itemTag.put("Item", chestStack.save(this.registryAccess(), new CompoundTag()));
-                    chestItems.add(itemTag);
-                }
-            }
-            tag.put("OstrichChestItems", chestItems);
+            tag.put("OstrichChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
         }
     }
 
@@ -403,21 +434,13 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             this.entityData.set(DATA_HEAD_BURIED, tag.getBoolean("OstrichHeadBuried"));
         }
         if (tag.contains("OstrichSaddleItem", 8)) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("OstrichSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("OstrichSaddleItem"));
         }
         if (tag.hasUUID("OstrichGrudge")) {
             grudgeTargetUUID = tag.getUUID("OstrichGrudge");
         }
         if (tag.contains("OstrichChestItems", 9)) {
-            net.minecraft.nbt.ListTag chestItems = tag.getList("OstrichChestItems", 10);
-            for (int i = 0; i < chestItems.size(); i++) {
-                CompoundTag itemTag = chestItems.getCompound(i);
-                int slot = itemTag.getInt("Slot");
-                ItemStack chestStack = ItemStack.parse(this.registryAccess(), itemTag.getCompound("Item")).orElse(ItemStack.EMPTY);
-                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
-                    chestInventory.setItem(slot, chestStack);
-                }
-            }
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("OstrichChestItems", 10), this.registryAccess());
         }
     }
 
@@ -436,18 +459,18 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);
-            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+            NamingHelper.promptRename(this, tamer.getUUID());
         }
     }
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        net.minecraft.world.entity.SpawnGroupData data =
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData data =
                 super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
 
         int roll = this.random.nextInt(100);
@@ -470,17 +493,17 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             return null;
         }
         startTalking();
-        return com.example.neomocreatures.init.ModSounds.OSTRICH_AMBIENT.get();
+        return ModSounds.OSTRICH_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.OSTRICH_HURT.get();
+        return ModSounds.OSTRICH_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.OSTRICH_DEATH.get();
+        return ModSounds.OSTRICH_DEATH.get();
     }
 
     @Nullable
@@ -581,7 +604,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             }
 
             if (flyingMount) {
-                this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+                this.move(MoverType.SELF, this.getDeltaMovement());
                 this.moveRelative(0.096F, travelVector); // flyerFriction()/10
                 Vec3 motion = this.getDeltaMovement();
                 this.setDeltaMovement(motion.x * 0.96D, motion.y * 0.89D - 0.055D, motion.z * 0.96D);
@@ -598,8 +621,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     private boolean isOnAirClear() {
-        net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(this.getX(), this.getY() - 0.2D, this.getZ());
-        net.minecraft.core.BlockPos below2 = net.minecraft.core.BlockPos.containing(this.getX(), this.getY() - 1.2D, this.getZ());
+        BlockPos below = BlockPos.containing(this.getX(), this.getY() - 0.2D, this.getZ());
+        BlockPos below2 = BlockPos.containing(this.getX(), this.getY() - 1.2D, this.getZ());
         return this.level().getBlockState(below).isAir() && this.level().getBlockState(below2).isAir();
     }
 
@@ -634,8 +657,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     public void applyWhipBoost() {
-        this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 100, 1, false, true));
+        this.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SPEED, 100, 1, false, true));
         if (getEssence() == ESSENCE_UNIHORNED) {
             this.entityData.set(DATA_UNIHORNED_CHARGE_TICKS, 100);
         }
@@ -644,9 +667,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     public void dropAllEquipment() {
         if (isSaddled()) {
             this.ejectPassengers();
-            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem));
             this.saddleItemId = null;
             setSaddled(false);
@@ -656,7 +677,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             setHelmet(HELMET_NONE);
         }
         if (hasChest()) {
-            this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+            this.spawnAtLocation(new ItemStack(Items.CHEST));
             for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
                 ItemStack stack = chestInventory.getItem(slot);
                 if (!stack.isEmpty()) {
@@ -665,7 +686,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             }
             chestInventory.clearContent();
             if (getFlagColor() != -1) {
-                this.spawnAtLocation(new ItemStack(woolItemFor(net.minecraft.world.item.DyeColor.byId(getFlagColor()))));
+                this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
                 setFlagColor(-1);
             }
             setHasChest(false);
@@ -673,7 +694,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     /** Snapshot used to restore this ostrich later from a filled Pet Amulet. */
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("OstrichVariant", getVariant().name());
         tag.putInt("OstrichEssence", getEssence());
@@ -714,14 +735,14 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 if (this.isVehicle()) {
                     applyWhipBoost();
@@ -733,8 +754,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                         this.setTarget(null);
                     }
                 }
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                 if (!player.getAbilities().instabuild) {
                     stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
@@ -746,7 +767,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             startTalking();
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(4.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -757,10 +778,10 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
 
         if (!this.isTame() && !this.isBaby() && eggAppearCounter <= 0
                 && getVariant() != OstrichVariant.MALE
-                && stack.is(net.minecraft.world.item.Items.MELON_SEEDS)) {
+                && stack.is(Items.MELON_SEEDS)) {
             startTalking();
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 tryStartBreeding(player, stack);
             }
             return InteractionResult.SUCCESS;
@@ -776,20 +797,20 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
-                    this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
-                    if (!player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE))) {
-                        player.drop(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE), false);
+                    this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+                    if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                        player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
                     }
                 }
                 return InteractionResult.SUCCESS;
             }
 
-            if (!isSaddled() && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                    || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+            if (!isSaddled() && (stack.is(Items.SADDLE)
+                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
                 if (!this.level().isClientSide) {
                     setSaddled(true);
-                    this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -807,7 +828,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 }
                 if (!this.level().isClientSide) {
                     setHelmet(helmetFromItem);
-                    this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
+                    this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -815,10 +836,10 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 return InteractionResult.SUCCESS;
             }
 
-            if (!hasChest() && stack.is(net.minecraft.world.item.Items.CHEST)) {
+            if (!hasChest() && stack.is(Items.CHEST)) {
                 if (!this.level().isClientSide) {
                     setHasChest(true);
-                    this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                    this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -826,14 +847,14 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 return InteractionResult.SUCCESS;
             }
 
-            net.minecraft.world.item.DyeColor woolColor = dyeColorForWool(stack.getItem());
+            DyeColor woolColor = dyeColorForWool(stack.getItem());
             if (hasChest() && woolColor != null && woolColor.getId() != getFlagColor()) {
                 if (!this.level().isClientSide) {
                     if (getFlagColor() != -1) {
-                        this.spawnAtLocation(new ItemStack(woolItemFor(net.minecraft.world.item.DyeColor.byId(getFlagColor()))));
+                        this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
                     }
                     setFlagColor(woolColor.getId());
-                    this.playSound(net.minecraft.sounds.SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
+                    this.playSound(SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -841,21 +862,19 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 return InteractionResult.SUCCESS;
             }
 
-            if (stack.is(net.minecraft.world.item.Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
+            if (stack.is(Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
                 if (!this.level().isClientSide) {
                     if (getHelmet() != HELMET_NONE) {
                         this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
                         setHelmet(HELMET_NONE);
-                        this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
+                        this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
                     } else {
                         setSaddled(false);
                         this.ejectPassengers();
-                        net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                                : net.minecraft.world.item.Items.SADDLE;
+                        Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                         this.saddleItemId = null;
                         this.spawnAtLocation(new ItemStack(saddleItem));
-                        this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                        this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
                     }
                     if (!player.getAbilities().instabuild) {
                         stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
@@ -892,42 +911,42 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     private static int helmetIdFor(ItemStack stack) {
-        if (stack.is(net.minecraft.world.item.Items.LEATHER_HELMET)) return HELMET_LEATHER;
-        if (stack.is(net.minecraft.world.item.Items.IRON_HELMET)) return HELMET_IRON;
-        if (stack.is(net.minecraft.world.item.Items.GOLDEN_HELMET)) return HELMET_GOLD;
-        if (stack.is(net.minecraft.world.item.Items.DIAMOND_HELMET)) return HELMET_DIAMOND;
-        if (stack.is(com.example.neomocreatures.init.ModItems.HIDE_HELMET.get())) return HELMET_HIDE;
-        if (stack.is(com.example.neomocreatures.init.ModItems.FUR_HELMET.get())) return HELMET_FUR;
-        if (stack.is(com.example.neomocreatures.init.ModItems.REPTILE_HELMET.get())) return HELMET_REPTILE;
-        if (stack.is(com.example.neomocreatures.init.ModItems.SCORP_HELMET_DIRT.get())) return HELMET_SCORP_DIRT;
-        if (stack.is(com.example.neomocreatures.init.ModItems.SCORP_HELMET_CAVE.get())) return HELMET_SCORP_CAVE;
-        if (stack.is(com.example.neomocreatures.init.ModItems.SCORP_HELMET_FROST.get())) return HELMET_SCORP_FROST;
-        if (stack.is(com.example.neomocreatures.init.ModItems.SCORP_HELMET_NETHER.get())) return HELMET_SCORP_NETHER;
-        if (stack.is(com.example.neomocreatures.init.ModItems.SCORP_HELMET_UNDEAD.get())) return HELMET_SCORP_UNDEAD;
+        if (stack.is(Items.LEATHER_HELMET)) return HELMET_LEATHER;
+        if (stack.is(Items.IRON_HELMET)) return HELMET_IRON;
+        if (stack.is(Items.GOLDEN_HELMET)) return HELMET_GOLD;
+        if (stack.is(Items.DIAMOND_HELMET)) return HELMET_DIAMOND;
+        if (stack.is(ModItems.HIDE_HELMET.get())) return HELMET_HIDE;
+        if (stack.is(ModItems.FUR_HELMET.get())) return HELMET_FUR;
+        if (stack.is(ModItems.REPTILE_HELMET.get())) return HELMET_REPTILE;
+        if (stack.is(ModItems.SCORP_HELMET_DIRT.get())) return HELMET_SCORP_DIRT;
+        if (stack.is(ModItems.SCORP_HELMET_CAVE.get())) return HELMET_SCORP_CAVE;
+        if (stack.is(ModItems.SCORP_HELMET_FROST.get())) return HELMET_SCORP_FROST;
+        if (stack.is(ModItems.SCORP_HELMET_NETHER.get())) return HELMET_SCORP_NETHER;
+        if (stack.is(ModItems.SCORP_HELMET_UNDEAD.get())) return HELMET_SCORP_UNDEAD;
         return HELMET_NONE;
     }
 
-    private static net.minecraft.world.item.Item itemForHelmet(int id) {
+    private static Item itemForHelmet(int id) {
         return switch (id) {
-            case HELMET_LEATHER -> net.minecraft.world.item.Items.LEATHER_HELMET;
-            case HELMET_IRON -> net.minecraft.world.item.Items.IRON_HELMET;
-            case HELMET_GOLD -> net.minecraft.world.item.Items.GOLDEN_HELMET;
-            case HELMET_DIAMOND -> net.minecraft.world.item.Items.DIAMOND_HELMET;
-            case HELMET_HIDE -> com.example.neomocreatures.init.ModItems.HIDE_HELMET.get();
-            case HELMET_FUR -> com.example.neomocreatures.init.ModItems.FUR_HELMET.get();
-            case HELMET_REPTILE -> com.example.neomocreatures.init.ModItems.REPTILE_HELMET.get();
-            case HELMET_SCORP_DIRT -> com.example.neomocreatures.init.ModItems.SCORP_HELMET_DIRT.get();
-            case HELMET_SCORP_CAVE -> com.example.neomocreatures.init.ModItems.SCORP_HELMET_CAVE.get();
-            case HELMET_SCORP_FROST -> com.example.neomocreatures.init.ModItems.SCORP_HELMET_FROST.get();
-            case HELMET_SCORP_NETHER -> com.example.neomocreatures.init.ModItems.SCORP_HELMET_NETHER.get();
-            case HELMET_SCORP_UNDEAD -> com.example.neomocreatures.init.ModItems.SCORP_HELMET_UNDEAD.get();
-            default -> net.minecraft.world.item.Items.LEATHER_HELMET;
+            case HELMET_LEATHER -> Items.LEATHER_HELMET;
+            case HELMET_IRON -> Items.IRON_HELMET;
+            case HELMET_GOLD -> Items.GOLDEN_HELMET;
+            case HELMET_DIAMOND -> Items.DIAMOND_HELMET;
+            case HELMET_HIDE -> ModItems.HIDE_HELMET.get();
+            case HELMET_FUR -> ModItems.FUR_HELMET.get();
+            case HELMET_REPTILE -> ModItems.REPTILE_HELMET.get();
+            case HELMET_SCORP_DIRT -> ModItems.SCORP_HELMET_DIRT.get();
+            case HELMET_SCORP_CAVE -> ModItems.SCORP_HELMET_CAVE.get();
+            case HELMET_SCORP_FROST -> ModItems.SCORP_HELMET_FROST.get();
+            case HELMET_SCORP_NETHER -> ModItems.SCORP_HELMET_NETHER.get();
+            case HELMET_SCORP_UNDEAD -> ModItems.SCORP_HELMET_UNDEAD.get();
+            default -> Items.LEATHER_HELMET;
         };
     }
 
     @Nullable
-    private static net.minecraft.world.item.DyeColor dyeColorForWool(net.minecraft.world.item.Item item) {
-        for (net.minecraft.world.item.DyeColor color : net.minecraft.world.item.DyeColor.values()) {
+    private static DyeColor dyeColorForWool(Item item) {
+        for (DyeColor color : DyeColor.values()) {
             if (item == woolItemFor(color)) {
                 return color;
             }
@@ -935,24 +954,24 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         return null;
     }
 
-    private static net.minecraft.world.item.Item woolItemFor(net.minecraft.world.item.DyeColor color) {
-        net.minecraft.world.level.block.Block block = switch (color) {
-            case WHITE -> net.minecraft.world.level.block.Blocks.WHITE_WOOL;
-            case ORANGE -> net.minecraft.world.level.block.Blocks.ORANGE_WOOL;
-            case MAGENTA -> net.minecraft.world.level.block.Blocks.MAGENTA_WOOL;
-            case LIGHT_BLUE -> net.minecraft.world.level.block.Blocks.LIGHT_BLUE_WOOL;
-            case YELLOW -> net.minecraft.world.level.block.Blocks.YELLOW_WOOL;
-            case LIME -> net.minecraft.world.level.block.Blocks.LIME_WOOL;
-            case PINK -> net.minecraft.world.level.block.Blocks.PINK_WOOL;
-            case GRAY -> net.minecraft.world.level.block.Blocks.GRAY_WOOL;
-            case LIGHT_GRAY -> net.minecraft.world.level.block.Blocks.LIGHT_GRAY_WOOL;
-            case CYAN -> net.minecraft.world.level.block.Blocks.CYAN_WOOL;
-            case PURPLE -> net.minecraft.world.level.block.Blocks.PURPLE_WOOL;
-            case BLUE -> net.minecraft.world.level.block.Blocks.BLUE_WOOL;
-            case BROWN -> net.minecraft.world.level.block.Blocks.BROWN_WOOL;
-            case GREEN -> net.minecraft.world.level.block.Blocks.GREEN_WOOL;
-            case RED -> net.minecraft.world.level.block.Blocks.RED_WOOL;
-            case BLACK -> net.minecraft.world.level.block.Blocks.BLACK_WOOL;
+    private static Item woolItemFor(DyeColor color) {
+        Block block = switch (color) {
+            case WHITE -> Blocks.WHITE_WOOL;
+            case ORANGE -> Blocks.ORANGE_WOOL;
+            case MAGENTA -> Blocks.MAGENTA_WOOL;
+            case LIGHT_BLUE -> Blocks.LIGHT_BLUE_WOOL;
+            case YELLOW -> Blocks.YELLOW_WOOL;
+            case LIME -> Blocks.LIME_WOOL;
+            case PINK -> Blocks.PINK_WOOL;
+            case GRAY -> Blocks.GRAY_WOOL;
+            case LIGHT_GRAY -> Blocks.LIGHT_GRAY_WOOL;
+            case CYAN -> Blocks.CYAN_WOOL;
+            case PURPLE -> Blocks.PURPLE_WOOL;
+            case BLUE -> Blocks.BLUE_WOOL;
+            case BROWN -> Blocks.BROWN_WOOL;
+            case GREEN -> Blocks.GREEN_WOOL;
+            case RED -> Blocks.RED_WOOL;
+            case BLACK -> Blocks.BLACK_WOOL;
         };
         return block.asItem();
     }
@@ -982,7 +1001,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     @Nullable
     private MoCOstrichEntity findValidPartner() {
         OstrichVariant mine = getVariant();
-        java.util.List<MoCOstrichEntity> nearby = this.level().getEntitiesOfClass(MoCOstrichEntity.class,
+        List<MoCOstrichEntity> nearby = this.level().getEntitiesOfClass(MoCOstrichEntity.class,
                 this.getBoundingBox().inflate(PAIR_RADIUS),
                 other -> other != this && !other.isTame() && !other.isBaby() && other.eggAppearCounter <= 0);
 
@@ -1012,15 +1031,15 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             return;
         }
         if (--eggAppearCounter == 0) {
-            com.example.neomocreatures.entity.egg.MoCEggEntity egg =
-                    com.example.neomocreatures.init.ModEntities.MOC_EGG.get().create((ServerLevel) this.level());
+            MoCEggEntity egg =
+                    ModEntities.MOC_EGG.get().create((ServerLevel) this.level());
             if (egg != null) {
                 egg.moveTo(this.getX(), this.getY(), this.getZ(), 0F, 0F);
-                egg.setHatchEntityId(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(
-                        com.example.neomocreatures.init.ModEntities.MOC_OSTRICH.get()));
+                egg.setHatchEntityId(BuiltInRegistries.ENTITY_TYPE.getKey(
+                        ModEntities.MOC_OSTRICH.get()));
                 egg.setHatchVariant(rollDestinedVariant().name());
-                egg.setSourceItemId(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(
-                        com.example.neomocreatures.init.ModItems.OSTRICH_EGG.get()));
+                egg.setSourceItemId(BuiltInRegistries.ITEM.getKey(
+                        ModItems.OSTRICH_EGG.get()));
                 egg.setRequiresLight(false);
                 egg.setRequirePickupToTame(true);
                 this.level().addFreshEntity(egg);
@@ -1042,8 +1061,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     public static void alertNearbyOstriches(Level level, Vec3 pos, Player thief, double radius) {
-        java.util.List<MoCOstrichEntity> nearby = level.getEntitiesOfClass(MoCOstrichEntity.class,
-                new net.minecraft.world.phys.AABB(pos, pos).inflate(radius),
+        List<MoCOstrichEntity> nearby = level.getEntitiesOfClass(MoCOstrichEntity.class,
+                new AABB(pos, pos).inflate(radius),
                 o -> !o.isTame() && !o.isBaby());
         for (MoCOstrichEntity ostrich : nearby) {
             ostrich.grudgeTargetUUID = thief.getUUID();
@@ -1051,12 +1070,12 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         }
     }
 
-    private static class AttackEggHolderGoal extends net.minecraft.world.entity.ai.goal.Goal {
+    private static class AttackEggHolderGoal extends Goal {
         private final MoCOstrichEntity ostrich;
 
         AttackEggHolderGoal(MoCOstrichEntity ostrich) {
             this.ostrich = ostrich;
-            this.setFlags(java.util.EnumSet.of(Flag.TARGET));
+            this.setFlags(EnumSet.of(Flag.TARGET));
         }
 
         @Override
@@ -1090,7 +1109,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
             return false;
         }
         boolean hurt = super.hurt(source, amount);
@@ -1118,8 +1137,8 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         if (!this.isBaby()) {
             return 1.0F;
         }
-        float progress = net.minecraft.util.Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return net.minecraft.util.Mth.lerp(progress, BABY_SCALE, 1.0F);
+        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
+        return Mth.lerp(progress, BABY_SCALE, 1.0F);
     }
 
     private void tickGrowth() {
@@ -1146,9 +1165,9 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     @Override
-    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+    protected AABB makeBoundingBox() {
         if (this.isBaby()) {
-            net.minecraft.world.entity.EntityDimensions babyHitbox =
+            EntityDimensions babyHitbox =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
             return babyHitbox.makeBoundingBox(this.position());
         }
@@ -1183,7 +1202,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
         ticks--;
         this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
         if (ticks == TRANSFORM_SOUND_TICKS) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
         }
         if (ticks <= 0) {
             setEssence(getPendingEssence());
@@ -1209,7 +1228,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     private void tickAscendFlapSound() {
         boolean ascendHeldNow = isAscendHeld();
         if (ascendHeldNow && !wasAscendHeldLastTick && canFlyEssence()) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
+            this.playSound(ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
         }
         wasAscendHeldLastTick = ascendHeldNow;
     }
@@ -1221,15 +1240,15 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
 
             // Raw ostrich meat: 0-2 base, affected by Looting. Always dropped raw,
             // even if it died on fire (there's no "cooked on fire" logic here).
-            MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.OSTRICH_RAW.get(),
+            MoCLootUtil.dropItems(this, ModItems.OSTRICH_RAW.get(),
                     MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
 
             // Essence hearts / unicorn horn depending on the ostrich's essence, 25% base + Looting.
-            net.minecraft.world.item.Item essenceHeartItem = switch (getEssence()) {
-                case ESSENCE_WYVERN -> com.example.neomocreatures.init.ModItems.HEART_OF_DARKNESS.get();
-                case ESSENCE_FIRE -> com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get();
-                case ESSENCE_UNDEAD -> com.example.neomocreatures.init.ModItems.HEART_OF_UNDEAD.get();
-                case ESSENCE_UNIHORNED -> com.example.neomocreatures.init.ModItems.UNICORN_HORN.get();
+            Item essenceHeartItem = switch (getEssence()) {
+                case ESSENCE_WYVERN -> ModItems.HEART_OF_DARKNESS.get();
+                case ESSENCE_FIRE -> ModItems.HEART_OF_FIRE.get();
+                case ESSENCE_UNDEAD -> ModItems.HEART_OF_UNDEAD.get();
+                case ESSENCE_UNIHORNED -> ModItems.UNICORN_HORN.get();
                 default -> null;
             };
             if (essenceHeartItem != null) {
@@ -1240,9 +1259,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
 
             // Equipped saddle (the real one or the crafted one, depending on saddleItemId).
             if (isSaddled()) {
-                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                        : net.minecraft.world.item.Items.SADDLE;
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                 this.spawnAtLocation(new ItemStack(saddleItem));
             }
 
@@ -1253,7 +1270,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
 
             // Chest + contents + the flag's wool (same as before).
             if (hasChest()) {
-                this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+                this.spawnAtLocation(new ItemStack(Items.CHEST));
                 for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
                     ItemStack chestStack = chestInventory.getItem(slot);
                     if (!chestStack.isEmpty()) {
@@ -1261,7 +1278,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                     }
                 }
                 if (getFlagColor() != -1) {
-                    this.spawnAtLocation(new ItemStack(woolItemFor(net.minecraft.world.item.DyeColor.byId(getFlagColor()))));
+                    this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
                 }
             }
         }
@@ -1275,13 +1292,13 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     }
 
     private void openChestMenu(Player player) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.minecraft.network.chat.Component title = this.hasCustomName()
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
                     ? this.getDisplayName().copy().append(" Storage")
-                    : net.minecraft.network.chat.Component.literal("Ostrich Storage");
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
-                            net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    : Component.literal("Ostrich Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(
+                            MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
                     title));
         }
     }
@@ -1289,9 +1306,9 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     private void openInventoryFor(Player player) {
         if (hasChest()) {
             openChestMenu(player);
-        } else if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        } else if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -1308,7 +1325,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.ostrich.OstrichVariant.valueOf(tag.getString("OstrichVariant")));
+        this.setVariant(OstrichVariant.valueOf(tag.getString("OstrichVariant")));
         if (tag.contains("OstrichEssence")) {
             this.setEssence(tag.getInt("OstrichEssence"));
         }
@@ -1323,7 +1340,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

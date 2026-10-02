@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -22,7 +21,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntity> {
 
-    private static final float R = 57.29578F;
+    private static final float R = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -317,10 +316,5 @@ public class MoCKomodoDragonModel extends HierarchicalModel<MoCKomodoDragonEntit
         this.saddleA.y = lift + 12F;
         this.saddleB.y = lift + 12F;
         this.saddleC.y = lift + 12F;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

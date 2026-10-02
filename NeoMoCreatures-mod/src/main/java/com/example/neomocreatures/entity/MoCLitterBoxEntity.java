@@ -1,10 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCTickUtil;
 
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -92,7 +97,7 @@ public class MoCLitterBoxEntity extends Mob {
     }
 
     @Override
-    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
@@ -110,7 +115,7 @@ public class MoCLitterBoxEntity extends Mob {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                this.playSound(net.minecraft.sounds.SoundEvents.SAND_PLACE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SAND_PLACE, 1.0F, 1.0F);
                 setUsedLitter(false);
             }
             return InteractionResult.SUCCESS;
@@ -119,8 +124,8 @@ public class MoCLitterBoxEntity extends Mob {
         if (this.getVehicle() == null) {
             if (player.isShiftKeyDown()) {
                 if (!this.level().isClientSide) {
-                    player.getInventory().add(new ItemStack(com.example.neomocreatures.init.ModItems.KITTY_LITTER.get()));
-                    this.playSound(net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 0.2F,
+                    player.getInventory().add(new ItemStack(ModItems.KITTY_LITTER.get()));
+                    this.playSound(SoundEvents.ITEM_PICKUP, 0.2F,
                             ((this.random.nextFloat() - this.random.nextFloat()) * 1.4F + 2.0F));
                     this.discard();
                 }
@@ -129,7 +134,7 @@ public class MoCLitterBoxEntity extends Mob {
             if (!this.level().isClientSide) {
                 this.setYRot(Math.round(this.getYRot() / 90.0F) * 90.0F + 90.0F);
                 this.setYHeadRot(this.getYRot());
-                this.playSound(net.minecraft.sounds.SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.playSound(SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
@@ -157,26 +162,26 @@ public class MoCLitterBoxEntity extends Mob {
                     setUsedLitter(false);
                 }
             } else {
-                this.level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                this.level().addParticle(ParticleTypes.SMOKE,
                         this.getX(), this.getY(), this.getZ(), 0.0D, 0.0D, 0.0D);
             }
         }
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("UsedLitter", isUsedLitter());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setUsedLitter(tag.getBoolean("UsedLitter"));
     }
 
     @Override
-    protected void positionRider(net.minecraft.world.entity.Entity passenger, Entity.MoveFunction moveFunction) {
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (!this.hasPassenger(passenger)) {
             return;
         }

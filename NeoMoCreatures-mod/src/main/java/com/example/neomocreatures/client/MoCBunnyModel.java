@@ -9,7 +9,6 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.util.Mth;
 
 /**
  * 1:1 port of {@code drzhark.mocreatures.client.model.MoCModelBunny}. Unlike
@@ -21,7 +20,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCBunnyModel extends HierarchicalModel<MoCBunnyEntity> {
 
-    private static final float DEG_TO_RAD = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -100,8 +99,8 @@ public class MoCBunnyModel extends HierarchicalModel<MoCBunnyEntity> {
     @Override
     public void setupAnim(MoCBunnyEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        float headX = -headPitch / DEG_TO_RAD;
-        float headY = netHeadYaw / DEG_TO_RAD;
+        float headX = -headPitch / RADIAN;
+        float headY = netHeadYaw / RADIAN;
         this.head.xRot = headX;
         this.head.yRot = headY;
         this.earRight.xRot = headX;
@@ -119,8 +118,8 @@ public class MoCBunnyModel extends HierarchicalModel<MoCBunnyEntity> {
         this.tail.xRot = (float) (Math.PI / 2);
 
         if (entity.getVehicle() == null && !entity.isHeld()) {
-            float frontLeg = Mth.cos(limbSwing * 0.6662F) * 1.0F * limbSwingAmount;
-            float hindLeg = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.2F * limbSwingAmount;
+            float frontLeg = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.0F);
+            float hindLeg = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.2F);
             this.legFrontRight.xRot = frontLeg;
             this.legFrontLeft.xRot = frontLeg;
             this.legBackRight.xRot = hindLeg;

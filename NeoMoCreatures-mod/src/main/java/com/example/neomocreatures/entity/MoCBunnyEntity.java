@@ -1,6 +1,8 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bunny.BunnyVariant;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
@@ -9,16 +11,21 @@ import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -27,12 +34,15 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
@@ -41,6 +51,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -63,13 +75,13 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     private static final double HEAD_HEIGHT_OFFSET = 0.35D;
     /** Wiki: "any mob the player is riding... receives a massive speed boost, almost impossible to control" — total speed x5. */
     private static final double MOUNT_SPEED_BOOST = 4.0D;
-    private static final net.minecraft.resources.ResourceLocation MOUNT_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "bunny_mount_speed_boost");
+    private static final ResourceLocation MOUNT_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "bunny_mount_speed_boost");
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBunnyEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Optional<java.util.UUID>> DATA_HELD_BY =
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCBunnyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     private float lastAppliedScale = -1F;
@@ -86,7 +98,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     public MoCBunnyEntity(EntityType<? extends MoCBunnyEntity> type, Level level) {
         super(type, level);
         // Wiki: "usually stay out of water" — strongly discourages pathing through it.
-        this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
     }
 
     @Override
@@ -98,7 +110,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 livingEntity -> !this.isTame()));
         // Wiki: "bred by feeding them golden carrots" — same vanilla love-mode
         // approach-and-breed behaviour as pigs, cows, etc.
-        this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new RandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
     }
@@ -128,13 +140,13 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("BunnyVariant", getVariant().name());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("BunnyVariant", 8)) {
             try {
@@ -144,8 +156,8 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
     }
 
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Bunny", true);
         tag.putString("BunnyVariant", getVariant().name());
         tag.putFloat("Health", this.getHealth());
@@ -204,7 +216,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         if (this.wasInLove && !nowInLove && this.level() instanceof ServerLevel serverLevel) {
             int extraBabies = 2 + this.random.nextInt(3); // 2-4 more, on top of vanilla's own 1 = 3-5 total
             for (int i = 0; i < extraBabies; i++) {
-                MoCBunnyEntity baby = com.example.neomocreatures.init.ModEntities.MOC_BUNNY.get().create(serverLevel);
+                MoCBunnyEntity baby = ModEntities.MOC_BUNNY.get().create(serverLevel);
                 if (baby == null) {
                     continue;
                 }
@@ -276,7 +288,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        MoCBunnyEntity baby = com.example.neomocreatures.init.ModEntities.MOC_BUNNY.get().create(level);
+        MoCBunnyEntity baby = ModEntities.MOC_BUNNY.get().create(level);
         if (baby != null && this.getOwner() instanceof Player owner) {
             baby.tame(owner);
         }
@@ -284,7 +296,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     }
 
     /** Carries the chosen variant to the rest of a spawn group — same pattern as MoCSnakeEntity's SnakeGroupData. */
-    private static final class BunnyGroupData implements net.minecraft.world.entity.SpawnGroupData {
+    private static final class BunnyGroupData implements SpawnGroupData {
         final BunnyVariant variant;
         BunnyGroupData(BunnyVariant variant) {
             this.variant = variant;
@@ -292,15 +304,15 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     }
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        net.minecraft.world.entity.SpawnGroupData resultGroupData = spawnGroupData;
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData resultGroupData = spawnGroupData;
 
-        if (spawnType == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnType == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
+        if (spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION) {
             BunnyVariant variant = spawnGroupData instanceof BunnyGroupData shared
                     ? shared.variant
                     : pickVariantForBiome(level, this.blockPosition());
@@ -320,7 +332,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     }
 
     /** Wiki: "Bunnies always spawn white in taiga, cold taiga, ice mountains or ice plains biomes." */
-    private BunnyVariant pickVariantForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+    private BunnyVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
         if (biome.is(ModTags.BUNNY_WHITE_BIOMES)) {
             return BunnyVariant.WHITE;
@@ -489,7 +501,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -525,7 +537,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         try {
-            this.setVariant(com.example.neomocreatures.entity.bunny.BunnyVariant.valueOf(tag.getString("BunnyVariant")));
+            this.setVariant(BunnyVariant.valueOf(tag.getString("BunnyVariant")));
         } catch (IllegalArgumentException ignored) {
         }
         this.setTame(true, false);
@@ -539,7 +551,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
             this.setBaby(!tag.getBoolean("Adult"));
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

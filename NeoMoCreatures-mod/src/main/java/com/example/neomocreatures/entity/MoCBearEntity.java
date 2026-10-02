@@ -1,54 +1,90 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.entity.bear.BearVariant;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Bee;
+import net.minecraft.world.entity.animal.Panda;
+import net.minecraft.world.entity.animal.PolarBear;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 
-public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.HasCustomInventoryScreen,
-        net.minecraft.world.entity.PlayerRideableJumping, StorablePet {
+import net.neoforged.neoforge.network.PacketDistributor;
+
+public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCustomInventoryScreen,
+        PlayerRideableJumping, StorablePet {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
@@ -63,9 +99,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(18);
+    private final SimpleContainer chestInventory = new SimpleContainer(18);
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
     
        
     private static final int MOUTH_TICKS_MAX = 20;
@@ -172,21 +208,21 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     private static boolean isBlackGrizzlyTamingMeat(ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.COOKED_BEEF)
-                || stack.is(net.minecraft.world.item.Items.COOKED_PORKCHOP)
-                || stack.is(net.minecraft.world.item.Items.COOKED_CHICKEN)
-                || stack.is(net.minecraft.world.item.Items.COOKED_MUTTON)
-                || stack.is(net.minecraft.world.item.Items.COOKED_RABBIT)
-                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_COOKED.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.DUCK_COOKED.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.VENISON_COOKED.get());
+        return stack.is(Items.COOKED_BEEF)
+                || stack.is(Items.COOKED_PORKCHOP)
+                || stack.is(Items.COOKED_CHICKEN)
+                || stack.is(Items.COOKED_MUTTON)
+                || stack.is(Items.COOKED_RABBIT)
+                || stack.is(ModItems.TURKEY_COOKED.get())
+                || stack.is(ModItems.DUCK_COOKED.get())
+                || stack.is(ModItems.VENISON_COOKED.get());
     }
 
     private static boolean isPolarTamingMeat(ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.COOKED_COD)
-                || stack.is(net.minecraft.world.item.Items.COOKED_SALMON)
-                || stack.is(com.example.neomocreatures.init.ModItems.TURTLE_COOKED.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.CRAB_COOKED.get());
+        return stack.is(Items.COOKED_COD)
+                || stack.is(Items.COOKED_SALMON)
+                || stack.is(ModItems.TURTLE_COOKED.get())
+                || stack.is(ModItems.CRAB_COOKED.get());
     }
 
     private boolean isTamingMeatForVariant(ItemStack stack) {
@@ -196,25 +232,25 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     /** Healing accepts any meat, cooked or raw, either species' list — more lenient than taming on purpose. */
     private static boolean isAnyMeat(ItemStack stack) {
         return isBlackGrizzlyTamingMeat(stack) || isPolarTamingMeat(stack)
-                || stack.is(net.minecraft.world.item.Items.BEEF)
-                || stack.is(net.minecraft.world.item.Items.PORKCHOP)
-                || stack.is(net.minecraft.world.item.Items.CHICKEN)
-                || stack.is(net.minecraft.world.item.Items.MUTTON)
-                || stack.is(net.minecraft.world.item.Items.RABBIT)
-                || stack.is(net.minecraft.world.item.Items.COD)
-                || stack.is(net.minecraft.world.item.Items.SALMON)
-                || stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.DUCK_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.VENISON_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.TURTLE_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.CRAB_RAW.get());
+                || stack.is(Items.BEEF)
+                || stack.is(Items.PORKCHOP)
+                || stack.is(Items.CHICKEN)
+                || stack.is(Items.MUTTON)
+                || stack.is(Items.RABBIT)
+                || stack.is(Items.COD)
+                || stack.is(Items.SALMON)
+                || stack.is(ModItems.TURKEY_RAW.get())
+                || stack.is(ModItems.DUCK_RAW.get())
+                || stack.is(ModItems.VENISON_RAW.get())
+                || stack.is(ModItems.TURTLE_RAW.get())
+                || stack.is(ModItems.CRAB_RAW.get());
     }
 
     @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+    public void travel(Vec3 travelVector) {
         if (getBearState() == SITTING_STATE) {
             this.getNavigation().stop();
-            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            super.travel(Vec3.ZERO);
             return;
         }
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player
@@ -231,7 +267,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
 
     private void executeRidersJump(float scale) {
         double jumpY = this.getJumpPower() * scale;
-        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         this.setDeltaMovement(motion.x, jumpY, motion.z);
         this.hasImpulse = true;
     }
@@ -246,7 +282,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
                 + this.level().getFluidState(this.blockPosition()).getHeight(this.level(), this.blockPosition());
         double bodyTop = this.getY() + this.getBbHeight();
         double submersion = fluidTop - bodyTop;
-        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         if (submersion > 0.1D) {
             double push = Mth.clamp(submersion * 0.15D, 0.04D, 0.2D);
             this.setDeltaMovement(motion.x, Math.max(motion.y, push), motion.z);
@@ -277,15 +313,15 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             return false; // A tamed bear never hunts other animals on its own.
         }
         return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity)
-                && !(target instanceof net.minecraft.world.entity.animal.PolarBear)
-                && !(target instanceof net.minecraft.world.entity.animal.Panda)
+                && !(target instanceof PolarBear)
+                && !(target instanceof Panda)
                 && !(target instanceof MoCElephantEntity)
-                && !(target instanceof net.minecraft.world.entity.animal.Bee);
+                && !(target instanceof Bee);
     }
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
             return false;
         }
         return super.hurt(source, amount);
@@ -296,7 +332,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PandaOnlyPanicGoal(this, 1.4D));
         this.goalSelector.addGoal(2, new FollowSameVariantAdultGoal(this, 1.0D));
-        this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -309,7 +345,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     @Override
-    public boolean isFood(net.minecraft.world.item.ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return isTame() && isAnyMeat(stack);
     }
 
@@ -334,8 +370,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob otherParent) {
-        MoCBearEntity baby = com.example.neomocreatures.init.ModEntities.MOC_BEAR.get().create(level);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        MoCBearEntity baby = ModEntities.MOC_BEAR.get().create(level);
         if (baby != null) {
             baby.setVariant(this.getVariant());
         }
@@ -343,7 +379,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     @Override
-    public void spawnChildFromBreeding(net.minecraft.server.level.ServerLevel level, Animal partner) {
+    public void spawnChildFromBreeding(ServerLevel level, Animal partner) {
         MoCBearEntity baby = (MoCBearEntity) this.getBreedOffspring(level, partner);
         if (baby == null) {
             return;
@@ -357,16 +393,16 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         this.resetLove();
         partner.resetLove();
         level.broadcastEntityEvent(this, (byte) 18);
-        if (level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+        if (level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             MoCExperienceUtil.dropExperienceOrb(level, this, this.getRandom().nextInt(7) + 1);
         }
 
-        java.util.UUID ownerUUID = this.getOwnerUUID();
+        UUID ownerUUID = this.getOwnerUUID();
         Player nearbyOwner = ownerUUID != null ? level.getPlayerByUUID(ownerUUID) : null;
         if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= 1000.0D) { // squared distance: ~31 blocks
             baby.setOwnerUUID(nearbyOwner.getUUID());
             baby.setTame(true, true);
-            com.example.neomocreatures.util.NamingHelper.promptRename(baby, nearbyOwner.getUUID());
+            NamingHelper.promptRename(baby, nearbyOwner.getUUID());
         }
     }
 
@@ -410,7 +446,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     /** Which variant a whole group will be, decided once per group by biome — never mixed within a group. */
-    private BearVariant pickVariantForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+    private BearVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
 
         // Checked in order; each tag holds vanilla biomes plus optional modded ones.
@@ -534,10 +570,10 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         if (this.isTame() || !this.isBaby() || getVariant() == BearVariant.PANDA) {
             return;
         }
-        net.minecraft.world.entity.item.ItemEntity nearestFood = null;
+        ItemEntity nearestFood = null;
         double nearestDistSqr = EAT_NEARBY_ITEM_RANGE * EAT_NEARBY_ITEM_RANGE;
-        for (net.minecraft.world.entity.item.ItemEntity itemEntity : this.level().getEntitiesOfClass(
-                net.minecraft.world.entity.item.ItemEntity.class, this.getBoundingBox().inflate(EAT_NEARBY_ITEM_RANGE))) {
+        for (ItemEntity itemEntity : this.level().getEntitiesOfClass(
+                ItemEntity.class, this.getBoundingBox().inflate(EAT_NEARBY_ITEM_RANGE))) {
             if (itemEntity.getOwner() == null || !isTamingMeatForVariant(itemEntity.getItem())) {
                 continue;
             }
@@ -559,11 +595,11 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             nearestFood.discard();
         }
         startTalking();
-        this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-        java.util.UUID thrower = nearestFood.getOwner().getUUID();
+        this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+        UUID thrower = nearestFood.getOwner().getUUID();
         this.setOwnerUUID(thrower);
         this.setTame(true, true);
-        com.example.neomocreatures.util.NamingHelper.promptRename(this, thrower);
+        NamingHelper.promptRename(this, thrower);
     }
 
     private void tickMouthAndAttack() {
@@ -585,22 +621,22 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     @Override
     protected SoundEvent getAmbientSound() {
         startTalking();
-        return com.example.neomocreatures.init.ModSounds.BEAR_AMBIENT.get();
+        return ModSounds.BEAR_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
         startTalking();
-        return com.example.neomocreatures.init.ModSounds.BEAR_HURT.get();
+        return ModSounds.BEAR_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.BEAR_DEATH.get();
+        return ModSounds.BEAR_DEATH.get();
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("BearVariant", getVariant().getId());
         tag.putBoolean("BearSitting", getBearState() == SITTING_STATE);
@@ -610,22 +646,12 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         }
         tag.putBoolean("BearHasChest", hasChest());
         if (hasChest()) {
-            net.minecraft.nbt.ListTag chestList = new net.minecraft.nbt.ListTag();
-            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                ItemStack chestStack = chestInventory.getItem(slot);
-                if (!chestStack.isEmpty()) {
-                    net.minecraft.nbt.CompoundTag slotTag = new net.minecraft.nbt.CompoundTag();
-                    slotTag.putInt("Slot", slot);
-                    slotTag.put("Item", chestStack.save(this.registryAccess()));
-                    chestList.add(slotTag);
-                }
-            }
-            tag.put("BearChestItems", chestList);
+            tag.put("BearChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
         }
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("BearVariant")) {
             setVariant(BearVariant.byId(tag.getInt("BearVariant")));
@@ -636,18 +662,11 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         }
         setSaddled(tag.getBoolean("BearSaddled"));
         if (tag.contains("BearSaddleItem")) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("BearSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("BearSaddleItem"));
         }
         if (tag.getBoolean("BearHasChest")) {
             setHasChest(true);
-            for (net.minecraft.nbt.Tag entry : tag.getList("BearChestItems", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-                net.minecraft.nbt.CompoundTag slotTag = (net.minecraft.nbt.CompoundTag) entry;
-                int slot = slotTag.getInt("Slot");
-                ItemStack chestStack = ItemStack.parse(this.registryAccess(), slotTag.getCompound("Item")).orElse(ItemStack.EMPTY);
-                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
-                    chestInventory.setItem(slot, chestStack);
-                }
-            }
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("BearChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }
 
@@ -658,12 +677,12 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     // vanilla already triggers for both players and tamed wolves.
     // ---------------------------------------------------------------
     @Override
-    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
 
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+        MoCLootUtil.dropItems(this, ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
 
         dropAllEquipment();
     }
@@ -676,15 +695,13 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
      */
     public void dropAllEquipment() {
         if (isSaddled()) {
-            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem));
             this.saddleItemId = null;
             setSaddled(false);
         }
         if (hasChest()) {
-            this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+            this.spawnAtLocation(new ItemStack(Items.CHEST));
             for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
                 ItemStack chestStack = chestInventory.getItem(slot);
                 if (!chestStack.isEmpty()) {
@@ -696,8 +713,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     /** Builds the NBT payload stored inside a filled Pet Amulet for this bear. */
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putInt("BearVariant", getVariant().getId());
         tag.putFloat("Health", this.getHealth());
         tag.putBoolean("Adult", !this.isBaby());
@@ -734,7 +751,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         FollowSameVariantAdultGoal(MoCBearEntity cub, double speedModifier) {
             this.cub = cub;
             this.speedModifier = speedModifier;
-            this.setFlags(java.util.EnumSet.of(Flag.MOVE));
+            this.setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
@@ -742,7 +759,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             if (!this.cub.isBaby() || this.cub.isTame()) {
                 return false;
             }
-            java.util.List<MoCBearEntity> nearby = this.cub.level().getEntitiesOfClass(MoCBearEntity.class,
+            List<MoCBearEntity> nearby = this.cub.level().getEntitiesOfClass(MoCBearEntity.class,
                     this.cub.getBoundingBox().inflate(8.0D, 4.0D, 8.0D),
                     bear -> !bear.isBaby() && bear.getVariant() == this.cub.getVariant());
             if (nearby.isEmpty()) {
@@ -777,7 +794,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         }
     }
 
-    private static class PandaOnlyPanicGoal extends net.minecraft.world.entity.ai.goal.PanicGoal {
+    private static class PandaOnlyPanicGoal extends PanicGoal {
     private final MoCBearEntity bear;
 
     PandaOnlyPanicGoal(MoCBearEntity bear, double speedModifier) {
@@ -803,7 +820,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
 
         ProtectCubGoal(MoCBearEntity bear) {
             this.bear = bear;
-            this.setFlags(java.util.EnumSet.of(Flag.TARGET));
+            this.setFlags(EnumSet.of(Flag.TARGET));
         }
 
         @Override
@@ -827,13 +844,13 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     private void openChestMenu(Player player) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.minecraft.network.chat.Component title = this.hasCustomName()
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
                     ? this.getDisplayName().copy().append(" Storage")
-                    : net.minecraft.network.chat.Component.literal("Bear Storage");
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
-                            net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    : Component.literal("Bear Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(
+                            MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
                     title));
         }
     }
@@ -848,9 +865,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             openChestMenu(player);
             return;
         }
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -876,8 +893,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     @Override
-    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travelVector) {
-        return new net.minecraft.world.phys.Vec3(player.xxa, 0.0D, player.zza);
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa, 0.0D, player.zza);
     }
 
     @Override
@@ -887,7 +904,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     }
 
     @Override
-    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+    protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         this.setYRot(player.getYRot());
         this.yRotO = this.getYRot();
@@ -926,38 +943,38 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setBearState(getBearState() == SITTING_STATE ? FOURS_STATE : SITTING_STATE);
                 this.standingTicks = 0; // whip-sit is permanent, not the timed wild stand/sit
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                 if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.isTame() && getVariant() == BearVariant.PANDA && stack.is(net.minecraft.world.item.Items.BAMBOO)) {
+        if (!this.isTame() && getVariant() == BearVariant.PANDA && stack.is(Items.BAMBOO)) {
             if (!this.level().isClientSide) {
                 startTalking();
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
                 this.tame(player);
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                NamingHelper.promptRename(this, player.getUUID());
             }
             return InteractionResult.SUCCESS;
         }
@@ -965,7 +982,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         if (this.isTame() && this.isOwnedBy(player) && isAnyMeat(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 startTalking();
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -975,12 +992,12 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-            && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+            && (stack.is(Items.SADDLE)
+                || stack.is(ModItems.HORSE_SADDLE.get()))) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
-                this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -988,25 +1005,23 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
             if (!this.level().isClientSide) {
                 setSaddled(false);
                 this.ejectPassengers();
-                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                        : net.minecraft.world.item.Items.SADDLE;
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                 this.saddleItemId = null;
                 this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasChest()
-                && stack.is(net.minecraft.world.item.Items.CHEST)) {
+                && stack.is(Items.CHEST)) {
             if (!this.level().isClientSide) {
                 setHasChest(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -1024,7 +1039,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
         }
 
         if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()
-                && !stack.is(com.example.neomocreatures.init.ModItems.SCROLL_OF_FREEDOM.get())) {
+                && !stack.is(ModItems.SCROLL_OF_FREEDOM.get())) {
             openChestMenu(player);
             return InteractionResult.SUCCESS;
         }
@@ -1039,7 +1054,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.bear.BearVariant.byId(tag.getInt("BearVariant")));
+        this.setVariant(BearVariant.byId(tag.getInt("BearVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -1051,7 +1066,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

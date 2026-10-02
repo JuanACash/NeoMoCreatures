@@ -1,8 +1,9 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCOstrichEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -13,9 +14,10 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
+
 public class MoCOstrichModel extends HierarchicalModel<MoCOstrichEntity> {
 
-    private static final float R = 57.29578F;
+    private static final float R = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart uBeak;
@@ -372,7 +374,7 @@ private final ModelPart uniHorn;
                 CubeListBuilder.create().texOffs(28, 0).addBox(-0.5F, -15F, -0.5F, 1, 17, 1),
                 PartPose.offsetAndRotation(0F, 0F, 5F, -14.91F / R, 0F, 0F));
 
-        java.util.Map<String, int[]> flagTexOffsets = new java.util.LinkedHashMap<>();
+        Map<String, int[]> flagTexOffsets = new LinkedHashMap<>();
         flagTexOffsets.put("flag_black", new int[]{108, 8});
         flagTexOffsets.put("flag_gray", new int[]{108, 16});
         flagTexOffsets.put("flag_yellow", new int[]{48, 46});
@@ -755,10 +757,5 @@ private final ModelPart uniHorn;
         uniHorn.xRot = 18F / R + headXRot;
         uniHorn.yRot = headYRot;
 
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

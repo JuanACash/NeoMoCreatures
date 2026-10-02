@@ -8,6 +8,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+
 /** Port of the Mouse's renderer registration (shadow 0.2). */
 public class MoCMouseRenderer extends MobRenderer<MoCMouseEntity, MoCMouseModel<MoCMouseEntity>> {
 
@@ -28,7 +30,7 @@ public class MoCMouseRenderer extends MobRenderer<MoCMouseEntity, MoCMouseModel<
     }
 
     @Override
-    protected void scale(MoCMouseEntity entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+    protected void scale(MoCMouseEntity entity, PoseStack poseStack, float partialTick) {
         float scale = 0.6F;
         poseStack.scale(scale, scale, scale);
     }

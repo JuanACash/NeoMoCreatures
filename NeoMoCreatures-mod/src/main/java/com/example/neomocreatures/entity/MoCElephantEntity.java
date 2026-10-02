@@ -4,28 +4,51 @@ import com.example.neomocreatures.entity.elephant.ElephantVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.Set;
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -35,12 +58,24 @@ import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Step 1 port of drzhark.mocreatures.entity.neutral.MoCEntityElephant: walks,
@@ -52,8 +87,8 @@ import net.minecraft.world.level.Level;
  * bespoke 0-100 age/temper scale) for consistency with the rest of this
  * codebase — see MoCWyvernEntity's tickGrowth() for the same pattern.
  */
-public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.PlayerRideableJumping,
-        net.minecraft.world.entity.HasCustomInventoryScreen, StorablePet {
+public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
+        HasCustomInventoryScreen, StorablePet {
 
     private static final float BABY_SCALE = 0.5F;
     private static final int GROWTH_TICKS = 24000;
@@ -71,7 +106,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     private static final int SAFE_FALL_BLOCKS = 3;
     // First 2 chests give 18 slots each, the 3rd and 4th (mammoth only) give 9 each —
     // 18+18+9+9 = 54, exactly vanilla's ChestMenu row limit, so all 4 stay fully usable.
-    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(54);
+    private final SimpleContainer chestInventory = new SimpleContainer(54);
 
     private static int slotsForChestIndex(int index) {
         return index < 2 ? 18 : 9;
@@ -124,11 +159,11 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     /** Full ItemStack (not just a tier enum) so durability survives and anvil repair keeps working normally. */
     private ItemStack tuskStack = ItemStack.EMPTY;
 
-    private static final java.util.Set<net.minecraft.world.level.block.Block> BULLDOZER_BLACKLIST = java.util.Set.of(
-            net.minecraft.world.level.block.Blocks.OBSIDIAN,
-            net.minecraft.world.level.block.Blocks.CRYING_OBSIDIAN,
-            net.minecraft.world.level.block.Blocks.BEDROCK,
-            net.minecraft.world.level.block.Blocks.REINFORCED_DEEPSLATE);
+    private static final Set<Block> BULLDOZER_BLACKLIST = Set.of(
+            Blocks.OBSIDIAN,
+            Blocks.CRYING_OBSIDIAN,
+            Blocks.BEDROCK,
+            Blocks.REINFORCED_DEEPSLATE);
     private static final double BULLDOZER_MIN_SPEED_SQR = 0.0025D;
 
     public MoCElephantEntity(EntityType<? extends MoCElephantEntity> type, Level level) {
@@ -137,7 +172,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new ElephantMeleeAttackGoal(this, 1.0D, false));
         // Calves stick close to the nearest adult instead of wandering off on their own.
@@ -226,21 +261,21 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         if (this.isVehicle() || !this.onGround()) {
             return;
         }
-        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         if (motion.x * motion.x + motion.z * motion.z < 0.0004D) {
             return;
         }
-        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(motion.x, 0.0D, motion.z).normalize();
-        net.minecraft.core.BlockPos ahead = this.blockPosition()
+        Vec3 dir = new Vec3(motion.x, 0.0D, motion.z).normalize();
+        BlockPos ahead = this.blockPosition()
                 .offset((int) Math.round(dir.x), 0, (int) Math.round(dir.z));
 
-        if (this.level().getFluidState(ahead).is(net.minecraft.tags.FluidTags.WATER)) {
+        if (this.level().getFluidState(ahead).is(FluidTags.WATER)) {
             this.getNavigation().stop();
             this.setDeltaMovement(0.0D, motion.y, 0.0D);
             return;
         }
 
-        net.minecraft.core.BlockPos.MutableBlockPos check = ahead.below().mutable();
+        BlockPos.MutableBlockPos check = ahead.below().mutable();
         int drop = 0;
         while (drop <= SAFE_FALL_BLOCKS && this.level().getBlockState(check).getCollisionShape(this.level(), check).isEmpty()) {
             check.move(0, -1, 0);
@@ -254,7 +289,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
     private void applyLavaBuoyancy() {
         if (this.isInLava()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            double submergedFraction = this.getFluidHeight(FluidTags.LAVA);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
@@ -272,7 +307,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
      */
     private void tickTuskBulldozer() {
         if (tuskStack.isEmpty() || this.isBaby() || !this.isVehicle() || !(this.level() instanceof ServerLevel level)
-                || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+                || !level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
             lastTuskCheckX = this.getX();
             lastTuskCheckZ = this.getZ();
             return;
@@ -289,26 +324,26 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
         damageCollidedEntities();
 
-        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(dx, 0.0D, dz).normalize();
+        Vec3 dir = new Vec3(dx, 0.0D, dz).normalize();
 
         // Its actual body footprint, pushed forward and padded a bit sideways so it always
         // covers at least 2 block columns wide — the exact hitbox alone can land centered
         // on a single column depending on position, which isn't enough to guarantee a path.
         double blocksLong = Math.max(1.0D, this.getBbWidth());
-        net.minecraft.world.phys.AABB path = this.getBoundingBox()
+        AABB path = this.getBoundingBox()
                 .inflate(0.65D, 0.0D, 0.65D)
                 .move(dir.x * blocksLong, 0.0D, dir.z * blocksLong);
 
-        net.minecraft.core.BlockPos min = net.minecraft.core.BlockPos.containing(path.minX, this.getY(), path.minZ);
-        net.minecraft.core.BlockPos max = net.minecraft.core.BlockPos.containing(path.maxX, this.getY(), path.maxZ);
+        BlockPos min = BlockPos.containing(path.minX, this.getY(), path.minZ);
+        BlockPos max = BlockPos.containing(path.maxX, this.getY(), path.maxZ);
 
         float hardnessCap = bulldozerHardnessCap();
         int blocksHigh = Mth.ceil(this.getBbHeight()); // clears its own full height, not a fixed count
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int z = min.getZ(); z <= max.getZ(); z++) {
                 for (int yOffset = 0; yOffset < blocksHigh; yOffset++) {
-                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, this.blockPosition().getY() + yOffset, z);
-                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+                    BlockPos pos = new BlockPos(x, this.blockPosition().getY() + yOffset, z);
+                    BlockState state = level.getBlockState(pos);
                     if (state.isAir() || BULLDOZER_BLACKLIST.contains(state.getBlock())) {
                         continue;
                     }
@@ -330,8 +365,8 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     /** Speed boost + a short ramming window — called by WhipItem while ridden. */
     public void startWhipCharge() {
         this.entityData.set(DATA_WHIP_CHARGE_TICKS, WHIP_CHARGE_DURATION_TICKS);
-        this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, WHIP_CHARGE_DURATION_TICKS, WHIP_SPEED_AMPLIFIER, false, true));
+        this.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SPEED, WHIP_CHARGE_DURATION_TICKS, WHIP_SPEED_AMPLIFIER, false, true));
     }
 
     /** Pushes (and lightly hurts) anything it bumps into while charging — same knockback-style ram as the unicorn. */
@@ -340,11 +375,11 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         if (ticks <= 0) {
             return;
         }
-        net.minecraft.world.phys.AABB aabb = this.getBoundingBox().inflate(0.6D);
+        AABB aabb = this.getBoundingBox().inflate(0.6D);
         for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, aabb,
                 e -> e != this && e != this.getControllingPassenger() && !this.hasPassenger(e) && e.isAlive())) {
             if (target.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE))) {
-                net.minecraft.world.phys.Vec3 knockDir = target.position().subtract(this.position()).normalize();
+                Vec3 knockDir = target.position().subtract(this.position()).normalize();
                 target.setDeltaMovement(target.getDeltaMovement().add(knockDir.x * 1.2D, 0.4D, knockDir.z * 1.2D));
                 target.hurtMarked = true;
             }
@@ -372,7 +407,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         tuskStack.setDamageValue(tuskStack.getDamageValue() + 1);
         if (tuskStack.getDamageValue() >= tuskStack.getMaxDamage()) {
             this.level().playSound(null, this.blockPosition(),
-                    net.minecraft.sounds.SoundEvents.ITEM_BREAK, net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F);
+                    SoundEvents.ITEM_BREAK, SoundSource.NEUTRAL, 1.0F, 1.0F);
             tuskStack = ItemStack.EMPTY;
             this.entityData.set(DATA_TUSK_TIER, 0);
         }
@@ -438,16 +473,16 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     private boolean isTuskItem(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.TUSKS_WOOD.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.TUSKS_IRON.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.TUSKS_DIAMOND.get());
+        return stack.is(ModItems.TUSKS_WOOD.get())
+                || stack.is(ModItems.TUSKS_IRON.get())
+                || stack.is(ModItems.TUSKS_DIAMOND.get());
     }
 
     private int tuskTierFor(ItemStack stack) {
-        if (stack.is(com.example.neomocreatures.init.ModItems.TUSKS_DIAMOND.get())) {
+        if (stack.is(ModItems.TUSKS_DIAMOND.get())) {
             return 3;
         }
-        return stack.is(com.example.neomocreatures.init.ModItems.TUSKS_IRON.get()) ? 2 : 1;
+        return stack.is(ModItems.TUSKS_IRON.get()) ? 2 : 1;
     }
 
     /** Elephant/mammoth hardness ceiling per tier — obsidian/bedrock are always excluded regardless. */
@@ -528,30 +563,30 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     private boolean isTameFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.SUGAR_LUMP.get())
-                || stack.is(net.minecraft.world.item.Items.CAKE);
+        return stack.is(ModItems.SUGAR_LUMP.get())
+                || stack.is(Items.CAKE);
     }
 
     /** Cake counts double so either 10 sugar lumps or 5 cakes reach TAME_GOAL exactly. */
     private int tameFoodValue(ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.CAKE) ? 2 : 1;
+        return stack.is(Items.CAKE) ? 2 : 1;
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.SUGAR_LUMP.get())
-                || stack.is(net.minecraft.world.item.Items.BREAD)
-                || stack.is(net.minecraft.world.item.Items.WHEAT)
-                || stack.is(net.minecraft.world.item.Items.BAKED_POTATO);
+        return stack.is(ModItems.SUGAR_LUMP.get())
+                || stack.is(Items.BREAD)
+                || stack.is(Items.WHEAT)
+                || stack.is(Items.BAKED_POTATO);
     }
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnReason,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        ElephantVariant variant = (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION)
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnGroupData) {
+        ElephantVariant variant = (spawnReason == MobSpawnType.NATURAL
+                || spawnReason == MobSpawnType.CHUNK_GENERATION)
                 ? variantForBiome(level, this.blockPosition())
                 : ElephantVariant.randomSpawnable(this.random);
         setVariant(variant);
@@ -569,7 +604,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
      * by the actual biome temperature instead of pure random, so it never picks
      * something thematically wrong (e.g. an African in the snow) just because of that drift.
      */
-    private ElephantVariant variantForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+    private ElephantVariant variantForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
         if (biome.is(ModTags.ELEPHANT_ASIAN_BIOMES)) {
             return ElephantVariant.ASIAN;
@@ -599,7 +634,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -618,7 +653,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
                     this.tame(player);
                     setSitting(false);
                     this.entityData.set(DATA_TAME_PROGRESS, 0);
-                    com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                    NamingHelper.promptRename(this, player.getUUID());
                 } else {
                     this.entityData.set(DATA_TAME_PROGRESS, progress);
                 }
@@ -639,10 +674,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
         // Calves can't be equipped with anything.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasHarness()
-                && stack.is(com.example.neomocreatures.init.ModItems.ELEPHANT_HARNESS.get())) {
+                && stack.is(ModItems.ELEPHANT_HARNESS.get())) {
             if (!this.level().isClientSide) {
                 setHarnessed(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -661,10 +696,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         // Calves can't be equipped with anything.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && hasHarness() && !hasGarment()
                 && getChestCount() < getMaxChestCount()
-                && stack.is(com.example.neomocreatures.init.ModItems.ELEPHANT_CHEST.get())) {
+                && stack.is(ModItems.ELEPHANT_CHEST.get())) {
             if (!this.level().isClientSide) {
                 setChestCount(getChestCount() + 1);
-                this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -675,10 +710,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         // Only a fully grown, tamed Asian with a harness — never with chests already on, and never the other 3 species.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && hasHarness() && !hasGarment()
                 && getVariant() == ElephantVariant.ASIAN && getChestCount() == 0
-                && stack.is(com.example.neomocreatures.init.ModItems.ELEPHANT_GARMENT.get())) {
+                && stack.is(ModItems.ELEPHANT_GARMENT.get())) {
             if (!this.level().isClientSide) {
                 setGarment(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -688,10 +723,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
         // The howdah needs the garment on first.
         if (this.isTame() && this.isOwnedBy(player) && hasGarment() && !hasHowdah()
-                && stack.is(com.example.neomocreatures.init.ModItems.ELEPHANT_HOWDAH.get())) {
+                && stack.is(ModItems.ELEPHANT_HOWDAH.get())) {
             if (!this.level().isClientSide) {
                 setHowdah(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -701,10 +736,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && hasHarness() && !hasPlatform()
                 && getVariant() == ElephantVariant.MAMMOTH_SONGHUA
-                && stack.is(com.example.neomocreatures.init.ModItems.MAMMOTH_PLATFORM.get())) {
+                && stack.is(ModItems.MAMMOTH_PLATFORM.get())) {
             if (!this.level().isClientSide) {
                 setPlatform(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -726,41 +761,41 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && !tuskStack.isEmpty() && stack.is(net.minecraft.tags.ItemTags.PICKAXES)) {
+        if (this.isTame() && !tuskStack.isEmpty() && stack.is(ItemTags.PICKAXES)) {
             if (!this.level().isClientSide) {
                 this.spawnAtLocation(tuskStack.copy());
                 tuskStack = ItemStack.EMPTY;
                 this.entityData.set(DATA_TUSK_TIER, 0);
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && hasHowdah()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && hasHowdah()) {
             if (!this.level().isClientSide) {
                 setHowdah(false);
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_HOWDAH.get()));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HOWDAH.get()));
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && hasGarment() && !hasHowdah()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && hasGarment() && !hasHowdah()) {
             if (!this.level().isClientSide) {
                 setGarment(false);
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_GARMENT.get()));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_GARMENT.get()));
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
         // Chests come off before the harness — shears always remove the most recently added one first.
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && getChestCount() > 0) {
+        if (this.isTame() && stack.is(Items.SHEARS) && getChestCount() > 0) {
             if (!this.level().isClientSide) {
                 int removedIndex = getChestCount() - 1;
                 int rangeStart = totalChestSlots(removedIndex);
@@ -770,20 +805,20 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
                     chestInventory.setItem(slot, ItemStack.EMPTY);
                 }
                 setChestCount(removedIndex);
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_CHEST.get()));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_CHEST.get()));
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && hasPlatform()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && hasPlatform()) {
             if (!this.level().isClientSide) {
                 setPlatform(false);
                 if (this.getPassengers().size() > 1) {
                     this.getPassengers().get(1).stopRiding();
                 }
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MAMMOTH_PLATFORM.get()));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.spawnAtLocation(new ItemStack(ModItems.MAMMOTH_PLATFORM.get()));
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
@@ -791,13 +826,13 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         // Shears removal order matters once more equipment exists (howdah -> garment ->
         // platform/chests -> tusks -> harness last) — for now harness is the only thing to remove.
         // The harness only comes off once everything that depends on it is already gone.
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && hasHarness()
+        if (this.isTame() && stack.is(Items.SHEARS) && hasHarness()
                 && getChestCount() == 0 && !hasGarment() && !hasPlatform() && tuskStack.isEmpty()) {
             if (!this.level().isClientSide) {
                 setHarnessed(false);
                 this.ejectPassengers();
-                this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_HARNESS.get()));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HARNESS.get()));
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
@@ -813,26 +848,26 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
     }
 
-    private static net.minecraft.world.inventory.MenuType<net.minecraft.world.inventory.ChestMenu> menuTypeForRows(int rows) {
+    private static MenuType<ChestMenu> menuTypeForRows(int rows) {
         return switch (rows) {
-            case 1 -> net.minecraft.world.inventory.MenuType.GENERIC_9x1;
-            case 2 -> net.minecraft.world.inventory.MenuType.GENERIC_9x2;
-            case 3 -> net.minecraft.world.inventory.MenuType.GENERIC_9x3;
-            case 4 -> net.minecraft.world.inventory.MenuType.GENERIC_9x4;
-            case 5 -> net.minecraft.world.inventory.MenuType.GENERIC_9x5;
-            default -> net.minecraft.world.inventory.MenuType.GENERIC_9x6;
+            case 1 -> MenuType.GENERIC_9x1;
+            case 2 -> MenuType.GENERIC_9x2;
+            case 3 -> MenuType.GENERIC_9x3;
+            case 4 -> MenuType.GENERIC_9x4;
+            case 5 -> MenuType.GENERIC_9x5;
+            default -> MenuType.GENERIC_9x6;
         };
     }
 
     private void openChestMenu(Player player) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+        if (player instanceof ServerPlayer serverPlayer) {
             int rows = totalChestSlots(getChestCount()) / 9;
             var menuType = menuTypeForRows(rows);
-            net.minecraft.network.chat.Component title = this.hasCustomName()
+            Component title = this.hasCustomName()
                     ? this.getDisplayName().copy().append(" Storage")
-                    : net.minecraft.network.chat.Component.literal("Elephant Storage");
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(menuType, id, inv, this.chestInventory, rows),
+                    : Component.literal("Elephant Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(menuType, id, inv, this.chestInventory, rows),
                     title));
         }
     }
@@ -851,9 +886,9 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
             openChestMenu(player);
             return;
         }
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -878,7 +913,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
 
         int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+        MoCLootUtil.dropItems(this, ModItems.HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
     private void dropChestsAndContents() {
@@ -886,7 +921,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
             this.spawnAtLocation(chestInventory.getItem(slot));
         }
         for (int i = 0; i < getChestCount(); i++) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_CHEST.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_CHEST.get()));
         }
         setChestCount(0);
     }
@@ -940,17 +975,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
         tag.putBoolean("ElephantSittingSynced", isSittingSynced());
         tag.putInt("ElephantChestCount", getChestCount());
         if (getChestCount() > 0) {
-            net.minecraft.nbt.ListTag chestItems = new net.minecraft.nbt.ListTag();
-            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                ItemStack chestStack = chestInventory.getItem(slot);
-                if (!chestStack.isEmpty()) {
-                    CompoundTag itemTag = new CompoundTag();
-                    itemTag.putInt("Slot", slot);
-                    itemTag.put("Item", chestStack.save(this.registryAccess(), new CompoundTag()));
-                    chestItems.add(itemTag);
-                }
-            }
-            tag.put("ElephantChestItems", chestItems);
+            tag.put("ElephantChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
         }
         if (!tuskStack.isEmpty()) {
             tag.put("ElephantTusks", tuskStack.save(this.registryAccess(), new CompoundTag()));
@@ -982,16 +1007,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
             setChestCount(tag.getInt("ElephantChestCount"));
         }
         if (tag.contains("ElephantChestItems", 9)) {
-            net.minecraft.nbt.ListTag chestItems = tag.getList("ElephantChestItems", 10);
-            for (int i = 0; i < chestItems.size(); i++) {
-                CompoundTag itemTag = chestItems.getCompound(i);
-                int slot = itemTag.getInt("Slot");
-                ItemStack chestStack = ItemStack.parse(this.registryAccess(), itemTag.getCompound("Item"))
-                        .orElse(ItemStack.EMPTY);
-                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
-                    chestInventory.setItem(slot, chestStack);
-                }
-            }
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ElephantChestItems", 10), this.registryAccess());
         }
         if (tag.contains("ElephantTusks", 10)) {
             tuskStack = ItemStack.parse(this.registryAccess(), tag.getCompound("ElephantTusks")).orElse(ItemStack.EMPTY);
@@ -1046,20 +1062,20 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     /** Everything wearable this elephant currently has on — used by die() and by the Scroll of Freedom. */
     public void dropAllEquipment() {
         if (hasHowdah()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_HOWDAH.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HOWDAH.get()));
             setHowdah(false);
         }
         if (hasGarment()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_GARMENT.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_GARMENT.get()));
             setGarment(false);
         }
         if (hasPlatform()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MAMMOTH_PLATFORM.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.MAMMOTH_PLATFORM.get()));
             setPlatform(false);
         }
         dropChestsAndContents();
         if (hasHarness()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.ELEPHANT_HARNESS.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HARNESS.get()));
             setHarnessed(false);
         }
         if (!tuskStack.isEmpty()) {
@@ -1070,7 +1086,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     /** Snapshot used to restore this elephant later from a filled Pet Amulet. */
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("ElephantVariant", getVariant().name());
         tag.putFloat("Health", this.getHealth());
@@ -1123,9 +1139,9 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     @Override
-    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+    protected AABB makeBoundingBox() {
         if (this.isBaby()) {
-            net.minecraft.world.entity.EntityDimensions babyDimensions =
+            EntityDimensions babyDimensions =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
             return babyDimensions.makeBoundingBox(this.position());
         }
@@ -1133,8 +1149,8 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
             return false;
         }
         return super.hurt(source, amount);
@@ -1184,8 +1200,8 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     @Override
-    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travelVector) {
-        return new net.minecraft.world.phys.Vec3(player.xxa * 0.5D, 0.0D, player.zza);
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa * 0.5D, 0.0D, player.zza);
     }
 
     @Override
@@ -1202,7 +1218,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     public void onPlayerJump(int jumpPower) {
         if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
             double jumpVelocity = getVariant().getJumpVelocity();
-            net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+            Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, jumpVelocity, motion.z);
             this.hasImpulse = true;
         }
@@ -1224,7 +1240,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     }
 
     @Override
-    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+    protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         this.setYRot(player.getYRot());
         this.yRotO = this.getYRot();
@@ -1241,7 +1257,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.elephant.ElephantVariant.valueOf(tag.getString("ElephantVariant")));
+        this.setVariant(ElephantVariant.valueOf(tag.getString("ElephantVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -1253,7 +1269,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

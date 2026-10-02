@@ -9,7 +9,6 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.util.Mth;
 
 /**
  * Port of {@code drzhark.mocreatures.client.model.MoCModelDeer}. Faithful to the original: only the
@@ -86,9 +85,9 @@ public class MoCDeerModel<T extends MoCDeerEntity> extends HierarchicalModel<T> 
     @Override
     public void setupAnim(T deer, float limbSwing, float limbSwingAmount, float ageInTicks,
                           float netHeadYaw, float headPitch) {
-        this.leg1.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        this.leg2.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;
-        this.leg3.xRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;
-        this.leg4.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        this.leg1.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
+        this.leg2.xRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.4F);
+        this.leg3.xRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.4F);
+        this.leg4.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
     }
 }

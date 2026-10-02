@@ -7,6 +7,8 @@ import com.example.neomocreatures.util.MoCLootUtil;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -14,10 +16,13 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -35,6 +40,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityWerewolf}. Two forms sharing one
@@ -175,11 +181,11 @@ public class MoCWerewolfEntity extends Monster {
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-                                        net.minecraft.world.DifficultyInstance difficulty,
-                                        net.minecraft.world.entity.MobSpawnType spawnType,
-                                        @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        WerewolfVariant variant = level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
+                                        @Nullable SpawnGroupData spawnGroupData) {
+        WerewolfVariant variant = level.getLevel().dimension() == Level.NETHER
                 ? WerewolfVariant.FIRE
                 : WerewolfVariant.random(this.random);
         this.entityData.set(DATA_VARIANT, variant.getId());
@@ -235,7 +241,7 @@ public class MoCWerewolfEntity extends Monster {
         if (weapon.is(ModItems.SILVER_SWORD.get()) || weapon.is(ModItems.SILVER_AXE.get())) {
             return true;
         }
-        String path = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(weapon.getItem()).getPath();
+        String path = BuiltInRegistries.ITEM.getKey(weapon.getItem()).getPath();
         return path.contains("silver");
     }
 
@@ -312,7 +318,7 @@ public class MoCWerewolfEntity extends Monster {
         }
         this.refreshDimensions();
         for (int i = 0; i < 30; i++) {
-            this.level().addParticle(net.minecraft.core.particles.ParticleTypes.POOF,
+            this.level().addParticle(ParticleTypes.POOF,
                     this.getX() + (this.random.nextDouble() - 0.5D), this.getY() + this.random.nextDouble() * this.getBbHeight(),
                     this.getZ() + (this.random.nextDouble() - 0.5D), 0.0D, 0.05D, 0.0D);
         }

@@ -3,6 +3,7 @@ package com.example.neomocreatures.event;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
@@ -10,6 +11,7 @@ import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -51,7 +53,7 @@ public class NightmareRiderFireImmunityHandler {
         if (entity.getVehicle() instanceof MoCScorpionEntity scorpion && scorpion.getVariant() == ScorpionVariant.NETHER) {
             return true;
         }
-        return entity.getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich
-            && ostrich.getEssence() == com.example.neomocreatures.entity.MoCOstrichEntity.ESSENCE_FIRE;
+        return entity.getVehicle() instanceof MoCOstrichEntity ostrich
+            && ostrich.getEssence() == MoCOstrichEntity.ESSENCE_FIRE;
     }
 }

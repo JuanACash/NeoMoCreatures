@@ -1,5 +1,7 @@
 package com.example.neomocreatures.init;
 
+import com.example.neomocreatures.NeoMoCreatures;
+
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
+
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -19,7 +22,7 @@ public class ModArmorMaterials {
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
             DeferredRegister.create(
                     Registries.ARMOR_MATERIAL,
-                    com.example.neomocreatures.NeoMoCreatures.MODID
+                    NeoMoCreatures.MODID
             );
 
     private static final Map<ArmorItem.Type, Integer> DIAMOND_DEFENSE = Map.of(
@@ -46,7 +49,7 @@ public class ModArmorMaterials {
     private static ArmorMaterial.Layer layer(String name) {
         return new ArmorMaterial.Layer(
                 ResourceLocation.fromNamespaceAndPath(
-                        com.example.neomocreatures.NeoMoCreatures.MODID,
+                        NeoMoCreatures.MODID,
                         name
                 )
         );

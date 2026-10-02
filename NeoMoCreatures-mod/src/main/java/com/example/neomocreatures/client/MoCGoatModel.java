@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCGoatEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -100,7 +99,7 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
 
         PartDefinition neck = root.addOrReplaceChild("neck",
                 CubeListBuilder.create().texOffs(18, 14).addBox(-1.5F, -2.0F, -5F, 3, 4, 6),
-                PartPose.offsetAndRotation(0F, 11F, -8F, -24F / 57.29578F, 0F, 0F));
+                PartPose.offsetAndRotation(0F, 11F, -8F, -24F / ModelAnimations.DEGREES_PER_RADIAN, 0F, 0F));
 
         PartDefinition head = root.addOrReplaceChild("head",
                 CubeListBuilder.create().texOffs(52, 16).addBox(-1.5F, -2F, -2F, 3, 5, 3),
@@ -159,10 +158,10 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
     @Override
     public void setupAnim(MoCGoatEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        this.legFrontRight.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        this.legFrontRight.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
         this.legFrontLeft.xRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;
         this.legRearLeft.xRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;
-        this.legRearRight.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        this.legRearRight.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
 
         // Wiki/original: pawing-the-ground warning stomp (front-right leg
         // only), overriding the regular walk swing while it plays.
@@ -176,7 +175,7 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
             } else {
                 stomp = -legTicks + 100;
             }
-            this.legFrontRight.xRot = stomp / 57.29578F;
+            this.legFrontRight.xRot = stomp / ModelAnimations.DEGREES_PER_RADIAN;
         }
 
         float clampedYaw = Mth.clamp(netHeadYaw, -20F, 20F);
@@ -185,7 +184,7 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
         boolean angry = entity.isAngry();
         int attackTicks = entity.getAttackTicks();
         // Original: baseAngle = 30° + headPitch, the resting forward/down tilt.
-        float restingHeadXRot = (30F / 57.29578F) + (headPitch * ((float) Math.PI / 180F));
+        float restingHeadXRot = (30F / ModelAnimations.DEGREES_PER_RADIAN) + (headPitch * ((float) Math.PI / 180F));
         // head's pivot is FIXED (see the "disconnected head" fix earlier —
         // it's an independent part, not a child of neck, so its position
         // never follows neck's rotation). Rotating it further and further
@@ -206,8 +205,8 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
             final float RAM_NECK_XROT_DEG = 30F;     // inverted from resting's -30° — same pivot, just flipped to point down instead of up
             final float RAM_HEAD_DOWN_SHIFT = 5F;    // added to head's baseline y (8)
             final float RAM_HEAD_FORWARD_SHIFT = 2F; // added to head's baseline |z| (12)
-            this.head.xRot = RAM_HEAD_XROT_DEG / 57.29578F;
-            this.neck.xRot = RAM_NECK_XROT_DEG / 57.29578F;
+            this.head.xRot = RAM_HEAD_XROT_DEG / ModelAnimations.DEGREES_PER_RADIAN;
+            this.neck.xRot = RAM_NECK_XROT_DEG / ModelAnimations.DEGREES_PER_RADIAN;
             this.head.x = 0F;
             this.head.y = 8F + RAM_HEAD_DOWN_SHIFT;
             this.head.z = -12F - RAM_HEAD_FORWARD_SHIFT;
@@ -218,8 +217,8 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
             this.neck.y = 11F;
             this.neck.z = -8F;
         } else if (angry) {
-            this.head.xRot = 30F / 57.29578F;
-            this.neck.xRot = -40F / 57.29578F;
+            this.head.xRot = 30F / ModelAnimations.DEGREES_PER_RADIAN;
+            this.neck.xRot = -40F / ModelAnimations.DEGREES_PER_RADIAN;
             this.head.x = 0F;
             this.head.y = 8F;
             this.head.z = -12F;
@@ -228,7 +227,7 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
             this.neck.z = -8F;
         } else {
             this.head.xRot = restingHeadXRot;
-            this.neck.xRot = -30F / 57.29578F;
+            this.neck.xRot = -30F / ModelAnimations.DEGREES_PER_RADIAN;
             this.head.x = 0F;
             this.head.y = 8F;
             this.head.z = -12F;
@@ -265,11 +264,6 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
         this.hornL5.visible = male && growth > 0.9F;
         this.goatie.visible = male && growth > 0.9F;
 
-        this.tongue.xRot = entity.isBleating() ? (-5F / 57.29578F) : 0F;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
+        this.tongue.xRot = entity.isBleating() ? (-5F / ModelAnimations.DEGREES_PER_RADIAN) : 0F;
     }
 }

@@ -17,6 +17,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -25,6 +26,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -49,6 +51,7 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -130,7 +133,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
 
     /** Where each species is allowed to spawn naturally; the piranha's own biomes never overlap the rest. */
     /** Biomes each species can spawn in, as tags (vanilla plus optional modded biomes). */
-    private static final Map<SmallFishVariant, net.minecraft.tags.TagKey<Biome>> SPAWN_BIOMES = Map.ofEntries(
+    private static final Map<SmallFishVariant, TagKey<Biome>> SPAWN_BIOMES = Map.ofEntries(
             Map.entry(SmallFishVariant.ANCHOVY, ModTags.SMALL_FISH_ANCHOVY_BIOMES),
             Map.entry(SmallFishVariant.ANGELFISH, ModTags.SMALL_FISH_ANGELFISH_BIOMES),
             Map.entry(SmallFishVariant.ANGLER, ModTags.SMALL_FISH_ANGLER_BIOMES),
@@ -363,7 +366,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 
@@ -393,7 +396,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
         MoCLootUtil.dropItems(this, this.getEggItemForVariant(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
-    private net.minecraft.world.item.Item getEggItemForVariant() {
+    private Item getEggItemForVariant() {
         return switch (this.getVariant()) {
             case ANCHOVY -> ModItems.ANCHOVY_EGG.get();
             case ANGELFISH -> ModItems.ANGELFISH_EGG.get();

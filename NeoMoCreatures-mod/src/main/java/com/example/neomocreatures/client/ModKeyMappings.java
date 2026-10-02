@@ -1,15 +1,19 @@
 package com.example.neomocreatures.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
+import com.example.neomocreatures.network.AscendInputPayload;
+import com.example.neomocreatures.network.DescendInputPayload;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import com.mojang.blaze3d.platform.InputConstants;
 
 public class ModKeyMappings {
 
@@ -35,7 +39,7 @@ public class ModKeyMappings {
             if (descendPressed != wasDescendPressed) {
                 wasDescendPressed = descendPressed;
                 if (Minecraft.getInstance().player != null) {
-                    PacketDistributor.sendToServer(new com.example.neomocreatures.network.DescendInputPayload(descendPressed));
+                    PacketDistributor.sendToServer(new DescendInputPayload(descendPressed));
                 }
             }
 
@@ -43,7 +47,7 @@ public class ModKeyMappings {
             if (ascendPressed != wasAscendPressed) {
                 wasAscendPressed = ascendPressed;
                 if (Minecraft.getInstance().player != null) {
-                    PacketDistributor.sendToServer(new com.example.neomocreatures.network.AscendInputPayload(ascendPressed));
+                    PacketDistributor.sendToServer(new AscendInputPayload(ascendPressed));
                 }
             }
 

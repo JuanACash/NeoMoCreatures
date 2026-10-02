@@ -25,6 +25,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -45,6 +46,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 
+import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
 /**
@@ -107,7 +109,7 @@ public class MoCCrabEntity extends TamableAnimal implements StorablePet {
         this.goalSelector.addGoal(1, new FollowOwnerGoal(this, FOLLOW_SPEED, 8.0F, 2.0F));
         this.goalSelector.addGoal(PANIC_PRIORITY, new PanicGoal(this, PANIC_SPEED));
         this.goalSelector.addGoal(3, new AvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED,
-                (Predicate<net.minecraft.world.entity.LivingEntity>) player -> !this.isOwnedBy((Player) player)));
+                (Predicate<LivingEntity>) player -> !this.isOwnedBy((Player) player)));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
@@ -179,7 +181,7 @@ public class MoCCrabEntity extends TamableAnimal implements StorablePet {
 
     @Override
     public boolean canDrownInFluidType(FluidType type) {
-        if (type == net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value()) {
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
             return false;
         }
         return super.canDrownInFluidType(type);

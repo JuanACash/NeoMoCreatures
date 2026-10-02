@@ -1,7 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bird.BirdVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
@@ -11,16 +13,23 @@ import com.example.neomocreatures.util.PetStorageUtil;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -31,6 +40,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -51,6 +62,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.phys.Vec3;
 
@@ -67,7 +79,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBirdEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Optional<java.util.UUID>> DATA_HELD_BY =
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCBirdEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     private static final double SEED_SEARCH_RADIUS = 8.0D;
@@ -76,9 +88,9 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     private static final int SLOW_FALLING_REFRESH_TICKS = 5;
     private static final double HEAD_HEIGHT_OFFSET = 0.25D;
     private static final double MOUNT_SPEED_BOOST = 4.0D;
-    private static final net.minecraft.resources.ResourceLocation MOUNT_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "bird_mount_speed_boost");
+    private static final ResourceLocation MOUNT_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "bird_mount_speed_boost");
 
     /** Wiki: "healed by any type of seeds" / eaten off the ground to become pre-tamed — same set as vanilla's Parrot. */
     private static boolean isSeed(ItemStack stack) {
@@ -168,13 +180,13 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("BirdVariant", getVariant().name());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("BirdVariant", 8)) {
             try {
@@ -198,7 +210,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     }
 
     /** Carries the chosen variant to the rest of a spawn group — same pattern as MoCSnakeEntity/MoCBunnyEntity. */
-    private static final class BirdGroupData implements net.minecraft.world.entity.SpawnGroupData {
+    private static final class BirdGroupData implements SpawnGroupData {
         final BirdVariant variant;
         BirdGroupData(BirdVariant variant) {
             this.variant = variant;
@@ -206,11 +218,11 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     }
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
         BirdVariant variant = spawnGroupData instanceof BirdGroupData shared
                 ? shared.variant
                 : BirdVariant.random(this.random);
@@ -226,12 +238,12 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     @Override
     protected SoundEvent getAmbientSound() {
         return switch (getVariant()) {
-            case WHITE -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_WHITE.get();
-            case BLACK -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_BLACK.get();
-            case GREEN -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_GREEN.get();
-            case BLUE -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_BLUE.get();
-            case YELLOW -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_YELLOW.get();
-            case RED -> com.example.neomocreatures.init.ModSounds.BIRD_AMBIENT_RED.get();
+            case WHITE -> ModSounds.BIRD_AMBIENT_WHITE.get();
+            case BLACK -> ModSounds.BIRD_AMBIENT_BLACK.get();
+            case GREEN -> ModSounds.BIRD_AMBIENT_GREEN.get();
+            case BLUE -> ModSounds.BIRD_AMBIENT_BLUE.get();
+            case YELLOW -> ModSounds.BIRD_AMBIENT_YELLOW.get();
+            case RED -> ModSounds.BIRD_AMBIENT_RED.get();
         };
     }
 
@@ -285,7 +297,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -315,8 +327,8 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         return super.mobInteract(player, hand);
     }
 
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Bird", true);
         tag.putString("BirdVariant", getVariant().name());
         tag.putFloat("Health", this.getHealth());
@@ -523,7 +535,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         private static final int SEARCH_RADIUS = 6;
         private final MoCBirdEntity bird;
         @Nullable
-        private net.minecraft.core.BlockPos target;
+        private BlockPos target;
         private int cooldown;
 
         TreePerchGoal(MoCBirdEntity bird) {
@@ -540,15 +552,15 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             if (bird.random.nextInt(3) != 0) {
                 return false;
             }
-            net.minecraft.core.BlockPos origin = bird.blockPosition();
-            for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(
+            BlockPos origin = bird.blockPosition();
+            for (BlockPos pos : BlockPos.betweenClosed(
                     origin.offset(-SEARCH_RADIUS, -SEARCH_RADIUS, -SEARCH_RADIUS),
                     origin.offset(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS))) {
                 if (bird.level().getBlockState(pos).getBlock() instanceof LeavesBlock) {
-                    net.minecraft.core.BlockPos.MutableBlockPos logSearch = pos.mutable();
+                    BlockPos.MutableBlockPos logSearch = pos.mutable();
                     for (int i = 0; i < 6; i++) {
-                        logSearch.move(net.minecraft.core.Direction.DOWN);
-                        if (bird.level().getBlockState(logSearch).is(net.minecraft.tags.BlockTags.LOGS)) {
+                        logSearch.move(Direction.DOWN);
+                        if (bird.level().getBlockState(logSearch).is(BlockTags.LOGS)) {
                             this.target = findTreeTop(logSearch.immutable());
                             return true;
                         }
@@ -558,18 +570,18 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             return false;
         }
 
-        private net.minecraft.core.BlockPos findTreeTop(net.minecraft.core.BlockPos logPos) {
-            net.minecraft.core.BlockPos.MutableBlockPos top = logPos.mutable();
-            while (bird.level().getBlockState(top).is(net.minecraft.tags.BlockTags.LOGS)
+        private BlockPos findTreeTop(BlockPos logPos) {
+            BlockPos.MutableBlockPos top = logPos.mutable();
+            while (bird.level().getBlockState(top).is(BlockTags.LOGS)
                     || bird.level().getBlockState(top).getBlock() instanceof LeavesBlock) {
-                top.move(net.minecraft.core.Direction.UP);
+                top.move(Direction.UP);
             }
             return top.immutable();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return this.target != null && bird.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(this.target)) > 1.0D;
+            return this.target != null && bird.distanceToSqr(Vec3.atCenterOf(this.target)) > 1.0D;
         }
 
         @Override
@@ -594,7 +606,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         try {
-            this.setVariant(com.example.neomocreatures.entity.bird.BirdVariant.valueOf(tag.getString("BirdVariant")));
+            this.setVariant(BirdVariant.valueOf(tag.getString("BirdVariant")));
         } catch (IllegalArgumentException ignored) {
         }
         this.setTame(true, false);
@@ -603,7 +615,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         }
         this.setHealth((float) tag.getFloat("Health"));
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

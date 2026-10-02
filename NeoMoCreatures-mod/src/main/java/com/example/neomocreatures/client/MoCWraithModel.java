@@ -19,7 +19,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCWraithModel<T extends MoCWraithEntity> extends HierarchicalModel<T> {
 
-    private static final float RADIAN = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;

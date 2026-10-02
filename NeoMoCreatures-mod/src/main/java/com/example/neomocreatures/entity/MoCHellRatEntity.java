@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.particles.ParticleTypes;
@@ -88,17 +89,17 @@ public class MoCHellRatEntity extends MoCRatEntity {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return com.example.neomocreatures.init.ModSounds.HELL_RAT_AMBIENT.get();
+        return ModSounds.HELL_RAT_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.HELL_RAT_HURT.get();
+        return ModSounds.HELL_RAT_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.HELL_RAT_DEATH.get();
+        return ModSounds.HELL_RAT_DEATH.get();
     }
 
     // ---------------------------------------------------------------------

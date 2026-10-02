@@ -8,9 +8,13 @@ import com.example.neomocreatures.block.WyvSaplingBlock;
 import com.example.neomocreatures.block.WyvTallGrassBlock;
 import com.example.neomocreatures.block.WyvernNestBlock;
 
+import net.minecraft.util.ColorRGBA;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ColoredFallingBlock;
+import net.minecraft.world.level.block.DropExperienceBlock;
+import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -19,6 +23,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -88,18 +93,18 @@ public class ModBlocks {
                     .strength(2.0F, 5.0F).ignitedByLava());
 
     // ==== Ores (drop XP when mined, like vanilla) ====
-    public static final DeferredBlock<net.minecraft.world.level.block.DropExperienceBlock> WYVERN_DIAMOND_ORE = BLOCKS.registerBlock("wyvern_diamond_ore",
-            props -> new net.minecraft.world.level.block.DropExperienceBlock(net.minecraft.util.valueproviders.UniformInt.of(4, 8), props),
+    public static final DeferredBlock<DropExperienceBlock> WYVERN_DIAMOND_ORE = BLOCKS.registerBlock("wyvern_diamond_ore",
+            props -> new DropExperienceBlock(UniformInt.of(4, 8), props),
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(4.5F, 5.0F).requiresCorrectToolForDrops());
 
-    public static final DeferredBlock<net.minecraft.world.level.block.DropExperienceBlock> WYVERN_EMERALD_ORE = BLOCKS.registerBlock("wyvern_emerald_ore",
-            props -> new net.minecraft.world.level.block.DropExperienceBlock(net.minecraft.util.valueproviders.UniformInt.of(4, 8), props),
+    public static final DeferredBlock<DropExperienceBlock> WYVERN_EMERALD_ORE = BLOCKS.registerBlock("wyvern_emerald_ore",
+            props -> new DropExperienceBlock(UniformInt.of(4, 8), props),
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(4.5F, 5.0F).requiresCorrectToolForDrops());
 
-    public static final DeferredBlock<net.minecraft.world.level.block.DropExperienceBlock> WYVERN_LAPIS_ORE = BLOCKS.registerBlock("wyvern_lapis_ore",
-            props -> new net.minecraft.world.level.block.DropExperienceBlock(net.minecraft.util.valueproviders.UniformInt.of(3, 6), props),
+    public static final DeferredBlock<DropExperienceBlock> WYVERN_LAPIS_ORE = BLOCKS.registerBlock("wyvern_lapis_ore",
+            props -> new DropExperienceBlock(UniformInt.of(3, 6), props),
             BlockBehaviour.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE)
                     .strength(1.5F, 5.0F).requiresCorrectToolForDrops());
 
@@ -157,7 +162,7 @@ public class ModBlocks {
    public static final DeferredBlock<ColoredFallingBlock> SILVER_SAND = BLOCKS.register(
         "silver_sand",
         () -> new ColoredFallingBlock(
-                new net.minecraft.util.ColorRGBA(0xC0C0C0FF),
+                new ColorRGBA(0xC0C0C0FF),
                 BlockBehaviour.Properties.ofFullCopy(Blocks.SAND)
                 .strength(0.6F, 0.6F)
         )
@@ -206,8 +211,8 @@ public class ModBlocks {
      * Must run inside FMLCommonSetupEvent#enqueueWork: FireBlock's flammability map isn't thread-safe.
      */
     public static void registerFlammability() {
-        net.minecraft.world.level.block.FireBlock fire =
-                (net.minecraft.world.level.block.FireBlock) net.minecraft.world.level.block.Blocks.FIRE;
+        FireBlock fire =
+                (FireBlock) Blocks.FIRE;
         fire.setFlammable(WYVWOOD_LOG.get(), 5, 5);
         fire.setFlammable(LOG_OGRE_LAIR.get(), 5, 5);
         fire.setFlammable(WYVWOOD_PLANKS.get(), 5, 20);

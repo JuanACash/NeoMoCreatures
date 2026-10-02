@@ -4,8 +4,6 @@ import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCWerewolfEntity;
 import com.example.neomocreatures.entity.werewolf.WerewolfVariant;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,6 +13,8 @@ import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 /** Port of {@code MoCRenderWerewolf}: the wolf model always drives the base render pass, with a
  *  layer that draws vanilla's plain humanoid mesh — and only that — while in human form. */
@@ -39,11 +39,11 @@ public class MoCWerewolfRenderer extends MobRenderer<MoCWerewolfEntity, MoCWerew
      *  it fully transparent instead — same technique already used for the Ghost Horse. */
     @Override
     public void render(MoCWerewolfEntity entity, float entityYaw, float partialTick,
-                       com.mojang.blaze3d.vertex.PoseStack poseStack,
-                       net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
+                       PoseStack poseStack,
+                       MultiBufferSource buffer, int packedLight) {
         if (entity.isHumanForm()) {
-            net.minecraft.client.renderer.MultiBufferSource invisibleBuffer = renderType ->
-                    new com.example.neomocreatures.client.AlphaVertexConsumer(buffer.getBuffer(renderType), 0);
+            MultiBufferSource invisibleBuffer = renderType ->
+                    new AlphaVertexConsumer(buffer.getBuffer(renderType), 0);
             super.render(entity, entityYaw, partialTick, poseStack, invisibleBuffer, packedLight);
         } else {
             super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);

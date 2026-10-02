@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.server.level.ServerLevel;
@@ -61,7 +62,7 @@ public class MoCFireOgreEntity extends MoCOgreEntity {
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.HEART_OF_FIRE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, MoCLootUtil.getLootingLevel(level, damageSource)));
+        MoCLootUtil.dropItems(this, ModItems.HEART_OF_FIRE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, MoCLootUtil.getLootingLevel(level, damageSource)));
     }
 
 }

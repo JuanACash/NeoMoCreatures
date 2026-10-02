@@ -1,7 +1,7 @@
 package com.example.neomocreatures.worldgen;
 
 import com.example.neomocreatures.init.ModBlocks;
-import com.mojang.serialization.Codec;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -20,6 +21,8 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.storage.loot.LootTable;
+
+import com.mojang.serialization.Codec;
 
 public class WyvernNestFeature extends Feature<NoneFeatureConfiguration> {
 
@@ -63,7 +66,7 @@ public class WyvernNestFeature extends Feature<NoneFeatureConfiguration> {
         return buildNest(level, base, random);
     }
 
-    private boolean isValidGround(net.minecraft.world.level.block.Block block) {
+    private boolean isValidGround(Block block) {
         return block == ModBlocks.WYVGRASS.get()
                 || block == ModBlocks.SILVER_SAND.get()
                 || block == Blocks.DIRT

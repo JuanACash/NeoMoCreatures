@@ -2,7 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCBigGolemEntity;
 import com.example.neomocreatures.entity.golem.GolemBody;
-import com.example.neomocreatures.entity.golem.GolemState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -14,6 +13,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
+import com.example.neomocreatures.entity.golem.GolemState;
 
 /**
  * Port of {@code drzhark.mocreatures.client.model.MoCModelGolem}. Each of the 23 body slots is a single
@@ -31,7 +31,7 @@ public class MoCBigGolemModel<T extends MoCBigGolemEntity> extends EntityModel<T
 
     private static final float DEG = Mth.DEG_TO_RAD;
     private static final float QUARTER_TURN = 45.0F * DEG;
-    private static final float WALK_FREQUENCY = 0.6662F;
+    private static final float WALK_FREQUENCY = ModelAnimations.WALK_FREQUENCY;
     private static final float WALK_AMPLITUDE = 1.2F;
     private static final float ARM_SWAY_SPEED = 0.09F;
     private static final float ARM_SWAY_AMOUNT = 0.05F;

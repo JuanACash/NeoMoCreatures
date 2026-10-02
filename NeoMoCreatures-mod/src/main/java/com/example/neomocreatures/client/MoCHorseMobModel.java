@@ -248,7 +248,7 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
         this.upperMouthOpen.xRot = headXRot - 0.0872664F;
         this.lowerMouthOpen.xRot = headXRot + 0.261799F;
 
-        boolean isBat = entity.getVariant() == com.example.neomocreatures.entity.monster.MoCHorseMobEntity.Variant.BATHORSE;
+        boolean isBat = entity.getVariant() == MoCHorseMobEntity.Variant.BATHORSE;
         this.wingInnerL.visible = isBat;
         this.wingMidL.visible = isBat;
         this.wingOuterL.visible = isBat;
@@ -261,7 +261,7 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
 
                 float wingRot = flying
                         ? Mth.cos(ageInTicks * 0.3F + (float) Math.PI) * 1.2F
-                        : 60F / 57.29578F; // folded — same value the original used for All (Y rotation position)
+                        : 60F / ModelAnimations.DEGREES_PER_RADIAN; // folded — same value the original used for All (Y rotation position)
 
                 // Z rotation (flap hinge) — same absolute angle across all 3
                 // pieces, just like the original (no nesting, it's a flat model).
@@ -277,8 +277,8 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
                         this.wingOuterL.yRot = -0.3228859F + wingRot / 2F;
                         this.wingOuterR.yRot = 0.3228859F - wingRot / 2F;
                 } else {
-                        this.wingOuterL.yRot = -90F / 57.29578F;
-                        this.wingOuterR.yRot = 90F / 57.29578F;
+                        this.wingOuterL.yRot = -90F / ModelAnimations.DEGREES_PER_RADIAN;
+                        this.wingOuterR.yRot = 90F / ModelAnimations.DEGREES_PER_RADIAN;
                 }
 
                 // Position — this is what was missing: the outer tip gets recalculated
@@ -297,8 +297,8 @@ public class MoCHorseMobModel extends HierarchicalModel<MoCHorseMobEntity> {
                 this.wingOuterR.z = -6F;
 
                 if (flying) {
-                        float upperFold = 15F / 57.29578F;
-                        float lowerFold = 45F / 57.29578F;
+                        float upperFold = 15F / ModelAnimations.DEGREES_PER_RADIAN;
+                        float lowerFold = 45F / ModelAnimations.DEGREES_PER_RADIAN;
                         setLegAngle(this.leg1Upper, this.leg1Lower, this.leg1Hoof, upperFold, lowerFold);
                         setLegAngle(this.leg2Upper, this.leg2Lower, this.leg2Hoof, upperFold, lowerFold);
                         setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, upperFold, lowerFold);

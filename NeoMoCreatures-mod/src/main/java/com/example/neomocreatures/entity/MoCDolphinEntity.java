@@ -751,7 +751,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 

@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCSnakeEntity;
 import com.example.neomocreatures.entity.snake.SnakeVariant;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -29,7 +30,7 @@ public class MoCSnakeModel extends HierarchicalModel<MoCSnakeEntity> {
 
     private static final int BODY_SEGMENTS = 40;
     private static final float SEGMENT_SPACING = -1.6F;
-    private static final float DEG_TO_RAD = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart[] body = new ModelPart[BODY_SEGMENTS];
@@ -230,8 +231,8 @@ public class MoCSnakeModel extends HierarchicalModel<MoCSnakeEntity> {
         this.picked = entity.isPickedUp();
         this.limbSwing = limbSwing;
 
-        float rAX = headPitch / DEG_TO_RAD;
-        float rAY = netHeadYaw / DEG_TO_RAD;
+        float rAX = headPitch / RADIAN;
+        float rAY = netHeadYaw / RADIAN;
         this.head.xRot = rAX;
         this.head.yRot = rAY;
         this.body[0].xRot = rAX * 0.95F;
@@ -275,7 +276,7 @@ public class MoCSnakeModel extends HierarchicalModel<MoCSnakeEntity> {
         }
         if (this.variant == SnakeVariant.RATTLE) {
             this.tail.xRot = (this.nearPlayer || this.rattleOff != 0F)
-                    ? ((Mth.cos(netHeadYaw * 10F) * 20F) + 90F) / DEG_TO_RAD
+                    ? ((Mth.cos(netHeadYaw * 10F) * 20F) + 90F) / RADIAN
                     : 0F;
         }
     }

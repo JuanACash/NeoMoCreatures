@@ -4,6 +4,8 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
 
+import java.util.EnumSet;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -19,6 +21,7 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -391,7 +394,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
         if (this.isSwimmingDeep()) {
             // CrocodileSwimMoveControl already computes the desired deltaMovement each tick —
             // just apply it and let drag settle it.
-            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+            this.move(MoverType.SELF, this.getDeltaMovement());
             this.setDeltaMovement(this.getDeltaMovement().scale(WATER_DRAG));
         } else {
             super.travel(travelVector);
@@ -406,7 +409,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
     /** True only when genuinely submerged (eyes underwater) — not just standing in ankle-deep water
      *  at the shore, which is where isInWater() gets noisy. */
     public boolean isSwimmingDeep() {
-        return this.isEyeInFluid(net.minecraft.tags.FluidTags.WATER);
+        return this.isEyeInFluid(FluidTags.WATER);
     }
 
     @Override
@@ -541,7 +544,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
     private final class RestGoal extends Goal {
 
         RestGoal() {
-            this.setFlags(java.util.EnumSet.of(Goal.Flag.MOVE));
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
         }
 
         @Override

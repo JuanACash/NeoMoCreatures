@@ -1,15 +1,18 @@
 package com.example.neomocreatures.entity;
 
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -30,6 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 /**
@@ -50,9 +54,9 @@ public class MoCSilverSkeletonEntity extends Monster {
 
     /** Wiki: "significantly increase" its speed once it notices the player — matches the sprint
      *  animation the model already reads via isSprinting(). */
-    private static final net.minecraft.resources.ResourceLocation AGGRO_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "silver_skeleton_aggro_speed");
+    private static final ResourceLocation AGGRO_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "silver_skeleton_aggro_speed");
     private static final AttributeModifier AGGRO_SPEED_MODIFIER = new AttributeModifier(
             AGGRO_SPEED_MODIFIER_ID, 0.15D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
@@ -170,7 +174,7 @@ public class MoCSilverSkeletonEntity extends Monster {
     }
 
     @Override
-    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
+    public boolean canBeAffected(MobEffectInstance effect) {
         return effect.getEffect() != MobEffects.POISON.value() && super.canBeAffected(effect);
     }
 
@@ -203,7 +207,7 @@ public class MoCSilverSkeletonEntity extends Monster {
     }
 
     @Override
-    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         this.playSound(SoundEvents.SKELETON_STEP, 0.15F, 1.0F);
     }
 

@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCTurtleEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -150,7 +149,7 @@ public class MoCTurtleModel extends HierarchicalModel<MoCTurtleEntity> {
         this.legFrontRight.xRot = stepB;
         this.legRearLeft.xRot = stepB;
         this.legRearRight.xRot = stepA;
-        this.tail.yRot = Mth.cos(limbSwing * 0.6662F) * 0.7F * limbSwingAmount;
+        this.tail.yRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.7F);
     }
 
     private void animateSwimming(float limbSwing, float limbSwingAmount) {
@@ -170,10 +169,5 @@ public class MoCTurtleModel extends HierarchicalModel<MoCTurtleEntity> {
         this.legRearLeft.xRot = flail;
         this.legRearRight.xRot = -flail;
         this.tail.yRot = -flail;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

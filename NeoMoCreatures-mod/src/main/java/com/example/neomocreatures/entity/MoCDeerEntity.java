@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.deer.DeerVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 
@@ -15,10 +16,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -32,6 +37,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityDeer}. Passive: never fights back, only
@@ -156,10 +162,10 @@ public class MoCDeerEntity extends TamableAnimal {
     }
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-                                        net.minecraft.world.DifficultyInstance difficulty,
-                                        net.minecraft.world.entity.MobSpawnType spawnType,
-                                        @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
+                                        @Nullable SpawnGroupData spawnGroupData) {
         DeerVariant variant = DeerVariant.values()[this.random.nextInt(DeerVariant.values().length)];
         this.entityData.set(DATA_VARIANT, variant.getId());
         this.entityData.set(DATA_MOC_AGE, variant == DeerVariant.FAWN ? START_AGE : MAX_AGE);
@@ -237,7 +243,7 @@ public class MoCDeerEntity extends TamableAnimal {
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.AgeableMob getBreedOffspring(ServerLevel level, net.minecraft.world.entity.AgeableMob otherParent) {
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null;
     }
 
@@ -247,18 +253,18 @@ public class MoCDeerEntity extends TamableAnimal {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return this.isFawn() ? com.example.neomocreatures.init.ModSounds.DEER_AMBIENT_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.DEER_AMBIENT.get();
+        return this.isFawn() ? ModSounds.DEER_AMBIENT_BABY.get()
+                : ModSounds.DEER_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.DEER_HURT.get();
+        return ModSounds.DEER_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.DEER_DEATH.get();
+        return ModSounds.DEER_DEATH.get();
     }
 
     // ---------------------------------------------------------------------

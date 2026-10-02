@@ -1,8 +1,6 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -53,10 +51,5 @@ public class MoCEggModel extends HierarchicalModel<MoCEggEntity> {
     public void setupAnim(MoCEggEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
         // Static object, nothing to animate — matches the original.
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

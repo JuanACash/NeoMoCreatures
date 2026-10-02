@@ -1,5 +1,7 @@
 package com.example.neomocreatures.init;
 
+import com.example.neomocreatures.NeoMoCreatures;
+
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -12,7 +14,7 @@ import net.minecraft.world.level.block.Block;
 public class ModTags {
 
     private static TagKey<Item> tag(String name) {
-        return ItemTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
+        return ItemTags.create(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));
     }
 
     public static final TagKey<Item> REPAIRS_SCORP_CAVE = tag("repairs_scorp_cave_armor");
@@ -30,7 +32,7 @@ public class ModTags {
     public static final TagKey<Item> FILCH_LIZARD_STEALS = tag("filch_lizard_steals");
 
     private static TagKey<Block> blockTag(String name) {
-        return BlockTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
+        return BlockTags.create(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));
     }
 
     /** Blocks no golem may tear out of the world, on top of the built-in safety rules in GolemBlockPicker. */
@@ -41,7 +43,7 @@ public class ModTags {
 
     private static TagKey<Biome> biomeTag(String name) {
         return TagKey.create(Registries.BIOME,
-                ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
+                ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));
     }
 
     // Biomes that decide which variant a creature spawns as (data/neomocreatures/tags/worldgen/biome/variants/).

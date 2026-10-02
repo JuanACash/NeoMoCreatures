@@ -2,8 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -11,7 +9,11 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 /**
  * 1:1 port of drzhark.mocreatures.client.model.MoCModelElephant (Techne /
@@ -31,7 +33,7 @@ import net.minecraft.util.Mth;
 public class MoCElephantModel extends HierarchicalModel<MoCElephantEntity> {
 
     // Minecraft's radian-per-degree constant, same value the original Techne model used.
-    private static final float R = 57.29578F;
+    private static final float R = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private float yOffset;
@@ -365,7 +367,7 @@ public class MoCElephantModel extends HierarchicalModel<MoCElephantEntity> {
     }
 
     /** Tiny local helper so createBodyLayer() reads as one line per cube, like the original Techne dump. */
-    private record PartDefinitionHolder(net.minecraft.client.model.geom.builders.PartDefinition root) {
+    private record PartDefinitionHolder(PartDefinition root) {
         void add(String name, int u, int v, float bx, float by, float bz, int w, int h, int d,
                  float px, float py, float pz, float rx, float ry, float rz) {
             root.addOrReplaceChild(name,
@@ -397,8 +399,8 @@ public class MoCElephantModel extends HierarchicalModel<MoCElephantEntity> {
         backRightLowerLeg.y = LOWER_LEG_Y;
         backLeftLowerLeg.y = LOWER_LEG_Y;
 
-        float rLegXRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 0.8F * limbSwingAmount;
-        float lLegXRot = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float rLegXRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
+        float lLegXRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
 
         float headXRot = Math.max(headPitch, 0F) / R;
         float headYRot = Mth.clamp(netHeadYaw, -20F, 20F) / R;

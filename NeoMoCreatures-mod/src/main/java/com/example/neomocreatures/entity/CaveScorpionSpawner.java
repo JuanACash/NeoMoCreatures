@@ -1,11 +1,16 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
+import com.example.neomocreatures.init.ModEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
@@ -24,7 +29,7 @@ public class CaveScorpionSpawner {
         if (!(event.getLevel() instanceof ServerLevel level) || level.isClientSide) {
             return;
         }
-        if (level.dimension() != net.minecraft.world.level.Level.OVERWORLD) {
+        if (level.dimension() != Level.OVERWORLD) {
             return;
         }
         if (++tickCounter < CHECK_INTERVAL_TICKS) {
@@ -43,7 +48,7 @@ public class CaveScorpionSpawner {
             if (level.random.nextInt(SPAWN_CHANCE_DENOMINATOR) != 0) {
                 continue;
             }
-            com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] Checking near player at Y={}", player.blockPosition().getY());
+            NeoMoCreatures.LOGGER.info("[CaveScorpion] Checking near player at Y={}", player.blockPosition().getY());
             tryCaveSpawnNear(level, player);
         }
     }
@@ -59,7 +64,7 @@ public class CaveScorpionSpawner {
             if (pos.getY() > MAX_Y) {
                 continue;
             }
-            if (player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)) < 24.0D * 24.0D) {
+            if (player.distanceToSqr(Vec3.atCenterOf(pos)) < 24.0D * 24.0D) {
                 continue;
             }
             if (!level.getWorldBorder().isWithinBounds(pos)) {
@@ -68,22 +73,22 @@ public class CaveScorpionSpawner {
             boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
                     && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
             if (!spaceOk) {
-                com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: space not ok at {}", i, pos);
+                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: space not ok at {}", i, pos);
                 continue;
             }
             if (level.getBlockState(pos.below()).isAir()) {
-                com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: no floor at {}", i, pos);
+                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: no floor at {}", i, pos);
                 continue;
             }
             int brightness = level.getMaxLocalRawBrightness(pos);
             if (brightness > 9) {
-                com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: too bright ({}) at {}", i, brightness, pos);
+                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: too bright ({}) at {}", i, brightness, pos);
                 continue;
             }
 
-            MoCScorpionEntity scorpion = com.example.neomocreatures.init.ModEntities.MOC_SCORPION.get().create(level);
+            MoCScorpionEntity scorpion = ModEntities.MOC_SCORPION.get().create(level);
             if (scorpion == null) {
-                com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] entity.create() returned null!");
+                NeoMoCreatures.LOGGER.info("[CaveScorpion] entity.create() returned null!");
                 return;
             }
             scorpion.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D,
@@ -97,6 +102,6 @@ public class CaveScorpionSpawner {
             }
             return;
         }
-        com.example.neomocreatures.NeoMoCreatures.LOGGER.info("[CaveScorpion] all {} tries exhausted, none valid", MAX_TRIES);
+        NeoMoCreatures.LOGGER.info("[CaveScorpion] all {} tries exhausted, none valid", MAX_TRIES);
     }
 }

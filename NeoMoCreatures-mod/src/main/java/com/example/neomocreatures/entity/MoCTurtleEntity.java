@@ -997,7 +997,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
             this.setGrowthScale(tag.getFloat("Scale"));
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

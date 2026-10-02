@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity.bigcat;
 
+import java.util.Set;
+
+import net.minecraft.util.RandomSource;
+
 /**
  * The 8 base big-cat species (no hybrids yet — those come in a later step).
  * Stats are taken directly from the original MoCEntityLion/Tiger/Leopard/Panther
@@ -101,7 +105,7 @@ public enum BigCatVariant {
     }
 
     /** Lion egg: 75% a random-gender lion, 25% a random-gender white lion. */
-    public static BigCatVariant randomLion(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomLion(RandomSource random) {
         if (random.nextInt(4) == 0) {
             return random.nextBoolean() ? WHITE_LION : WHITE_LION_FEMALE;
         }
@@ -109,47 +113,47 @@ public enum BigCatVariant {
     }
 
     /** Tiger egg: 75% orange, 25% white. */
-    public static BigCatVariant randomTiger(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomTiger(RandomSource random) {
         return random.nextInt(4) == 0 ? WHITE_TIGER : TIGER;
     }
 
     /** Wild spawn: 1/20 chance of white, not the spawn egg's 25%. */
-    public static BigCatVariant randomWildLion(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomWildLion(RandomSource random) {
         boolean white = random.nextInt(20) == 0;
         boolean male = random.nextBoolean();
         return white ? (male ? WHITE_LION : WHITE_LION_FEMALE) : (male ? LION_MALE : LION_FEMALE);
     }
 
-    public static BigCatVariant randomWildTiger(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomWildTiger(RandomSource random) {
         return random.nextInt(20) == 0 ? WHITE_TIGER : TIGER;
     }
 
     /** Panther egg: only one look exists. */
-    public static BigCatVariant randomPanther(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomPanther(RandomSource random) {
         return PANTHER;
     }
 
-    public static BigCatVariant randomLiger(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomLiger(RandomSource random) {
         return LIGER;
     }
 
-    public static BigCatVariant randomLiard(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomLiard(RandomSource random) {
         return LIARD;
     }
 
-    public static BigCatVariant randomLeoger(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomLeoger(RandomSource random) {
         return LEOGER;
     }
 
-    public static BigCatVariant randomLither(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomLither(RandomSource random) {
         return LITHER;
     }
 
-    public static BigCatVariant randomPanthard(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomPanthard(RandomSource random) {
         return PANTHARD;
     }
 
-    public static BigCatVariant randomPanthger(net.minecraft.util.RandomSource random) {
+    public static BigCatVariant randomPanthger(RandomSource random) {
         return PANTHGER;
     }
 
@@ -183,13 +187,13 @@ public enum BigCatVariant {
 
     /** Only the plain-colored base species hybridize — white/snow variants never cross with a different species. */
     private static BigCatVariant hybridFor(BigCatVariant a, BigCatVariant b) {
-        java.util.Set<BigCatVariant> pair = java.util.Set.of(a, b);
-        if (pair.equals(java.util.Set.of(LEOPARD, TIGER))) return LEOGER;
-        if (pair.equals(java.util.Set.of(LION_MALE, LEOPARD))) return LIARD;
-        if (pair.equals(java.util.Set.of(LION_MALE, TIGER))) return LIGER;
-        if (pair.equals(java.util.Set.of(LION_MALE, PANTHER))) return LITHER;
-        if (pair.equals(java.util.Set.of(LEOPARD, PANTHER))) return PANTHARD;
-        if (pair.equals(java.util.Set.of(PANTHER, TIGER))) return PANTHGER;
+        Set<BigCatVariant> pair = Set.of(a, b);
+        if (pair.equals(Set.of(LEOPARD, TIGER))) return LEOGER;
+        if (pair.equals(Set.of(LION_MALE, LEOPARD))) return LIARD;
+        if (pair.equals(Set.of(LION_MALE, TIGER))) return LIGER;
+        if (pair.equals(Set.of(LION_MALE, PANTHER))) return LITHER;
+        if (pair.equals(Set.of(LEOPARD, PANTHER))) return PANTHARD;
+        if (pair.equals(Set.of(PANTHER, TIGER))) return PANTHGER;
         return null;
     }
 
@@ -211,7 +215,7 @@ public enum BigCatVariant {
     }
 
     /** 0 white/snow parents -> 1%, 1 -> 25%, 2 -> 99% — same curve for lion white and leopard snow genes. */
-    private static boolean rollRareGene(boolean aRare, boolean bRare, net.minecraft.util.RandomSource random) {
+    private static boolean rollRareGene(boolean aRare, boolean bRare, RandomSource random) {
         int rareParents = (aRare ? 1 : 0) + (bRare ? 1 : 0);
         float chance = switch (rareParents) {
             case 0 -> 0.01F;
@@ -222,7 +226,7 @@ public enum BigCatVariant {
     }
 
     /** Only call once canBreedTogether() has already confirmed these two can breed. */
-    public static BigCatVariant rollOffspring(BigCatVariant a, BigCatVariant b, net.minecraft.util.RandomSource random) {
+    public static BigCatVariant rollOffspring(BigCatVariant a, BigCatVariant b, RandomSource random) {
         Genus ga = genusOf(a);
         if (ga != genusOf(b)) {
             return hybridFor(a, b);

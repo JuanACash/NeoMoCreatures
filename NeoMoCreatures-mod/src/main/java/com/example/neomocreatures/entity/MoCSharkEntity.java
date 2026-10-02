@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -7,14 +8,19 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -41,6 +47,10 @@ import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.aquatic.MoCEntityShark}. Unlike
@@ -60,9 +70,9 @@ import net.minecraft.world.level.Level;
  */
 public class MoCSharkEntity extends TamableAnimal implements EggHatchable, GrowthScaled, StorablePet {
 
-    private static final net.minecraft.resources.ResourceLocation ATTACK_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "shark_attack_speed_boost");
+    private static final ResourceLocation ATTACK_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "shark_attack_speed_boost");
     private static final double ATTACK_SPEED_BOOST = 1.0D;
     /** Wiki: "suffocate and die when out of water" — ticks up while not in water, resets while in it. */
     private int outOfWaterTicks;
@@ -89,7 +99,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
      * TamableAnimal, natural spawning in the ocean would always fail without this.
      */
     @Override
-    public boolean checkSpawnObstruction(net.minecraft.world.level.LevelReader level) {
+    public boolean checkSpawnObstruction(LevelReader level) {
         return level.isUnobstructed(this);
     }
 
@@ -98,7 +108,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 
@@ -123,7 +133,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     }
 
     private boolean isReadyToHunt() {
-        return this.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL;
+        return this.level().getDifficulty() != Difficulty.PEACEFUL;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -141,9 +151,9 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     }
 
     @Override
-    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+    public boolean canDrownInFluidType(FluidType type) {
         // NeoForge's replacement for the now-final canBreatheUnderwater().
-        if (type == net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value()) {
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
             return false;
         }
         return super.canDrownInFluidType(type);
@@ -231,7 +241,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
             return false;
         }
         boolean wasHurt = super.hurt(source, amount);
-        if (wasHurt && this.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
+        if (wasHurt && this.level().getDifficulty() != Difficulty.PEACEFUL) {
             if (attacker != this && attacker instanceof LivingEntity livingAttacker) {
                 this.setTarget(livingAttacker);
             }
@@ -267,7 +277,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
 
         // Wiki: "a tamed shark can be moved with the use of a fish net."
         if (this.isTame() && this.isOwnedBy(player)
-                && stack.is(com.example.neomocreatures.init.ModItems.FISH_NET.get())) {
+                && stack.is(ModItems.FISH_NET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -277,8 +287,8 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
         return super.mobInteract(player, hand);
     }
 
-    private net.minecraft.nbt.CompoundTag buildNetTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildNetTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Shark", true);
         tag.putFloat("Health", this.getHealth());
         tag.putBoolean("Adult", !this.isBaby());
@@ -327,15 +337,15 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
         // Wiki: "0-3 shark teeth (60% chance)... Looting does affect the chance... making it more common."
         double toothChance = Math.min(1.0D, 0.6D + lootingLevel * 0.1D);
         if (this.random.nextDouble() < toothChance) {
-            MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.SHARK_TEETH.get(),
+            MoCLootUtil.dropItems(this, ModItems.SHARK_TEETH.get(),
                     MoCLootUtil.rollWithLootingRange(this.random, 4, lootingLevel));
         }
 
         // Wiki: "10% chance to drop an egg... only if difficulty is Easy or higher."
         double eggChance = Math.min(1.0D, 0.10D + lootingLevel * 0.02D);
-        if (this.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL
+        if (this.level().getDifficulty() != Difficulty.PEACEFUL
                 && this.random.nextDouble() < eggChance) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.SHARK_EGG.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.SHARK_EGG.get()));
         }
     }
 

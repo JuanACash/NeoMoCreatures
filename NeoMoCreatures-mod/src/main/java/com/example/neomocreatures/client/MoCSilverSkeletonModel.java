@@ -15,7 +15,7 @@ import net.minecraft.util.Mth;
  *  swings along with the arm itself; the swords are part of the model, not a held item. */
 public class MoCSilverSkeletonModel<T extends MoCSilverSkeletonEntity> extends HierarchicalModel<T> {
 
-    private static final float RADIAN = 57.29578F;
+    private static final float RADIAN = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     private final ModelPart head;
@@ -144,8 +144,8 @@ public class MoCSilverSkeletonModel<T extends MoCSilverSkeletonEntity> extends H
         this.head.xRot = headPitch / RADIAN;
         this.head.yRot = netHeadYaw / RADIAN;
 
-        float rightLegX = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;
-        float leftLegX = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float rightLegX = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
+        float leftLegX = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
 
         int leftAttack = skeleton.attackCounterLeft;
         int rightAttack = skeleton.attackCounterRight;

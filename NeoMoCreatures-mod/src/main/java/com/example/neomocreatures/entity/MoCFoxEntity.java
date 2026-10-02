@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
@@ -10,11 +11,14 @@ import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -22,6 +26,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
@@ -34,6 +40,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -44,6 +51,7 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -109,7 +117,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         // Wiki: "will flee from players and follow adult foxes" — vanilla's
         // generic "follow nearest adult of my own class" goal fits as-is.
         this.goalSelector.addGoal(3, new FoxFollowParentGoal(this));
-        this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -130,7 +138,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         // "hunt anything smaller than them" was never meant to include other foxes.
         // Wiki: "Tamed foxes stop attacking other mobs too."
         if (this.isBaby() || this.isTame() || target instanceof MoCFoxEntity
-                || target instanceof net.minecraft.world.entity.animal.Fox) {
+                || target instanceof Fox) {
             return false;
         }
         return target.getBbWidth() <= 0.7F && target.getBbHeight() <= 0.7F;
@@ -370,7 +378,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
-    private boolean pickSnowForBiome(ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+    private boolean pickSnowForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
 
         if (biome.is(ModTags.FOX_SNOW_BIOMES)) {
@@ -387,13 +395,13 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Snow", isSnow());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("Snow")) {
             setSnow(tag.getBoolean("Snow"));
@@ -402,21 +410,21 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
 
 
     private boolean isTamingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get());
+        return stack.is(ModItems.TURKEY_RAW.get());
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.TURKEY_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get());
+        return stack.is(ModItems.TURKEY_RAW.get())
+                || stack.is(ModItems.RAT_RAW.get());
     }
 
     @Override
     public boolean isFood(ItemStack stack) {
-        return this.isTame() && stack.is(net.minecraft.world.item.Items.SWEET_BERRIES);
+        return this.isTame() && stack.is(Items.SWEET_BERRIES);
     }
 
     @Override
-    public net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         // Same rename-with-a-book convention used by every other tameable
@@ -425,35 +433,35 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (!this.isTame() && isTamingFood(stack)) {
             if (!this.level().isClientSide) {
                 this.tame(player);
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                NamingHelper.promptRename(this, player.getUUID());
                 this.setHealth(this.getMaxHealth());
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.setHealth(this.getMaxHealth());
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         return super.mobInteract(player, hand);
@@ -462,7 +470,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        MoCFoxEntity cub = com.example.neomocreatures.init.ModEntities.MOC_FOX.get().create(level);
+        MoCFoxEntity cub = ModEntities.MOC_FOX.get().create(level);
         if (cub == null) {
             return null;
         }
@@ -483,7 +491,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         }
         if (owner instanceof Player player) {
             cub.tame(player);
-            com.example.neomocreatures.util.NamingHelper.promptRename(cub, player.getUUID());
+            NamingHelper.promptRename(cub, player.getUUID());
         }
 
         return cub;
@@ -495,12 +503,12 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
 
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
 
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.FUR.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
         /** Builds the NBT payload stored inside a filled Pet Amulet for this fox. */
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Fox", true);
         tag.putBoolean("Snow", isSnow());
         tag.putFloat("Health", this.getHealth());
@@ -514,7 +522,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     }
 
     /** Captures this tamed fox into a Pet Amulet and removes it from the world. */
-    private void capturePetInstant(Player player, net.minecraft.world.InteractionHand hand) {
+    private void capturePetInstant(Player player, InteractionHand hand) {
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
@@ -542,7 +550,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

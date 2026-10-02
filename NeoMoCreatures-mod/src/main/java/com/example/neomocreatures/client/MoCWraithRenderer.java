@@ -4,13 +4,14 @@ import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import com.example.neomocreatures.entity.MoCWraithEntity;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 /** Port of the real {@code MoCRenderWraith}: same standard render pipeline every other entity in
  *  this mod uses (position, body/head rotation, walk animation all handled automatically), just
@@ -41,9 +42,9 @@ public class MoCWraithRenderer extends MobRenderer<MoCWraithEntity, MoCWraithMod
     }
 
     @Override
-    protected net.minecraft.client.renderer.RenderType getRenderType(MoCWraithEntity entity, boolean bodyVisible,
+    protected RenderType getRenderType(MoCWraithEntity entity, boolean bodyVisible,
                        boolean translucent, boolean glowing) {
-        return net.minecraft.client.renderer.RenderType.entityTranslucent(this.getTextureLocation(entity));
+        return RenderType.entityTranslucent(this.getTextureLocation(entity));
     }
 
     @Override

@@ -7,8 +7,10 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.registries.DeferredItem;
 
 /**
  * Set bonus: a player wearing all 4 pieces of scorpion armour from the SAME
@@ -60,8 +62,8 @@ public class ScorpArmorSetBonusHandler {
     }
 
     private static boolean isFullSet(ItemStack helmet, ItemStack chest, ItemStack legs, ItemStack boots,
-            net.neoforged.neoforge.registries.DeferredItem<?> helmetItem, net.neoforged.neoforge.registries.DeferredItem<?> chestItem,
-            net.neoforged.neoforge.registries.DeferredItem<?> legsItem, net.neoforged.neoforge.registries.DeferredItem<?> bootsItem) {
+            DeferredItem<?> helmetItem, DeferredItem<?> chestItem,
+            DeferredItem<?> legsItem, DeferredItem<?> bootsItem) {
         return helmet.is(helmetItem.get()) && chest.is(chestItem.get()) && legs.is(legsItem.get()) && boots.is(bootsItem.get());
     }
 }

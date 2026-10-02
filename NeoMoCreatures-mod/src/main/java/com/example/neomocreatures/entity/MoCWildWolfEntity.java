@@ -14,9 +14,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -25,13 +28,18 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.AABB;
 
@@ -106,10 +114,10 @@ public class MoCWildWolfEntity extends Monster {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new WolfTargetGoal<>(this, Player.class, false));
         this.targetSelector.addGoal(3, new WolfTargetGoal<>(this, IronGolem.class, true));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Pig.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Cow.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Sheep.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Chicken.class, false));
+        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Pig.class, false));
+        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Cow.class, false));
+        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Sheep.class, false));
+        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Chicken.class, false));
     }
 
     public WildWolfVariant getVariant() {
@@ -121,9 +129,9 @@ public class MoCWildWolfEntity extends Monster {
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-                                        net.minecraft.world.DifficultyInstance difficulty,
-                                        net.minecraft.world.entity.MobSpawnType spawnType,
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+                                        DifficultyInstance difficulty,
+                                        MobSpawnType spawnType,
                                         @Nullable SpawnGroupData spawnGroupData) {
         // Original: checkSpawningBiome() forces TIMBER in a cold/snowy/frozen/ice biome, checked
         // before the normal 1-5 roll, which only fires if a variant hasn't already been assigned.
@@ -176,7 +184,7 @@ public class MoCWildWolfEntity extends Monster {
     }
 
     @Override
-    protected void positionRider(net.minecraft.world.entity.Entity passenger, net.minecraft.world.entity.Entity.MoveFunction moveFunction) {
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
             double dist = 0.1D;
             double x = this.getX() + dist * Math.sin(this.getYRot() / 57.29578F);

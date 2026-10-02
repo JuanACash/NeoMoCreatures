@@ -102,8 +102,8 @@ public class MoCMouseModel<T extends MoCMouseEntity> extends HierarchicalModel<T
         this.whiskerL.xRot = this.head.xRot;
         this.whiskerL.yRot = this.head.yRot;
 
-        float frontLegX = Mth.cos(limbSwing * 0.6662F) * 0.6F * limbSwingAmount;
-        float rearLegX = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 0.8F * limbSwingAmount;
+        float frontLegX = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.6F);
+        float rearLegX = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 0.8F);
         this.frontL.xRot = frontLegX;
         this.rearL.xRot = rearLegX;
         this.rearR.xRot = frontLegX;

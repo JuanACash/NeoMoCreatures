@@ -1,9 +1,21 @@
 package com.example.neomocreatures;
 
+import com.example.neomocreatures.client.ModClientParticles;
 import com.example.neomocreatures.client.ModKeyMappings;
+import com.example.neomocreatures.client.NightmareOverlayHandler;
+import com.example.neomocreatures.entity.CaveScorpionSpawner;
+import com.example.neomocreatures.event.GrowthScaleJoinHandler;
+import com.example.neomocreatures.event.KittyVillageSpawner;
+import com.example.neomocreatures.event.NightmareRiderFireImmunityHandler;
+import com.example.neomocreatures.event.ScorpArmorSetBonusHandler;
+import com.example.neomocreatures.event.ScorpionHoldReleaseHandler;
+import com.example.neomocreatures.init.ModArmorMaterials;
+import com.example.neomocreatures.init.ModBlocks;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModEntityAttributes;
+import com.example.neomocreatures.init.ModFeatures;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModSpawnPlacements;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
@@ -372,24 +384,24 @@ public class NeoMoCreatures {
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         NeoForge.EVENT_BUS.register(this);
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.ScorpArmorSetBonusHandler.class);
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.NightmareRiderFireImmunityHandler.class);
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.client.NightmareOverlayHandler.class);
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.ScorpionHoldReleaseHandler.class);
-        NeoForge.EVENT_BUS.register(new com.example.neomocreatures.entity.CaveScorpionSpawner());
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.KittyVillageSpawner.class);
-        NeoForge.EVENT_BUS.register(com.example.neomocreatures.event.GrowthScaleJoinHandler.class);
+        NeoForge.EVENT_BUS.register(ScorpArmorSetBonusHandler.class);
+        NeoForge.EVENT_BUS.register(NightmareRiderFireImmunityHandler.class);
+        NeoForge.EVENT_BUS.register(NightmareOverlayHandler.class);
+        NeoForge.EVENT_BUS.register(ScorpionHoldReleaseHandler.class);
+        NeoForge.EVENT_BUS.register(new CaveScorpionSpawner());
+        NeoForge.EVENT_BUS.register(KittyVillageSpawner.class);
+        NeoForge.EVENT_BUS.register(GrowthScaleJoinHandler.class);
     }
 
     private void registerDeferredRegistries(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
-        com.example.neomocreatures.init.ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
-        com.example.neomocreatures.init.ModBlocks.BLOCKS.register(modEventBus);
+        ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
+        ModBlocks.BLOCKS.register(modEventBus);
         ModTrunkPlacerTypes.TRUNK_PLACER_TYPES.register(modEventBus);
-        com.example.neomocreatures.init.ModParticles.PARTICLE_TYPES.register(modEventBus);
+        ModParticles.PARTICLE_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
-        com.example.neomocreatures.init.ModFeatures.FEATURES.register(modEventBus);
+        ModFeatures.FEATURES.register(modEventBus);
     }
 
     private void registerEntitiesAndSounds(IEventBus modEventBus) {
@@ -402,11 +414,11 @@ public class NeoMoCreatures {
     private void registerNetworkingAndClient(IEventBus modEventBus) {
         modEventBus.addListener(ModNetworking::register);
         modEventBus.addListener(ModKeyMappings::register);
-        modEventBus.register(com.example.neomocreatures.client.ModClientParticles.class);
+        modEventBus.register(ModClientParticles.class);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(com.example.neomocreatures.init.ModBlocks::registerFlammability);
+        event.enqueueWork(ModBlocks::registerFlammability);
         LOGGER.info("neomocreatures common setup complete");
     }
 

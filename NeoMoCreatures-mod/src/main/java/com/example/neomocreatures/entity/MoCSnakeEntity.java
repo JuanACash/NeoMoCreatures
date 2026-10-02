@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.snake.SnakeVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -7,19 +8,27 @@ import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -34,6 +43,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -45,6 +55,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -52,6 +63,9 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
+
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hunter.MoCEntitySnake}: a
@@ -73,7 +87,7 @@ import net.minecraft.world.phys.Vec3;
  * happens via {@link #onHatchedFromEgg}, not feeding.
  */
 public class MoCSnakeEntity extends TamableAnimal
-        implements com.example.neomocreatures.entity.egg.EggHatchable, CarriedPet, GrowthScaled, StorablePet {
+        implements EggHatchable, CarriedPet, GrowthScaled, StorablePet {
 
     private static final double NEAR_PLAYER_RANGE = 5.0D;
     private static final double SEARCH_RADIUS = 12.0D;
@@ -99,7 +113,7 @@ public class MoCSnakeEntity extends TamableAnimal
             SynchedEntityData.defineId(MoCSnakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BITING =
             SynchedEntityData.defineId(MoCSnakeEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<java.util.Optional<java.util.UUID>> DATA_HELD_BY =
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCSnakeEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     /** How long after being released before it can be picked up again — avoids an instant re-grab flicker. */
     private int pickupCooldown;
@@ -153,7 +167,7 @@ public class MoCSnakeEntity extends TamableAnimal
     }
 
     private void startHolding(Player player) {
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.of(player.getUUID()));
+        this.entityData.set(DATA_HELD_BY, Optional.of(player.getUUID()));
         this.setNoAi(true);
         this.setNoGravity(true);
         this.noPhysics = true;
@@ -161,7 +175,7 @@ public class MoCSnakeEntity extends TamableAnimal
     }
 
     private void stopHolding() {
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.empty());
+        this.entityData.set(DATA_HELD_BY, Optional.empty());
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
@@ -286,7 +300,7 @@ public class MoCSnakeEntity extends TamableAnimal
         super.defineSynchedData(builder);
         builder.define(DATA_VARIANT, SnakeVariant.GREEN_DARK.getId());
         builder.define(DATA_BITING, false);
-        builder.define(DATA_HELD_BY, java.util.Optional.empty());
+        builder.define(DATA_HELD_BY, Optional.empty());
     }
 
     public SnakeVariant getVariant() {
@@ -309,7 +323,7 @@ public class MoCSnakeEntity extends TamableAnimal
     private static final float SCALE_CHANGE_THRESHOLD = 0.01F;
 
     private void tickGrowth() {
-        net.minecraft.world.entity.ai.attributes.AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
+        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
         if (scaleAttr == null) {
             return;
         }
@@ -429,7 +443,7 @@ public class MoCSnakeEntity extends TamableAnimal
      * client-only in tickCosmeticAnimation().
      */
     private void playLocalSound(SoundEvent sound, float volume, float pitch) {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {
             mc.level.playLocalSound(this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch, false);
         }
@@ -493,7 +507,7 @@ public class MoCSnakeEntity extends TamableAnimal
 
     /** 1:1 port of the original's hiss/pissed tick block. */
     private void tickHissAndPissed() {
-        if (this.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL
+        if (this.level().getDifficulty() != Difficulty.PEACEFUL
                 && getNearPlayer() && !this.isTame() && getVariant().isBold()) {
             this.hissCounter++;
             if (this.hissCounter % HISS_SOUND_INTERVAL == 0) {
@@ -537,7 +551,7 @@ public class MoCSnakeEntity extends TamableAnimal
         }
         boolean wasHurt = super.hurt(source, amount);
         if (wasHurt && !this.level().isClientSide && !this.isTame()
-                && this.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
+                && this.level().getDifficulty() != Difficulty.PEACEFUL) {
             Entity attacker = source.getEntity();
             if (attacker != this && attacker instanceof LivingEntity livingAttacker) {
                 setPissed(true);
@@ -665,10 +679,10 @@ public class MoCSnakeEntity extends TamableAnimal
     }
 
     @Override
-    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+    public boolean canDrownInFluidType(FluidType type) {
         // NeoForge's replacement for the now-final canBreatheUnderwater() — same
         // intent as the original mod's MoCEntitySnake.canBreatheUnderwater().
-        if (type == net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value()) {
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
             return false;
         }
         return super.canDrownInFluidType(type);
@@ -708,10 +722,10 @@ public class MoCSnakeEntity extends TamableAnimal
 
     /** Wiki: "Tamed snakes can be healed with raw rat." */
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get());
+        return stack.is(ModItems.RAT_RAW.get());
     }
 
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Snake", true);
         tag.putInt("SnakeVariant", getVariant().getId());
@@ -730,16 +744,16 @@ public class MoCSnakeEntity extends TamableAnimal
     }
 
     /** The taming egg matching this snake's own variant — used for the death drop. */
-    private net.minecraft.world.item.Item getEggItem() {
+    private Item getEggItem() {
         return switch (getVariant()) {
-            case GREEN_DARK -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_GREEN_DARK.get();
-            case WOLF -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_WOLF.get();
-            case ORANGE -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_ORANGE.get();
-            case GREEN_BRIGHT -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_GREEN_BRIGHT.get();
-            case CORAL -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_CORAL.get();
-            case COBRA -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_COBRA.get();
-            case RATTLE -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_RATTLE.get();
-            case PYTHON -> com.example.neomocreatures.init.ModItems.SNAKE_EGG_PYTHON.get();
+            case GREEN_DARK -> ModItems.SNAKE_EGG_GREEN_DARK.get();
+            case WOLF -> ModItems.SNAKE_EGG_WOLF.get();
+            case ORANGE -> ModItems.SNAKE_EGG_ORANGE.get();
+            case GREEN_BRIGHT -> ModItems.SNAKE_EGG_GREEN_BRIGHT.get();
+            case CORAL -> ModItems.SNAKE_EGG_CORAL.get();
+            case COBRA -> ModItems.SNAKE_EGG_COBRA.get();
+            case RATTLE -> ModItems.SNAKE_EGG_RATTLE.get();
+            case PYTHON -> ModItems.SNAKE_EGG_PYTHON.get();
         };
     }
 
@@ -753,7 +767,7 @@ public class MoCSnakeEntity extends TamableAnimal
 
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
-                this.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
+                this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -762,7 +776,7 @@ public class MoCSnakeEntity extends TamableAnimal
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -773,7 +787,7 @@ public class MoCSnakeEntity extends TamableAnimal
         // your shoulders." Same system as MoCKittyEntity — needs an empty
         // hand, and only one CarriedPet at a time per player.
         if (this.isTame() && this.isOwnedBy(player) && this.pickupCooldown <= 0 && !isHeld() && stack.isEmpty()
-                && !com.example.neomocreatures.util.PetCarryUtil.isAlreadyCarryingAPet(player)) {
+                && !PetCarryUtil.isAlreadyCarryingAPet(player)) {
             if (!this.level().isClientSide) {
                 startHolding(player);
             }
@@ -796,7 +810,7 @@ public class MoCSnakeEntity extends TamableAnimal
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);
-            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+            NamingHelper.promptRename(this, tamer.getUUID());
         }
     }
 
@@ -828,7 +842,7 @@ public class MoCSnakeEntity extends TamableAnimal
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.snake.SnakeVariant.byId(tag.getInt("SnakeVariant")));
+        this.setVariant(SnakeVariant.byId(tag.getInt("SnakeVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -840,7 +854,7 @@ public class MoCSnakeEntity extends TamableAnimal
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

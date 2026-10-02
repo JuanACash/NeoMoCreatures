@@ -1,28 +1,42 @@
 package com.example.neomocreatures.entity;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
+import com.example.neomocreatures.client.ModKeyMappings;
+import com.example.neomocreatures.entity.horse.HorseEssenceHandler;
+import com.example.neomocreatures.entity.horse.HorseSounds;
+import com.example.neomocreatures.entity.horse.HorseStats;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -32,18 +46,28 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -56,11 +80,20 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
@@ -111,8 +144,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
 
     public static final int AMULET_VANISH_DURATION_TICKS = 140;
-    private net.minecraft.world.item.Item pendingAmuletTemplate = null;
-    private java.util.UUID pendingAmuletOwner = null;
+    private Item pendingAmuletTemplate = null;
+    private UUID pendingAmuletOwner = null;
 
     public static final int VANISH_DURATION_TICKS = 100;
 
@@ -173,33 +206,37 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     // works with vanilla's stock ChestMenu with zero extra GUI code.
     private final SimpleContainer chestInventory = new SimpleContainer(27);
 
+
+    /** Right-click behaviour of the four essences. */
+    private final HorseEssenceHandler essenceHandler = new HorseEssenceHandler(this);
+
     public static final int GRAZE_DURATION_TICKS = 100;
 
     private float nightmareFleeYaw = 0F;
 
-    private static final java.util.Map<net.minecraft.world.item.DyeColor, MoCHorseGenetics.FairyColor> DYE_TO_FAIRY_COLOR = java.util.Map.ofEntries(
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.WHITE, MoCHorseGenetics.FairyColor.WHITE),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.ORANGE, MoCHorseGenetics.FairyColor.ORANGE),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.YELLOW, MoCHorseGenetics.FairyColor.YELLOW),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.LIME, MoCHorseGenetics.FairyColor.LIGHTGREEN),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.GREEN, MoCHorseGenetics.FairyColor.GREEN),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.CYAN, MoCHorseGenetics.FairyColor.CYAN),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.LIGHT_BLUE, MoCHorseGenetics.FairyColor.BLUE),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.BLUE, MoCHorseGenetics.FairyColor.DARKBLUE),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.PURPLE, MoCHorseGenetics.FairyColor.PURPLE),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.PINK, MoCHorseGenetics.FairyColor.PINK),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.RED, MoCHorseGenetics.FairyColor.RED),
-            java.util.Map.entry(net.minecraft.world.item.DyeColor.BLACK, MoCHorseGenetics.FairyColor.BLACK)
+    private static final Map<DyeColor, MoCHorseGenetics.FairyColor> DYE_TO_FAIRY_COLOR = Map.ofEntries(
+            Map.entry(DyeColor.WHITE, MoCHorseGenetics.FairyColor.WHITE),
+            Map.entry(DyeColor.ORANGE, MoCHorseGenetics.FairyColor.ORANGE),
+            Map.entry(DyeColor.YELLOW, MoCHorseGenetics.FairyColor.YELLOW),
+            Map.entry(DyeColor.LIME, MoCHorseGenetics.FairyColor.LIGHTGREEN),
+            Map.entry(DyeColor.GREEN, MoCHorseGenetics.FairyColor.GREEN),
+            Map.entry(DyeColor.CYAN, MoCHorseGenetics.FairyColor.CYAN),
+            Map.entry(DyeColor.LIGHT_BLUE, MoCHorseGenetics.FairyColor.BLUE),
+            Map.entry(DyeColor.BLUE, MoCHorseGenetics.FairyColor.DARKBLUE),
+            Map.entry(DyeColor.PURPLE, MoCHorseGenetics.FairyColor.PURPLE),
+            Map.entry(DyeColor.PINK, MoCHorseGenetics.FairyColor.PINK),
+            Map.entry(DyeColor.RED, MoCHorseGenetics.FairyColor.RED),
+            Map.entry(DyeColor.BLACK, MoCHorseGenetics.FairyColor.BLACK)
     );
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.MobSpawnType spawnReason,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
-        || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnReason == MobSpawnType.NATURAL
+        || spawnReason == MobSpawnType.CHUNK_GENERATION) {
             var biome = level.getBiome(this.blockPosition());
-            java.util.List<Species> options = new java.util.ArrayList<>();
+            List<Species> options = new ArrayList<>();
             if (biome.is(ModTags.HORSE_TIER1_BIOMES)) options.add(Species.HORSE);
             if (biome.is(ModTags.HORSE_ZEBRA_BIOMES)) options.add(Species.ZEBRA);
             if (biome.is(ModTags.HORSE_DONKEY_BIOMES)) options.add(Species.DONKEY);
@@ -235,7 +272,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
                 .add(Attributes.JUMP_STRENGTH, 0.7D);
     }
 
-    public static boolean isExemptZebraRider(net.minecraft.world.entity.player.Player player) {
+    public static boolean isExemptZebraRider(Player player) {
         if (!(player.getVehicle() instanceof MoCHorseEntity mount)) {
             return false;
         }
@@ -243,87 +280,24 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         if (species == Species.ZEBRA || species == Species.ZORSE) {
             return true;
         }
-        return species == Species.HORSE && coatTier(mount.getCoat()) == 4;
+        return species == Species.HORSE && HorseStats.coatTier(mount.getCoat()) == 4;
     }
 
-    // ---------------------------------------------------------------
-    // Per-species/tier stats (health, speed, jump). The jump values come
-    // from simulating a horse's real jump physics (gravity 0.08
-    // blocks/tick², drag 0.98) to hit the exact requested height in
-    // blocks, since jump_strength isn't linear with height. Undead/
-    // Skeleton aren't handled separately: since they don't change
-    // getSpecies(), they automatically inherit their counterpart's stats.
-    // ---------------------------------------------------------------
-    private static final double JUMP_1_5_BLOCKS = 0.4965D;
-    private static final double JUMP_2_BLOCKS = 0.5750D;
-    private static final double JUMP_3_BLOCKS = 0.7099D;
-    private static final double JUMP_4_BLOCKS = 0.8254D;
-    private static final double JUMP_4_5_BLOCKS = 0.8791D;
-    private static final double JUMP_5_5_BLOCKS = 0.9790D;
-
-    /** "Walking alone" speed (no rider) for the special horses: the same
-     *  as a normal tier-4 horse. Zorse, donkey/mule/zonkey, zebra, and
-     *  horse (all tiers) are left untouched. */
-    private static final double SPECIAL_UNMOUNTED_SPEED = 0.2594D;
-
-    private static int coatTier(Coat coat) {
-        return switch (coat) {
-            case WHITE, CREAMY, BROWN, DARKBROWN, BLACK -> 1;
-            case BRIGHTCREAMY, SPECKLED, PALEBROWN, GREY -> 2;
-            case PINTO, BRIGHTPINTO, PALESPECKLES -> 3;
-            case SPOTTED, COW -> 4;
-        };
-    }
-
+    /** Applies the species/coat stats from {@link HorseStats}; never heals above the new max. */
     private void applyMoCAttributes() {
-        double health;
-        double speed;
-        double jump;
-
-        switch (getSpecies()) {
-            case DONKEY -> { health = 16D; speed = 0.175D; jump = JUMP_1_5_BLOCKS; }
-            case MULE, ZONKY -> { health = 18D; speed = 0.1901D; jump = JUMP_1_5_BLOCKS; }
-            case ZEBRA -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; }
-            case ZORSE -> { health = 24D; speed = 0.2594D; jump = JUMP_4_BLOCKS; }
-            case BATHORSE, NIGHTMARE -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
-            case UNICORN -> { health = 28D; speed = 0.4D; jump = JUMP_5_5_BLOCKS; }
-            case PEGASUS -> { health = 28D; speed = 0.37D; jump = JUMP_4_5_BLOCKS; }
-            case DARK_PEGASUS -> { health = 28D; speed = 0.34D; jump = JUMP_4_5_BLOCKS; }
-            case FAIRY_HORSE -> { health = 30D; speed = 0.4D; jump = JUMP_4_5_BLOCKS; }
-            case GHOST, GHOST_WINGED, HORSE_BUG -> { health = 26D; speed = 0.3104D; jump = JUMP_4_5_BLOCKS; }
-            case HORSE -> {
-                switch (coatTier(getCoat())) {
-                    case 3 -> { health = 20D; speed = 0.2432D; jump = JUMP_3_BLOCKS; }
-                    case 4 -> { health = 24D; speed = 0.2594D; jump = JUMP_4_BLOCKS; }
-                    default -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; } // tier 1 y 2
-                }
-            }
-            default -> { health = 18D; speed = 0.2101D; jump = JUMP_2_BLOCKS; }
-        }
-
-        net.minecraft.world.entity.ai.attributes.AttributeInstance healthAttr = this.getAttribute(Attributes.MAX_HEALTH);
-        if (healthAttr != null) healthAttr.setBaseValue(health);
-        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speedAttr != null) speedAttr.setBaseValue(speed);
-        net.minecraft.world.entity.ai.attributes.AttributeInstance jumpAttr = this.getAttribute(Attributes.JUMP_STRENGTH);
-        if (jumpAttr != null) jumpAttr.setBaseValue(jump);
+        HorseStats stats = HorseStats.of(getSpecies(), getCoat());
+        AttributeInstance healthAttr = this.getAttribute(Attributes.MAX_HEALTH);
+        if (healthAttr != null) healthAttr.setBaseValue(stats.maxHealth());
+        AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speedAttr != null) speedAttr.setBaseValue(stats.movementSpeed());
+        AttributeInstance jumpAttr = this.getAttribute(Attributes.JUMP_STRENGTH);
+        if (jumpAttr != null) jumpAttr.setBaseValue(stats.jumpStrength());
 
         // Never heals for free (loading/transforming shouldn't raise current
         // health) — it only prevents it from exceeding the new max.
         if (this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
-    }
-
-    /** Bathorse, Nightmare, Unicorn, Pegasus, Dark Pegasus, Fairy y Ghost/
-    *  Ghost Winged (includes their undead versions, since undead doesn't
-    *  change species). Zorse, donkey/mule/zonkey, zebra, and horse (any
-    *  tier, including undead horse) are deliberately left out. */
-    private boolean isSlowedWhenUnridden() {
-        return switch (getSpecies()) {
-            case BATHORSE, NIGHTMARE, UNICORN, PEGASUS, DARK_PEGASUS, FAIRY_HORSE, GHOST, GHOST_WINGED -> true;
-            default -> false;
-        };
     }
 
     @Override
@@ -470,7 +444,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return ordinal == UNSET ? getSpecies() : Species.values()[ordinal];
     }
 
-    private void startTransform(Species target) {
+    public void startTransform(Species target) {
         this.entityData.set(DATA_TRANSFORM_TARGET, target.ordinal());
         this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
     }
@@ -535,7 +509,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return false;
     }
 
-    private net.minecraft.world.item.Item filledAmuletFor(net.minecraft.world.item.Item emptyAmulet) {
+    private Item filledAmuletFor(Item emptyAmulet) {
         if (emptyAmulet == ModItems.AMULET_BONE.get()) return ModItems.AMULET_BONE_FULL.get();
         if (emptyAmulet == ModItems.AMULET_FAIRY.get()) return ModItems.AMULET_FAIRY_FULL.get();
         if (emptyAmulet == ModItems.AMULET_PEGASUS.get()) return ModItems.AMULET_PEGASUS_FULL.get();
@@ -544,7 +518,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return null;
     }
 
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("Species", getSpecies().name());
         tag.putString("Coat", getCoat().name());
@@ -569,15 +543,15 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return tag;
     }
 
-    private void finishCapture(net.minecraft.world.item.Item filledItem, CompoundTag tag, boolean preserveEquipment) {
+    private void finishCapture(Item filledItem, CompoundTag tag, boolean preserveEquipment) {
         if (preserveEquipment) {
             ItemStack saddle = this.inventory.getItem(0);
             if (!saddle.isEmpty()) {
-                tag.putString("SaddleItem", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(saddle.getItem()).toString());
+                tag.putString("SaddleItem", BuiltInRegistries.ITEM.getKey(saddle.getItem()).toString());
             }
             ItemStack armor = this.getItemBySlot(EquipmentSlot.BODY);
             if (!armor.isEmpty()) {
-                tag.putString("ArmorItem", net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(armor.getItem()).toString());
+                tag.putString("ArmorItem", BuiltInRegistries.ITEM.getKey(armor.getItem()).toString());
             }
             if (hasChest()) {
                 tag.putBoolean("HasChest", true);
@@ -595,14 +569,14 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         }
 
         ItemStack result = new ItemStack(filledItem);
-        result.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                net.minecraft.world.item.component.CustomData.of(tag));
+        result.set(DataComponents.CUSTOM_DATA,
+                CustomData.of(tag));
         this.spawnAtLocation(result);
         this.discard();
     }
 
     private void startAmuletCapture(ItemStack amulet, Player player) {
-        net.minecraft.world.item.Item filledItem = filledAmuletFor(amulet.getItem());
+        Item filledItem = filledAmuletFor(amulet.getItem());
         if (filledItem == null) {
             return;
         }
@@ -611,7 +585,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         this.entityData.set(DATA_VANISH_TICKS, 1);
         this.entityData.set(DATA_VANISH_DURATION_TICKS, AMULET_VANISH_DURATION_TICKS);
         this.getNavigation().stop();
-        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
         this.playSound(ModSounds.AMULET_VANISH.get(), 1.0F, 1.0F);
     }
 
@@ -622,7 +596,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     }
 
     private void completeAmuletCapture() {
-        net.minecraft.world.item.Item filledItem = filledAmuletFor(this.pendingAmuletTemplate);
+        Item filledItem = filledAmuletFor(this.pendingAmuletTemplate);
         this.pendingAmuletTemplate = null;
         if (filledItem == null) {
             return;
@@ -654,6 +628,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     public void setUndeadDecayTicksPublic(int ticks) {
         this.undeadDecayTicks = ticks;
+    }
+
+    /** Starts the undead conversion countdown (Essence of Undead). */
+    public void startUndeadTransform() {
+        this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, UNDEAD_TRANSFORM_DURATION_TICKS);
     }
 
     public void setDescendHeld(boolean held) {
@@ -753,7 +732,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     }
     
     @Override
-    public void die(net.minecraft.world.damagesource.DamageSource damageSource) {
+    public void die(DamageSource damageSource) {
         super.die(damageSource);
         if (this.level().isClientSide || !this.isTamed()) {
             return;
@@ -769,7 +748,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         boolean wasFlyer = getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
                 || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE;
 
-        MoCHorseEntity ghost = com.example.neomocreatures.init.ModEntities.MOC_HORSE.get().create(this.level());
+        MoCHorseEntity ghost = ModEntities.MOC_HORSE.get().create(this.level());
         if (ghost == null) return;
         ghost.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
         ghost.setSpecies(wasFlyer ? Species.GHOST_WINGED : Species.GHOST);
@@ -778,13 +757,13 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         ghost.setAge(0);
         this.level().addFreshEntity(ghost);
         ghost.playSound(ModSounds.HORSE_GHOST_GRUNT1.get(), 1.0F, 1.0F);
-        com.example.neomocreatures.util.NamingHelper.promptRename(ghost, this.getOwnerUUID());
+        NamingHelper.promptRename(ghost, this.getOwnerUUID());
     }
 
     private boolean fleeing = false;
 
-    private static final net.minecraft.resources.ResourceLocation ZEBRA_FLEE_SPEED_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, "zebra_flee_speed");
+    private static final ResourceLocation ZEBRA_FLEE_SPEED_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "zebra_flee_speed");
 
     public boolean isFleeing() {
         return this.fleeing;
@@ -795,15 +774,15 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             return;
         }
         this.fleeing = fleeing;
-        net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speedAttr == null) {
             return;
         }
         if (fleeing) {
             if (speedAttr.getModifier(ZEBRA_FLEE_SPEED_MODIFIER_ID) == null) {
-                speedAttr.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                speedAttr.addTransientModifier(new AttributeModifier(
                         ZEBRA_FLEE_SPEED_MODIFIER_ID, 0.5D,
-                        net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             }
         } else {
             speedAttr.removeModifier(ZEBRA_FLEE_SPEED_MODIFIER_ID);
@@ -862,67 +841,27 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return gruntSound();
-    }
-
-    private SoundEvent gruntSound() {
-        if (isUndead()) {
-            return this.random.nextBoolean() ? ModSounds.HORSE_UNDEAD_GRUNT1.get() : ModSounds.HORSE_UNDEAD_GRUNT2.get();
-        }
-        if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
-            return switch (this.random.nextInt(3)) {
-                case 0 -> ModSounds.HORSE_GHOST_GRUNT1.get();
-                case 1 -> ModSounds.HORSE_GHOST_GRUNT2.get();
-                default -> ModSounds.HORSE_GHOST_GRUNT3.get();
-            };
-        }
-        return switch (getSpecies()) {
-            case DONKEY, MULE, ZONKY -> ModSounds.DONKEY_GRUNT.get();
-            case ZEBRA, ZORSE -> ModSounds.ZEBRA_GRUNT.get();
-            default -> ModSounds.HORSE_GRUNT.get();
-        };
+        return HorseSounds.ambient(getSpecies(), isUndead(), this.random);
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) return ModSounds.HORSE_GHOST_HURT.get();
-        if (isUndead()) return ModSounds.HORSE_UNDEAD_HURT.get();
-        return switch (getSpecies()) {
-            case DONKEY, MULE, ZONKY -> ModSounds.DONKEY_HURT.get();
-            case ZEBRA, ZORSE -> ModSounds.ZEBRA_HURT.get();
-            default -> ModSounds.HORSE_HURT.get();
-        };
+        return HorseSounds.hurt(getSpecies(), isUndead());
     }
-
-    
 
     @Override
     protected SoundEvent getDeathSound() {
-        if (isUndead()) return ModSounds.HORSE_UNDEAD_DEATH.get();
-        if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) return ModSounds.HORSE_GHOST_DEATH.get();
-        return switch (getSpecies()) {
-            case DONKEY, MULE, ZONKY -> ModSounds.DONKEY_DEATH.get();
-            default -> ModSounds.HORSE_DEATH.get();
-        };
+        return HorseSounds.death(getSpecies(), isUndead());
     }
 
     /**
      * Sound vanilla plays (via makeMad()) when a player mounts an untamed
-     * horse and it throws them off — the alternative taming path, next to
-     * food/apples. makeMad() is already inherited from AbstractHorse and
-     * already does everything else (throwing off the rider, raising
-     * "temper", and rearing with setStanding(true)); here we just pick
-     * which "mad" sound fits each variant.
+     * horse and it throws them off. makeMad() is inherited from AbstractHorse
+     * and already throws off the rider, raises temper and rears.
      */
     @Override
     protected SoundEvent getAngrySound() {
-        if (isUndead()) {
-            return ModSounds.HORSE_MAD_UNDEAD.get();
-        }
-        if (getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
-            return ModSounds.HORSE_GHOST_MAD.get();
-        }
-        return ModSounds.HORSE_MOB_AGGRESSIVE.get();
+        return HorseSounds.angry(getSpecies(), isUndead());
     }
 
     /**
@@ -961,8 +900,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         // No chest: none of vanilla's saddle/armor menu — instead, we ask
         // the client to open the player's regular inventory.
         if (player instanceof ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -1143,7 +1082,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         }
 
         if (this.isTamed() && getSpecies() == Species.FAIRY_HORSE && !isFairyColorLocked() && !isColorTransforming()
-                && stack.getItem() instanceof net.minecraft.world.item.DyeItem dyeItem
+                && stack.getItem() instanceof DyeItem dyeItem
                 && DYE_TO_FAIRY_COLOR.containsKey(dyeItem.getDyeColor())) {
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
@@ -1172,11 +1111,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         // renamed by anyone, which makes the renamer its new owner.
         if (this.isTamed() && stack.is(Items.BOOK)
                 && (player.getUUID().equals(this.getOwnerUUID()) || this.getOwnerUUID() == null)) {
-            if (!this.level().isClientSide && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 if (this.getOwnerUUID() == null) {
-                    com.example.neomocreatures.util.NamingHelper.promptRenameAndAdopt(this, serverPlayer);
+                    NamingHelper.promptRenameAndAdopt(this, serverPlayer);
                 } else {
-                    com.example.neomocreatures.util.NamingHelper.promptRename(this, this.getOwnerUUID());
+                    NamingHelper.promptRename(this, this.getOwnerUUID());
                 }
             }
             return InteractionResult.SUCCESS;
@@ -1263,248 +1202,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return super.mobInteract(player, hand);
     }
 
-    /**
-    * Essence of Darkness: transforms zorse -> bathorse and pegasus ->
-    * dark pegasus (with height/mounted restrictions in the latter case
-    * while transforming), and also heals or triggers love mode on an
-    * already-transformed bathorse/dark pegasus.
-    */
-    private InteractionResult tryEssenceOfDarknessInteraction(Player player, ItemStack stack) {
-        //ESSENCE OF DARKNESS: ZORSE -> BATHORSE
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())) {
-            if (getSpecies() == Species.ZORSE && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(Species.BATHORSE);
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (getSpecies() == Species.BATHORSE) {
-                if (!this.level().isClientSide) {
-                    if (this.getHealth() < this.getMaxHealth()) {
-                        this.heal(this.getMaxHealth());
-                    } else if (!this.isInLove() && this.canFallInLove()) {
-                        this.setInLove(player);
-                    } else {
-                        return InteractionResult.PASS;
-                    }
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        //ESSENCE OF DARKNESS: PEGASUS -> DARK PEGASUS
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
-                && getSpecies() == Species.PEGASUS) {
-            if (!isTransforming()) {
-                if (this.getY() < 150.0D) {
-                    return InteractionResult.PASS;
-                }
-                if (this.isVehicle()) {
-                    return InteractionResult.PASS;
-                }
-                if (!this.level().isClientSide) {
-                    startTransform(Species.DARK_PEGASUS);
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
-                && getSpecies() == Species.DARK_PEGASUS) {
-            if (!this.level().isClientSide) {
-                if (this.getHealth() < this.getMaxHealth()) {
-                    this.heal(this.getMaxHealth());
-                } else if (!this.isInLove() && this.canFallInLove()) {
-                    this.setInLove(player);
-                } else {
-                    return InteractionResult.PASS;
-                }
-                useEssence(player, stack);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        return null;
-    }
-
-    /**
-    * Essence of Fire: transforms zorse -> nightmare, and heals or
-    * triggers love mode on an already-transformed nightmare.
-    */
-    private InteractionResult tryEssenceOfFireInteraction(Player player, ItemStack stack) {
-        //ESSENCE OF FIRE: ZORSE -> NIGHTMARE
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_FIRE.get())) {
-            if (getSpecies() == Species.ZORSE && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(Species.NIGHTMARE);
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (getSpecies() == Species.NIGHTMARE) {
-                if (!this.level().isClientSide) {
-                    if (this.getHealth() < this.getMaxHealth()) {
-                        this.heal(this.getMaxHealth());
-                    } else if (!this.isInLove() && this.canFallInLove()) {
-                        this.setInLove(player);
-                    } else {
-                        return InteractionResult.PASS;
-                    }
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-    * Essence of Undead: converts horse/zorse/unicorn, or
-    * bathorse/pegasus/dark_pegasus, into their undead version (as long
-    * as it's not blocked by Essence of Light); if it's already undead,
-    * it instead resets the stage to 0 and heals.
-    */
-    private InteractionResult tryEssenceOfUndeadInteraction(Player player, ItemStack stack) {
-        //ESSENCE OF UNDEAD: HORSE/ZORSE -> UNDEAD HORSE
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
-                && (getSpecies() == Species.HORSE || getSpecies() == Species.ZORSE || getSpecies() == Species.UNICORN)
-                && !isUndeadLocked()) {
-            if (!this.level().isClientSide) {
-                if (!isUndead() && !isUndeadTransforming()) {
-                    this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, UNDEAD_TRANSFORM_DURATION_TICKS);
-                    useEssence(player, stack);
-                } else if (!isUndeadTransforming()) {
-                    if (this.getHealth() < this.getMaxHealth()) {
-                        this.heal(this.getMaxHealth());
-                    }
-                    setUndeadStage(UNDEAD_STAGE_0);
-                    undeadDecayTicks = 0;
-                    useEssence(player, stack);
-                }
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        //ESSENCE OF UNDEAD: BATHORSE/PEGASUS/DARK_PEGASUS -> UNDEAD PEGASUS
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
-                && (getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS)
-                && !isUndeadLocked()) {
-            if (!this.level().isClientSide) {
-                if (!isUndead() && !isUndeadTransforming()) {
-                    this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, UNDEAD_TRANSFORM_DURATION_TICKS);
-                    useEssence(player, stack);
-                } else if (!isUndeadTransforming()) {
-                    if (this.getHealth() < this.getMaxHealth()) {
-                        this.heal(this.getMaxHealth());
-                    }
-                    setUndeadStage(UNDEAD_STAGE_0);
-                    undeadDecayTicks = 0;
-                    useEssence(player, stack);
-                }
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        return null;
-    }
-
-    /**
-    * Essence of Light: permanently locks the current undead stage
-    * pegasus (with the same height/mounted restrictions as Essence of
-    * Darkness), and heals or triggers love mode on already-transformed
-    * unicorn/pegasus/fairy horse.
-    */
-    private InteractionResult tryEssenceOfLightInteraction(Player player, ItemStack stack) {
-        //ESSENCE OF LIGHT: Permanent Undead Stage
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                && isUndead() && !isUndeadTransforming()) {
-            if (!this.level().isClientSide) {
-                this.heal(this.getMaxHealth());
-                setUndeadLocked(true);
-                useEssence(player, stack);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        //ESSENCE OF LIGHT: NIGHTMARE -> UNICORN
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())) {
-            if (getSpecies() == Species.NIGHTMARE && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(Species.UNICORN);
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (getSpecies() == Species.UNICORN) {
-                if (!this.level().isClientSide) {
-                    if (this.getHealth() < this.getMaxHealth()) {
-                        this.heal(this.getMaxHealth());
-                    } else if (!this.isInLove() && this.canFallInLove()) {
-                        this.setInLove(player);
-                    } else {
-                        return InteractionResult.PASS;
-                    }
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        //ESSENCE OF LIGHT: BATHORSE -> PEGASUS
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                && getSpecies() == Species.BATHORSE) {
-            if (!isTransforming()) {
-                if (this.getY() < 150.0D) {
-                    return InteractionResult.PASS;
-                }
-                if (this.isVehicle()) {
-                    return InteractionResult.PASS;
-                }
-                if (!this.level().isClientSide) {
-                    startTransform(Species.PEGASUS);
-                    useEssence(player, stack);
-                }
-                return InteractionResult.SUCCESS;
-            }
-        }
-
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                && getSpecies() == Species.PEGASUS) {
-            if (!this.level().isClientSide) {
-                if (this.getHealth() < this.getMaxHealth()) {
-                    this.heal(this.getMaxHealth());
-                } else if (!this.isInLove() && this.canFallInLove()) {
-                    this.setInLove(player);
-                } else {
-                    return InteractionResult.PASS;
-                }
-                useEssence(player, stack);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        if (this.isTamed() && !this.isBaby() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                && getSpecies() == Species.FAIRY_HORSE) {
-            if (!this.level().isClientSide) {
-                if (this.getHealth() < this.getMaxHealth()) {
-                    this.heal(this.getMaxHealth());
-                } else if (!this.isInLove() && this.canFallInLove()) {
-                    this.setInLove(player);
-                } else {
-                    return InteractionResult.PASS;
-                }
-                useEssence(player, stack);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        return null;
-    }
-
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -1544,25 +1241,9 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             return tryRidingTameAttempt(player, stack, hand);
         }
 
-        InteractionResult darknessResult = tryEssenceOfDarknessInteraction(player, stack);
-        if (darknessResult != null) {
-            return darknessResult;
-        }
-
-        InteractionResult fireResult = tryEssenceOfFireInteraction(player, stack);
-        if (fireResult != null) {
-            return fireResult;
-        }
-        
-
-        InteractionResult undeadResult = tryEssenceOfUndeadInteraction(player, stack);
-        if (undeadResult != null) {
-            return undeadResult;
-        }
-
-        InteractionResult lightResult = tryEssenceOfLightInteraction(player, stack);
-        if (lightResult != null) {
-            return lightResult;
+        InteractionResult essenceResult = this.essenceHandler.tryInteract(player, stack);
+        if (essenceResult != null) {
+            return essenceResult;
         }
 
         if (this.isTamed() && !this.isBaby() && getSpecies() == Species.NIGHTMARE && stack.is(Items.REDSTONE)) {
@@ -1615,7 +1296,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     private void applyOwnership(Player player) {
         this.setTamed(true);
         this.setOwnerUUID(player.getUUID());
-        com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+        NamingHelper.promptRename(this, player.getUUID());
     }
 
     /**
@@ -1708,7 +1389,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     }
 
     @Override
-    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+    public boolean canDrownInFluidType(FluidType type) {
         return !isSkeletonStage() && super.canDrownInFluidType(type);
     }
 
@@ -1769,8 +1450,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     public void startUnicornCharge() {
         this.unicornChargeTicks = UNICORN_CHARGE_DURATION_TICKS;
         this.entityData.set(DATA_UNICORN_CHARGE_TICKS, UNICORN_CHARGE_DURATION_TICKS);
-        this.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, 60, 2, false, true));
+        this.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SPEED, 60, 2, false, true));
     }
 
     public int getUnicornChargeTicks() {
@@ -1778,11 +1459,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     }
 
     private void unicornChargeTick() {
-        net.minecraft.world.phys.AABB aabb = this.getBoundingBox().inflate(0.6D);
+        AABB aabb = this.getBoundingBox().inflate(0.6D);
         for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, aabb,
                 e -> e != this && e != this.getControllingPassenger() && e.isAlive())) {
             if (target.hurt(this.damageSources().mobAttack(this), 6.0F)) {
-                net.minecraft.world.phys.Vec3 knockDir = target.position().subtract(this.position()).normalize();
+                Vec3 knockDir = target.position().subtract(this.position()).normalize();
                 target.setDeltaMovement(target.getDeltaMovement().add(knockDir.x * 1.2D, 0.4D, knockDir.z * 1.2D));
                 target.hurtMarked = true;
             }
@@ -1827,13 +1508,13 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     private void nightmareFireEffect() {
         BlockPos pos = new BlockPos(
-                net.minecraft.util.Mth.floor(this.getX()),
-                net.minecraft.util.Mth.floor(this.getBoundingBox().minY),
-                net.minecraft.util.Mth.floor(this.getZ())
+                Mth.floor(this.getX()),
+                Mth.floor(this.getBoundingBox().minY),
+                Mth.floor(this.getZ())
         ).offset(-1, 0, -1);
 
         if (this.level().getBlockState(pos).isAir()) {
-            this.level().setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.FIRE.defaultBlockState());
+            this.level().setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
         }
     }
 
@@ -1841,10 +1522,10 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        net.minecraft.core.particles.SimpleParticleType particle =
+        SimpleParticleType particle =
                 getSpecies() == Species.FAIRY_HORSE
-                        ? com.example.neomocreatures.init.ModParticles.starFxForFairyColor(getFairyColor())
-                        : com.example.neomocreatures.init.ModParticles.STAR_FX.get();
+                        ? ModParticles.starFxForFairyColor(getFairyColor())
+                        : ModParticles.STAR_FX.get();
         serverLevel.sendParticles(particle,
                 this.getX(), this.getY() + 0.2D, this.getZ(),
                 1, 0.3D, 0.1D, 0.3D, 0.01D);
@@ -1947,12 +1628,12 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         if (this.fallImmuneTicks > 0) {
             this.fallImmuneTicks--;
         }
-        if (this.isSlowedWhenUnridden()) {
-            net.minecraft.world.entity.ai.attributes.AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (HorseStats.isSlowedWhenUnridden(getSpecies())) {
+            AttributeInstance speedAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
             if (speedAttr != null) {
-                if (!this.isVehicle() && speedAttr.getBaseValue() != SPECIAL_UNMOUNTED_SPEED) {
-                    speedAttr.setBaseValue(SPECIAL_UNMOUNTED_SPEED);
-                } else if (this.isVehicle() && speedAttr.getBaseValue() == SPECIAL_UNMOUNTED_SPEED) {
+                if (!this.isVehicle() && speedAttr.getBaseValue() != HorseStats.SPECIAL_UNMOUNTED_SPEED) {
+                    speedAttr.setBaseValue(HorseStats.SPECIAL_UNMOUNTED_SPEED);
+                } else if (this.isVehicle() && speedAttr.getBaseValue() == HorseStats.SPECIAL_UNMOUNTED_SPEED) {
                     applyMoCAttributes();
                 }
             }
@@ -2146,7 +1827,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             double vx = this.random.nextGaussian() * 0.02D;
             double vy = this.random.nextGaussian() * 0.02D;
             double vz = this.random.nextGaussian() * 0.02D;
-            this.level().addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
+            this.level().addParticle(ParticleTypes.LAVA,
                     this.getX() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
                     this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
                     this.getZ() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
@@ -2162,7 +1843,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         if (!this.level().isClientSide) {
             if (isVanishing()) {
                 this.getNavigation().stop();
-                this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                this.setDeltaMovement(Vec3.ZERO);
             }
 
             tickCountdownTimers();
@@ -2271,7 +1952,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         if (this.getOwnerUUID() != null) {
             foal.setOwnerUUID(this.getOwnerUUID());
             foal.setTamed(true);
-            com.example.neomocreatures.util.NamingHelper.promptRename(foal, this.getOwnerUUID());
+            NamingHelper.promptRename(foal, this.getOwnerUUID());
         }
         this.level().addFreshEntity(foal);
 
@@ -2310,8 +1991,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             setHasChest(false);
         }
     }
-
-    private void useEssence(Player player, ItemStack stack) {
+    /** Drinking animation and sound, uses up the essence and gives back the empty bottle. */
+    public void consumeEssence(Player player, ItemStack stack) {
         openMouth();
         this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
         if (!player.getAbilities().instabuild) {
@@ -2404,7 +2085,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         }
     }
 
-    private void dropChanceItems(net.minecraft.world.item.Item item, float chancePerRoll) {
+    private void dropChanceItems(Item item, float chancePerRoll) {
         for (int i = 0; i < 2; i++) {
             if (this.random.nextFloat() < chancePerRoll) {
                 this.spawnAtLocation(item);
@@ -2434,7 +2115,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             return false;
         }
         if (this.level().isClientSide) {
-            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+            LocalPlayer player = Minecraft.getInstance().player;
             return player != null && this.distanceToSqr(player) < 64.0D;
         }
         return super.shouldShowName();
@@ -2454,7 +2135,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
      * floating in water/lava with no gravity pull, or falling with
      * normal flyer gravity.
      */
-    private void applyFlightMovement(net.minecraft.world.phys.Vec3 travelVector) {
+    private void applyFlightMovement(Vec3 travelVector) {
         float friction = switch (getSpecies()) {
             case PEGASUS -> isUndead() ? FLYER_FRICTION : PEGASUS_FRICTION;
             case DARK_PEGASUS -> DARK_PEGASUS_FRICTION;
@@ -2465,18 +2146,18 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         boolean floatingInWater = this.isInWater() && !isSkeletonStage();
         boolean floatingInLava = this.isInLava() && !isSkeletonStage();
 
-        this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+        this.move(MoverType.SELF, this.getDeltaMovement());
         this.moveRelative(friction / 10F, travelVector);
 
         if (floatingInWater || floatingInLava) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(friction, FLYER_FALL_SPEED, friction));
             double fluidHeight = floatingInLava
-                    ? this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA)
-                    : this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+                    ? this.getFluidHeight(FluidTags.LAVA)
+                    : this.getFluidHeight(FluidTags.WATER);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && fluidHeight >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
-            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
                     && controllingRider.isShiftKeyDown()) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
             }
@@ -2494,22 +2175,22 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
      */
     private void applyGroundedFluidBuoyancy() {
         if (this.isInWater() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            double submergedFraction = this.getFluidHeight(FluidTags.WATER);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
-            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
                     && controllingRider.isShiftKeyDown()) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
             }
         }
 
         if (this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            double submergedFraction = this.getFluidHeight(FluidTags.LAVA);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
-            if (this.getControllingPassenger() instanceof net.minecraft.world.entity.LivingEntity controllingRider
+            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
                     && controllingRider.isShiftKeyDown()) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
             }
@@ -2517,7 +2198,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     }
 
     @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+    public void travel(Vec3 travelVector) {
         boolean isBatFlyer = (getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
                 || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE || getSpecies() == Species.GHOST_WINGED)
                 && this.isTamed() && !isTransforming();
@@ -2528,14 +2209,14 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         boolean ascend = this.ascendHeld;
         boolean descend = this.descendHeld;
         if (this.level().isClientSide
-                && this.getControllingPassenger() == net.minecraft.client.Minecraft.getInstance().player) {
-            ascend = net.minecraft.client.Minecraft.getInstance().options.keyJump.isDown();
-            descend = com.example.neomocreatures.client.ModKeyMappings.DESCEND.isDown();
+                && this.getControllingPassenger() == Minecraft.getInstance().player) {
+            ascend = Minecraft.getInstance().options.keyJump.isDown();
+            descend = ModKeyMappings.DESCEND.isDown();
         }
 
         if (!this.isVehicle() && this.getGrazeTicks() > 0) {
             this.getNavigation().stop();
-            super.travel(net.minecraft.world.phys.Vec3.ZERO);
+            super.travel(Vec3.ZERO);
             return;
         }
 
@@ -2574,7 +2255,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             if (jumpPower < 0) {
                 jumpPower = 0;
             }
-            double jumpStrength = this.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH)
+            double jumpStrength = this.getAttributeValue(Attributes.JUMP_STRENGTH)
                     * (jumpPower / 100.0);
             this.setDeltaMovement(this.getDeltaMovement().add(0, jumpStrength, 0));
             this.hasImpulse = true;
@@ -2606,13 +2287,13 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return switch (getSpecies()) {
             case ZORSE -> 4.2D;
             case NIGHTMARE, HORSE_BUG -> 4.2D;
-            case HORSE -> coatTier(getCoat()) == 4 ? 4.2D : 3.2D;
+            case HORSE -> HorseStats.coatTier(getCoat()) == 4 ? 4.2D : 3.2D;
             default -> 3.2D;
         };
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (getSpecies() == Species.BATHORSE || getSpecies() == Species.UNICORN
                 || getSpecies() == Species.PEGASUS || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE
                 || getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) {
@@ -2675,16 +2356,16 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Coat")) {
-            this.setCoat(com.example.neomocreatures.breeding.MoCHorseGenetics.Coat.valueOf(tag.getString("Coat")));
+            this.setCoat(MoCHorseGenetics.Coat.valueOf(tag.getString("Coat")));
         }
-        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) != null && tag.contains("MaxHealth")) {
-            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(tag.getDouble("MaxHealth"));
+        if (this.getAttribute(Attributes.MAX_HEALTH) != null && tag.contains("MaxHealth")) {
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(tag.getDouble("MaxHealth"));
         }
-        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) != null && tag.contains("MovementSpeed")) {
-            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(tag.getDouble("MovementSpeed"));
+        if (this.getAttribute(Attributes.MOVEMENT_SPEED) != null && tag.contains("MovementSpeed")) {
+            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(tag.getDouble("MovementSpeed"));
         }
-        if (this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH) != null && tag.contains("JumpStrength")) {
-            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH).setBaseValue(tag.getDouble("JumpStrength"));
+        if (this.getAttribute(Attributes.JUMP_STRENGTH) != null && tag.contains("JumpStrength")) {
+            this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(tag.getDouble("JumpStrength"));
         }
         if (tag.contains("UndeadStage")) {
             this.setUndeadStagePublic(tag.getInt("UndeadStage"));
@@ -2692,7 +2373,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             this.setUndeadDecayTicksPublic(tag.getInt("UndeadDecayTicks"));
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
         if (tag.contains("FairyColor")) {
             this.setFairyColor(FairyColor.valueOf(tag.getString("FairyColor")));
@@ -2704,12 +2385,12 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         }
         if (tag.contains("ArmorItem")) {
             Item armorItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(tag.getString("ArmorItem")));
-            this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.BODY, new ItemStack(armorItem));
+            this.setItemSlot(EquipmentSlot.BODY, new ItemStack(armorItem));
         }
         if (tag.getBoolean("HasChest")) {
             this.setHasChestPublic(true);
             if (tag.contains("ChestItems")) {
-                net.minecraft.nbt.ListTag items = tag.getList("ChestItems", net.minecraft.nbt.Tag.TAG_COMPOUND);
+                ListTag items = tag.getList("ChestItems", Tag.TAG_COMPOUND);
                 for (int i = 0; i < items.size(); i++) {
                     CompoundTag itemTag = items.getCompound(i);
                     int slot = itemTag.getInt("Slot");

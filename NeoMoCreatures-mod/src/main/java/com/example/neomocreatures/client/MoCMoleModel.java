@@ -88,8 +88,8 @@ public class MoCMoleModel<T extends MoCMoleEntity> extends HierarchicalModel<T> 
     @Override
     public void setupAnim(T mole, float limbSwing, float limbSwingAmount, float ageInTicks,
                           float netHeadYaw, float headPitch) {
-        this.head.yRot = netHeadYaw / 57.29578F;
-        this.head.xRot = headPitch / 57.29578F;
+        this.head.yRot = netHeadYaw / ModelAnimations.DEGREES_PER_RADIAN;
+        this.head.xRot = headPitch / ModelAnimations.DEGREES_PER_RADIAN;
         this.nose.xRot = 0.2617994F + this.head.xRot;
         this.nose.yRot = this.head.yRot;
 

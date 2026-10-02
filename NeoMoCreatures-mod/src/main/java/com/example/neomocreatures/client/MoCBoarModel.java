@@ -141,8 +141,8 @@ public class MoCBoarModel<T extends MoCBoarEntity> extends HierarchicalModel<T> 
         this.rightEar.xRot = 0.6981317F + xAngle;
         this.rightEar.yRot = yAngle;
 
-        float leftLegRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        float rightLegRot = Mth.cos(limbSwing * 0.6662F + Mth.PI) * 1.4F * limbSwingAmount;
+        float leftLegRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
+        float rightLegRot = ModelAnimations.walkSwingOpposite(limbSwing, limbSwingAmount, 1.4F);
 
         this.upperLegLeft.xRot = leftLegRot;
         this.lowerLegLeft.xRot = leftLegRot;

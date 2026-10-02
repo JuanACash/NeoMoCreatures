@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity.ai;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -39,7 +40,7 @@ public class HerdFollowGoal extends Goal {
         this.maxRange = maxRange;
         this.executionChance = executionChance;
         this.herdMatePredicate = herdMatePredicate;
-        this.setFlags(java.util.EnumSet.of(Goal.Flag.MOVE));
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 
     @Override

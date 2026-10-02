@@ -3,29 +3,45 @@ package com.example.neomocreatures.entity;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -36,18 +52,25 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RestrictSunGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, net.minecraft.world.entity.PlayerRideableJumping,
-        net.minecraft.world.entity.monster.Enemy, StorablePet {
+public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, PlayerRideableJumping,
+        Enemy, StorablePet {
 
     private static final int STING_CHANCE = 5; // 1 in 5, matches rand.nextInt(5)==0
     private static final int STING_ANIM_TICKS = 50;
@@ -80,7 +103,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TRANSFORM_TICKS =
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<java.util.Optional<java.util.UUID>> DATA_HELD_BY =
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_SADDLED =
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -92,12 +115,12 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     }
 
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(2, new RestrictSunGoal(this));
         this.goalSelector.addGoal(6, new LeapAtTargetGoal(this, 0.4F));
@@ -136,7 +159,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             if (this.scorpion.isTame() || this.scorpion.getVariant() == ScorpionVariant.UNDEAD) {
                 return false;
             }
-            boolean inNether = this.scorpion.level().dimension() == net.minecraft.world.level.Level.NETHER;
+            boolean inNether = this.scorpion.level().dimension() == Level.NETHER;
             return (inNether || getRawLight(this.scorpion) <= 9) && super.canUse();
         }
     }
@@ -194,8 +217,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(com.example.neomocreatures.init.ModItems.RAT_RAW.get())
-                || stack.is(com.example.neomocreatures.init.ModItems.RAT_COOKED.get());
+        return stack.is(ModItems.RAT_RAW.get())
+                || stack.is(ModItems.RAT_COOKED.get());
     }
 
     public boolean isTransforming() {
@@ -218,7 +241,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         int ticks = this.entityData.get(DATA_TRANSFORM_TICKS) - 1;
         this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
         if (ticks == TRANSFORM_SOUND_TICKS) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
         }
         if (ticks <= 0) {
             setVariant(ScorpionVariant.UNDEAD);
@@ -231,9 +254,9 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
-            if (!player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE))) {
-                player.drop(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE), false);
+            this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+            if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
             }
         }
     }
@@ -241,33 +264,33 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     /** Each color only ever lays its own egg. */
     private static Item eggItemFor(ScorpionVariant variant) {
         return switch (variant) {
-            case DIRT -> com.example.neomocreatures.init.ModItems.DIRT_SCORPION_EGG.get();
-            case CAVE -> com.example.neomocreatures.init.ModItems.CAVE_SCORPION_EGG.get();
-            case FROST -> com.example.neomocreatures.init.ModItems.FROST_SCORPION_EGG.get();
-            case NETHER -> com.example.neomocreatures.init.ModItems.FIRE_SCORPION_EGG.get();
-            case UNDEAD -> com.example.neomocreatures.init.ModItems.UNDEAD_SCORPION_EGG.get();
+            case DIRT -> ModItems.DIRT_SCORPION_EGG.get();
+            case CAVE -> ModItems.CAVE_SCORPION_EGG.get();
+            case FROST -> ModItems.FROST_SCORPION_EGG.get();
+            case NETHER -> ModItems.FIRE_SCORPION_EGG.get();
+            case UNDEAD -> ModItems.UNDEAD_SCORPION_EGG.get();
         };
     }
 
     /** Each color drops its own chitin. */
     private static Item chitinItemFor(ScorpionVariant variant) {
         return switch (variant) {
-            case DIRT -> com.example.neomocreatures.init.ModItems.CHITIN.get();
-            case CAVE -> com.example.neomocreatures.init.ModItems.CHITIN_BLACK.get();
-            case FROST -> com.example.neomocreatures.init.ModItems.CHITIN_FROST.get();
-            case NETHER -> com.example.neomocreatures.init.ModItems.CHITIN_NETHER.get();
-            case UNDEAD -> com.example.neomocreatures.init.ModItems.CHITIN_UNDEAD.get();
+            case DIRT -> ModItems.CHITIN.get();
+            case CAVE -> ModItems.CHITIN_BLACK.get();
+            case FROST -> ModItems.CHITIN_FROST.get();
+            case NETHER -> ModItems.CHITIN_NETHER.get();
+            case UNDEAD -> ModItems.CHITIN_UNDEAD.get();
         };
     }
 
     /** Each color only ever drops its own sting. */
     private static Item stingItemFor(ScorpionVariant variant) {
         return switch (variant) {
-            case DIRT -> com.example.neomocreatures.init.ModItems.SCORP_STING_DIRT.get();
-            case CAVE -> com.example.neomocreatures.init.ModItems.SCORP_STING_CAVE.get();
-            case FROST -> com.example.neomocreatures.init.ModItems.SCORP_STING_FROST.get();
-            case NETHER -> com.example.neomocreatures.init.ModItems.SCORP_STING_NETHER.get();
-            case UNDEAD -> com.example.neomocreatures.init.ModItems.SCORP_STING_UNDEAD.get();
+            case DIRT -> ModItems.SCORP_STING_DIRT.get();
+            case CAVE -> ModItems.SCORP_STING_CAVE.get();
+            case FROST -> ModItems.SCORP_STING_FROST.get();
+            case NETHER -> ModItems.SCORP_STING_NETHER.get();
+            case UNDEAD -> ModItems.SCORP_STING_UNDEAD.get();
         };
     }
 
@@ -275,8 +298,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         if (!this.isBaby()) {
             return 1.0F;
         }
-        float progress = net.minecraft.util.Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return net.minecraft.util.Mth.lerp(progress, BABY_SCALE, 1.0F);
+        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
+        return Mth.lerp(progress, BABY_SCALE, 1.0F);
     }
 
     private void tickGrowth() {
@@ -317,15 +340,15 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
     private void startHolding(Player player) {
         this.heldBy = player;
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.of(player.getUUID()));
+        this.entityData.set(DATA_HELD_BY, Optional.of(player.getUUID()));
         this.setNoAi(true);
         this.setNoGravity(true);
         this.noPhysics = true;
-        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
     }
 
     private void stopHolding() {
-        this.entityData.set(DATA_HELD_BY, java.util.Optional.empty());
+        this.entityData.set(DATA_HELD_BY, Optional.empty());
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
@@ -344,12 +367,12 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             stopHolding();
             return;
         }
-        net.minecraft.world.phys.Vec3 look = this.heldBy.getLookAngle();
-        net.minecraft.world.phys.Vec3 handPos = this.heldBy.getEyePosition()
+        Vec3 look = this.heldBy.getLookAngle();
+        Vec3 handPos = this.heldBy.getEyePosition()
                 .add(look.scale(0.6D))
                 .add(0.0D, -0.35D, 0.0D);
         this.moveTo(handPos.x, handPos.y, handPos.z, this.getYRot(), 0.0F);
-        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
     }
 
     public ScorpionVariant getVariant() {
@@ -425,8 +448,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
     /** Wiki: same speed forward/backward, but very slow moving sideways. */
     @Override
-    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travelVector) {
-        return new net.minecraft.world.phys.Vec3(player.xxa * SIDEWAYS_RIDDEN_FACTOR, 0.0D, player.zza);
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa * SIDEWAYS_RIDDEN_FACTOR, 0.0D, player.zza);
     }
 
     /** Wiki: riding doesn't change its speed — no multiplier here, unlike the big cat. */
@@ -436,7 +459,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     }
 
     @Override
-    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+    protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         this.setYRot(player.getYRot());
         this.yRotO = this.getYRot();
@@ -455,7 +478,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     public void onPlayerJump(int jumpPower) {
         if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
-            net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+            Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
             this.hasImpulse = true;
         }
@@ -507,16 +530,16 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
         // Whip toggles sitting — only while tamed and not currently being
         // ridden, exactly like the original MoCEntityPetScorpion.
-        if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get()) && !this.isVehicle()) {
+        if (this.isTame() && stack.is(ModItems.WHIP.get()) && !this.isVehicle()) {
             if (!this.level().isClientSide) {
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                 if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -526,13 +549,13 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             if (stack.is(Items.BOOK)) {
                 return NamingHelper.renameWithBook(this, player);
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+            if (stack.is(ModItems.PET_AMULET.get())) {
                 if (!this.level().isClientSide) {
                     capturePetInstant(player, hand);
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_UNDEAD.get())
+            if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
                     && getVariant() != ScorpionVariant.UNDEAD && !isTransforming()) {
                 if (!this.level().isClientSide) {
                     startUndeadTransform();
@@ -540,7 +563,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_UNDEAD.get())
+            if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
                     && getVariant() == ScorpionVariant.UNDEAD) {
                 if (!this.level().isClientSide) {
                     this.spawnAtLocation(new ItemStack(eggItemFor(ScorpionVariant.UNDEAD)));
@@ -548,7 +571,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 useEssence(player, stack);
                 return InteractionResult.SUCCESS;
             }
-            if (stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_DARKNESS.get())
+            if (stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
                     && getVariant() != ScorpionVariant.UNDEAD) {
                 if (!this.level().isClientSide) {
                     this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
@@ -559,7 +582,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
                 startTalking();
                 if (!this.level().isClientSide) {
-                    this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                    this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                     this.heal(HEAL_AMOUNT);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
@@ -568,12 +591,12 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 return InteractionResult.SUCCESS;
             }
             if (!this.isBaby() && !isSaddled()
-                    && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                        || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+                    && (stack.is(Items.SADDLE)
+                        || stack.is(ModItems.HORSE_SADDLE.get()))) {
                 if (!this.level().isClientSide) {
                     setSaddled(true);
-                    this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
                         stack.shrink(1);
                     }
@@ -600,24 +623,22 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                     startHolding(player);
                     if (!wasTame) {
                         this.tame(player);
-                        com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                        NamingHelper.promptRename(this, player.getUUID());
                     }
                 }
             }
             return InteractionResult.SUCCESS;
         }
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
             if (!this.level().isClientSide) {
                 setSaddled(false);
                 this.ejectPassengers();
-                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                        : net.minecraft.world.item.Items.SADDLE;
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                 this.saddleItemId = null;
                 this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
             }
             return InteractionResult.SUCCESS;
@@ -635,7 +656,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         builder.define(DATA_CLAW_TICKS, 0);
         builder.define(DATA_STING_TICKS, 0);
         builder.define(DATA_TRANSFORM_TICKS, 0);
-        builder.define(DATA_HELD_BY, java.util.Optional.empty());
+        builder.define(DATA_HELD_BY, Optional.empty());
         builder.define(DATA_SADDLED, false);
         builder.define(DATA_SITTING_SYNCED, false);
     }
@@ -671,19 +692,19 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             setSitting(tag.getBoolean("ScorpionSittingSynced"));
         }
         if (tag.contains("ScorpionSaddleItem", 8)) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("ScorpionSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("ScorpionSaddleItem"));
         }
     }
 
     @Override
-    protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(Level level) {
-        return new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this, level);
+    protected PathNavigation createNavigation(Level level) {
+        return new WallClimberNavigation(this, level);
     }
 
     @Override
-    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+    protected AABB makeBoundingBox() {
         if (this.isBaby()) {
-            net.minecraft.world.entity.EntityDimensions babyHitbox =
+            EntityDimensions babyHitbox =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
             return babyHitbox.makeBoundingBox(this.position());
         }
@@ -692,14 +713,14 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnReason,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
-            boolean isNether = level.getLevel().dimension() == net.minecraft.world.level.Level.NETHER;
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnReason == MobSpawnType.NATURAL
+                || spawnReason == MobSpawnType.CHUNK_GENERATION) {
+            boolean isNether = level.getLevel().dimension() == Level.NETHER;
             if (isNether) {
                 setVariant(ScorpionVariant.NETHER);
             } else if (this.blockPosition().getY() <= 40) {
@@ -721,18 +742,18 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
             // Wiki: a scorpion carrying babies on its back can never have a rider.
             if (!hasBabies && this.random.nextFloat() < 0.15F) {
-                net.minecraft.world.entity.EntityType<?> riderType = isNether
-                        ? (this.random.nextBoolean() ? net.minecraft.world.entity.EntityType.ZOMBIFIED_PIGLIN
-                                : net.minecraft.world.entity.EntityType.PIGLIN)
-                        : (this.random.nextBoolean() ? net.minecraft.world.entity.EntityType.ZOMBIE
-                                : net.minecraft.world.entity.EntityType.SKELETON);
+                EntityType<?> riderType = isNether
+                        ? (this.random.nextBoolean() ? EntityType.ZOMBIFIED_PIGLIN
+                                : EntityType.PIGLIN)
+                        : (this.random.nextBoolean() ? EntityType.ZOMBIE
+                                : EntityType.SKELETON);
                 spawnRider(level, riderType);
             }
         }
         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
     }
 
-    private void spawnRider(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.world.entity.EntityType<?> riderType) {
+    private void spawnRider(ServerLevelAccessor level, EntityType<?> riderType) {
         Entity rider = riderType.create(level.getLevel());
         if (rider instanceof Mob mob) {
             mob.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
@@ -766,16 +787,14 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             baby.setAge(-GROWTH_TICKS);
             baby.setPersistenceRequired();
             this.level().addFreshEntity(baby);
-            baby.playSound(net.minecraft.sounds.SoundEvents.SLIME_SQUISH, 1.0F, 1.0F);
+            baby.playSound(SoundEvents.SLIME_SQUISH, 1.0F, 1.0F);
         }
     }
 
     /** Saddle always drops if equipped, regardless of who removed it. */
     public void dropAllEquipment() {
         if (isSaddled()) {
-            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem));
             this.saddleItemId = null;
             setSaddled(false);
@@ -783,7 +802,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     }
 
     /** Snapshot used to restore this scorpion later from a filled Pet Amulet. */
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("ScorpionVariant", getVariant().name());
         tag.putFloat("Health", this.getHealth());
@@ -810,7 +829,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         if (this.isBaby()) {
             // Babies only ever drop string — no chitin, no stings.
             // 0-2 base, extended by looting
-            MoCLootUtil.dropItems(this, net.minecraft.world.item.Items.STRING, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
+            MoCLootUtil.dropItems(this, Items.STRING, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
         } else {
             // 0-1 base each, extended by looting
             MoCLootUtil.dropItems(this, chitinItemFor(getVariant()), MoCLootUtil.rollWithLootingRange(this.random, 2, lootingLevel));
@@ -818,9 +837,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         }
 
         if (isSaddled()) {
-            Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem)); // not affected by looting
         }
     }
@@ -838,7 +855,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         this.setHealth(this.getMaxHealth());
         if (tamer != null) {
             this.tame(tamer);
-            com.example.neomocreatures.util.NamingHelper.promptRename(this, tamer.getUUID());
+            NamingHelper.promptRename(this, tamer.getUUID());
         }
     }
 
@@ -869,17 +886,17 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     protected SoundEvent getAmbientSound() {
         startTalking();
-        return com.example.neomocreatures.init.ModSounds.SCORPION_AMBIENT.get();
+        return ModSounds.SCORPION_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.SCORPION_HURT.get();
+        return ModSounds.SCORPION_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.SCORPION_DEATH.get();
+        return ModSounds.SCORPION_DEATH.get();
     }
 
     /**
@@ -896,8 +913,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         boolean stinging = this.entityData.get(DATA_STING_TICKS) == 0 && this.random.nextInt(STING_CHANCE) == 0;
         if (stinging && target instanceof LivingEntity living) {
             this.entityData.set(DATA_STING_TICKS, 1);
-            this.playSound(com.example.neomocreatures.init.ModSounds.SCORPION_STING.get(), 1.0F, 1.0F);
-            getVariant().applySting(living, this.level().dimension() == net.minecraft.world.level.Level.NETHER);
+            this.playSound(ModSounds.SCORPION_STING.get(), 1.0F, 1.0F);
+            getVariant().applySting(living, this.level().dimension() == Level.NETHER);
         } else {
             swingClaw();
         }
@@ -935,7 +952,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         int claw = this.entityData.get(DATA_CLAW_TICKS);
         if (claw > 0) {
             if (claw == 10 || claw == 20) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.SCORPION_CLAW.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.SCORPION_CLAW.get(), 1.0F, 1.0F);
             }
             if (++claw > CLAW_SWING_TICKS) {
                 claw = 0;
@@ -971,7 +988,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         this.setBaby(!tag.getBoolean("Adult"));
         this.setHealth((float) tag.getFloat("Health"));
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCFoxEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -89,16 +88,11 @@ public class MoCFoxModel extends HierarchicalModel<MoCFoxEntity> {
         this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
         this.head.xRot = headPitch * ((float) Math.PI / 180F);
 
-        float legAngle = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        float legAngle = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
         float legAngleOpposite = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;
         this.leg1.xRot = legAngle;
         this.leg2.xRot = legAngleOpposite;
         this.leg3.xRot = legAngleOpposite;
         this.leg4.xRot = legAngle;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

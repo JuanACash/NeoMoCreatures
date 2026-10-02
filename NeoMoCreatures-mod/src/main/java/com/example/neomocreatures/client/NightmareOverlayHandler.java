@@ -3,11 +3,13 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
+import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 
 import net.minecraft.client.Minecraft;
+
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent;
 
@@ -33,8 +35,8 @@ public class NightmareOverlayHandler {
         if (player.getVehicle() instanceof MoCScorpionEntity scorpion && scorpion.getVariant() == ScorpionVariant.NETHER) {
             event.setCanceled(true);
         }
-        if (player.getVehicle() instanceof com.example.neomocreatures.entity.MoCOstrichEntity ostrich
-                && ostrich.getEssence() == com.example.neomocreatures.entity.MoCOstrichEntity.ESSENCE_FIRE) {
+        if (player.getVehicle() instanceof MoCOstrichEntity ostrich
+                && ostrich.getEssence() == MoCOstrichEntity.ESSENCE_FIRE) {
             event.setCanceled(true);
         }
     }

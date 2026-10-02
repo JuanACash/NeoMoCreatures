@@ -1,8 +1,6 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCWyvernEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -12,6 +10,10 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 /**
  * 1:1 port of drzhark.mocreatures.client.model.MoCModelWyvern (Techne / ModelRenderer)
@@ -26,7 +28,7 @@ import net.minecraft.util.Mth;
 public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
 
     // Minecraft's radian-per-degree constant, same value the original Techne model used.
-    private static final float R = 57.29578F;
+    private static final float R = ModelAnimations.DEGREES_PER_RADIAN;
 
     private final ModelPart root;
     /**
@@ -786,13 +788,13 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         boolean gliding = entity.isGliding();
         boolean flapping = onAir && !gliding;
         float rLegXRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 0.8F * limbSwingAmount;
-        float lLegXRot = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float lLegXRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
 
         // ---- ridden with a player: matches the original's isRidden block —
         // the neck stops tracking the rider's look direction entirely
         // (locked straight ahead), flying holds it level, grounded uses a
         // fixed lowered brace instead of the free head-tracking pose above.
-        boolean ridden = entity.isVehicle() && entity.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player;
+        boolean ridden = entity.isVehicle() && entity.getControllingPassenger() instanceof Player;
         if (ridden) {
             this.neck1.yRot = 0F;
             this.neck2.yRot = 0F;

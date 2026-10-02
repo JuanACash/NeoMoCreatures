@@ -1,10 +1,12 @@
 package com.example.neomocreatures.entity.egg;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 
+import javax.annotation.Nullable;
+
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -22,8 +24,11 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+
+import net.neoforged.neoforge.fluids.FluidType;
 
 /**
  * 1:1-in-spirit port of drzhark.mocreatures.entity.item.MoCEntityEgg, minus
@@ -135,7 +140,7 @@ public class MoCEggEntity extends Mob {
     }
 
     @Override
-    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+    public boolean canDrownInFluidType(FluidType type) {
         // No egg (of any creature) should ever drown — the shark egg in
         // particular needs to sit submerged in water to hatch at all.
         return false;
@@ -231,8 +236,8 @@ public class MoCEggEntity extends Mob {
                 data.putString("HatchVariant", this.hatchVariant);
             }
             data.putBoolean("WasPickedUp", true);
-            stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                    net.minecraft.world.item.component.CustomData.of(data));
+            stack.set(DataComponents.CUSTOM_DATA,
+                    CustomData.of(data));
         }
 
         if (player.getInventory().add(stack)) {
@@ -241,7 +246,7 @@ public class MoCEggEntity extends Mob {
             player.take(this, 1);
 
             if (this.hatchEntityId.equals(BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.MOC_OSTRICH.get()))) {
-                com.example.neomocreatures.entity.MoCOstrichEntity.alertNearbyOstriches(
+                MoCOstrichEntity.alertNearbyOstriches(
                         this.level(), this.position(), player, 15.0D);
             }
         } else {

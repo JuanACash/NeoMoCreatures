@@ -1,8 +1,6 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCLitterBoxEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -68,10 +66,5 @@ public class MoCLitterBoxModel extends HierarchicalModel<MoCLitterBoxEntity> {
         boolean used = entity.isUsedLitter();
         litter.visible = !used;
         litterUsed.visible = used;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

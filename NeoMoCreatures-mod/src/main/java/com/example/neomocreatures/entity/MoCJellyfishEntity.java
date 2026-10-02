@@ -14,6 +14,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -45,6 +46,7 @@ import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -273,7 +275,7 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
         }
         Player player = this.level().getNearestPlayer(this, POISON_RANGE);
         if (player == null || !player.isInWater() || this.distanceTo(player) >= POISON_RANGE
-                || player.getAbilities().invulnerable || player.getVehicle() instanceof net.minecraft.world.entity.vehicle.Boat) {
+                || player.getAbilities().invulnerable || player.getVehicle() instanceof Boat) {
             return;
         }
         player.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
@@ -322,7 +324,7 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
      * so it barely spawned at night or in deep, dark water.
      */
     @Override
-    public float getWalkTargetValue(net.minecraft.core.BlockPos pos, net.minecraft.world.level.LevelReader level) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 

@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCRaccoonEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -164,27 +163,22 @@ public class MoCRaccoonModel extends HierarchicalModel<MoCRaccoonEntity> {
         float rLeg = Mth.cos(limbSwing + (float) Math.PI) * 0.8F * limbSwingAmount;
         float lLeg = Mth.cos(limbSwing) * 0.8F * limbSwingAmount;
 
-        this.legFrontRightA.xRot = (30F / 57.29578F) + rLeg;
-        this.legFrontLeftA.xRot = (30F / 57.29578F) + lLeg;
-        this.legRearRightA.xRot = (53F / 57.29578F) + lLeg;
-        this.legRearLeftA.xRot = (53F / 57.29578F) + rLeg;
+        this.legFrontRightA.xRot = (30F / ModelAnimations.DEGREES_PER_RADIAN) + rLeg;
+        this.legFrontLeftA.xRot = (30F / ModelAnimations.DEGREES_PER_RADIAN) + lLeg;
+        this.legRearRightA.xRot = (53F / ModelAnimations.DEGREES_PER_RADIAN) + lLeg;
+        this.legRearLeftA.xRot = (53F / ModelAnimations.DEGREES_PER_RADIAN) + rLeg;
 
-        this.legFrontRightB.xRot = (-21F / 57.29578F) + rLeg;
+        this.legFrontRightB.xRot = (-21F / ModelAnimations.DEGREES_PER_RADIAN) + rLeg;
         this.footFrontRight.xRot = rLeg;
-        this.legFrontLeftB.xRot = (-21F / 57.29578F) + lLeg;
+        this.legFrontLeftB.xRot = (-21F / ModelAnimations.DEGREES_PER_RADIAN) + lLeg;
         this.footFrontLeft.xRot = lLeg;
 
-        this.legRearRightB.xRot = (53F / 57.29578F) + lLeg;
+        this.legRearRightB.xRot = (53F / ModelAnimations.DEGREES_PER_RADIAN) + lLeg;
         this.footRearRight.xRot = lLeg;
-        this.legRearLeftB.xRot = (53F / 57.29578F) + rLeg;
+        this.legRearLeftB.xRot = (53F / ModelAnimations.DEGREES_PER_RADIAN) + rLeg;
         this.footRearLeft.xRot = rLeg;
 
-        this.tailA.yRot = Mth.cos(limbSwing * 0.6662F) * 0.7F * limbSwingAmount;
+        this.tailA.yRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.7F);
         this.tailB.yRot = this.tailA.yRot;
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

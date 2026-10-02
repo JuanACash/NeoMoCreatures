@@ -23,7 +23,7 @@ import net.minecraft.util.Mth;
  */
 public class MoCScorpionModel extends HierarchicalModel<MoCScorpionEntity> {
 
-    private static final float R = 57.29578F;
+    private static final float R = ModelAnimations.DEGREES_PER_RADIAN;
     private boolean sittingForRender;
 
     private final ModelPart root;

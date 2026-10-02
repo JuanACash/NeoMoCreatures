@@ -8,6 +8,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+
 /** Port of the Boar's renderer registration (shadow 0.7, its own texture for adult vs. baby). */
 public class MoCBoarRenderer extends MobRenderer<MoCBoarEntity, MoCBoarModel<MoCBoarEntity>> {
 
@@ -29,7 +31,7 @@ public class MoCBoarRenderer extends MobRenderer<MoCBoarEntity, MoCBoarModel<MoC
     }
 
     @Override
-    protected void scale(MoCBoarEntity entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+    protected void scale(MoCBoarEntity entity, PoseStack poseStack, float partialTick) {
         float scale = entity.getAgeScale();
         poseStack.scale(scale, scale, scale);
     }

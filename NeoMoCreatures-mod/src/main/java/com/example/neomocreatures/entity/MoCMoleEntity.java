@@ -1,12 +1,15 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -146,8 +149,8 @@ public class MoCMoleEntity extends TamableAnimal {
         }
         BlockPos pos = BlockPos.containing(this.getX(), this.getBoundingBox().minY - 0.5D, this.getZ());
         BlockState state = this.level().getBlockState(pos);
-        serverLevel.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
-                        net.minecraft.core.particles.ParticleTypes.BLOCK, state),
+        serverLevel.sendParticles(new BlockParticleOption(
+                        ParticleTypes.BLOCK, state),
                 this.getX(), this.getY() + 0.2D, this.getZ(), 8, 0.2D, 0.1D, 0.2D, 0.0D);
     }
 
@@ -273,7 +276,7 @@ public class MoCMoleEntity extends TamableAnimal {
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
         int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
     }
 
 

@@ -5,13 +5,16 @@ import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.network.chat.Component;
 
 
 public class MoCScorpionRenderer extends MobRenderer<MoCScorpionEntity, MoCScorpionModel> {
@@ -28,14 +31,14 @@ public class MoCScorpionRenderer extends MobRenderer<MoCScorpionEntity, MoCScorp
     @Override
     public void render(MoCScorpionEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
                         MultiBufferSource buffer, int packedLight) {
-        net.minecraft.world.entity.player.Player holder = entity.isHeld() ? entity.getHolder() : null;
+        Player holder = entity.isHeld() ? entity.getHolder() : null;
         if (holder != null) {
-            net.minecraft.world.phys.Vec3 scorpionPos = entity.getPosition(partialTicks);
-            net.minecraft.world.phys.Vec3 look = holder.getViewVector(partialTicks);
-            net.minecraft.world.phys.Vec3 handPos = holder.getEyePosition(partialTicks)
+            Vec3 scorpionPos = entity.getPosition(partialTicks);
+            Vec3 look = holder.getViewVector(partialTicks);
+            Vec3 handPos = holder.getEyePosition(partialTicks)
                     .add(look.scale(0.6D))
                     .add(0.0D, -0.35D, 0.0D);
-            net.minecraft.world.phys.Vec3 delta = handPos.subtract(scorpionPos);
+            Vec3 delta = handPos.subtract(scorpionPos);
 
             poseStack.pushPose();
             poseStack.translate(delta.x, delta.y + 0.15D, delta.z);

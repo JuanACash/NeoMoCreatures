@@ -1,47 +1,88 @@
 package com.example.neomocreatures.entity;
 
-import javax.annotation.Nullable;
-
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Panda;
+import net.minecraft.world.entity.animal.PolarBear;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Step 2 port of drzhark.mocreatures.entity.hunter.MoCEntity{Lion,Tiger,
@@ -51,8 +92,8 @@ import net.minecraft.world.level.Level;
  * then go neutral for a while after a kill until hungry again. Taming,
  * saddle, and chest still come in later steps.
  */
-public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.PlayerRideableJumping,
-        net.minecraft.world.entity.HasCustomInventoryScreen, StorablePet {
+public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
+        HasCustomInventoryScreen, StorablePet {
 
     private static final float BABY_SCALE = 0.5F;
     private static final double SPRINT_SPEED_BONUS = 0.15D;
@@ -116,9 +157,9 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, net.
     /** Ticks left before it's hungry again and resumes hunting — 0 means "hungry, will hunt". */
     private int hungerCooldown;
 
-    private final net.minecraft.world.SimpleContainer chestInventory = new net.minecraft.world.SimpleContainer(9);
+    private final SimpleContainer chestInventory = new SimpleContainer(9);
     @Nullable
-    private net.minecraft.resources.ResourceLocation saddleItemId;
+    private ResourceLocation saddleItemId;
 
     public MoCBigCatEntity(EntityType<? extends MoCBigCatEntity> type, Level level) {
         super(type, level);
@@ -126,10 +167,10 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, net.
 
     @Override
 protected void registerGoals() {
-        this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
-        this.goalSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.BreedGoal(this, 1.0D));
+        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -148,8 +189,8 @@ protected void registerGoals() {
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
         if (!canHunt(target) || target instanceof MoCBigCatEntity || target instanceof MoCBearEntity
-                || target instanceof net.minecraft.world.entity.animal.PolarBear
-                || target instanceof net.minecraft.world.entity.animal.Panda
+                || target instanceof PolarBear
+                || target instanceof Panda
                 || target instanceof MoCElephantEntity) {
             return false;
         }
@@ -157,8 +198,8 @@ protected void registerGoals() {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        if (this.isBaby() && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
             return false;
         }
         return super.hurt(source, amount);
@@ -172,7 +213,7 @@ protected void registerGoals() {
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -181,22 +222,22 @@ protected void registerGoals() {
 
         // Whip toggles sitting when used directly on a tamed cat — also blocks
         // mounting while holding it, simply because this check runs first.
-        if (this.isTame() && stack.is(com.example.neomocreatures.init.ModItems.WHIP.get())) {
+        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setSitting(!isSittingSynced());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), com.example.neomocreatures.init.ModSounds.WHIP.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F,
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
                         0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
                 if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.isTame() && this.isBaby() && hasEaten() && stack.is(com.example.neomocreatures.init.ModItems.MEDALLION.get())) {
+        if (!this.isTame() && this.isBaby() && hasEaten() && stack.is(ModItems.MEDALLION.get())) {
             if (!this.level().isClientSide) {
                 this.tame(player);
                 this.entityData.set(DATA_HAS_MEDALLION, true);
@@ -204,14 +245,14 @@ protected void registerGoals() {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                NamingHelper.promptRename(this, player.getUUID());
             }
             return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && isCarnivoreFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -223,7 +264,7 @@ protected void registerGoals() {
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSterile()
                 && !this.isInLove() && isBreedingFood(stack)) {
             if (!this.level().isClientSide) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.setInLove(player);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -233,7 +274,7 @@ protected void registerGoals() {
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !hasWings() && !isTransforming()
-                && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_DARKNESS.get())
+                && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
                 && getVariant().canGetDarknessWings()) {
             if (!this.level().isClientSide) {
                 startWingTransform();
@@ -242,7 +283,7 @@ protected void registerGoals() {
             return InteractionResult.SUCCESS;
         }
         if (this.isTame() && this.isOwnedBy(player) && !hasWings() && !isTransforming()
-                && stack.is(com.example.neomocreatures.init.ModItems.ESSENCE_OF_LIGHT.get())
+                && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
                 && getVariant().canGetLightWings()) {
             if (!this.level().isClientSide) {
                 startWingTransform();
@@ -252,12 +293,12 @@ protected void registerGoals() {
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && (stack.is(net.minecraft.world.item.Items.SADDLE)
-                    || stack.is(com.example.neomocreatures.init.ModItems.HORSE_SADDLE.get()))) {
+                && (stack.is(Items.SADDLE)
+                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
-                this.saddleItemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(net.minecraft.sounds.SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
+                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -266,25 +307,23 @@ protected void registerGoals() {
         }
 
         // Saddle-only — the chest can't be removed by shears, only by death or a pet amulet (later step).
-        if (this.isTame() && stack.is(net.minecraft.world.item.Items.SHEARS) && isSaddled()) {
+        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
             if (!this.level().isClientSide) {
                 setSaddled(false);
                 this.ejectPassengers();
-                net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                        ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                        : net.minecraft.world.item.Items.SADDLE;
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
                 this.saddleItemId = null;
                 this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasChest()
-                && stack.is(net.minecraft.world.item.Items.CHEST)) {
+                && stack.is(Items.CHEST)) {
             if (!this.level().isClientSide) {
                 setHasChest(true);
-                this.playSound(net.minecraft.sounds.SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -314,13 +353,13 @@ protected void registerGoals() {
     }
 
     private void openChestMenu(Player player) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.minecraft.network.chat.Component title = this.hasCustomName()
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
                     ? this.getDisplayName().copy().append(" Storage")
-                    : net.minecraft.network.chat.Component.literal("Big Cat Storage");
-            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
-                    (id, inv, p) -> new net.minecraft.world.inventory.ChestMenu(
-                            net.minecraft.world.inventory.MenuType.GENERIC_9x1, id, inv, this.chestInventory, 1),
+                    : Component.literal("Big Cat Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(
+                            MenuType.GENERIC_9x1, id, inv, this.chestInventory, 1),
                     title));
         }
     }
@@ -335,9 +374,9 @@ protected void registerGoals() {
             openChestMenu(player);
             return;
         }
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer,
-                    new com.example.neomocreatures.network.OpenPlayerInventoryPayload());
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
         }
     }
 
@@ -346,10 +385,10 @@ protected void registerGoals() {
         if (this.isTame() || !this.isBaby() || hasEaten()) {
             return;
         }
-        net.minecraft.world.entity.item.ItemEntity nearestFood = null;
+        ItemEntity nearestFood = null;
         double nearestDistSqr = EAT_NEARBY_ITEM_RANGE * EAT_NEARBY_ITEM_RANGE;
-        for (net.minecraft.world.entity.item.ItemEntity itemEntity : this.level().getEntitiesOfClass(
-                net.minecraft.world.entity.item.ItemEntity.class, this.getBoundingBox().inflate(EAT_NEARBY_ITEM_RANGE))) {
+        for (ItemEntity itemEntity : this.level().getEntitiesOfClass(
+                ItemEntity.class, this.getBoundingBox().inflate(EAT_NEARBY_ITEM_RANGE))) {
             if (!isCarnivoreFood(itemEntity.getItem())) {
                 continue;
             }
@@ -370,7 +409,7 @@ protected void registerGoals() {
         if (nearestFood.getItem().isEmpty()) {
             nearestFood.discard();
         }
-        this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+        this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
         setHasEaten(true);
     }
 
@@ -382,7 +421,7 @@ protected void registerGoals() {
         int ticks = getTransformTicks() - 1;
         this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
         if (ticks == WING_TRANSFORM_SOUND_TICKS) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
         }
         if (ticks <= 0) {
             this.entityData.set(DATA_HAS_WINGS, true);
@@ -409,8 +448,8 @@ protected void registerGoals() {
 
     private static boolean isBreedingFood(ItemStack stack) {
         return isCarnivoreFood(stack)
-                || stack.is(net.minecraft.world.item.Items.BEEF)
-                || stack.is(net.minecraft.world.item.Items.RABBIT);
+                || stack.is(Items.BEEF)
+                || stack.is(Items.RABBIT);
     }
 
     /** Winged, ghost, and every hybrid are sterile — can never enter love mode at all. */
@@ -419,10 +458,10 @@ protected void registerGoals() {
     }
 
     public static boolean isCarnivoreFood(ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.PORKCHOP)
-                || stack.is(net.minecraft.world.item.Items.COD)
-                || stack.is(net.minecraft.world.item.Items.SALMON)
-                || stack.is(net.minecraft.world.item.Items.TROPICAL_FISH);
+        return stack.is(Items.PORKCHOP)
+                || stack.is(Items.COD)
+                || stack.is(Items.SALMON)
+                || stack.is(Items.TROPICAL_FISH);
     }
 
     public BigCatVariant getVariant() {
@@ -552,7 +591,7 @@ protected void registerGoals() {
 
     /** Carries the family chosen for the first spawned member to the rest of its herd — the actual
      *  fix for tigers/leopards/panthers showing up mixed together in the same group. */
-    private static final class BigCatGroupData implements net.minecraft.world.entity.SpawnGroupData {
+    private static final class BigCatGroupData implements SpawnGroupData {
         final WildFamily family;
         BigCatGroupData(WildFamily family) {
             this.family = family;
@@ -560,15 +599,15 @@ protected void registerGoals() {
     }
 
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(
-            net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty,
-            net.minecraft.world.entity.MobSpawnType spawnReason,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnGroupData) {
         BigCatGroupData resultGroupData = null;
 
-        if (spawnReason == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnReason == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION) {
+        if (spawnReason == MobSpawnType.NATURAL
+                || spawnReason == MobSpawnType.CHUNK_GENERATION) {
             WildFamily family;
             if (spawnGroupData instanceof BigCatGroupData shared) {
                 family = shared.family;
@@ -594,7 +633,7 @@ protected void registerGoals() {
     }
 
     /** Which family a whole herd will be, decided once per herd by biome — never mixed within a group. */
-    private WildFamily pickFamilyForBiome(net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.core.BlockPos pos) {
+    private WildFamily pickFamilyForBiome(ServerLevelAccessor level, BlockPos pos) {
         var biome = level.getBiome(pos);
 
         if (biome.is(ModTags.BIGCAT_SNOW_LEOPARD_BIOMES)) {
@@ -634,7 +673,7 @@ protected void registerGoals() {
         };
     }
 
-    public static boolean isSnowyBiome(net.minecraft.world.level.LevelReader level, net.minecraft.core.BlockPos pos) {
+    public static boolean isSnowyBiome(LevelReader level, BlockPos pos) {
         return level.getBiome(pos).value().getBaseTemperature() <= 0.15F;
     }
 
@@ -652,12 +691,12 @@ protected void registerGoals() {
     private void useEssence(Player player, ItemStack stack) {
         openMouth();
         if (!this.level().isClientSide) {
-            this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+            this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
-            if (!player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE))) {
-                player.drop(new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE), false);
+            if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
             }
         }
     }
@@ -701,17 +740,7 @@ protected void registerGoals() {
         }
         tag.putBoolean("BigCatHasChest", hasChest());
         if (hasChest()) {
-            net.minecraft.nbt.ListTag chestItems = new net.minecraft.nbt.ListTag();
-            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
-                ItemStack chestStack = chestInventory.getItem(slot);
-                if (!chestStack.isEmpty()) {
-                    CompoundTag itemTag = new CompoundTag();
-                    itemTag.putInt("Slot", slot);
-                    itemTag.put("Item", chestStack.save(this.registryAccess(), new CompoundTag()));
-                    chestItems.add(itemTag);
-                }
-            }
-            tag.put("BigCatChestItems", chestItems);
+            tag.put("BigCatChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
         }
         tag.putBoolean("BigCatWings", hasWings());
         tag.putBoolean("BigCatFlying", getIsFlying());
@@ -745,21 +774,13 @@ protected void registerGoals() {
             setSaddled(tag.getBoolean("BigCatSaddled"));
         }
         if (tag.contains("BigCatSaddleItem", 8)) {
-            this.saddleItemId = net.minecraft.resources.ResourceLocation.parse(tag.getString("BigCatSaddleItem"));
+            this.saddleItemId = ResourceLocation.parse(tag.getString("BigCatSaddleItem"));
         }
         if (tag.contains("BigCatHasChest")) {
             setHasChest(tag.getBoolean("BigCatHasChest"));
         }
         if (tag.contains("BigCatChestItems", 9)) {
-            net.minecraft.nbt.ListTag chestItems = tag.getList("BigCatChestItems", 10);
-            for (int i = 0; i < chestItems.size(); i++) {
-                CompoundTag itemTag = chestItems.getCompound(i);
-                int slot = itemTag.getInt("Slot");
-                ItemStack chestStack = ItemStack.parse(this.registryAccess(), itemTag.getCompound("Item")).orElse(ItemStack.EMPTY);
-                if (slot >= 0 && slot < chestInventory.getContainerSize()) {
-                    chestInventory.setItem(slot, chestStack);
-                }
-            }
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("BigCatChestItems", 10), this.registryAccess());
         }
         if (tag.contains("BigCatWings")) {
             this.entityData.set(DATA_HAS_WINGS, tag.getBoolean("BigCatWings"));
@@ -781,9 +802,9 @@ protected void registerGoals() {
     }
 
     @Override
-    protected net.minecraft.world.phys.AABB makeBoundingBox() {
+    protected AABB makeBoundingBox() {
         if (this.isBaby()) {
-            net.minecraft.world.entity.EntityDimensions babyDimensions =
+            EntityDimensions babyDimensions =
                     this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
             return babyDimensions.makeBoundingBox(this.position());
         }
@@ -793,22 +814,22 @@ protected void registerGoals() {
     @Override
     protected SoundEvent getAmbientSound() {
         openMouth();
-        return this.isBaby() ? com.example.neomocreatures.init.ModSounds.BIG_CAT_AMBIENT_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.BIG_CAT_AMBIENT.get();
+        return this.isBaby() ? ModSounds.BIG_CAT_AMBIENT_BABY.get()
+                : ModSounds.BIG_CAT_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
         openMouth();
-        return this.isBaby() ? com.example.neomocreatures.init.ModSounds.BIG_CAT_HURT_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.BIG_CAT_HURT.get();
+        return this.isBaby() ? ModSounds.BIG_CAT_HURT_BABY.get()
+                : ModSounds.BIG_CAT_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
         openMouth();
-        return this.isBaby() ? com.example.neomocreatures.init.ModSounds.BIG_CAT_DEATH_BABY.get()
-                : com.example.neomocreatures.init.ModSounds.BIG_CAT_DEATH.get();
+        return this.isBaby() ? ModSounds.BIG_CAT_DEATH_BABY.get()
+                : ModSounds.BIG_CAT_DEATH.get();
     }
 
     @Override
@@ -849,14 +870,14 @@ protected void registerGoals() {
             }
             this.entityData.set(DATA_WING_FLAP_TICKS, flapCounter);
             if (flapCounter == 5) {
-                this.playSound(com.example.neomocreatures.init.ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
+                this.playSound(ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
             }
         } else {
             this.entityData.set(DATA_WING_FLAP_TICKS, 0);
         }
 
         if (getIsFlying() && !this.isVehicle()) {
-            net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+            Vec3 motion = this.getDeltaMovement();
             double newY = Math.max(motion.y - 0.03D, -0.25D);
             this.setDeltaMovement(motion.x, newY, motion.z);
             if (this.onGround()) {
@@ -887,19 +908,17 @@ protected void registerGoals() {
 
     private void dropAllEquipment(boolean includeMedallion) {
         if (includeMedallion && hasMedallion()) {
-            this.spawnAtLocation(new ItemStack(com.example.neomocreatures.init.ModItems.MEDALLION.get()));
+            this.spawnAtLocation(new ItemStack(ModItems.MEDALLION.get()));
             this.entityData.set(DATA_HAS_MEDALLION, false);
         }
         if (isSaddled()) {
-            net.minecraft.world.item.Item saddleItem = this.saddleItemId != null
-                    ? net.minecraft.core.registries.BuiltInRegistries.ITEM.get(this.saddleItemId)
-                    : net.minecraft.world.item.Items.SADDLE;
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
             this.spawnAtLocation(new ItemStack(saddleItem));
             this.saddleItemId = null;
             setSaddled(false);
         }
         if (hasChest()) {
-            this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.CHEST));
+            this.spawnAtLocation(new ItemStack(Items.CHEST));
             for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
                 this.spawnAtLocation(chestInventory.getItem(slot));
             }
@@ -908,7 +927,7 @@ protected void registerGoals() {
     }
 
     /** Snapshot used to restore this big cat later from a filled Pet Amulet. */
-    private CompoundTag buildAmuletTag(java.util.UUID owner) {
+    private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("BigCatVariant", getVariant().name());
         tag.putFloat("Health", this.getHealth());
@@ -939,7 +958,7 @@ protected void registerGoals() {
 
         int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        MoCLootUtil.dropItems(this, com.example.neomocreatures.init.ModItems.BIG_CAT_CLAW.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+        MoCLootUtil.dropItems(this, ModItems.BIG_CAT_CLAW.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
     }
 
     /** 25% chance that a tamed big cat leaves a translucent ghost of its own variant when it dies. */
@@ -958,13 +977,13 @@ protected void registerGoals() {
         ghost.setOwnerUUID(this.getOwnerUUID());
         ghost.setAge(0);
         this.level().addFreshEntity(ghost);
-        ghost.playSound(com.example.neomocreatures.init.ModSounds.BIG_CAT_AMBIENT.get(), 1.0F, 1.0F);
-        com.example.neomocreatures.util.NamingHelper.promptRename(ghost, this.getOwnerUUID());
+        ghost.playSound(ModSounds.BIG_CAT_AMBIENT.get(), 1.0F, 1.0F);
+        NamingHelper.promptRename(ghost, this.getOwnerUUID());
     }
 
-    private static final net.minecraft.resources.ResourceLocation SPRINT_MODIFIER_ID =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    com.example.neomocreatures.NeoMoCreatures.MODID, "big_cat_sprint");
+    private static final ResourceLocation SPRINT_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(
+                    NeoMoCreatures.MODID, "big_cat_sprint");
 
     /** Wild hunting or a tamed cat chasing its target moves noticeably faster — matches the original's isSprinting() bonus. */
     private void tickSprintSpeed() {
@@ -975,8 +994,8 @@ protected void registerGoals() {
         boolean sprinting = this.getTarget() != null;
         boolean hasBonus = speedAttr.getModifier(SPRINT_MODIFIER_ID) != null;
         if (sprinting && !hasBonus) {
-            speedAttr.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                    SPRINT_MODIFIER_ID, SPRINT_SPEED_BONUS, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+            speedAttr.addTransientModifier(new AttributeModifier(
+                    SPRINT_MODIFIER_ID, SPRINT_SPEED_BONUS, AttributeModifier.Operation.ADD_VALUE));
         } else if (!sprinting && hasBonus) {
             speedAttr.removeModifier(SPRINT_MODIFIER_ID);
         }
@@ -991,21 +1010,21 @@ protected void registerGoals() {
         if (this.isVehicle() || !this.onGround()) {
             return;
         }
-        net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         if (motion.x * motion.x + motion.z * motion.z < 0.0004D) {
             return;
         }
-        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(motion.x, 0.0D, motion.z).normalize();
-        net.minecraft.core.BlockPos ahead = this.blockPosition()
+        Vec3 dir = new Vec3(motion.x, 0.0D, motion.z).normalize();
+        BlockPos ahead = this.blockPosition()
                 .offset((int) Math.round(dir.x), 0, (int) Math.round(dir.z));
 
-        if (this.level().getFluidState(ahead).is(net.minecraft.tags.FluidTags.WATER)) {
+        if (this.level().getFluidState(ahead).is(FluidTags.WATER)) {
             this.getNavigation().stop();
             this.setDeltaMovement(0.0D, motion.y, 0.0D);
             return;
         }
 
-        net.minecraft.core.BlockPos.MutableBlockPos check = ahead.below().mutable();
+        BlockPos.MutableBlockPos check = ahead.below().mutable();
         int drop = 0;
         while (drop <= SAFE_FALL_BLOCKS && this.level().getBlockState(check).getCollisionShape(this.level(), check).isEmpty()) {
             check.move(0, -1, 0);
@@ -1070,7 +1089,7 @@ protected void registerGoals() {
     }
 
     @Override
-    public boolean canMate(net.minecraft.world.entity.animal.Animal otherAnimal) {
+    public boolean canMate(Animal otherAnimal) {
         if (!(otherAnimal instanceof MoCBigCatEntity other) || other == this) {
             return false;
         }
@@ -1089,7 +1108,7 @@ protected void registerGoals() {
         if (!(otherParent instanceof MoCBigCatEntity other)) {
             return null;
         }
-        MoCBigCatEntity cub = com.example.neomocreatures.init.ModEntities.MOC_BIG_CAT.get().create(level);
+        MoCBigCatEntity cub = ModEntities.MOC_BIG_CAT.get().create(level);
         if (cub == null) {
             return null;
         }
@@ -1097,11 +1116,11 @@ protected void registerGoals() {
 
         // Both parents are tamed (that's the only way they could breed at all) —
         // the cub is tamed to the same owner the instant it's born, per the wiki.
-        java.util.UUID ownerId = this.getOwnerUUID() != null ? this.getOwnerUUID() : other.getOwnerUUID();
+        UUID ownerId = this.getOwnerUUID() != null ? this.getOwnerUUID() : other.getOwnerUUID();
         if (ownerId != null) {
             cub.setTame(true, false);
             cub.setOwnerUUID(ownerId);
-            com.example.neomocreatures.util.NamingHelper.promptRename(cub, ownerId);
+            NamingHelper.promptRename(cub, ownerId);
         }
         return cub;
     }
@@ -1129,9 +1148,9 @@ protected void registerGoals() {
     }
 
     @Override
-    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
         double vertical = hasWings() ? (isAscendHeld() ? 1.0D : (isDescendHeld() ? -1.0D : 0.0D)) : 0.0D;
-        return new net.minecraft.world.phys.Vec3(player.xxa, vertical, player.zza);
+        return new Vec3(player.xxa, vertical, player.zza);
     }
 
     @Override
@@ -1146,7 +1165,7 @@ protected void registerGoals() {
 
     private void applyWaterBuoyancy() {
         if (this.isInWater() && !getIsFlying()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.WATER);
+            double submergedFraction = this.getFluidHeight(FluidTags.WATER);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
@@ -1155,7 +1174,7 @@ protected void registerGoals() {
 
     private void applyLavaBuoyancy() {
         if (this.isInLava() && !getIsFlying()) {
-            double submergedFraction = this.getFluidHeight(net.minecraft.tags.FluidTags.LAVA);
+            double submergedFraction = this.getFluidHeight(FluidTags.LAVA);
             if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
                 this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
             }
@@ -1163,7 +1182,7 @@ protected void registerGoals() {
     }
 
     @Override
-    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travelVector) {
+    protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         this.setYRot(player.getYRot());
         this.yRotO = this.getYRot();
@@ -1191,7 +1210,7 @@ protected void registerGoals() {
     }
 
     @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+    public void travel(Vec3 travelVector) {
         if (!hasWings()) {
             applyWaterBuoyancy();
             applyLavaBuoyancy();
@@ -1202,8 +1221,8 @@ protected void registerGoals() {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player && getIsFlying()) {
             this.setNoGravity(true);
             this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
-            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
-            net.minecraft.world.phys.Vec3 delta = this.getDeltaMovement()
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            Vec3 delta = this.getDeltaMovement()
                     .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)
                     .subtract(0.0D, RIDDEN_FLYER_GRAVITY_PULL, 0.0D);
             if (this.isInWater() && delta.y < 0.0D) {
@@ -1217,11 +1236,11 @@ protected void registerGoals() {
         if (getIsFlying() && !this.isPassenger() && !this.isVehicle()) {
             if (this.isInWater()) {
                 this.moveRelative(0.02F, travelVector);
-                this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+                this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.8D));
             } else {
                 this.moveRelative(this.getSpeed(), travelVector);
-                this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+                this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale(flyerFriction()));
             }
             this.fallDistance = 0.0F;
@@ -1246,7 +1265,7 @@ protected void registerGoals() {
     @Override
     public void onPlayerJump(int jumpPower) {
         if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
-            net.minecraft.world.phys.Vec3 motion = this.getDeltaMovement();
+            Vec3 motion = this.getDeltaMovement();
             this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
             this.hasImpulse = true;
         }
@@ -1270,7 +1289,7 @@ protected void registerGoals() {
     /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setVariant(com.example.neomocreatures.entity.bigcat.BigCatVariant.valueOf(tag.getString("BigCatVariant")));
+        this.setVariant(BigCatVariant.valueOf(tag.getString("BigCatVariant")));
         this.setTame(true, false);
         if (tag.hasUUID("OwnerUUID")) {
             this.setOwnerUUID(tag.getUUID("OwnerUUID"));
@@ -1288,7 +1307,7 @@ protected void registerGoals() {
             this.setMedallion(true);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

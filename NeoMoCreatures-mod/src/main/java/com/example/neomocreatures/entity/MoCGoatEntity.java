@@ -9,17 +9,22 @@ import com.example.neomocreatures.util.PetStorageUtil;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -28,6 +33,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -44,6 +51,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -310,7 +319,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             return NamingHelper.renameWithBook(this, player);
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(com.example.neomocreatures.init.ModItems.PET_AMULET.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
             if (!this.level().isClientSide) {
                 capturePetInstant(player, hand);
             }
@@ -333,7 +342,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
                 return InteractionResult.FAIL;
             }
             if (!this.level().isClientSide) {
-                this.playSound(net.minecraft.sounds.SoundEvents.GOAT_MILK, 1.0F, 1.0F);
+                this.playSound(SoundEvents.GOAT_MILK, 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -358,7 +367,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         if (!this.isTame() && isFood(stack)) {
             if (!this.level().isClientSide) {
                 this.tame(player);
-                com.example.neomocreatures.util.NamingHelper.promptRename(this, player.getUUID());
+                NamingHelper.promptRename(this, player.getUUID());
                 this.playSound(ModSounds.GOAT_EATING.get(), 1.0F, 1.0F);
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -595,18 +604,18 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     }
 
     @Override
-    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
-        this.playSound(net.minecraft.sounds.SoundEvents.SHEEP_STEP, 0.15F, 1.0F);
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        this.playSound(SoundEvents.SHEEP_STEP, 0.15F, 1.0F);
     }
 
     @Nullable
     @Override
-    public net.minecraft.world.entity.SpawnGroupData finalizeSpawn(net.minecraft.world.level.ServerLevelAccessor level,
-            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.MobSpawnType spawnType,
-            @Nullable net.minecraft.world.entity.SpawnGroupData spawnGroupData) {
-        if ((spawnType == net.minecraft.world.entity.MobSpawnType.NATURAL
-                || spawnType == net.minecraft.world.entity.MobSpawnType.CHUNK_GENERATION
-                || spawnType == net.minecraft.world.entity.MobSpawnType.SPAWN_EGG)
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if ((spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION
+                || spawnType == MobSpawnType.SPAWN_EGG)
                 && this.random.nextInt(100) < 15) {
             this.setBaby(true);
         }
@@ -616,14 +625,14 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     }
 
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Male", isMale());
         tag.putInt("ColorIndex", getColorIndex());
     }
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("Male")) {
             setMale(tag.getBoolean("Male"));
@@ -638,7 +647,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         // Wiki: "any edible food item (mod and vanilla)" — same check
         // GoatFollowFoodGoal already uses to decide if a player is "holding
         // something edible", just applied here to the item in hand.
-        return stack.has(net.minecraft.core.component.DataComponents.FOOD);
+        return stack.has(DataComponents.FOOD);
     }
 
     @Nullable
@@ -662,8 +671,8 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     }
 
     /** Builds the NBT payload stored inside a filled Pet Amulet for this goat. */
-    private net.minecraft.nbt.CompoundTag buildAmuletTag(java.util.UUID owner) {
-        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("Goat", true);
         tag.putBoolean("Male", isMale());
         tag.putInt("Color", getColorIndex());
@@ -702,7 +711,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
         }
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(net.minecraft.network.chat.Component.literal(tag.getString("Name")));
+            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

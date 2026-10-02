@@ -1,8 +1,7 @@
 package com.example.neomocreatures.client;
 
+import com.example.neomocreatures.entity.MoCKittyBedEntity;
 import com.example.neomocreatures.entity.MoCKittyEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -12,6 +11,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
+
 
 public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
 
@@ -93,7 +93,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
     public void setupAnim(MoCKittyEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
         boolean sitting = entity.isKittySitting()
-                || entity.getVehicle() instanceof com.example.neomocreatures.entity.MoCKittyBedEntity
+                || entity.getVehicle() instanceof MoCKittyBedEntity
                 || entity.isHeld();
         boolean swinging = entity.isKittySwinging();
         int kittyState = entity.getKittyState();
@@ -106,8 +106,8 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         headParts[7].visible = false;
         headParts[8].visible = kittyState == 12;
 
-        float headYRot = netHeadYaw / 57.29578F;
-        float headXRot = headPitch / 57.29578F;
+        float headYRot = netHeadYaw / ModelAnimations.DEGREES_PER_RADIAN;
+        float headXRot = headPitch / ModelAnimations.DEGREES_PER_RADIAN;
         for (int i = 0; i < 9; i++) {
             headParts[i].yRot = headYRot;
             headParts[i].xRot = headXRot;
@@ -117,10 +117,10 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
         medallion.visible = entity.isTame();
 
         rightArm.xRot = Mth.cos((limbSwing * 0.6662F) + 3.141593F) * 2.0F * limbSwingAmount * 0.5F;
-        leftArm.xRot = Mth.cos(limbSwing * 0.6662F) * 2.0F * limbSwingAmount * 0.5F;
+        leftArm.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 2.0F) * 0.5F;
         rightArm.zRot = 0F;
         leftArm.zRot = 0F;
-        rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        rightLeg.xRot = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
         leftLeg.xRot = Mth.cos((limbSwing * 0.6662F) + 3.141593F) * 1.4F * limbSwingAmount;
         rightLeg.yRot = 0F;
         leftLeg.yRot = 0F;
@@ -149,10 +149,5 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
             rightLeg.yRot = 0.1F;
             leftLeg.yRot = -0.1F;
         }
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

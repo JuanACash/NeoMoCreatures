@@ -313,10 +313,10 @@ public class MoCBearModel extends HierarchicalModel<MoCBearEntity> {
                 : 0F;
         int state = entity.getBearState();
 
-        float lLegRotX = Mth.cos(limbSwing * 0.6662F) * 0.8F * limbSwingAmount;
+        float lLegRotX = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 0.8F);
         float rLegRotX = Mth.cos((limbSwing * 0.6662F) + 3.141593F) * 0.8F * limbSwingAmount;
-        float xAngle = headPitch / 57.29578F;
-        float yAngle = netHeadYaw / 57.29578F;
+        float xAngle = headPitch / ModelAnimations.DEGREES_PER_RADIAN;
+        float yAngle = netHeadYaw / ModelAnimations.DEGREES_PER_RADIAN;
 
         if (state == MoCBearEntity.FOURS_STATE) {
             head.visible = true; snout.visible = true; lEar.visible = true; rEar.visible = true;

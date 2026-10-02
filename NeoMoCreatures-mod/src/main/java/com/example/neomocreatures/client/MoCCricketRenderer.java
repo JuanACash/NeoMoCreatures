@@ -8,6 +8,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+
 /** Port of the Cricket's renderer registration (the generic renderer with shadow size 0). */
 public class MoCCricketRenderer extends MobRenderer<MoCCricketEntity, MoCCricketModel<MoCCricketEntity>> {
 
@@ -27,11 +30,11 @@ public class MoCCricketRenderer extends MobRenderer<MoCCricketEntity, MoCCricket
 
     /** Original: while airborne it tilts nose-up when rising and nose-down when falling. */
     @Override
-    protected void scale(MoCCricketEntity entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+    protected void scale(MoCCricketEntity entity, PoseStack poseStack, float partialTick) {
         if (!entity.onGround()) {
             double vertical = entity.getDeltaMovement().y;
             float angle = vertical > 0.5D ? 35.0F : vertical < -0.5D ? -35.0F : (float) (vertical * 70.0D);
-            poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(angle));
+            poseStack.mulPose(Axis.XP.rotationDegrees(angle));
         }
     }
 }

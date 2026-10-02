@@ -6,10 +6,15 @@ import com.example.neomocreatures.init.ModEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 
 /** One egg per species — unlike BigCat, bears have no families/hybrids, so each egg always spawns the same fixed variant. */
@@ -49,16 +54,16 @@ public class BearSpawnEggItem extends DeferredSpawnEggItem {
     }
 
     @Override
-    public net.minecraft.world.InteractionResult interactLivingEntity(
-            net.minecraft.world.item.ItemStack stack,
-            net.minecraft.world.entity.player.Player player,
-            net.minecraft.world.entity.LivingEntity target,
-            net.minecraft.world.InteractionHand hand) {
+    public InteractionResult interactLivingEntity(
+            ItemStack stack,
+            Player player,
+            LivingEntity target,
+            InteractionHand hand) {
         if (!(target instanceof MoCBearEntity adult) || adult.isBaby() || adult.getVariant() != this.variant) {
-            return net.minecraft.world.InteractionResult.PASS;
+            return InteractionResult.PASS;
         }
         if (!(target.level() instanceof ServerLevel serverLevel)) {
-            return net.minecraft.world.InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         MoCBearEntity cub = ModEntities.MOC_BEAR.get().create(serverLevel);
         if (cub != null) {
@@ -70,6 +75,6 @@ public class BearSpawnEggItem extends DeferredSpawnEggItem {
                 stack.shrink(1);
             }
         }
-        return net.minecraft.world.InteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 }

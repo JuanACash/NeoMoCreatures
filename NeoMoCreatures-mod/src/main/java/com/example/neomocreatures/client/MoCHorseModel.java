@@ -1,9 +1,10 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.entity.MoCHorseEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import java.util.EnumSet;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -13,7 +14,11 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 /**
  * NOTE on the head/neck cluster: decompiled a newer official build
@@ -257,16 +262,16 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
         root.addOrReplaceChild("wing_butterfly_wide_l",
                 CubeListBuilder.create()
                         .texOffs(0, 98).addBox(-1F, 0F, -14F, 26, 0, 30,
-                                java.util.EnumSet.of(net.minecraft.core.Direction.UP))
+                                EnumSet.of(Direction.UP))
                         .texOffs(0, 98).addBox(-1F, -0.5F, -14F, 26, 0, 30,
-                                java.util.EnumSet.of(net.minecraft.core.Direction.DOWN)),
+                                EnumSet.of(Direction.DOWN)),
                 PartPose.offsetAndRotation(5.3F, 4F, -2F, 0F, 0F, -0.7853982F));
         root.addOrReplaceChild("wing_butterfly_wide_r",
                 CubeListBuilder.create()
                         .texOffs(0, 68).addBox(-25F, 0F, -14F, 26, 0, 30,
-                                java.util.EnumSet.of(net.minecraft.core.Direction.UP))
+                                EnumSet.of(Direction.UP))
                         .texOffs(0, 68).addBox(-25F, -0.5F, -14F, 26, 0, 30,
-                                java.util.EnumSet.of(net.minecraft.core.Direction.DOWN)),
+                                EnumSet.of(Direction.DOWN)),
                 PartPose.offsetAndRotation(-5.3F, 4F, -2F, 0F, 0F, 0.7853982F));
 
         root.addOrReplaceChild("tail_a",
@@ -363,15 +368,15 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
         this.muleEarRight.visible = longEared;
         this.horn.visible = entity.getSpecies() == Species.UNICORN || entity.getSpecies() == Species.FAIRY_HORSE;
 
-        boolean isFairy = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.FAIRY_HORSE;
-        boolean isGhostWinged = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED;
+        boolean isFairy = entity.getSpecies() == MoCHorseGenetics.Species.FAIRY_HORSE;
+        boolean isGhostWinged = entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED;
 
         // horsefairywhite, horsefairypink, and horsefairyblue use the "wide"
         // wing (a single face, no front/back duplicate) to avoid flickering.
         boolean useWideWings = isFairy && (
-                entity.getFairyColor() == com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor.WHITE
-                        || entity.getFairyColor() == com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor.PINK
-                        || entity.getFairyColor() == com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor.BLUE);
+                entity.getFairyColor() == MoCHorseGenetics.FairyColor.WHITE
+                        || entity.getFairyColor() == MoCHorseGenetics.FairyColor.PINK
+                        || entity.getFairyColor() == MoCHorseGenetics.FairyColor.BLUE);
 
         this.wingButterflyL.visible = (isFairy && !useWideWings) || isGhostWinged;
         this.wingButterflyR.visible = (isFairy && !useWideWings) || isGhostWinged;
@@ -619,11 +624,11 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
         this.reinRight.y = headY;
         this.reinRight.z = headZ;
 
-        boolean hasSegmentedWings = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.BATHORSE
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.PEGASUS
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.DARK_PEGASUS;
-        boolean isGhost = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED;
+        boolean hasSegmentedWings = entity.getSpecies() == MoCHorseGenetics.Species.BATHORSE
+                || entity.getSpecies() == MoCHorseGenetics.Species.PEGASUS
+                || entity.getSpecies() == MoCHorseGenetics.Species.DARK_PEGASUS;
+        boolean isGhost = entity.getSpecies() == MoCHorseGenetics.Species.GHOST
+                || entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED;
         boolean canFoldLegsFlying = hasSegmentedWings || isFairy || isGhost;
 
         this.wingInnerL.visible = hasSegmentedWings;
@@ -638,7 +643,7 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
 
         float wingRot = flying
                 ? Mth.cos(ageInTicks * 0.3F + (float) Math.PI) * 1.2F
-                : 60F / 57.29578F;
+                : 60F / ModelAnimations.DEGREES_PER_RADIAN;
 
         this.wingInnerL.zRot = wingRot;
         this.wingMidL.zRot = wingRot;
@@ -651,8 +656,8 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
                 this.wingOuterL.yRot = -0.3228859F + wingRot / 2F;
                 this.wingOuterR.yRot = 0.3228859F - wingRot / 2F;
         } else {
-                this.wingOuterL.yRot = -90F / 57.29578F;
-                this.wingOuterR.yRot = 90F / 57.29578F;
+                this.wingOuterL.yRot = -90F / ModelAnimations.DEGREES_PER_RADIAN;
+                this.wingOuterR.yRot = 90F / ModelAnimations.DEGREES_PER_RADIAN;
         }
 
         this.wingInnerL.x = 5F; this.wingInnerL.y = 3F; this.wingInnerL.z = -6F;
@@ -669,8 +674,8 @@ public class MoCHorseModel extends HierarchicalModel<MoCHorseEntity> {
         }
 
         if (isGhost || (canFoldLegsFlying && !entity.onGround())) {
-                float upperFold = 15F / 57.29578F;
-                float lowerFold = 45F / 57.29578F;
+                float upperFold = 15F / ModelAnimations.DEGREES_PER_RADIAN;
+                float lowerFold = 45F / ModelAnimations.DEGREES_PER_RADIAN;
                 setLegAngle(this.leg1Upper, this.leg1Lower, this.leg1Hoof, upperFold, lowerFold);
                 setLegAngle(this.leg2Upper, this.leg2Lower, this.leg2Hoof, upperFold, lowerFold);
                 setLegAngle(this.leg3Upper, this.leg3Lower, this.leg3Hoof, upperFold, lowerFold);

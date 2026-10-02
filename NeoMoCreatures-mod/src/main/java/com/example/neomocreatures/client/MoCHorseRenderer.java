@@ -1,16 +1,23 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.entity.MoCHorseEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
+
+import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel> {
 
@@ -38,17 +45,17 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
     }
 
     @Override
-    protected net.minecraft.client.renderer.RenderType getRenderType(MoCHorseEntity entity, boolean bodyVisible, boolean translucent, boolean showOutline) {
-        boolean isGhost = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED;
+    protected RenderType getRenderType(MoCHorseEntity entity, boolean bodyVisible, boolean translucent, boolean showOutline) {
+        boolean isGhost = entity.getSpecies() == MoCHorseGenetics.Species.GHOST
+                || entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED;
         return super.getRenderType(entity, bodyVisible, translucent || isGhost || entity.isVanishing(), showOutline);
     }
 
     @Override
-    public net.minecraft.world.phys.Vec3 getRenderOffset(MoCHorseEntity entity, float partialTicks) {
-        net.minecraft.world.phys.Vec3 offset = super.getRenderOffset(entity, partialTicks);
-        if (entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED) {
+    public Vec3 getRenderOffset(MoCHorseEntity entity, float partialTicks) {
+        Vec3 offset = super.getRenderOffset(entity, partialTicks);
+        if (entity.getSpecies() == MoCHorseGenetics.Species.GHOST
+                || entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED) {
             offset = offset.add(0D, 0.3D, 0D);
         }
         return offset;
@@ -56,20 +63,20 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
 
     @Override
     public void render(MoCHorseEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        boolean isGhost = entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST
-                || entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED;
+        boolean isGhost = entity.getSpecies() == MoCHorseGenetics.Species.GHOST
+                || entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED;
         if (!isGhost && !entity.isVanishing()) {
             super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
             return;
         }
 
         float alphaF = isGhost
-                ? (entity.getSpecies() == com.example.neomocreatures.breeding.MoCHorseGenetics.Species.GHOST_WINGED ? 0.35F : 0.6F)
+                ? (entity.getSpecies() == MoCHorseGenetics.Species.GHOST_WINGED ? 0.35F : 0.6F)
                 : entity.getVanishAlpha();
         int alphaInt = (int) (alphaF * 255F);
 
         MultiBufferSource alphaBuffer = renderType ->
-                new com.example.neomocreatures.client.AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
+                new AlphaVertexConsumer(buffer.getBuffer(renderType), alphaInt);
         super.render(entity, entityYaw, partialTicks, poseStack, alphaBuffer, packedLight);
     }
 
@@ -135,7 +142,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
         return textureFor(entity.getSpecies(), entity);
     }
         
-    private ResourceLocation textureFor(com.example.neomocreatures.breeding.MoCHorseGenetics.Species species, MoCHorseEntity entity) {
+    private ResourceLocation textureFor(MoCHorseGenetics.Species species, MoCHorseEntity entity) {
         String fileName = switch (species) {
             case ZEBRA -> "horsezebra" + armorSuffix(entity);
             case DONKEY -> "horsedonkey";
@@ -159,15 +166,15 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
         return TEXTURE_CACHE.get(fileName);
     }
     private static String armorSuffix(MoCHorseEntity entity) {
-        ItemStack armorItem = entity.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.BODY);
-        if (armorItem.is(net.minecraft.world.item.Items.IRON_HORSE_ARMOR)) return "metal";
-        if (armorItem.is(net.minecraft.world.item.Items.GOLDEN_HORSE_ARMOR)) return "gold";
-        if (armorItem.is(net.minecraft.world.item.Items.DIAMOND_HORSE_ARMOR)) return "diamond";
+        ItemStack armorItem = entity.getItemBySlot(EquipmentSlot.BODY);
+        if (armorItem.is(Items.IRON_HORSE_ARMOR)) return "metal";
+        if (armorItem.is(Items.GOLDEN_HORSE_ARMOR)) return "gold";
+        if (armorItem.is(Items.DIAMOND_HORSE_ARMOR)) return "diamond";
         return "";
     }
 
     private static String crystalSuffix(MoCHorseEntity entity) {
-        ItemStack armorItem = entity.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.BODY);
-        return armorItem.is(com.example.neomocreatures.init.ModItems.HORSE_ARMOR_CRYSTAL.get()) ? "crystaline" : "";
+        ItemStack armorItem = entity.getItemBySlot(EquipmentSlot.BODY);
+        return armorItem.is(ModItems.HORSE_ARMOR_CRYSTAL.get()) ? "crystaline" : "";
     }
 }
