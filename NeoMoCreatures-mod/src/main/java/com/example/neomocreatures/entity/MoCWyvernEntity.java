@@ -13,6 +13,7 @@ import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
@@ -78,7 +79,7 @@ import net.minecraft.world.phys.Vec3;
 
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount, EquippedPet {
 
     private static final double AGGRO_RADIUS = 14.0D;
     private static final int POISON_DURATION_TICKS = 200;
@@ -554,8 +555,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(ModItems.RAT_RAW.get())
-                || stack.is(ModItems.TURKEY_RAW.get());
+        return stack.is(ModTags.WYVERN_HEALING_FOOD);
     }
 
     @Override
@@ -639,8 +639,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
             }
 
             if (!this.isBaby() && !this.isSaddled()
-                    && (stack.is(Items.SADDLE)
-                        || stack.is(ModItems.HORSE_SADDLE.get()))) {
+                    && stack.is(ModTags.MOUNT_SADDLES)) {
                 if (!this.level().isClientSide) {
                     this.setSaddled(true);
                     this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -801,6 +800,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     /** Spawns 1-3 maggots at the death location. */
 
     /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
+    /** Saddle, armor, chest and everything inside it. */
+    @Override
+    public void dropAllEquipment() {
+        this.dropSaddleAndArmor();
+        this.dropChestAndContents();
+    }
+
     public void dropSaddleAndArmor() {
         if (this.isSaddled()) {
             Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);

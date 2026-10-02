@@ -471,9 +471,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
 
     /** Scrolls act on the entity through their own interaction, so a right click with one must not mount. */
     private static boolean isEntityScroll(ItemStack stack) {
-        return stack.is(ModItems.SCROLL_OF_FREEDOM.get())
-                || stack.is(ModItems.SCROLL_OF_SALE.get())
-                || stack.is(ModItems.SCROLL_OF_OWNER.get());
+        return stack.is(ModTags.ENTITY_SCROLLS);
     }
 
     private void tameBy(Player player) {

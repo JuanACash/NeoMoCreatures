@@ -887,12 +887,6 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         this.noPhysics = false;
         this.heldBy = null;
     }
-
-    /** Called by KittyHoldReleaseHandler — releasing by right-clicking anywhere, same as the scorpion. */
-    public void releaseHeldPublic() {
-        stopHolding();
-        setKittyCareState(STATE_IDLE);
-    }
     
     private void tickHeld() {
         if (!isHeld()) {

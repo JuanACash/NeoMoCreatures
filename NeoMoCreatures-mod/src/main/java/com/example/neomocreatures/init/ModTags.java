@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
@@ -28,6 +29,31 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_HIDE = tag("repairs_hide_armor");
     public static final TagKey<Item> RAW_FISHES = tag("raw_fishes");
     public static final TagKey<Item> COOKED_FISHES = tag("cooked_fishes");
+    /** Cooked meat that tames black and grizzly bears. */
+    public static final TagKey<Item> BEAR_TAMING_MEAT = tag("bear_taming_meat");
+    /** Cooked fish/seafood that tames polar bears. */
+    public static final TagKey<Item> POLAR_BEAR_TAMING_MEAT = tag("polar_bear_taming_meat");
+    /** Any meat (raw or cooked) a tamed bear can be healed with. */
+    public static final TagKey<Item> BEAR_HEALING_MEAT = tag("bear_healing_meat");
+    /** Food big cats eat, are healed with and pick up from the ground. */
+    public static final TagKey<Item> BIG_CAT_FOOD = tag("big_cat_food");
+    /** Food that puts two big cats in love mode. */
+    public static final TagKey<Item> BIG_CAT_BREEDING_FOOD = tag("big_cat_breeding_food");
+    /** Food a tamed manticore is healed with. */
+    public static final TagKey<Item> MANTICORE_FOOD = tag("manticore_food");
+    /** Saddles any rideable mod creature accepts (vanilla saddle and the mod's horse saddle). */
+    public static final TagKey<Item> MOUNT_SADDLES = tag("mount_saddles");
+    /** Scrolls that act on a pet when used on it, so the click must never mount it instead. */
+    public static final TagKey<Item> ENTITY_SCROLLS = tag("entity_scrolls");
+    public static final TagKey<Item> ELEPHANT_TAMING_FOOD = tag("elephant_taming_food");
+    public static final TagKey<Item> ELEPHANT_HEALING_FOOD = tag("elephant_healing_food");
+    public static final TagKey<Item> OSTRICH_HEALING_FOOD = tag("ostrich_healing_food");
+    public static final TagKey<Item> WYVERN_HEALING_FOOD = tag("wyvern_healing_food");
+    public static final TagKey<Item> SCORPION_HEALING_FOOD = tag("scorpion_healing_food");
+    public static final TagKey<Item> KOMODO_DRAGON_HEALING_FOOD = tag("komodo_dragon_healing_food");
+    public static final TagKey<Item> FOX_HEALING_FOOD = tag("fox_healing_food");
+    /** Seeds birds eat (healing, pre-taming); the same set as the vanilla parrot used to accept. */
+    public static final TagKey<Item> BIRD_SEEDS = tag("bird_seeds");
     /** Items the Filch Lizard steals from players and picks up off the ground. */
     public static final TagKey<Item> FILCH_LIZARD_STEALS = tag("filch_lizard_steals");
 
@@ -40,6 +66,14 @@ public class ModTags {
     
     /** Ground bears can spawn on besides grass (#minecraft:animals_spawnable_on): ice and snow blocks for polar bears. */
     public static final TagKey<Block> BEAR_SPAWNABLE_ON = blockTag("bear_spawnable_on");
+
+    private static TagKey<EntityType<?>> entityTag(String name) {
+        return TagKey.create(Registries.ENTITY_TYPE,
+                ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));
+    }
+
+    /** Large animals that wild big cats and bears never hunt (each other, elephants, pandas...). */
+    public static final TagKey<EntityType<?>> NOT_HUNTED_BY_PREDATORS = entityTag("not_hunted_by_predators");
 
     private static TagKey<Biome> biomeTag(String name) {
         return TagKey.create(Registries.BIOME,

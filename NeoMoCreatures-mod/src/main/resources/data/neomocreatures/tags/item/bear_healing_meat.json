@@ -1,0 +1,18 @@
+{
+  "values": [
+    "#neomocreatures:bear_taming_meat",
+    "#neomocreatures:polar_bear_taming_meat",
+    "minecraft:beef",
+    "minecraft:porkchop",
+    "minecraft:chicken",
+    "minecraft:mutton",
+    "minecraft:rabbit",
+    "minecraft:cod",
+    "minecraft:salmon",
+    "neomocreatures:turkey_raw",
+    "neomocreatures:duck_raw",
+    "neomocreatures:venison_raw",
+    "neomocreatures:turtle_raw",
+    "neomocreatures:crab_raw"
+  ]
+}

@@ -67,8 +67,6 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Panda;
-import net.minecraft.world.entity.animal.PolarBear;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -93,7 +91,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * saddle, and chest still come in later steps.
  */
 public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
-        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount {
+        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount, EquippedPet {
 
     private static final float BABY_SCALE = 0.5F;
     private static final double SPRINT_SPEED_BONUS = 0.15D;
@@ -188,10 +186,7 @@ protected void registerGoals() {
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        if (!canHunt(target) || target instanceof MoCBigCatEntity || target instanceof MoCBearEntity
-                || target instanceof PolarBear
-                || target instanceof Panda
-                || target instanceof MoCElephantEntity) {
+        if (!canHunt(target) || (target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))) {
             return false;
         }
         return target != null && target.getBbHeight() < MAX_PREY_SIZE && target.getBbWidth() < MAX_PREY_SIZE;
@@ -293,8 +288,7 @@ protected void registerGoals() {
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && (stack.is(Items.SADDLE)
-                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
+                && stack.is(ModTags.MOUNT_SADDLES)) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
                 this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -447,9 +441,7 @@ protected void registerGoals() {
     }
 
     private static boolean isBreedingFood(ItemStack stack) {
-        return isCarnivoreFood(stack)
-                || stack.is(Items.BEEF)
-                || stack.is(Items.RABBIT);
+        return stack.is(ModTags.BIG_CAT_BREEDING_FOOD);
     }
 
     /** Winged, ghost, and every hybrid are sterile — can never enter love mode at all. */
@@ -458,10 +450,7 @@ protected void registerGoals() {
     }
 
     public static boolean isCarnivoreFood(ItemStack stack) {
-        return stack.is(Items.PORKCHOP)
-                || stack.is(Items.COD)
-                || stack.is(Items.SALMON)
-                || stack.is(Items.TROPICAL_FISH);
+        return stack.is(ModTags.BIG_CAT_FOOD);
     }
 
     public BigCatVariant getVariant() {
@@ -891,6 +880,7 @@ protected void registerGoals() {
     }
 
     /** Medallion/saddle/chest always drop if present, regardless of who killed it. Never affected by Looting. */
+    @Override
     public void dropAllEquipment() {
         dropAllEquipment(true);
     }

@@ -73,7 +73,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, Enemy, StorablePet, AscendingMount, DescendingMount {
+        HasCustomInventoryScreen, Enemy, StorablePet, AscendingMount, DescendingMount, EquippedPet, FireproofMount {
 
     private static final int STING_CHANCE = 5;
     private static final int STING_ANIM_TICKS = 50;
@@ -243,9 +243,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(Items.PORKCHOP)
-                || stack.is(Items.COD)
-                || stack.is(Items.SALMON);
+        return stack.is(ModTags.MANTICORE_FOOD);
     }
 
     public ManticoreVariant getVariant() {
@@ -439,8 +437,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && (stack.is(Items.SADDLE)
-                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
+                && stack.is(ModTags.MOUNT_SADDLES)) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
                 this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -633,6 +630,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         dropCombatLoot(level, recentlyHitByPlayer);
     }
 
+    @Override
     public void dropAllEquipment() {
         if (isSaddled()) {
             Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
@@ -888,5 +886,11 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             this.setCustomName(Component.literal(tag.getString("Name")));
         }
+    }
+
+    /** The fire manticore shields its rider from fire. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getVariant() == ManticoreVariant.FIRE;
     }
 }

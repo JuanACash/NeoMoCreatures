@@ -88,7 +88,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * codebase — see MoCWyvernEntity's tickGrowth() for the same pattern.
  */
 public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
-        HasCustomInventoryScreen, StorablePet {
+        HasCustomInventoryScreen, StorablePet, EquippedPet {
 
     private static final float BABY_SCALE = 0.5F;
     private static final int GROWTH_TICKS = 24000;
@@ -523,8 +523,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     }
 
     private boolean isTameFood(ItemStack stack) {
-        return stack.is(ModItems.SUGAR_LUMP.get())
-                || stack.is(Items.CAKE);
+        return stack.is(ModTags.ELEPHANT_TAMING_FOOD);
     }
 
     /** Cake counts double so either 10 sugar lumps or 5 cakes reach TAME_GOAL exactly. */
@@ -533,10 +532,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(ModItems.SUGAR_LUMP.get())
-                || stack.is(Items.BREAD)
-                || stack.is(Items.WHEAT)
-                || stack.is(Items.BAKED_POTATO);
+        return stack.is(ModTags.ELEPHANT_HEALING_FOOD);
     }
 
     @Override
@@ -1020,6 +1016,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     }
 
     /** Everything wearable this elephant currently has on — used by die() and by the Scroll of Freedom. */
+    @Override
     public void dropAllEquipment() {
         if (hasHowdah()) {
             this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HOWDAH.get()));

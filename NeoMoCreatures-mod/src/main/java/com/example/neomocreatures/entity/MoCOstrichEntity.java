@@ -6,6 +6,7 @@ import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -81,7 +82,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount {
+        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount, EquippedPet, FireproofMount {
 
     private static final int HIDE_TICKS = 60;
     private static final int MOUTH_TICKS_MAX = 20;
@@ -220,10 +221,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(Items.WHEAT)
-                || stack.is(Items.WHEAT_SEEDS)
-                || stack.is(Items.APPLE)
-                || stack.is(Items.GOLDEN_APPLE);
+        return stack.is(ModTags.OSTRICH_HEALING_FOOD);
     }
 
     public OstrichVariant getVariant() {
@@ -665,6 +663,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         }
     }
 
+    @Override
     public void dropAllEquipment() {
         if (isSaddled()) {
             this.ejectPassengers();
@@ -806,8 +805,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
                 return InteractionResult.SUCCESS;
             }
 
-            if (!isSaddled() && (stack.is(Items.SADDLE)
-                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
+            if (!isSaddled() && stack.is(ModTags.MOUNT_SADDLES)) {
                 if (!this.level().isClientSide) {
                     setSaddled(true);
                     this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -1343,5 +1341,11 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             this.setCustomName(Component.literal(tag.getString("Name")));
         }
+    }
+
+    /** An ostrich given the Essence of Fire shields its rider from fire. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getEssence() == ESSENCE_FIRE;
     }
 }

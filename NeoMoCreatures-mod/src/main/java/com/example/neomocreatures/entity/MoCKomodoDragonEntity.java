@@ -5,6 +5,7 @@ import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -84,7 +85,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * returns false and {@link #getBreedOffspring} always returns null.
  */
 public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount {
+        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount, EquippedPet {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
     private static final int MOUTH_TICKS_MAX = 20;
@@ -441,8 +442,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     private boolean isHealingFood(ItemStack stack) {
         // Wiki: "Tamed Komodo dragons can be healed with raw turkey or raw rat."
-        return stack.is(ModItems.TURKEY_RAW.get())
-                || stack.is(ModItems.RAT_RAW.get());
+        return stack.is(ModTags.KOMODO_DRAGON_HEALING_FOOD);
     }
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -488,8 +488,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         // Wiki: "After a Komodo dragon reaches its full size, it can be equipped
         // with a saddle" — gated on adulthood (!isBaby()), same as the tame check.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && (stack.is(Items.SADDLE)
-                    || stack.is(ModItems.HORSE_SADDLE.get()))) {
+                && stack.is(ModTags.MOUNT_SADDLES)) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
                 this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -624,6 +623,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         dropAllEquipment();
     }
 
+    @Override
     public void dropAllEquipment() {
         if (!isSaddled()) {
             return;

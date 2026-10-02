@@ -67,8 +67,6 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Bee;
-import net.minecraft.world.entity.animal.Panda;
-import net.minecraft.world.entity.animal.PolarBear;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -84,7 +82,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCustomInventoryScreen,
-        PlayerRideableJumping, StorablePet {
+        PlayerRideableJumping, StorablePet, EquippedPet {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.INT);
@@ -208,21 +206,11 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     }
 
     private static boolean isBlackGrizzlyTamingMeat(ItemStack stack) {
-        return stack.is(Items.COOKED_BEEF)
-                || stack.is(Items.COOKED_PORKCHOP)
-                || stack.is(Items.COOKED_CHICKEN)
-                || stack.is(Items.COOKED_MUTTON)
-                || stack.is(Items.COOKED_RABBIT)
-                || stack.is(ModItems.TURKEY_COOKED.get())
-                || stack.is(ModItems.DUCK_COOKED.get())
-                || stack.is(ModItems.VENISON_COOKED.get());
+        return stack.is(ModTags.BEAR_TAMING_MEAT);
     }
 
     private static boolean isPolarTamingMeat(ItemStack stack) {
-        return stack.is(Items.COOKED_COD)
-                || stack.is(Items.COOKED_SALMON)
-                || stack.is(ModItems.TURTLE_COOKED.get())
-                || stack.is(ModItems.CRAB_COOKED.get());
+        return stack.is(ModTags.POLAR_BEAR_TAMING_MEAT);
     }
 
     private boolean isTamingMeatForVariant(ItemStack stack) {
@@ -231,19 +219,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
 
     /** Healing accepts any meat, cooked or raw, either species' list — more lenient than taming on purpose. */
     private static boolean isAnyMeat(ItemStack stack) {
-        return isBlackGrizzlyTamingMeat(stack) || isPolarTamingMeat(stack)
-                || stack.is(Items.BEEF)
-                || stack.is(Items.PORKCHOP)
-                || stack.is(Items.CHICKEN)
-                || stack.is(Items.MUTTON)
-                || stack.is(Items.RABBIT)
-                || stack.is(Items.COD)
-                || stack.is(Items.SALMON)
-                || stack.is(ModItems.TURKEY_RAW.get())
-                || stack.is(ModItems.DUCK_RAW.get())
-                || stack.is(ModItems.VENISON_RAW.get())
-                || stack.is(ModItems.TURTLE_RAW.get())
-                || stack.is(ModItems.CRAB_RAW.get());
+        return stack.is(ModTags.BEAR_HEALING_MEAT);
     }
 
     @Override
@@ -312,10 +288,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         if (this.isTame()) {
             return false; // A tamed bear never hunts other animals on its own.
         }
-        return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity)
-                && !(target instanceof PolarBear)
-                && !(target instanceof Panda)
-                && !(target instanceof MoCElephantEntity)
+        return !(target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))
                 && !(target instanceof Bee);
     }
 
@@ -682,6 +655,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
      * the Scroll of Freedom / Pet Amulet items, which need the bear to
      * stay alive afterward.
      */
+    @Override
     public void dropAllEquipment() {
         if (isSaddled()) {
             Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
@@ -967,8 +941,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-            && (stack.is(Items.SADDLE)
-                || stack.is(ModItems.HORSE_SADDLE.get()))) {
+            && stack.is(ModTags.MOUNT_SADDLES)) {
             if (!this.level().isClientSide) {
                 setSaddled(true);
                 this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());

@@ -390,8 +390,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     }
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(ModItems.TURKEY_RAW.get())
-                || stack.is(ModItems.RAT_RAW.get());
+        return stack.is(ModTags.FOX_HEALING_FOOD);
     }
 
     @Override

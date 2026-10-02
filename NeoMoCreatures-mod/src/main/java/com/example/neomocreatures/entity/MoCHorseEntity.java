@@ -1,10 +1,17 @@
 package com.example.neomocreatures.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.client.ClientRiderInput;
 import com.example.neomocreatures.entity.horse.HorseBreedingHandler;
 import com.example.neomocreatures.entity.horse.HorseEffects;
@@ -21,13 +28,6 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -87,11 +87,10 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class MoCHorseEntity extends AbstractHorse implements StorablePet, AscendingMount, DescendingMount {
+public class MoCHorseEntity extends AbstractHorse implements StorablePet, AscendingMount, DescendingMount, EquippedPet, FireproofMount {
 
     private static final EntityDataAccessor<Integer> DATA_SPECIES =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
@@ -1808,6 +1807,13 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         }
         this.breedingHandler.tick();
     }
+    /** Saddle, armor, chest and everything inside it. */
+    @Override
+    public void dropAllEquipment() {
+        this.dropSaddleAndArmor();
+        this.dropChestAndContents();
+    }
+
     public void dropSaddleAndArmor() {
         ItemStack saddle = this.inventory.getItem(0);
         if (!saddle.isEmpty()) {
@@ -2129,4 +2135,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             }
         }
     }
+
+    /** Nightmares and dark pegasi carry their rider through fire unharmed. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getSpecies() == Species.NIGHTMARE || getSpecies() == Species.DARK_PEGASUS;
+    }
+
 }

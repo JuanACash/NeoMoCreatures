@@ -3,6 +3,7 @@ package com.example.neomocreatures.entity;
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
@@ -279,9 +280,7 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
 
     /** Scrolls act on the entity through their own interaction, so a right click with one must not mount. */
     private static boolean isEntityScroll(ItemStack stack) {
-        return stack.is(ModItems.SCROLL_OF_FREEDOM.get())
-                || stack.is(ModItems.SCROLL_OF_SALE.get())
-                || stack.is(ModItems.SCROLL_OF_OWNER.get());
+        return stack.is(ModTags.ENTITY_SCROLLS);
     }
 
     private void tameBy(Player player) {

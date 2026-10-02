@@ -1,14 +1,6 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCBearEntity;
-import com.example.neomocreatures.entity.MoCBigCatEntity;
-import com.example.neomocreatures.entity.MoCElephantEntity;
-import com.example.neomocreatures.entity.MoCHorseEntity;
-import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
-import com.example.neomocreatures.entity.MoCManticoreEntity;
-import com.example.neomocreatures.entity.MoCOstrichEntity;
-import com.example.neomocreatures.entity.MoCScorpionEntity;
-import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.EquippedPet;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -19,7 +11,6 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-
 
 public class ScrollOfFreedomItem extends Item {
 
@@ -42,28 +33,9 @@ public class ScrollOfFreedomItem extends Item {
         }
 
         // Drops saddle/armor/chest before freeing it
-        if (target instanceof MoCHorseEntity horse) {
-            horse.dropSaddleAndArmor();
-            horse.dropChestAndContents();
-        } else if (target instanceof MoCWyvernEntity wyvern) {
-            wyvern.dropSaddleAndArmor();
-            wyvern.dropChestAndContents();
-        } else if (target instanceof MoCElephantEntity elephant) {
-            elephant.dropAllEquipment();
-        } else if (target instanceof MoCBigCatEntity bigCat) {
-            bigCat.dropAllEquipment();
-        } else if (target instanceof MoCManticoreEntity manticore) {
-            manticore.dropAllEquipment();
-        } else if (target instanceof MoCScorpionEntity scorpion) {
-            scorpion.dropAllEquipment();
-        } else if (target instanceof MoCOstrichEntity ostrich) {
-            ostrich.dropAllEquipment();
-        } else if (target instanceof MoCBearEntity bear) {
-            bear.dropAllEquipment();
-        } else if (target instanceof MoCKomodoDragonEntity komodo) {
-            komodo.dropAllEquipment();
+        if (target instanceof EquippedPet equippedPet) {
+            equippedPet.dropAllEquipment();
         }
-        // (future entities with their own equipment: add their drop here)
 
         if (target instanceof TamableAnimal tamable) {
             tamable.setOwnerUUID(null);

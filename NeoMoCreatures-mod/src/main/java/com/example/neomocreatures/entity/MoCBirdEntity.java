@@ -4,6 +4,7 @@ import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bird.BirdVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
@@ -94,8 +95,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
 
     /** Wiki: "healed by any type of seeds" / eaten off the ground to become pre-tamed — same set as vanilla's Parrot. */
     private static boolean isSeed(ItemStack stack) {
-        return stack.is(Items.WHEAT_SEEDS) || stack.is(Items.MELON_SEEDS)
-                || stack.is(Items.PUMPKIN_SEEDS) || stack.is(Items.BEETROOT_SEEDS);
+        return stack.is(ModTags.BIRD_SEEDS);
     }
 
     /** True once it's eaten seeds off the ground — lets the next empty-hand right-click tame it. Not persisted, matching the original's transient flag. */

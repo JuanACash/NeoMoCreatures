@@ -70,7 +70,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, PlayerRideableJumping,
-        Enemy, StorablePet {
+        Enemy, StorablePet, EquippedPet, FireproofMount {
 
     private static final int STING_CHANCE = 5; // 1 in 5, matches rand.nextInt(5)==0
     private static final int STING_ANIM_TICKS = 50;
@@ -208,8 +208,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     
 
     private boolean isHealingFood(ItemStack stack) {
-        return stack.is(ModItems.RAT_RAW.get())
-                || stack.is(ModItems.RAT_COOKED.get());
+        return stack.is(ModTags.SCORPION_HEALING_FOOD);
     }
 
     public boolean isTransforming() {
@@ -582,8 +581,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 return InteractionResult.SUCCESS;
             }
             if (!this.isBaby() && !isSaddled()
-                    && (stack.is(Items.SADDLE)
-                        || stack.is(ModItems.HORSE_SADDLE.get()))) {
+                    && stack.is(ModTags.MOUNT_SADDLES)) {
                 if (!this.level().isClientSide) {
                     setSaddled(true);
                     this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
@@ -783,6 +781,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     }
 
     /** Saddle always drops if equipped, regardless of who removed it. */
+    @Override
     public void dropAllEquipment() {
         if (isSaddled()) {
             Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
@@ -981,5 +980,11 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
             this.setCustomName(Component.literal(tag.getString("Name")));
         }
+    }
+
+    /** The nether scorpion shields its rider from fire. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getVariant() == ScorpionVariant.NETHER;
     }
 }

@@ -1,0 +1,12 @@
+{
+  "values": [
+    "minecraft:cooked_beef",
+    "minecraft:cooked_porkchop",
+    "minecraft:cooked_chicken",
+    "minecraft:cooked_mutton",
+    "minecraft:cooked_rabbit",
+    "neomocreatures:turkey_cooked",
+    "neomocreatures:duck_cooked",
+    "neomocreatures:venison_cooked"
+  ]
+}
