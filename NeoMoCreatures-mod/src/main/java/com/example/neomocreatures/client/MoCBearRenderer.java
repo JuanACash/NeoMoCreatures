@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCBearRenderer extends MobRenderer<MoCBearEntity, MoCBearModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_bear");
+
     public static final ModelLayerLocation MOC_BEAR_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_bear"), "main");
 
@@ -20,8 +22,7 @@ public class MoCBearRenderer extends MobRenderer<MoCBearEntity, MoCBearModel> {
 
     @Override
     public ResourceLocation getTextureLocation(MoCBearEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_bear/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

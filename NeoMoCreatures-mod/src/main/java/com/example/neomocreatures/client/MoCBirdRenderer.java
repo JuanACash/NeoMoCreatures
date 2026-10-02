@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCBirdEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCBirdRenderer extends MobRenderer<MoCBirdEntity, MoCBirdModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_bird");
+
     public static final ModelLayerLocation MOC_BIRD_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_bird"), "main");
 
@@ -22,8 +25,7 @@ public class MoCBirdRenderer extends MobRenderer<MoCBirdEntity, MoCBirdModel> {
 
     @Override
     public ResourceLocation getTextureLocation(MoCBirdEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_bird/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

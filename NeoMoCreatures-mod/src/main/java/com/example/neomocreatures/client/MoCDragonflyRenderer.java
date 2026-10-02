@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCDragonflyRenderer extends MoCInsectRenderer<MoCDragonflyEntity, MoCDragonflyModel<MoCDragonflyEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_dragonfly");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_dragonfly"), "main");
 
@@ -18,6 +20,6 @@ public class MoCDragonflyRenderer extends MoCInsectRenderer<MoCDragonflyEntity, 
 
     @Override
     public ResourceLocation getTextureLocation(MoCDragonflyEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_dragonfly/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 }

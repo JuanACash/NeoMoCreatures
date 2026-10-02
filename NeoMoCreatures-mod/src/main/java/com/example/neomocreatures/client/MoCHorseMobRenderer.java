@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorseMobModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_horse_mob");
+
     public static final ModelLayerLocation MOC_HORSE_MOB_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_horse_mob"), "main");
 
@@ -32,7 +34,6 @@ public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorse
                 yield "horsenightmare" + frame;
             }
         };
-        return ResourceLocation.fromNamespaceAndPath(
-                NeoMoCreatures.MODID, "textures/entity/moc_horse_mob/" + fileName + ".png");
+        return TEXTURE_CACHE.get(fileName);
     }
 }

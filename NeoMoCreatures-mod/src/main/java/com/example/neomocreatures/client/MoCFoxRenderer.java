@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCFoxEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCFoxRenderer extends MobRenderer<MoCFoxEntity, MoCFoxModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_fox");
+
     public static final ModelLayerLocation MOC_FOX_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_fox"), "main");
 
@@ -23,7 +26,7 @@ public class MoCFoxRenderer extends MobRenderer<MoCFoxEntity, MoCFoxModel> {
     @Override
     public ResourceLocation getTextureLocation(MoCFoxEntity entity) {
         String file = entity.isSnow() ? "fox_snow" : (entity.isBaby() ? "fox_cub" : "fox");
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_fox/" + file + ".png");
+        return TEXTURE_CACHE.get(file);
     }
 
     @Override

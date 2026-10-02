@@ -20,6 +20,8 @@ import net.minecraft.resources.ResourceLocation;
  *  pass of the whole model. */
 public class MoCFireflyRenderer extends MoCInsectRenderer<MoCFireflyEntity, MoCFireflyModel<MoCFireflyEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_firefly");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_firefly"), "main");
 
@@ -32,7 +34,7 @@ public class MoCFireflyRenderer extends MoCInsectRenderer<MoCFireflyEntity, MoCF
 
     @Override
     public ResourceLocation getTextureLocation(MoCFireflyEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_firefly/firefly.png");
+        return TEXTURE_CACHE.get("firefly");
     }
 
     @Override

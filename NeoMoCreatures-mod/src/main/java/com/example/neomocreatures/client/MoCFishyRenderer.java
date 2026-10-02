@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCFishyEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -17,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
  * shadow 0.1). The 0.6x size is the entity's scale attribute, which the base renderer already applies.
  */
 public class MoCFishyRenderer extends MobRenderer<MoCFishyEntity, MoCFishyModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_fishy");
 
     public static final ModelLayerLocation MOC_FISHY_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_fishy"), "main");
@@ -37,8 +40,7 @@ public class MoCFishyRenderer extends MobRenderer<MoCFishyEntity, MoCFishyModel>
 
     @Override
     public ResourceLocation getTextureLocation(MoCFishyEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_fishy/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

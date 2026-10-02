@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCHellRatEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -12,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
  *  own 2-frame animated texture instead of a colour variant. */
 public class MoCHellRatRenderer extends MobRenderer<MoCHellRatEntity, MoCRatModel<MoCHellRatEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_hell_rat");
+
     private static final float SHADOW_RADIUS = 0.4F;
     private static final float SCALE = 1.3F;
 
@@ -21,8 +23,7 @@ public class MoCHellRatRenderer extends MobRenderer<MoCHellRatEntity, MoCRatMode
 
     @Override
     public ResourceLocation getTextureLocation(MoCHellRatEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_hell_rat/" + entity.getTextureFrameName() + ".png");
+        return TEXTURE_CACHE.get(entity.getTextureFrameName());
     }
 
     @Override

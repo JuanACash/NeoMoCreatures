@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Wild Wolf's renderer registration ({@code MoCRenderWWolf}, shadow 0.5). */
 public class MoCWildWolfRenderer extends MobRenderer<MoCWildWolfEntity, MoCWildWolfModel<MoCWildWolfEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_wild_wolf");
+
     public static final ModelLayerLocation MOC_WILD_WOLF_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_wild_wolf"), "main");
 
@@ -22,7 +24,6 @@ public class MoCWildWolfRenderer extends MobRenderer<MoCWildWolfEntity, MoCWildW
 
     @Override
     public ResourceLocation getTextureLocation(MoCWildWolfEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_wild_wolf/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 }

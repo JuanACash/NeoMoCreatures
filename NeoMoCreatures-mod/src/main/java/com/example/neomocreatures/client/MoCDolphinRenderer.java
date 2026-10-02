@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCDolphinEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -18,6 +19,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class MoCDolphinRenderer extends MobRenderer<MoCDolphinEntity, MoCDolphinModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_dolphin");
+
     public static final ModelLayerLocation MOC_DOLPHIN_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_dolphin"), "main");
 
@@ -29,8 +32,7 @@ public class MoCDolphinRenderer extends MobRenderer<MoCDolphinEntity, MoCDolphin
 
     @Override
     public ResourceLocation getTextureLocation(MoCDolphinEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_dolphin/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

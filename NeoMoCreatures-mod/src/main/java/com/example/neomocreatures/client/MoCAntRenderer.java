@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Ant's renderer registration (the generic renderer with shadow size 0). */
 public class MoCAntRenderer extends MobRenderer<MoCAntEntity, MoCAntModel<MoCAntEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_ant");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_ant"), "main");
 
@@ -20,6 +22,6 @@ public class MoCAntRenderer extends MobRenderer<MoCAntEntity, MoCAntModel<MoCAnt
 
     @Override
     public ResourceLocation getTextureLocation(MoCAntEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_ant/" + "ant" + ".png");
+        return TEXTURE_CACHE.get("ant");
     }
 }

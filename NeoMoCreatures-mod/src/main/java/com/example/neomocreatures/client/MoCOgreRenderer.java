@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Shared renderer for the 3 ogre species ({@code MoCRenderMoC} with {@code MoCModelOgre}, shadow 0.9). */
 public class MoCOgreRenderer<T extends MoCOgreEntity> extends MobRenderer<T, MoCOgreModel<T>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_ogre");
+
     public static final ModelLayerLocation MOC_OGRE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_ogre"), "main");
 
@@ -22,7 +24,6 @@ public class MoCOgreRenderer<T extends MoCOgreEntity> extends MobRenderer<T, MoC
 
     @Override
     public ResourceLocation getTextureLocation(T entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_ogre/" + entity.getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getTextureName());
     }
 }

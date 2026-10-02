@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCMoleEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -17,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
  *  offset is applied raw, with no smoothing at all — exactly like the source. */
 public class MoCMoleRenderer extends MobRenderer<MoCMoleEntity, MoCMoleModel<MoCMoleEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_mole");
+
     public static final ModelLayerLocation MOC_MOLE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_mole"), "main");
 
@@ -27,7 +30,7 @@ public class MoCMoleRenderer extends MobRenderer<MoCMoleEntity, MoCMoleModel<MoC
 
     @Override
     public ResourceLocation getTextureLocation(MoCMoleEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_mole/mole.png");
+        return TEXTURE_CACHE.get("mole");
     }
 
     @Override

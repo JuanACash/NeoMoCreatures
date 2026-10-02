@@ -6,6 +6,7 @@ import java.util.Map;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCTurtleEntity;
 import com.example.neomocreatures.entity.MoCTurtleEntity.TmntBrother;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -25,6 +26,8 @@ import net.minecraft.tags.FluidTags;
  * unscaled model space and are scaled together with the entity.
  */
 public class MoCTurtleRenderer extends MobRenderer<MoCTurtleEntity, MoCTurtleModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_turtle");
 
     public static final ModelLayerLocation MOC_TURTLE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_turtle"), "main");
@@ -78,7 +81,6 @@ public class MoCTurtleRenderer extends MobRenderer<MoCTurtleEntity, MoCTurtleMod
     }
 
     private static ResourceLocation texture(String fileName) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_turtle/" + fileName + ".png");
+        return TEXTURE_CACHE.get(fileName);
     }
 }

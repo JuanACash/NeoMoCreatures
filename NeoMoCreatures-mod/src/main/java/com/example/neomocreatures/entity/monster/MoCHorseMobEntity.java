@@ -1,9 +1,9 @@
 package com.example.neomocreatures.entity.monster;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;

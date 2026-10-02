@@ -3,18 +3,20 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
 
 
 public class MoCScorpionRenderer extends MobRenderer<MoCScorpionEntity, MoCScorpionModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_scorpion");
 
     public static final ModelLayerLocation MOC_SCORPION_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_scorpion"), "main");
@@ -52,13 +54,11 @@ public class MoCScorpionRenderer extends MobRenderer<MoCScorpionEntity, MoCScorp
             int interval = Math.max(1, ticksLeft / 8);
             boolean showUndead = (entity.tickCount / interval) % 2 == 0;
             ScorpionVariant shown = showUndead ? ScorpionVariant.UNDEAD : entity.getVariant();
-            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                    "textures/entity/moc_scorpion/" + shown.getTextureName() + ".png");
+            return TEXTURE_CACHE.get(shown.getTextureName());
         }
         // Saddle is texture-only, no separate 3D model — just swap to the "_saddled" file.
         String suffix = (entity.isSaddled() && !entity.isBaby()) ? "_saddled" : "";
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_scorpion/" + entity.getVariant().getTextureName() + suffix + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName() + suffix);
     }
 
     @Override

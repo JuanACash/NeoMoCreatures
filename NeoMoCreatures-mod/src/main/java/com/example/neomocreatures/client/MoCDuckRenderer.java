@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Duck's renderer registration (shadow 0.3). */
 public class MoCDuckRenderer extends MobRenderer<MoCDuckEntity, MoCDuckModel<MoCDuckEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_duck");
+
     public static final ModelLayerLocation MOC_DUCK_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_duck"), "main");
 
@@ -22,6 +24,6 @@ public class MoCDuckRenderer extends MobRenderer<MoCDuckEntity, MoCDuckModel<MoC
 
     @Override
     public ResourceLocation getTextureLocation(MoCDuckEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_duck/duck.png");
+        return TEXTURE_CACHE.get("duck");
     }
 }

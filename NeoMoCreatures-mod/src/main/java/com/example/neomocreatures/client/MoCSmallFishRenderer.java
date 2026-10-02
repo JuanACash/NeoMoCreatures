@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCSmallFishEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -17,6 +18,8 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class MoCSmallFishRenderer extends MobRenderer<MoCSmallFishEntity, MoCSmallFishModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_small_fish");
+
     public static final ModelLayerLocation MOC_SMALL_FISH_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_small_fish"), "main");
 
@@ -28,8 +31,7 @@ public class MoCSmallFishRenderer extends MobRenderer<MoCSmallFishEntity, MoCSma
 
     @Override
     public ResourceLocation getTextureLocation(MoCSmallFishEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_small_fish/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

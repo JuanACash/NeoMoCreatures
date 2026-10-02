@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Rat's renderer registration (shadow 0.3). */
 public class MoCRatRenderer extends MobRenderer<MoCRatEntity, MoCRatModel<MoCRatEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_rat");
+
     public static final ModelLayerLocation MOC_RAT_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_rat"), "main");
 
@@ -22,7 +24,6 @@ public class MoCRatRenderer extends MobRenderer<MoCRatEntity, MoCRatModel<MoCRat
 
     @Override
     public ResourceLocation getTextureLocation(MoCRatEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_rat/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 }

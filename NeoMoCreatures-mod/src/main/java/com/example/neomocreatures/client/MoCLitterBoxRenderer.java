@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCLitterBoxRenderer extends MobRenderer<MoCLitterBoxEntity, MoCLitterBoxModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_litter_box");
+
     public static final ModelLayerLocation MOC_LITTER_BOX_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_litter_box"), "main");
 
@@ -19,6 +21,6 @@ public class MoCLitterBoxRenderer extends MobRenderer<MoCLitterBoxEntity, MoCLit
 
     @Override
     public ResourceLocation getTextureLocation(MoCLitterBoxEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_litter_box/litter_box.png");
+        return TEXTURE_CACHE.get("litter_box");
     }
 }

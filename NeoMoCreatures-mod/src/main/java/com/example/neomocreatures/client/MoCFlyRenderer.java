@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCFlyRenderer extends MoCInsectRenderer<MoCFlyEntity, MoCFlyModel<MoCFlyEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_fly");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_fly"), "main");
 
@@ -18,6 +20,6 @@ public class MoCFlyRenderer extends MoCInsectRenderer<MoCFlyEntity, MoCFlyModel<
 
     @Override
     public ResourceLocation getTextureLocation(MoCFlyEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_fly/" + "fly" + ".png");
+        return TEXTURE_CACHE.get("fly");
     }
 }

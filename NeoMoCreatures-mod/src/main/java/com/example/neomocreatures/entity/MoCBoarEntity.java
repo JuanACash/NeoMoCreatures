@@ -1,11 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
-
 import java.util.EnumSet;
 
 import javax.annotation.Nullable;
+
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

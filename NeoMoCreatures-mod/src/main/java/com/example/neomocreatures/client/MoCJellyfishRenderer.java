@@ -2,16 +2,16 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCJellyfishEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
+import net.minecraft.client.renderer.RenderType;
 
 /**
  * Port of the jellyfish's renderer registration ({@code MoCRenderMoC} with
@@ -19,6 +19,8 @@ import net.minecraft.resources.ResourceLocation;
  * to full brightness rather than true light emission (see the entity's class comment for why).
  */
 public class MoCJellyfishRenderer extends MobRenderer<MoCJellyfishEntity, MoCJellyfishModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_jellyfish");
 
     public static final ModelLayerLocation MOC_JELLYFISH_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_jellyfish"), "main");
@@ -32,8 +34,7 @@ public class MoCJellyfishRenderer extends MobRenderer<MoCJellyfishEntity, MoCJel
 
     @Override
     public ResourceLocation getTextureLocation(MoCJellyfishEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_jellyfish/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Maggot's renderer registration (the generic renderer with shadow size 0). */
 public class MoCMaggotRenderer extends MobRenderer<MoCMaggotEntity, MoCMaggotModel<MoCMaggotEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_maggot");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_maggot"), "main");
 
@@ -20,6 +22,6 @@ public class MoCMaggotRenderer extends MobRenderer<MoCMaggotEntity, MoCMaggotMod
 
     @Override
     public ResourceLocation getTextureLocation(MoCMaggotEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_maggot/" + "maggot" + ".png");
+        return TEXTURE_CACHE.get("maggot");
     }
 }

@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCGoatEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -12,6 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public class MoCGoatRenderer extends MobRenderer<MoCGoatEntity, MoCGoatModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_goat");
 
     public static final ModelLayerLocation MOC_GOAT_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_goat"), "main");
@@ -35,8 +38,7 @@ public class MoCGoatRenderer extends MobRenderer<MoCGoatEntity, MoCGoatModel> {
         // original forced babies to always render white, but that was an
         // accidental side effect of its switch-statement falling through to
         // a default case, not an intentional "kids are always white" design.
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_goat/" + TEXTURES[entity.getColorIndex()] + ".png");
+        return TEXTURE_CACHE.get(TEXTURES[entity.getColorIndex()]);
     }
 
     @Override

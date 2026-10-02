@@ -3,6 +3,7 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCWerewolfEntity;
 import com.example.neomocreatures.entity.werewolf.WerewolfVariant;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.HumanoidModel;
@@ -18,6 +19,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of {@code MoCRenderWerewolf}: the wolf model always drives the base render pass, with a
  *  layer that draws vanilla's plain humanoid mesh — and only that — while in human form. */
 public class MoCWerewolfRenderer extends MobRenderer<MoCWerewolfEntity, MoCWerewolfModel<MoCWerewolfEntity>> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_werewolf");
 
     public static final ModelLayerLocation MOC_WEREWOLF_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_werewolf"), "main");
@@ -49,8 +52,7 @@ public class MoCWerewolfRenderer extends MobRenderer<MoCWerewolfEntity, MoCWerew
 
     @Override
     public ResourceLocation getTextureLocation(MoCWerewolfEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_werewolf/" + wolfTextureFor(entity) + ".png");
+        return TEXTURE_CACHE.get(wolfTextureFor(entity));
     }
 
     /** Fire cycles through 3 frames continuously (1-2-3-1-...), same cadence as the Nightmare horse. */
@@ -85,8 +87,7 @@ public class MoCWerewolfRenderer extends MobRenderer<MoCWerewolfEntity, MoCWerew
             this.humanModel.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
             this.getParentModel().copyPropertiesTo(this.humanModel);
 
-            ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                    "textures/entity/moc_werewolf/" + humanTextureFor(entity.getVariant()) + ".png");
+            ResourceLocation texture = TEXTURE_CACHE.get(humanTextureFor(entity.getVariant()));
             var vertexConsumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
             this.humanModel.renderToBuffer(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY, -1);
         }

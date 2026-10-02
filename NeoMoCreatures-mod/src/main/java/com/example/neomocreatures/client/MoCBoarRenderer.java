@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Boar's renderer registration (shadow 0.7, its own texture for adult vs. baby). */
 public class MoCBoarRenderer extends MobRenderer<MoCBoarEntity, MoCBoarModel<MoCBoarEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_boar");
+
     public static final ModelLayerLocation MOC_BOAR_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_boar"), "main");
 
@@ -23,7 +25,7 @@ public class MoCBoarRenderer extends MobRenderer<MoCBoarEntity, MoCBoarModel<MoC
     @Override
     public ResourceLocation getTextureLocation(MoCBoarEntity entity) {
         String texture = entity.isGrownAdult() ? "boar" : "boar_baby";
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_boar/" + texture + ".png");
+        return TEXTURE_CACHE.get(texture);
     }
 
     @Override

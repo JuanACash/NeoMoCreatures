@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Mouse's renderer registration (shadow 0.2). */
 public class MoCMouseRenderer extends MobRenderer<MoCMouseEntity, MoCMouseModel<MoCMouseEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_mouse");
+
     public static final ModelLayerLocation MOC_MOUSE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_mouse"), "main");
 
@@ -22,8 +24,7 @@ public class MoCMouseRenderer extends MobRenderer<MoCMouseEntity, MoCMouseModel<
 
     @Override
     public ResourceLocation getTextureLocation(MoCMouseEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_mouse/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

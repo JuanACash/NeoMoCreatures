@@ -2,8 +2,8 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -14,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCBigCatRenderer extends MobRenderer<MoCBigCatEntity, MoCBigCatModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_big_cat");
+
     public static final ModelLayerLocation MOC_BIG_CAT_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_big_cat"), "main");
 
@@ -23,8 +25,7 @@ public class MoCBigCatRenderer extends MobRenderer<MoCBigCatEntity, MoCBigCatMod
 
     @Override
     public ResourceLocation getTextureLocation(MoCBigCatEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_big_cat/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

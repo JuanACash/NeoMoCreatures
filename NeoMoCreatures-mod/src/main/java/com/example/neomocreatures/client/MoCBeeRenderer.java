@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCBeeRenderer extends MoCInsectRenderer<MoCBeeEntity, MoCBeeModel<MoCBeeEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_bee");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_bee"), "main");
 
@@ -18,6 +20,6 @@ public class MoCBeeRenderer extends MoCInsectRenderer<MoCBeeEntity, MoCBeeModel<
 
     @Override
     public ResourceLocation getTextureLocation(MoCBeeEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_bee/" + "bee" + ".png");
+        return TEXTURE_CACHE.get("bee");
     }
 }

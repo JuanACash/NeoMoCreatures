@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCTurkeyEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCTurkeyRenderer extends MobRenderer<MoCTurkeyEntity, MoCTurkeyModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_turkey");
+
     public static final ModelLayerLocation MOC_TURKEY_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_turkey"), "main");
 
@@ -23,7 +26,7 @@ public class MoCTurkeyRenderer extends MobRenderer<MoCTurkeyEntity, MoCTurkeyMod
     @Override
     public ResourceLocation getTextureLocation(MoCTurkeyEntity entity) {
         String file = (entity.isMale() && !entity.isBaby()) ? "turkey_male" : "turkey_female";
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_turkey/" + file + ".png");
+        return TEXTURE_CACHE.get(file);
     }
 
     @Override

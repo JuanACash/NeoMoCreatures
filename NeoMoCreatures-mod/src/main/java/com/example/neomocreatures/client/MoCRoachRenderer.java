@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCRoachRenderer extends MoCInsectRenderer<MoCRoachEntity, MoCRoachModel<MoCRoachEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_roach");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_roach"), "main");
 
@@ -18,6 +20,6 @@ public class MoCRoachRenderer extends MoCInsectRenderer<MoCRoachEntity, MoCRoach
 
     @Override
     public ResourceLocation getTextureLocation(MoCRoachEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_roach/" + "roach" + ".png");
+        return TEXTURE_CACHE.get("roach");
     }
 }

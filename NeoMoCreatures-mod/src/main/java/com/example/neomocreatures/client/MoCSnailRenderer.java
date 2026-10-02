@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Snail's renderer registration (the generic renderer with shadow size 0). */
 public class MoCSnailRenderer extends MobRenderer<MoCSnailEntity, MoCSnailModel<MoCSnailEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_snail");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_snail"), "main");
 
@@ -20,6 +22,6 @@ public class MoCSnailRenderer extends MobRenderer<MoCSnailEntity, MoCSnailModel<
 
     @Override
     public ResourceLocation getTextureLocation(MoCSnailEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_snail/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 }

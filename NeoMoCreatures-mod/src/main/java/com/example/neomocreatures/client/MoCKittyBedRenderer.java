@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCKittyBedRenderer extends MobRenderer<MoCKittyBedEntity, MoCKittyBedModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_kitty_bed");
+
     public static final ModelLayerLocation MOC_KITTY_BED_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_kitty_bed"), "main");
 
@@ -19,6 +21,6 @@ public class MoCKittyBedRenderer extends MobRenderer<MoCKittyBedEntity, MoCKitty
 
     @Override
     public ResourceLocation getTextureLocation(MoCKittyBedEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_kitty_bed/kitty_bed.png");
+        return TEXTURE_CACHE.get("kitty_bed");
     }
 }

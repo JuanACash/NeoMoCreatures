@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Cricket's renderer registration (the generic renderer with shadow size 0). */
 public class MoCCricketRenderer extends MobRenderer<MoCCricketEntity, MoCCricketModel<MoCCricketEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_cricket");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_cricket"), "main");
 
@@ -20,7 +22,7 @@ public class MoCCricketRenderer extends MobRenderer<MoCCricketEntity, MoCCricket
 
     @Override
     public ResourceLocation getTextureLocation(MoCCricketEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_cricket/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     /** Original: while airborne it tilts nose-up when rising and nose-down when falling. */

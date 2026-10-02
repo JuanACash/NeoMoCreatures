@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCGrasshopperRenderer extends MoCInsectRenderer<MoCGrasshopperEntity, MoCGrasshopperModel<MoCGrasshopperEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_grasshopper");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_grasshopper"), "main");
 
@@ -18,7 +20,7 @@ public class MoCGrasshopperRenderer extends MoCInsectRenderer<MoCGrasshopperEnti
 
     @Override
     public ResourceLocation getTextureLocation(MoCGrasshopperEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_grasshopper/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     /** Original: while airborne it tilts nose-up when rising and nose-down when falling. */

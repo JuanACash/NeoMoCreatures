@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCSnakeEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCSnakeRenderer extends MobRenderer<MoCSnakeEntity, MoCSnakeModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_snake");
+
     public static final ModelLayerLocation MOC_SNAKE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_snake"), "main");
 
@@ -22,8 +25,7 @@ public class MoCSnakeRenderer extends MobRenderer<MoCSnakeEntity, MoCSnakeModel>
 
     @Override
     public ResourceLocation getTextureLocation(MoCSnakeEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_snake/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

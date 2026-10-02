@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCBunnyEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -14,6 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 public class MoCBunnyRenderer extends MobRenderer<MoCBunnyEntity, MoCBunnyModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_bunny");
 
     public static final ModelLayerLocation MOC_BUNNY_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_bunny"), "main");
@@ -28,8 +31,7 @@ public class MoCBunnyRenderer extends MobRenderer<MoCBunnyEntity, MoCBunnyModel>
         // pair (a legacy-vs-new art style config toggle in the real mod) is
         // repurposed here as the adult/baby distinction instead.
         String suffix = entity.isBaby() ? "" : "_detailed";
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_bunny/" + entity.getVariant().getTextureName() + suffix + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName() + suffix);
     }
 
     @Override

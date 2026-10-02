@@ -2,8 +2,8 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCManticoreEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -12,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public class MoCManticoreRenderer extends MobRenderer<MoCManticoreEntity, MoCManticoreModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_manticore");
 
     public static final ModelLayerLocation MOC_MANTICORE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_manticore"), "main");
@@ -22,8 +24,7 @@ public class MoCManticoreRenderer extends MobRenderer<MoCManticoreEntity, MoCMan
 
     @Override
     public ResourceLocation getTextureLocation(MoCManticoreEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_manticore/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

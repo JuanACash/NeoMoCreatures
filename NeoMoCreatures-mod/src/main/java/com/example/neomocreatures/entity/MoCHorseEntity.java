@@ -1,9 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModParticles;
@@ -11,12 +15,7 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
-import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.List;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;

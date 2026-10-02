@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrichModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_ostrich");
+
     public static final ModelLayerLocation MOC_OSTRICH_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_ostrich"), "main");
 
@@ -20,8 +22,7 @@ public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrich
     @Override
     public ResourceLocation getTextureLocation(MoCOstrichEntity entity) {
         if (entity.isBaby()) {
-            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                    "textures/entity/moc_ostrich/ostrich_baby.png");
+            return TEXTURE_CACHE.get("ostrich_baby");
         }
 
         int currentEssence = entity.getEssence();
@@ -35,8 +36,7 @@ public class MoCOstrichRenderer extends MobRenderer<MoCOstrichEntity, MoCOstrich
         }
 
         String textureName = essenceTextureName(currentEssence, entity.getVariant());
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_ostrich/" + textureName + ".png");
+        return TEXTURE_CACHE.get(textureName);
     }
 
     private static String essenceTextureName(int essence, com.example.neomocreatures.entity.ostrich.OstrichVariant variant) {

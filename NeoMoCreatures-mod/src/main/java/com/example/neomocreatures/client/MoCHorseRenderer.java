@@ -14,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 
 public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_horse");
+
     public static final ModelLayerLocation MOC_HORSE_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_horse"), "main");
 
@@ -89,7 +91,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
                     case PEGASUS, DARK_PEGASUS -> "horseundeadpegasus01";
                     default -> "horseundead01";
                 };
-                return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + flickerFile + ".png");
+                return TEXTURE_CACHE.get(flickerFile);
             }
             return textureFor(entity.getSpecies(), entity);
         }
@@ -113,7 +115,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
                 int frame = 1 + (entity.tickCount / 20) % frameCount;
                 fileName = prefix + stage + frame;
             }
-            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+            return TEXTURE_CACHE.get(fileName);
         }
         if (entity.isTransforming()) {
             int ticksLeft = entity.getTransformTicks();
@@ -128,7 +130,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
             boolean showTarget = (entity.tickCount / interval) % 2 == 0;
             var targetColor = entity.getColorTransformTarget();
             String fileName = "horsefairy" + (showTarget ? targetColor.name().toLowerCase() : entity.getFairyColor().name().toLowerCase());
-            return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+            return TEXTURE_CACHE.get(fileName);
         }
         return textureFor(entity.getSpecies(), entity);
     }
@@ -154,8 +156,7 @@ public class MoCHorseRenderer extends MobRenderer<MoCHorseEntity, MoCHorseModel>
             case FAIRY_HORSE -> "horsefairy" + entity.getFairyColor().name().toLowerCase() + crystalSuffix(entity);
             case HORSE -> "horse" + entity.getCoat().name().toLowerCase() + armorSuffix(entity);
         };
-        return ResourceLocation.fromNamespaceAndPath(
-                NeoMoCreatures.MODID, "textures/entity/moc_horse/" + fileName + ".png");
+        return TEXTURE_CACHE.get(fileName);
     }
     private static String armorSuffix(MoCHorseEntity entity) {
         ItemStack armorItem = entity.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.BODY);

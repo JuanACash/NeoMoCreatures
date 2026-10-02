@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCButterflyRenderer extends MoCInsectRenderer<MoCButterflyEntity, MoCButterflyModel<MoCButterflyEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_butterfly");
+
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_butterfly"), "main");
 
@@ -18,7 +20,7 @@ public class MoCButterflyRenderer extends MoCInsectRenderer<MoCButterflyEntity, 
 
     @Override
     public ResourceLocation getTextureLocation(MoCButterflyEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_butterfly/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     /** Original: tFloat() - while flying it bobs up and down 0.2 blocks on a slow sine wave. */

@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCCrabEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -14,6 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the crab's renderer registration ({@code MoCRenderMoC} with {@code MoCModelCrab}, shadow 0.3). */
 public class MoCCrabRenderer extends MobRenderer<MoCCrabEntity, MoCCrabModel> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_crab");
+
     public static final ModelLayerLocation MOC_CRAB_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_crab"), "main");
 
@@ -25,8 +28,7 @@ public class MoCCrabRenderer extends MobRenderer<MoCCrabEntity, MoCCrabModel> {
 
     @Override
     public ResourceLocation getTextureLocation(MoCCrabEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_crab/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

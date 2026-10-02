@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Deer's renderer registration (shadow 0.7). */
 public class MoCDeerRenderer extends MobRenderer<MoCDeerEntity, MoCDeerModel<MoCDeerEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_deer");
+
     public static final ModelLayerLocation MOC_DEER_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_deer"), "main");
 
@@ -24,8 +26,7 @@ public class MoCDeerRenderer extends MobRenderer<MoCDeerEntity, MoCDeerModel<MoC
 
     @Override
     public ResourceLocation getTextureLocation(MoCDeerEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_deer/" + entity.getVariant().getTextureName() + ".png");
+        return TEXTURE_CACHE.get(entity.getVariant().getTextureName());
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.example.neomocreatures.client;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import com.example.neomocreatures.entity.MoCWraithEntity;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -15,6 +16,8 @@ import net.minecraft.resources.ResourceLocation;
  *  this mod uses (position, body/head rotation, walk animation all handled automatically), just
  *  drawn semi-transparent with a colour tint — grey for the Wraith, reddish for the Flame Wraith. */
 public class MoCWraithRenderer extends MobRenderer<MoCWraithEntity, MoCWraithModel<MoCWraithEntity>> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_wraith");
 
     public static final ModelLayerLocation MOC_WRAITH_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_wraith"), "main");
@@ -46,6 +49,6 @@ public class MoCWraithRenderer extends MobRenderer<MoCWraithEntity, MoCWraithMod
     @Override
     public ResourceLocation getTextureLocation(MoCWraithEntity entity) {
         String texture = entity instanceof MoCFlameWraithEntity ? "wraith_flame" : "wraith";
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_wraith/" + texture + ".png");
+        return TEXTURE_CACHE.get(texture);
     }
 }

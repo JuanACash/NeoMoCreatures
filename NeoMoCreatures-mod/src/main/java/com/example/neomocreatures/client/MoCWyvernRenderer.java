@@ -2,16 +2,18 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCWyvernEntity;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.network.chat.Component;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.resources.ResourceLocation;
 
 public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("wyvern");
 
     public static final ModelLayerLocation MOC_WYVERN_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "wyvern"), "main");
@@ -43,8 +45,7 @@ public class MoCWyvernRenderer extends MobRenderer<MoCWyvernEntity, MoCWyvernMod
             variant = showTarget ? entity.getTransformTarget() : variant;
         }
         String textureName = entity.isGhost() ? variant.getGhostTextureName() : variant.getTextureName();
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/wyvern/" + textureName + ".png");
+        return TEXTURE_CACHE.get(textureName);
     }
 
     @Override

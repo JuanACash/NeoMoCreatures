@@ -8,10 +8,12 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 
 public class MoCElephantRenderer extends MobRenderer<MoCElephantEntity, MoCElephantModel> {
+
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_elephant");
 
     public static final ModelLayerLocation MOC_ELEPHANT_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_elephant"), "main");
@@ -29,8 +31,7 @@ public class MoCElephantRenderer extends MobRenderer<MoCElephantEntity, MoCEleph
                 && entity.hasGarment()
                 ? com.example.neomocreatures.entity.elephant.ElephantVariant.ASIAN_DECORATED.getTextureName()
                 : entity.getVariant().getTextureName();
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID,
-                "textures/entity/moc_elephant/" + textureName + ".png");
+        return TEXTURE_CACHE.get(textureName);
     }
 
     @Override

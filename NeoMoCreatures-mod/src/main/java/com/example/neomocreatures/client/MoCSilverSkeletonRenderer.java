@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 /** Port of the Silver Skeleton's renderer registration (shadow 0.5). */
 public class MoCSilverSkeletonRenderer extends MobRenderer<MoCSilverSkeletonEntity, MoCSilverSkeletonModel<MoCSilverSkeletonEntity>> {
 
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_silver_skeleton");
+
     public static final ModelLayerLocation MOC_SILVER_SKELETON_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_silver_skeleton"), "main");
 
@@ -22,6 +24,6 @@ public class MoCSilverSkeletonRenderer extends MobRenderer<MoCSilverSkeletonEnti
 
     @Override
     public ResourceLocation getTextureLocation(MoCSilverSkeletonEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_silver_skeleton/silver_skeleton.png");
+        return TEXTURE_CACHE.get("silver_skeleton");
     }
 }
