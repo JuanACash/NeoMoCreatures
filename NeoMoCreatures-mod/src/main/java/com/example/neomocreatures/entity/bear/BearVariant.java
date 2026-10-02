@@ -1,5 +1,11 @@
 package com.example.neomocreatures.entity.bear;
 
+import com.example.neomocreatures.init.ModTags;
+
+import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
+
 /**
  * The 4 bear species. Stats/render scale taken directly from
  * MoCEntityBlackBear/GrizzlyBear/PolarBear/PandaBear (registerAttributes()
@@ -83,4 +89,34 @@ public enum BearVariant {
         }
         return BLACK;
     }
+
+
+    /** Which variant a whole group will be, decided once per group by biome — never mixed within a group. */
+    public static BearVariant forBiome(Holder<Biome> biome, RandomSource random) {
+        // Checked in order; each tag holds vanilla biomes plus optional modded ones.
+        if (biome.is(ModTags.BEAR_POLAR_BIOMES)) {
+            return POLAR;
+        }
+        if (biome.is(ModTags.BEAR_PANDA_BIOMES)) {
+            return PANDA;
+        }
+        if (biome.is(ModTags.BEAR_GRIZZLY_BIOMES)) {
+            return GRIZZLY;
+        }
+        if (biome.is(ModTags.BEAR_BLACK_BIOMES)) {
+            return BLACK;
+        }
+        if (biome.is(ModTags.BEAR_BLACK_OR_GRIZZLY_BIOMES)) {
+            return random.nextBoolean() ? BLACK : GRIZZLY;
+        }
+
+        // Safety net for a biome not explicitly listed (e.g. a datapack biome reusing
+        // one of these spawners) — decide by climate instead of defaulting silently.
+        float temperature = biome.value().getBaseTemperature();
+        if (temperature <= 0.15F) {
+            return POLAR;
+        }
+        return random.nextBoolean() ? BLACK : GRIZZLY;
+    }
+
 }

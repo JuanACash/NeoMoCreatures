@@ -1,7 +1,10 @@
 package com.example.neomocreatures.entity.bunny;
 
-import net.minecraft.util.RandomSource;
+import com.example.neomocreatures.init.ModTags;
 
+import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 /**
  * The 5 bunny colour variants, ported from the texture switch in
  * {@code drzhark.mocreatures.entity.passive.MoCEntityBunny#getTexture()}
@@ -49,4 +52,13 @@ public enum BunnyVariant {
         BunnyVariant[] variants = values();
         return variants[random.nextInt(variants.length)];
     }
+
+    /** Wiki: "Bunnies always spawn white in taiga, cold taiga, ice mountains or ice plains biomes." */
+    public static BunnyVariant forBiome(Holder<Biome> biome, RandomSource random) {
+        if (biome.is(ModTags.BUNNY_WHITE_BIOMES)) {
+            return WHITE;
+        }
+        return BunnyVariant.random(random);
+    }
+
 }

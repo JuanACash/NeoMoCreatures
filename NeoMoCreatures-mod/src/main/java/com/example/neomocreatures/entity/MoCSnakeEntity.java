@@ -1,20 +1,19 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.snake.SnakeVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -62,7 +61,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -564,7 +562,7 @@ public class MoCSnakeEntity extends TamableAnimal
 
         if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
             VariantGroupData<SnakeVariant> group = VariantGroupData.of(spawnGroupData, SnakeVariant.class,
-                    () -> pickVariantForBiome(level, this.blockPosition()));
+                    () -> SnakeVariant.forBiome(level.getBiome(this.blockPosition()), this.random));
             resultGroupData = group;
             setVariant(group.variant());
         } else {
@@ -580,47 +578,6 @@ public class MoCSnakeEntity extends TamableAnimal
         // its own. We track the group's shared variant ourselves instead.
         super.finalizeSpawn(level, difficulty, spawnType, null);
         return resultGroupData;
-    }
-
-    /**
-     * Wiki: rattlesnakes/spotted (wolf) snakes in deserts and badlands;
-     * cobras, pythons and green (bright) snakes in jungles/sparse jungles,
-     * cobras also in savannas; coral snakes in forests; orange snakes in
-     * plains; dark snakes almost anywhere (the fallback here).
-     */
-    private SnakeVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
-        var biome = level.getBiome(pos);
-
-        if (biome.is(ModTags.SNAKE_RATTLE_OR_WOLF_BIOMES)) {
-            return this.random.nextBoolean() ? SnakeVariant.RATTLE : SnakeVariant.WOLF;
-        }
-
-        // Wiki: "cobras also spawn in savannas" — savanna is cobra-only,
-        // unlike the jungle biomes it shares with python/green.
-        if (biome.is(ModTags.SNAKE_COBRA_BIOMES)) {
-            return SnakeVariant.COBRA;
-        }
-
-        // Wiki: pythons can also spawn in mangrove swamps (and other swamps/marshes),
-        // including right on the water surface (see the custom spawn placement predicate).
-        if (biome.is(ModTags.SNAKE_PYTHON_BIOMES)) {
-            return SnakeVariant.PYTHON;
-        }
-
-        if (biome.is(ModTags.SNAKE_JUNGLE_BIOMES)) {
-            SnakeVariant[] options = {SnakeVariant.COBRA, SnakeVariant.PYTHON, SnakeVariant.GREEN_BRIGHT};
-            return options[this.random.nextInt(options.length)];
-        }
-
-        if (biome.is(ModTags.SNAKE_CORAL_BIOMES)) {
-            return SnakeVariant.CORAL;
-        }
-
-        if (biome.is(ModTags.SNAKE_ORANGE_BIOMES)) {
-            return SnakeVariant.ORANGE;
-        }
-
-        return SnakeVariant.GREEN_DARK;
     }
 
     @Override

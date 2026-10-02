@@ -1,6 +1,14 @@
 package com.example.neomocreatures.entity.jellyfish;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 
 /**
  * The 12 jellyfish colours from {@code MoCEntityJellyFish.getTexture()}. The original only ever
@@ -62,4 +70,32 @@ public enum JellyfishVariant {
         JellyfishVariant[] variants = values();
         return variants[random.nextInt(variants.length)];
     }
+
+    /** Where each colour is allowed to spawn naturally. */
+    private static final Map<JellyfishVariant, Set<ResourceKey<Biome>>> SPAWN_BIOMES = Map.ofEntries(
+            Map.entry(ORANGE_DARK, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
+            Map.entry(PURPLE_GRAY, Set.of(Biomes.OCEAN, Biomes.LUKEWARM_OCEAN, Biomes.COLD_OCEAN)),
+            Map.entry(BLUE_DARK, Set.of(Biomes.DEEP_OCEAN, Biomes.DEEP_COLD_OCEAN, Biomes.DEEP_FROZEN_OCEAN)),
+            Map.entry(GREEN, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
+            Map.entry(ORANGE_RED, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
+            Map.entry(ORANGE_YELLOW, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
+            Map.entry(BLUE_SPECKLED, Set.of(Biomes.OCEAN, Biomes.DEEP_OCEAN, Biomes.DEEP_COLD_OCEAN)),
+            Map.entry(WHITE, Set.of(Biomes.OCEAN, Biomes.COLD_OCEAN, Biomes.FROZEN_OCEAN)),
+            Map.entry(PURPLE, Set.of(Biomes.LUKEWARM_OCEAN, Biomes.WARM_OCEAN)),
+            Map.entry(ORANGE_LIGHT, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
+            Map.entry(RED, Set.of(Biomes.DEEP_OCEAN, Biomes.DEEP_LUKEWARM_OCEAN, Biomes.DEEP_COLD_OCEAN)),
+            Map.entry(BLUE_LIGHT, Set.of(Biomes.OCEAN, Biomes.COLD_OCEAN, Biomes.FROZEN_OCEAN)));
+
+    /** Picks uniformly among the colours allowed in the biome this individual is spawning in. */
+    public static JellyfishVariant forBiome(Holder<Biome> biome, RandomSource random) {
+        List<JellyfishVariant> eligible = SPAWN_BIOMES.entrySet().stream()
+                .filter(entry -> entry.getValue().stream().anyMatch(biome::is))
+                .map(Map.Entry::getKey)
+                .toList();
+        if (eligible.isEmpty()) {
+            return JellyfishVariant.randomWild(random);
+        }
+        return eligible.get(random.nextInt(eligible.size()));
+    }
+
 }

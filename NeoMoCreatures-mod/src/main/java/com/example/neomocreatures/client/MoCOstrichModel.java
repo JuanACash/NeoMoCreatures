@@ -1,9 +1,9 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCOstrichEntity;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.example.neomocreatures.entity.MoCOstrichEntity;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -726,18 +726,18 @@ private final ModelPart uniHorn;
         part.visible = false;
         }
         ModelPart[] activeGroup = switch (helmet) {
-        case 1 -> new ModelPart[]{helmetLeather};
-        case 2 -> new ModelPart[]{helmetIron};
-        case 3 -> new ModelPart[]{helmetGold};
-        case 4 -> new ModelPart[]{helmetDiamond};
-        case 5 -> new ModelPart[]{helmetHide, helmetNeckHide, helmetHideEar1, helmetHideEar2};
-        case 6 -> new ModelPart[]{helmetFur, helmetNeckFur, helmetFurEar1, helmetFurEar2};
-        case 7 -> new ModelPart[]{helmetReptile, helmetReptileEar1, helmetReptileEar2};
-        case 8 -> new ModelPart[]{helmetScorpDirt};
-        case 9 -> new ModelPart[]{helmetScorpCave};
-        case 10 -> new ModelPart[]{helmetScorpFrost};
-        case 11 -> new ModelPart[]{helmetScorpNether};
-        case 12 -> new ModelPart[]{helmetScorpUndead};
+        case MoCOstrichEntity.HELMET_LEATHER -> new ModelPart[]{helmetLeather};
+        case MoCOstrichEntity.HELMET_IRON -> new ModelPart[]{helmetIron};
+        case MoCOstrichEntity.HELMET_GOLD -> new ModelPart[]{helmetGold};
+        case MoCOstrichEntity.HELMET_DIAMOND -> new ModelPart[]{helmetDiamond};
+        case MoCOstrichEntity.HELMET_HIDE -> new ModelPart[]{helmetHide, helmetNeckHide, helmetHideEar1, helmetHideEar2};
+        case MoCOstrichEntity.HELMET_FUR -> new ModelPart[]{helmetFur, helmetNeckFur, helmetFurEar1, helmetFurEar2};
+        case MoCOstrichEntity.HELMET_REPTILE -> new ModelPart[]{helmetReptile, helmetReptileEar1, helmetReptileEar2};
+        case MoCOstrichEntity.HELMET_SCORP_DIRT -> new ModelPart[]{helmetScorpDirt};
+        case MoCOstrichEntity.HELMET_SCORP_CAVE -> new ModelPart[]{helmetScorpCave};
+        case MoCOstrichEntity.HELMET_SCORP_FROST -> new ModelPart[]{helmetScorpFrost};
+        case MoCOstrichEntity.HELMET_SCORP_NETHER -> new ModelPart[]{helmetScorpNether};
+        case MoCOstrichEntity.HELMET_SCORP_UNDEAD -> new ModelPart[]{helmetScorpUndead};
         default -> new ModelPart[0];
         };
         for (ModelPart part : activeGroup) {
@@ -747,7 +747,7 @@ private final ModelPart uniHorn;
         part.yRot = head.yRot;
         }
         // The reptile helmet's ears keep their own fixed yRot offset from the head, per the original.
-        if (helmet == 7) {
+        if (helmet == MoCOstrichEntity.HELMET_REPTILE) {
         helmetReptileEar1.yRot = -35F / R + head.yRot;
         helmetReptileEar2.yRot = 35F / R + head.yRot;
         }

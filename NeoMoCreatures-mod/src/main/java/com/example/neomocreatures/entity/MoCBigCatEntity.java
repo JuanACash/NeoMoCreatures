@@ -1,7 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
+import com.example.neomocreatures.entity.bigcat.BigCatWildFamily;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -13,10 +18,6 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -79,7 +80,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -578,8 +578,6 @@ protected void registerGoals() {
         this.setHealth(this.getMaxHealth());
     }
 
-    private enum WildFamily { SNOW_LEOPARD, LEOPARD, PANTHER, TIGER, LION }
-
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
@@ -590,10 +588,10 @@ protected void registerGoals() {
 
         if (spawnReason == MobSpawnType.NATURAL
                 || spawnReason == MobSpawnType.CHUNK_GENERATION) {
-            VariantGroupData<WildFamily> group = VariantGroupData.of(spawnGroupData, WildFamily.class,
-                    () -> pickFamilyForBiome(level, this.blockPosition()));
+            VariantGroupData<BigCatWildFamily> group = VariantGroupData.of(spawnGroupData, BigCatWildFamily.class,
+                    () -> BigCatWildFamily.forBiome(level.getBiome(this.blockPosition()), this.random));
             resultGroupData = group;
-            setVariant(rollVariantForFamily(group.variant()));
+            setVariant(group.variant().rollVariant(this.random));
         } else {
             setVariant(BigCatVariant.randomLion(this.random)); // /summon, mob spawner, etc.
         }
@@ -608,47 +606,6 @@ protected void registerGoals() {
         // separately so the rest of the pack keeps getting the right family.
         super.finalizeSpawn(level, difficulty, spawnReason, null);
         return resultGroupData;
-    }
-
-    /** Which family a whole herd will be, decided once per herd by biome — never mixed within a group. */
-    private WildFamily pickFamilyForBiome(ServerLevelAccessor level, BlockPos pos) {
-        var biome = level.getBiome(pos);
-
-        if (biome.is(ModTags.BIGCAT_SNOW_LEOPARD_BIOMES)) {
-            return WildFamily.SNOW_LEOPARD;
-        }
-        if (biome.is(ModTags.BIGCAT_JUNGLE_BIOMES)) {
-            int roll = this.random.nextInt(38); // 14 + 10 + 14
-            if (roll < 14) return WildFamily.LEOPARD;
-            if (roll < 24) return WildFamily.PANTHER;
-            return WildFamily.TIGER;
-        }
-        if (biome.is(ModTags.BIGCAT_FOREST_BIOMES)) {
-            return this.random.nextInt(24) < 14 ? WildFamily.LEOPARD : WildFamily.PANTHER; // 14 vs 10
-        }
-        if (biome.is(ModTags.BIGCAT_LION_BIOMES)) {
-            return WildFamily.LION;
-        }
-
-        // Safety net for any biome not explicitly listed — decide by climate, never pure random.
-        float temperature = biome.value().getBaseTemperature();
-        if (temperature <= 0.15F) {
-            return WildFamily.SNOW_LEOPARD;
-        }
-        if (temperature >= 1.5F) {
-            return WildFamily.LION;
-        }
-        return this.random.nextBoolean() ? WildFamily.LEOPARD : WildFamily.PANTHER;
-    }
-
-    private BigCatVariant rollVariantForFamily(WildFamily family) {
-        return switch (family) {
-            case SNOW_LEOPARD -> BigCatVariant.SNOW_LEOPARD;
-            case LEOPARD -> BigCatVariant.LEOPARD;
-            case PANTHER -> BigCatVariant.PANTHER;
-            case TIGER -> BigCatVariant.randomWildTiger(this.random);
-            case LION -> BigCatVariant.randomWildLion(this.random);
-        };
     }
 
     public static boolean isSnowyBiome(LevelReader level, BlockPos pos) {

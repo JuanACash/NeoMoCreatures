@@ -1,21 +1,19 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.bunny.BunnyVariant;
-import com.example.neomocreatures.init.ModEntities;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.init.ModTags;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetCarryUtil;
-import com.example.neomocreatures.util.PetStorageUtil;
-
 import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.BlockPos;
+import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.bunny.BunnyVariant;
+import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageUtil;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -306,7 +304,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         if (spawnType == MobSpawnType.NATURAL
                 || spawnType == MobSpawnType.CHUNK_GENERATION) {
             VariantGroupData<BunnyVariant> group = VariantGroupData.of(spawnGroupData, BunnyVariant.class,
-                    () -> pickVariantForBiome(level, this.blockPosition()));
+                    () -> BunnyVariant.forBiome(level.getBiome(this.blockPosition()), this.random));
             resultGroupData = group;
             setVariant(group.variant());
         } else {
@@ -320,15 +318,6 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         // by MoCSnakeEntity/MoCBearEntity).
         super.finalizeSpawn(level, difficulty, spawnType, null);
         return resultGroupData;
-    }
-
-    /** Wiki: "Bunnies always spawn white in taiga, cold taiga, ice mountains or ice plains biomes." */
-    private BunnyVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
-        var biome = level.getBiome(pos);
-        if (biome.is(ModTags.BUNNY_WHITE_BIOMES)) {
-            return BunnyVariant.WHITE;
-        }
-        return BunnyVariant.random(this.random);
     }
 
     @Override

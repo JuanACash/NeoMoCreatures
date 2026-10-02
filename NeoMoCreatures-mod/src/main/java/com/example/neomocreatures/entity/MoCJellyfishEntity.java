@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.jellyfish.JellyfishVariant;
 import com.example.neomocreatures.init.ModItems;
@@ -8,21 +10,13 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nullable;
-
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -52,11 +46,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -106,22 +97,6 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
     private static final String VARIANT_TAG = "JellyfishVariant";
     /** NBT flag that marks a filled fish net as holding a jellyfish. */
     public static final String NET_KEY = "Jellyfish";
-
-    
-    /** Where each colour is allowed to spawn naturally. */
-    private static final Map<JellyfishVariant, Set<ResourceKey<Biome>>> SPAWN_BIOMES = Map.ofEntries(
-            Map.entry(JellyfishVariant.ORANGE_DARK, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(JellyfishVariant.PURPLE_GRAY, Set.of(Biomes.OCEAN, Biomes.LUKEWARM_OCEAN, Biomes.COLD_OCEAN)),
-            Map.entry(JellyfishVariant.BLUE_DARK, Set.of(Biomes.DEEP_OCEAN, Biomes.DEEP_COLD_OCEAN, Biomes.DEEP_FROZEN_OCEAN)),
-            Map.entry(JellyfishVariant.GREEN, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(JellyfishVariant.ORANGE_RED, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(JellyfishVariant.ORANGE_YELLOW, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(JellyfishVariant.BLUE_SPECKLED, Set.of(Biomes.OCEAN, Biomes.DEEP_OCEAN, Biomes.DEEP_COLD_OCEAN)),
-            Map.entry(JellyfishVariant.WHITE, Set.of(Biomes.OCEAN, Biomes.COLD_OCEAN, Biomes.FROZEN_OCEAN)),
-            Map.entry(JellyfishVariant.PURPLE, Set.of(Biomes.LUKEWARM_OCEAN, Biomes.WARM_OCEAN)),
-            Map.entry(JellyfishVariant.ORANGE_LIGHT, Set.of(Biomes.WARM_OCEAN, Biomes.LUKEWARM_OCEAN)),
-            Map.entry(JellyfishVariant.RED, Set.of(Biomes.DEEP_OCEAN, Biomes.DEEP_LUKEWARM_OCEAN, Biomes.DEEP_COLD_OCEAN)),
-            Map.entry(JellyfishVariant.BLUE_LIGHT, Set.of(Biomes.OCEAN, Biomes.COLD_OCEAN, Biomes.FROZEN_OCEAN)));
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCJellyfishEntity.class, EntityDataSerializers.INT);
@@ -197,22 +172,9 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
         // The whole group must be one colour — pick once for the first jellyfish and reuse it for
         // the rest of the group, instead of rolling separately for each individual.
         VariantGroupData<JellyfishVariant> school = VariantGroupData.of(spawnGroupData, JellyfishVariant.class,
-                () -> pickVariantForBiome(level));
+                () -> JellyfishVariant.forBiome(level.getBiome(this.blockPosition()), this.random));
         this.setVariant(school.variant());
         return super.finalizeSpawn(level, difficulty, spawnType, school);
-    }
-
-    /** Picks uniformly among the colours allowed in the biome this individual is spawning in. */
-    private JellyfishVariant pickVariantForBiome(ServerLevelAccessor level) {
-        Holder<Biome> biome = level.getBiome(this.blockPosition());
-        List<JellyfishVariant> eligible = SPAWN_BIOMES.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(biome::is))
-                .map(Map.Entry::getKey)
-                .toList();
-        if (eligible.isEmpty()) {
-            return JellyfishVariant.randomWild(this.random);
-        }
-        return eligible.get(this.random.nextInt(eligible.size()));
     }
 
     // ---------------------------------------------------------------------

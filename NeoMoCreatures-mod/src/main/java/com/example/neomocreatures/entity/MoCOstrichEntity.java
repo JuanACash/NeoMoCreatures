@@ -1,7 +1,14 @@
 package com.example.neomocreatures.entity;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
+import com.example.neomocreatures.entity.ostrich.OstrichEquipment;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -12,12 +19,6 @@ import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -74,11 +75,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
@@ -673,7 +671,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             setSaddled(false);
         }
         if (getHelmet() != HELMET_NONE) {
-            this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
+            this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
             setHelmet(HELMET_NONE);
         }
         if (hasChest()) {
@@ -686,7 +684,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             }
             chestInventory.clearContent();
             if (getFlagColor() != -1) {
-                this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
+                this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
                 setFlagColor(-1);
             }
             setHasChest(false);
@@ -817,7 +815,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
                 return InteractionResult.SUCCESS;
             }
 
-            int helmetFromItem = helmetIdFor(stack);
+            int helmetFromItem = OstrichEquipment.helmetIdFor(stack);
             if (helmetFromItem != HELMET_NONE) {
                 if (getHelmet() != HELMET_NONE) {
                     // SUCCESS (not FAIL) fully consumes the interaction, so vanilla's own
@@ -846,11 +844,11 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
                 return InteractionResult.SUCCESS;
             }
 
-            DyeColor woolColor = dyeColorForWool(stack.getItem());
+            DyeColor woolColor = OstrichEquipment.dyeColorForWool(stack.getItem());
             if (hasChest() && woolColor != null && woolColor.getId() != getFlagColor()) {
                 if (!this.level().isClientSide) {
                     if (getFlagColor() != -1) {
-                        this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
+                        this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
                     }
                     setFlagColor(woolColor.getId());
                     this.playSound(SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
@@ -864,7 +862,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             if (stack.is(Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
                 if (!this.level().isClientSide) {
                     if (getHelmet() != HELMET_NONE) {
-                        this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
+                        this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
                         setHelmet(HELMET_NONE);
                         this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
                     } else {
@@ -909,71 +907,6 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         return super.mobInteract(player, hand);
     }
 
-    private static int helmetIdFor(ItemStack stack) {
-        if (stack.is(Items.LEATHER_HELMET)) return HELMET_LEATHER;
-        if (stack.is(Items.IRON_HELMET)) return HELMET_IRON;
-        if (stack.is(Items.GOLDEN_HELMET)) return HELMET_GOLD;
-        if (stack.is(Items.DIAMOND_HELMET)) return HELMET_DIAMOND;
-        if (stack.is(ModItems.HIDE_HELMET.get())) return HELMET_HIDE;
-        if (stack.is(ModItems.FUR_HELMET.get())) return HELMET_FUR;
-        if (stack.is(ModItems.REPTILE_HELMET.get())) return HELMET_REPTILE;
-        if (stack.is(ModItems.SCORP_HELMET_DIRT.get())) return HELMET_SCORP_DIRT;
-        if (stack.is(ModItems.SCORP_HELMET_CAVE.get())) return HELMET_SCORP_CAVE;
-        if (stack.is(ModItems.SCORP_HELMET_FROST.get())) return HELMET_SCORP_FROST;
-        if (stack.is(ModItems.SCORP_HELMET_NETHER.get())) return HELMET_SCORP_NETHER;
-        if (stack.is(ModItems.SCORP_HELMET_UNDEAD.get())) return HELMET_SCORP_UNDEAD;
-        return HELMET_NONE;
-    }
-
-    private static Item itemForHelmet(int id) {
-        return switch (id) {
-            case HELMET_LEATHER -> Items.LEATHER_HELMET;
-            case HELMET_IRON -> Items.IRON_HELMET;
-            case HELMET_GOLD -> Items.GOLDEN_HELMET;
-            case HELMET_DIAMOND -> Items.DIAMOND_HELMET;
-            case HELMET_HIDE -> ModItems.HIDE_HELMET.get();
-            case HELMET_FUR -> ModItems.FUR_HELMET.get();
-            case HELMET_REPTILE -> ModItems.REPTILE_HELMET.get();
-            case HELMET_SCORP_DIRT -> ModItems.SCORP_HELMET_DIRT.get();
-            case HELMET_SCORP_CAVE -> ModItems.SCORP_HELMET_CAVE.get();
-            case HELMET_SCORP_FROST -> ModItems.SCORP_HELMET_FROST.get();
-            case HELMET_SCORP_NETHER -> ModItems.SCORP_HELMET_NETHER.get();
-            case HELMET_SCORP_UNDEAD -> ModItems.SCORP_HELMET_UNDEAD.get();
-            default -> Items.LEATHER_HELMET;
-        };
-    }
-
-    @Nullable
-    private static DyeColor dyeColorForWool(Item item) {
-        for (DyeColor color : DyeColor.values()) {
-            if (item == woolItemFor(color)) {
-                return color;
-            }
-        }
-        return null;
-    }
-
-    private static Item woolItemFor(DyeColor color) {
-        Block block = switch (color) {
-            case WHITE -> Blocks.WHITE_WOOL;
-            case ORANGE -> Blocks.ORANGE_WOOL;
-            case MAGENTA -> Blocks.MAGENTA_WOOL;
-            case LIGHT_BLUE -> Blocks.LIGHT_BLUE_WOOL;
-            case YELLOW -> Blocks.YELLOW_WOOL;
-            case LIME -> Blocks.LIME_WOOL;
-            case PINK -> Blocks.PINK_WOOL;
-            case GRAY -> Blocks.GRAY_WOOL;
-            case LIGHT_GRAY -> Blocks.LIGHT_GRAY_WOOL;
-            case CYAN -> Blocks.CYAN_WOOL;
-            case PURPLE -> Blocks.PURPLE_WOOL;
-            case BLUE -> Blocks.BLUE_WOOL;
-            case BROWN -> Blocks.BROWN_WOOL;
-            case GREEN -> Blocks.GREEN_WOOL;
-            case RED -> Blocks.RED_WOOL;
-            case BLACK -> Blocks.BLACK_WOOL;
-        };
-        return block.asItem();
-    }
 
     private void tryStartBreeding(Player player, ItemStack stack) {
         MoCOstrichEntity partner = findValidPartner();
@@ -1264,7 +1197,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
 
             // Equipped helmet.
             if (getHelmet() != HELMET_NONE) {
-                this.spawnAtLocation(new ItemStack(itemForHelmet(getHelmet())));
+                this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
             }
 
             // Chest + contents + the flag's wool (same as before).
@@ -1277,7 +1210,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
                     }
                 }
                 if (getFlagColor() != -1) {
-                    this.spawnAtLocation(new ItemStack(woolItemFor(DyeColor.byId(getFlagColor()))));
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
                 }
             }
         }

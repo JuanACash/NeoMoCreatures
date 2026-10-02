@@ -1,7 +1,10 @@
 package com.example.neomocreatures.entity.snake;
 
-import net.minecraft.util.RandomSource;
+import com.example.neomocreatures.init.ModTags;
 
+import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 /**
  * The 8 snake colour variants, ported from the texture switch in
  * {@code drzhark.mocreatures.entity.hunter.MoCEntitySnake#getTexture()}
@@ -79,4 +82,40 @@ public enum SnakeVariant {
         SnakeVariant[] variants = values();
         return variants[random.nextInt(variants.length)];
     }
+
+
+    /** Which variant a whole spawn group will be, decided once per group by biome. */
+    public static SnakeVariant forBiome(Holder<Biome> biome, RandomSource random) {
+        if (biome.is(ModTags.SNAKE_RATTLE_OR_WOLF_BIOMES)) {
+            return random.nextBoolean() ? RATTLE : WOLF;
+        }
+
+        // Wiki: "cobras also spawn in savannas" — savanna is cobra-only,
+        // unlike the jungle biomes it shares with python/green.
+        if (biome.is(ModTags.SNAKE_COBRA_BIOMES)) {
+            return COBRA;
+        }
+
+        // Wiki: pythons can also spawn in mangrove swamps (and other swamps/marshes),
+        // including right on the water surface (see the custom spawn placement predicate).
+        if (biome.is(ModTags.SNAKE_PYTHON_BIOMES)) {
+            return PYTHON;
+        }
+
+        if (biome.is(ModTags.SNAKE_JUNGLE_BIOMES)) {
+            SnakeVariant[] options = {COBRA, PYTHON, GREEN_BRIGHT};
+            return options[random.nextInt(options.length)];
+        }
+
+        if (biome.is(ModTags.SNAKE_CORAL_BIOMES)) {
+            return CORAL;
+        }
+
+        if (biome.is(ModTags.SNAKE_ORANGE_BIOMES)) {
+            return ORANGE;
+        }
+
+        return GREEN_DARK;
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
@@ -9,19 +11,12 @@ import com.example.neomocreatures.entity.ai.HerdFollowGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.smallfish.SmallFishVariant;
 import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -29,7 +24,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -57,10 +51,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -130,18 +122,6 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
     private static final float SUFFOCATION_DAMAGE = 1.0F;
 
     private static final String VARIANT_TAG = "SmallFishVariant";
-
-    /** Where each species is allowed to spawn naturally; the piranha's own biomes never overlap the rest. */
-    /** Biomes each species can spawn in, as tags (vanilla plus optional modded biomes). */
-    private static final Map<SmallFishVariant, TagKey<Biome>> SPAWN_BIOMES = Map.ofEntries(
-            Map.entry(SmallFishVariant.ANCHOVY, ModTags.SMALL_FISH_ANCHOVY_BIOMES),
-            Map.entry(SmallFishVariant.ANGELFISH, ModTags.SMALL_FISH_ANGELFISH_BIOMES),
-            Map.entry(SmallFishVariant.ANGLER, ModTags.SMALL_FISH_ANGLER_BIOMES),
-            Map.entry(SmallFishVariant.CLOWNFISH, ModTags.SMALL_FISH_CLOWNFISH_BIOMES),
-            Map.entry(SmallFishVariant.GOLDFISH, ModTags.SMALL_FISH_GOLDFISH_BIOMES),
-            Map.entry(SmallFishVariant.HIPPOTANG, ModTags.SMALL_FISH_HIPPOTANG_BIOMES),
-            Map.entry(SmallFishVariant.MANDARIN, ModTags.SMALL_FISH_MANDARIN_BIOMES),
-            Map.entry(SmallFishVariant.PIRANHA, ModTags.SMALL_FISH_PIRANHA_BIOMES));
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCSmallFishEntity.class, EntityDataSerializers.INT);
@@ -249,22 +229,9 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
         // The whole group must be one species, like a real school — pick once for the first fish and
         // reuse it for the rest of the group, instead of rolling separately for each individual.
         VariantGroupData<SmallFishVariant> school = VariantGroupData.of(spawnGroupData, SmallFishVariant.class,
-                () -> pickVariantForBiome(level));
+                () -> SmallFishVariant.forBiome(level.getBiome(this.blockPosition()), this.random));
         this.setVariant(school.variant());
         return super.finalizeSpawn(level, difficulty, spawnType, school);
-    }
-
-    /** Picks uniformly among the species allowed in the biome this individual is spawning in. */
-    private SmallFishVariant pickVariantForBiome(ServerLevelAccessor level) {
-        Holder<Biome> biome = level.getBiome(this.blockPosition());
-        List<SmallFishVariant> eligible = SPAWN_BIOMES.entrySet().stream()
-                .filter(entry -> biome.is(entry.getValue()))
-                .map(Map.Entry::getKey)
-                .toList();
-        if (eligible.isEmpty()) {
-            return SmallFishVariant.randomPassive(this.random);
-        }
-        return eligible.get(this.random.nextInt(eligible.size()));
     }
 
     // ---------------------------------------------------------------------

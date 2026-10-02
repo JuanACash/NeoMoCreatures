@@ -1,5 +1,11 @@
 package com.example.neomocreatures.entity;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModEntities;
@@ -14,13 +20,6 @@ import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
-
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -78,7 +77,6 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCustomInventoryScreen,
@@ -386,7 +384,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
 
         if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
             VariantGroupData<BearVariant> group = VariantGroupData.of(spawnGroupData, BearVariant.class,
-                    () -> pickVariantForBiome(level, this.blockPosition()));
+                    () -> BearVariant.forBiome(level.getBiome(this.blockPosition()), this.random));
             resultGroupData = group;
             setVariant(group.variant());
 
@@ -405,36 +403,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         // variant ourselves and hand it back separately.
         super.finalizeSpawn(level, difficulty, spawnType, null);
         return resultGroupData;
-    }
-
-    /** Which variant a whole group will be, decided once per group by biome — never mixed within a group. */
-    private BearVariant pickVariantForBiome(ServerLevelAccessor level, BlockPos pos) {
-        var biome = level.getBiome(pos);
-
-        // Checked in order; each tag holds vanilla biomes plus optional modded ones.
-        if (biome.is(ModTags.BEAR_POLAR_BIOMES)) {
-            return BearVariant.POLAR;
-        }
-        if (biome.is(ModTags.BEAR_PANDA_BIOMES)) {
-            return BearVariant.PANDA;
-        }
-        if (biome.is(ModTags.BEAR_GRIZZLY_BIOMES)) {
-            return BearVariant.GRIZZLY;
-        }
-        if (biome.is(ModTags.BEAR_BLACK_BIOMES)) {
-            return BearVariant.BLACK;
-        }
-        if (biome.is(ModTags.BEAR_BLACK_OR_GRIZZLY_BIOMES)) {
-            return this.random.nextBoolean() ? BearVariant.BLACK : BearVariant.GRIZZLY;
-        }
-
-        // Safety net for a biome not explicitly listed (e.g. a datapack biome reusing
-        // one of these spawners) — decide by climate instead of defaulting silently.
-        float temperature = biome.value().getBaseTemperature();
-        if (temperature <= 0.15F) {
-            return BearVariant.POLAR;
-        }
-        return this.random.nextBoolean() ? BearVariant.BLACK : BearVariant.GRIZZLY;
     }
 
     @Override
