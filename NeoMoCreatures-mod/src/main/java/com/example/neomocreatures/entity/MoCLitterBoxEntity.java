@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.util.MoCTickUtil;
+
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -144,9 +146,12 @@ public class MoCLitterBoxEntity extends Mob {
         if (isUsedLitter()) {
             if (!this.level().isClientSide) {
                 this.litterTime++;
-                for (Monster monster : this.level().getEntitiesOfClass(Monster.class,
-                        this.getBoundingBox().inflate(ATTRACT_RADIUS, 4.0D, ATTRACT_RADIUS))) {
-                    monster.setTarget(this);
+                // Monsters keep the target once set, so refreshing it twice a second is enough
+                if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
+                    for (Monster monster : this.level().getEntitiesOfClass(Monster.class,
+                            this.getBoundingBox().inflate(ATTRACT_RADIUS, 4.0D, ATTRACT_RADIUS))) {
+                        monster.setTarget(this);
+                    }
                 }
                 if (this.litterTime > AUTO_RESET_TICKS) {
                     setUsedLitter(false);

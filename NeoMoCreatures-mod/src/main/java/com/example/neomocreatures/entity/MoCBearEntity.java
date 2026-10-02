@@ -1,14 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -445,7 +446,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
             tickGrowth();
             tickBearState();
             tickMouthAndAttack();
-            tickEatNearbyFood();
+            if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
+                tickEatNearbyFood();
+            }
         }
     }
 

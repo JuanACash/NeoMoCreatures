@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.snail.SnailVariant;
+import com.example.neomocreatures.util.MoCTickUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -33,6 +34,9 @@ import net.minecraft.world.level.ServerLevelAccessor;
 public class MoCSnailEntity extends MoCCrawlerEntity {
 
     private static final double HIDE_RADIUS = 3.0D;
+
+    /** Last scan result; not saved, a reloaded snail simply rescans within a few ticks. */
+    private boolean threatened;
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCSnailEntity.class, EntityDataSerializers.INT);
@@ -120,8 +124,12 @@ public class MoCSnailEntity extends MoCCrawlerEntity {
         }
         // Wiki: reacts to any creature within 3 blocks regardless of its size, even an ant. Anything
         // stops it in its tracks; only a snail that has a shell also pulls into it.
-        LivingEntity threat = this.findNearbyCreature(HIDE_RADIUS, 0.0F);
-        boolean threatened = threat != null && this.hasLineOfSight(threat);
+        // The scan runs every few ticks; the result is kept in between so the snail stays stopped.
+        if (MoCTickUtil.isScanTick(this, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
+            LivingEntity threat = this.findNearbyCreature(HIDE_RADIUS, 0.0F);
+            this.threatened = threat != null && this.hasLineOfSight(threat);
+        }
+        boolean threatened = this.threatened;
         if (threatened) {
             this.getNavigation().stop();
         }

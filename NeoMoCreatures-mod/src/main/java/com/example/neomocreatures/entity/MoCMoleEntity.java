@@ -1,9 +1,10 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
+import com.example.neomocreatures.util.MoCTickUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -183,7 +184,8 @@ public class MoCMoleEntity extends TamableAnimal {
                 this.setMoleState(state == STATE_DIVING ? STATE_HIDDEN : STATE_NORMAL);
             }
         }
-        if (state == STATE_NORMAL && this.isOnDirt()) {
+        if (state == STATE_NORMAL && this.isOnDirt()
+                && MoCTickUtil.isScanTick(this, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
             LivingEntity threat = this.findNearbyThreat();
             if (threat != null && this.hasLineOfSight(threat)) {
                 this.transitionTimer = 0;

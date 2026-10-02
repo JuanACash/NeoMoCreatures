@@ -1,12 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.kitty.KittyVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -464,7 +465,9 @@ public class MoCKittyEntity extends TamableAnimal implements com.example.neomocr
             if (this.pickupCooldown > 0) {
                 this.pickupCooldown--;
             }
-            tickEatNearbyFood();
+            if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
+                tickEatNearbyFood();
+            }
             tickKittyCare();
         }
     }

@@ -1,14 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -817,7 +818,9 @@ protected void registerGoals() {
         if (!this.level().isClientSide) {
             tickIdleCounters();
             tickSprintSpeed();
-            tickEatNearbyFood();
+            if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
+                tickEatNearbyFood();
+            }
             tickWingTransform();
             tickWingedFlight();
             avoidHazardsAhead();
