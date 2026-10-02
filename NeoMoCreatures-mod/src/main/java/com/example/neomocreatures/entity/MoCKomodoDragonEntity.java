@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
 import com.example.neomocreatures.init.ModItems;
@@ -47,7 +48,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -84,7 +84,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * returns false and {@link #getBreedOffspring} always returns null.
  */
 public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        PlayerRideableJumping, StorablePet {
+        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
     private static final int MOUTH_TICKS_MAX = 20;
@@ -141,7 +141,8 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         // Default MoveControl only handles vertical movement by jumping, which is
         // exactly why the dragon was bobbing at the surface instead of swimming to
         // a submerged target. This drives deltaMovement toward the goal directly.
-        this.moveControl = new KomodoSwimMoveControl(this);
+        this.moveControl = new DeepSwimMoveControl(this,
+                () -> this.isSwimmingDeep() && !this.isVehicle(), SWIM_SPEED_MULTIPLIER);
     }
 
     @Override
@@ -207,51 +208,6 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
-    /** Moves smoothly toward the nav target on all three axes instead of jumping to correct height. */
-    private static class KomodoSwimMoveControl extends MoveControl {
-        private final MoCKomodoDragonEntity komodo;
-
-        KomodoSwimMoveControl(MoCKomodoDragonEntity komodo) {
-            super(komodo);
-            this.komodo = komodo;
-        }
-
-        @Override
-        public void tick() {
-            if (!this.komodo.isSwimmingDeep() || this.komodo.isVehicle()) {
-                super.tick();
-                return;
-            }
-
-            if (this.operation != MoveControl.Operation.MOVE_TO || this.komodo.getNavigation().isDone()) {
-                // Idle in water: damp existing motion toward zero instead of
-                // pushing up or down, so it neither rockets to the surface nor
-                // sinks like a stone while it has nowhere to go.
-                this.komodo.setDeltaMovement(this.komodo.getDeltaMovement().multiply(1.0D, 0.8D, 1.0D));
-                this.komodo.setSpeed(0.0F);
-                return;
-            }
-
-            double dx = this.wantedX - this.komodo.getX();
-            double dy = this.wantedY - this.komodo.getY();
-            double dz = this.wantedZ - this.komodo.getZ();
-            double distSqr = dx * dx + dy * dy + dz * dz;
-            if (distSqr < 2.5E-7D) {
-                this.komodo.setSpeed(0.0F);
-                return;
-            }
-
-            float speed = (float) (this.speedModifier * this.komodo.getAttributeValue(Attributes.MOVEMENT_SPEED))* SWIM_SPEED_MULTIPLIER;
-            Vec3 desired = new Vec3(dx, dy, dz).normalize().scale(speed);
-            this.komodo.setDeltaMovement(this.komodo.getDeltaMovement().lerp(desired, 0.125D));
-
-            float yRotTarget = (float) (Mth.atan2(dz, dx) * (180D / Math.PI)) - 90.0F;
-            this.komodo.setYRot(this.rotlerp(this.komodo.getYRot(), yRotTarget, 90.0F));
-            this.komodo.yBodyRot = this.komodo.getYRot();
-        }
-        
-    }
-
     @Override
     public boolean isPushedByFluid() {
         return false;
@@ -291,10 +247,12 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         builder.define(DATA_DESCEND_HELD, false);
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }
@@ -599,7 +557,6 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     protected float getRiddenSpeed(Player player) {
         return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) *0.5F;
     }
-
 
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {

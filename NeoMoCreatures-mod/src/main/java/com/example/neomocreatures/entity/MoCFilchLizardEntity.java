@@ -1,6 +1,7 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
 import com.example.neomocreatures.entity.filchlizard.FilchLizardVariant;
 import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModTags;
@@ -35,7 +36,6 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -121,7 +121,8 @@ public class MoCFilchLizardEntity extends Animal {
         this.goalSelector.addGoal(1, new PanicGoal(this, PANIC_SPEED_MODIFIER));
         this.goalSelector.addGoal(2, new GrabLootFromGroundGoal(this));
         this.goalSelector.addGoal(3, new StealFromPlayerGoal(this));
-        this.goalSelector.addGoal(4, new FleeWithLootGoal(this));
+        this.goalSelector.addGoal(4, new ConditionalAvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE,
+                FLEE_WALK_SPEED_MODIFIER, FLEE_SPRINT_SPEED_MODIFIER, this::isCarryingLoot));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED_MODIFIER));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, LOOK_DISTANCE));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -345,7 +346,6 @@ public class MoCFilchLizardEntity extends Animal {
         }
     }
 
-
     // ---------------------------------------------------------------------
     // Goals
     // ---------------------------------------------------------------------
@@ -473,21 +473,6 @@ public class MoCFilchLizardEntity extends Animal {
                 this.recalculateTicks = PATH_RECALCULATE_TICKS;
                 this.lizard.getNavigation().moveTo(this.victim, STEAL_SPEED_MODIFIER);
             }
-        }
-    }
-
-    /** Original: AIAvoidWhenNasty — only runs from players while it has something in its mouth. */
-    private static final class FleeWithLootGoal extends AvoidEntityGoal<Player> {
-        private final MoCFilchLizardEntity lizard;
-
-        FleeWithLootGoal(MoCFilchLizardEntity lizard) {
-            super(lizard, Player.class, FLEE_DISTANCE, FLEE_WALK_SPEED_MODIFIER, FLEE_SPRINT_SPEED_MODIFIER);
-            this.lizard = lizard;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.lizard.isCarryingLoot() && super.canUse();
         }
     }
 

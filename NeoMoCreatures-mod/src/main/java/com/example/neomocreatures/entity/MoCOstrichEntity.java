@@ -81,7 +81,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet {
+        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount {
 
     private static final int HIDE_TICKS = 60;
     private static final int MOUTH_TICKS_MAX = 20;
@@ -344,6 +344,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         return this.isVehicle() && (getEssence() == ESSENCE_WYVERN || getEssence() == ESSENCE_FIRE);
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }

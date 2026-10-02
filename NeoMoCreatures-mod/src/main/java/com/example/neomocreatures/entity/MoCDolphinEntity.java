@@ -1,6 +1,8 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.breeding.MoCDolphinGenetics;
+import com.example.neomocreatures.entity.ai.AquaticMoveControl;
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.dolphin.DolphinVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -48,9 +50,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -80,7 +80,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * <p>
  * Neutral: an adult dolphin fights back when hurt, a calf flees.
 **/
-public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, StorablePet {
+public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, StorablePet, AscendingMount, DescendingMount {
 
     // ---- Size and growth ----
     /** Original: a wild dolphin is created with age 120, which renders the model at 1.2x. */
@@ -210,7 +210,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
         // WaterAnimal does this; without it vanilla's random destination picker rejects almost
         // every water position for this mob, and the dolphin never finds anywhere to swim to.
         this.setPathfindingMalus(PathType.WATER, 0.0F);
-        this.moveControl = new DolphinMoveControl(this);
+        this.moveControl = new AquaticMoveControl(this, SWIM_MAX_TURN_DEGREES, VERTICAL_STEERING);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -228,7 +228,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new CalfPanicGoal(this, PANIC_SPEED));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, PANIC_SPEED, this::isBaby));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, ATTACK_SPEED, true));
         this.goalSelector.addGoal(WANDER_PRIORITY, new CruiseSwimGoal(this, WANDER_SPEED, WANDER_INTERVAL));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -717,10 +717,12 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
         }
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }
@@ -788,7 +790,6 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
                 MoCLootUtil.rollWithLootingBonus(this.random, MAX_COD_DROP + 1, lootingLevel));
     }
 
-
     @Override
     public boolean isFood(ItemStack stack) {
         return false; // dolphins are fed raw and cooked fish in the taming step, not through love mode
@@ -839,19 +840,6 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
     // Goals and movement
     // ---------------------------------------------------------------------
 
-    /** Original: only dolphins old enough to fight retaliate, so calves panic instead. */
-    private static final class CalfPanicGoal extends PanicGoal {
-
-        CalfPanicGoal(MoCDolphinEntity dolphin, double speedModifier) {
-            super(dolphin, speedModifier);
-        }
-
-        @Override
-        protected boolean shouldPanic() {
-            return this.mob.isBaby() && super.shouldPanic();
-        }
-    }
-
     /**
      * Random swimming that keeps to the top of the water column, like the original's diving
      * depth: every destination lies between {@link #MIN_CRUISE_DEPTH} and {@link #MAX_CRUISE_DEPTH}
@@ -901,38 +889,4 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
         }
     }
 
-    /** Same as vanilla fish: swims toward the path target, steering vertically a little at a time. */
-    private static final class DolphinMoveControl extends MoveControl {
-        private final MoCDolphinEntity dolphin;
-
-        DolphinMoveControl(MoCDolphinEntity dolphin) {
-            super(dolphin);
-            this.dolphin = dolphin;
-        }
-
-        @Override
-        public void tick() {
-            if (this.operation != MoveControl.Operation.MOVE_TO || this.dolphin.getNavigation().isDone()
-                    || !this.dolphin.isInWater() || this.dolphin.getControllingPassenger() != null) {
-                this.dolphin.setSpeed(0.0F);
-                return;
-            }
-            float speed = (float) (this.speedModifier * this.dolphin.getAttributeValue(Attributes.MOVEMENT_SPEED));
-            this.dolphin.setSpeed(Mth.lerp(0.125F, this.dolphin.getSpeed(), speed));
-
-            double dx = this.wantedX - this.dolphin.getX();
-            double dy = this.wantedY - this.dolphin.getY();
-            double dz = this.wantedZ - this.dolphin.getZ();
-            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (distance > 1.0E-5D) {
-                this.dolphin.setDeltaMovement(this.dolphin.getDeltaMovement()
-                        .add(0.0D, this.dolphin.getSpeed() * (dy / distance) * VERTICAL_STEERING, 0.0D));
-            }
-            if (dx != 0.0D || dz != 0.0D) {
-                float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
-                this.dolphin.setYRot(this.rotlerp(this.dolphin.getYRot(), targetYaw, SWIM_MAX_TURN_DEGREES));
-                this.dolphin.yBodyRot = this.dolphin.getYRot();
-            }
-        }
-    }
 }

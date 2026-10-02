@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -28,7 +29,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -109,8 +109,8 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, LOOK_DISTANCE));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DarknessTargetGoal<>(this, Player.class));
-        this.targetSelector.addGoal(3, new DarknessTargetGoal<>(this, IronGolem.class));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::isInDarkness));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, IronGolem.class, true, this::isInDarkness));
     }
 
     // ---------------------------------------------------------------------
@@ -317,7 +317,6 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
         MoCLootUtil.dropItems(this, item, count);
     }
 
-
     @Override
     protected int getBaseExperienceReward() {
         return EXPERIENCE;
@@ -357,21 +356,6 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
                 return;
             }
             super.tick();
-        }
-    }
-
-    /** Original: AIGolemTarget — only picks new targets while standing in the dark. */
-    private static final class DarknessTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCMiniGolemEntity golem;
-
-        DarknessTargetGoal(MoCMiniGolemEntity golem, Class<T> targetClass) {
-            super(golem, targetClass, true);
-            this.golem = golem;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.golem.isInDarkness() && super.canUse();
         }
     }
 }

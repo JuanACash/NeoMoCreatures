@@ -1,5 +1,8 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
+import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -24,14 +27,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -108,9 +108,10 @@ public class MoCBoarEntity extends Animal {
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         // Original: EntityAIFleeFromPlayer, gated by isNotScared() — only a non-adult ever flees.
-        this.goalSelector.addGoal(2, new BoarFleeGoal(this));
+        this.goalSelector.addGoal(2, new ConditionalAvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED,
+                () -> !this.isGrownAdult()));
         this.goalSelector.addGoal(3, new FollowParentGoal(this, FOLLOW_ADULT_SPEED));
-        this.goalSelector.addGoal(4, new RetaliateAttackGoal(this, ATTACK_SPEED));
+        this.goalSelector.addGoal(4, new ConditionalMeleeAttackGoal(this, ATTACK_SPEED, false, this::isRetaliating));
         this.goalSelector.addGoal(4, new BoarHitAndRunGoal(this));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED));
         this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -118,10 +119,10 @@ public class MoCBoarEntity extends Animal {
         // Wiki (piglets never attack): only an adult chases the player when provoked or approached,
         // and occasionally goes after a few specific small mobs — not in the decompiled source,
         // which had no target-selector goal at all.
-        this.targetSelector.addGoal(2, new AdultOnlyTargetGoal<>(this, Player.class, 10, false));
-        this.targetSelector.addGoal(3, new AdultOnlyTargetGoal<>(this, MoCFoxEntity.class, SMALL_MOB_RECHECK_TICKS, true));
-        this.targetSelector.addGoal(3, new AdultOnlyTargetGoal<>(this, MoCRaccoonEntity.class, SMALL_MOB_RECHECK_TICKS, true));
-        this.targetSelector.addGoal(3, new AdultOnlyTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, 10, false, false, null, this::isGrownAdult));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCFoxEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCRaccoonEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
     }
 
     @Override
@@ -265,47 +266,10 @@ public class MoCBoarEntity extends Animal {
         MoCLootUtil.dropItems(this, ModItems.HIDE.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
-
     
     @Override
     protected int getBaseExperienceReward() {
         return MoCExperienceUtil.rollStandardXp(this.random);
-    }
-
-    /** Original: EntityAIFleeFromPlayer gated by isNotScared() (true only when grown up) — so this
-     *  only ever fires for a baby. */
-    private static final class BoarFleeGoal extends AvoidEntityGoal<Player> {
-        private final MoCBoarEntity boar;
-
-        BoarFleeGoal(MoCBoarEntity boar) {
-            super(boar, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED);
-            this.boar = boar;
-        }
-
-        @Override
-        public boolean canUse() {
-            return !this.boar.isGrownAdult() && super.canUse();
-        }
-    }
-
-    /** Fights normally, no fleeing — only while isRetaliating() is true (the player hit it first). */
-    private static final class RetaliateAttackGoal extends MeleeAttackGoal {
-        private final MoCBoarEntity boar;
-
-        RetaliateAttackGoal(MoCBoarEntity boar, double speedModifier) {
-            super(boar, speedModifier, false);
-            this.boar = boar;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.boar.isRetaliating() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return this.boar.isRetaliating() && super.canContinueToUse();
-        }
     }
 
     /** The boar's own unprovoked aggression (proximity, or going after a small mob): closes in,
@@ -360,20 +324,6 @@ public class MoCBoarEntity extends Animal {
             }
         }
     }
-
-    /** Wiki: "Piglets do not attack the player" — gates any target-selector goal to adults only. */
-    private static final class AdultOnlyTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCBoarEntity boar;
-
-        AdultOnlyTargetGoal(MoCBoarEntity boar, Class<T> targetClass, int recheckTicks, boolean mustSee) {
-            super(boar, targetClass, recheckTicks, mustSee, false, null);
-            this.boar = boar;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.boar.isGrownAdult() && super.canUse();
-        }
-    }   
+   
 
 }

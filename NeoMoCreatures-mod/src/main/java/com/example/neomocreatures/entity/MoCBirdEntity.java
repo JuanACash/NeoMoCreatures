@@ -209,30 +209,21 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         return null;
     }
 
-    /** Carries the chosen variant to the rest of a spawn group — same pattern as MoCSnakeEntity/MoCBunnyEntity. */
-    private static final class BirdGroupData implements SpawnGroupData {
-        final BirdVariant variant;
-        BirdGroupData(BirdVariant variant) {
-            this.variant = variant;
-        }
-    }
-
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
             DifficultyInstance difficulty,
             MobSpawnType spawnType,
             @Nullable SpawnGroupData spawnGroupData) {
-        BirdVariant variant = spawnGroupData instanceof BirdGroupData shared
-                ? shared.variant
-                : BirdVariant.random(this.random);
-        setVariant(variant);
+        VariantGroupData<BirdVariant> group = VariantGroupData.of(spawnGroupData, BirdVariant.class,
+                () -> BirdVariant.random(this.random));
+        setVariant(group.variant());
 
         // Never forward our own custom SpawnGroupData into AgeableMob's
         // finalizeSpawn() — it crashes trying to cast it to its own type
         // (same fix already applied to MoCBunnyEntity/MoCSnakeEntity).
         super.finalizeSpawn(level, difficulty, spawnType, null);
-        return new BirdGroupData(variant);
+        return group;
     }
 
     @Override

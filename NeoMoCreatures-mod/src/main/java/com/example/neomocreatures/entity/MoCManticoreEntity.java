@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
 import com.example.neomocreatures.init.ModItems;
@@ -57,7 +58,6 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -73,7 +73,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, Enemy, StorablePet {
+        HasCustomInventoryScreen, Enemy, StorablePet, AscendingMount, DescendingMount {
 
     private static final int STING_CHANCE = 5;
     private static final int STING_ANIM_TICKS = 50;
@@ -132,29 +132,20 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new ManticoreDarknessTargetGoal<>(this, Player.class));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::canHuntPlayers));
     }
 
     private static float getBrightness(MoCManticoreEntity manticore) {
         return manticore.level().getMaxLocalRawBrightness(manticore.blockPosition()) / 15.0F;
     }
 
-    private static class ManticoreDarknessTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCManticoreEntity manticore;
-
-        ManticoreDarknessTargetGoal(MoCManticoreEntity manticore, Class<T> targetType) {
-            super(manticore, targetType, true);
-            this.manticore = manticore;
+    /** Hunts players only while wild and not sitting: anywhere in the Nether, otherwise in darkness. */
+    private boolean canHuntPlayers() {
+        if (this.isTame() || this.isOrderedToSit()) {
+            return false;
         }
-
-        @Override
-        public boolean canUse() {
-            if (this.manticore.isTame() || this.manticore.isOrderedToSit()) {
-                return false;
-            }
-            boolean inNether = this.manticore.level().dimension() == Level.NETHER;
-            return (inNether || getBrightness(this.manticore) <= 0.5F) && super.canUse();
-        }
+        boolean inNether = this.level().dimension() == Level.NETHER;
+        return inNether || getBrightness(this) <= 0.5F;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -295,10 +286,12 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         this.entityData.set(DATA_HAS_CHEST, hasChest);
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }

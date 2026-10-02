@@ -51,7 +51,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * <p>
  * Like the original it makes no sounds of its own, never flees and never attacks, and drops nothing.
  */
-public class MoCMantaRayEntity extends TamableAnimal implements StorablePet {
+public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, AscendingMount, DescendingMount {
 
     /** Original: age 180 gives a size factor of 1.5 (capped), which scales the whole model. */
     private static final double SCALE = 1.5D;
@@ -444,10 +444,12 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet {
         }
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }

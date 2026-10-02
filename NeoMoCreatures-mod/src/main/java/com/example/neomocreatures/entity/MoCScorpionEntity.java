@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import com.example.neomocreatures.init.ModItems;
@@ -55,7 +56,6 @@ import net.minecraft.world.entity.ai.goal.RestrictSunGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.monster.Enemy;
@@ -126,7 +126,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         this.goalSelector.addGoal(6, new LeapAtTargetGoal(this, 0.4F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new ScorpionDarknessTargetGoal<>(this, Player.class));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::canHuntPlayers));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D) {
             @Override
             public boolean canUse() {
@@ -146,22 +146,13 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         return scorpion.level().getMaxLocalRawBrightness(scorpion.blockPosition());
     }
 
-    private static class ScorpionDarknessTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCScorpionEntity scorpion;
-
-        ScorpionDarknessTargetGoal(MoCScorpionEntity scorpion, Class<T> targetType) {
-            super(scorpion, targetType, true);
-            this.scorpion = scorpion;
+    /** Wild, non-undead scorpions hunt players anywhere in the Nether, otherwise only in the dark. */
+    private boolean canHuntPlayers() {
+        if (this.isTame() || this.getVariant() == ScorpionVariant.UNDEAD) {
+            return false;
         }
-
-        @Override
-        public boolean canUse() {
-            if (this.scorpion.isTame() || this.scorpion.getVariant() == ScorpionVariant.UNDEAD) {
-                return false;
-            }
-            boolean inNether = this.scorpion.level().dimension() == Level.NETHER;
-            return (inNether || getRawLight(this.scorpion) <= 9) && super.canUse();
-        }
+        boolean inNether = this.level().dimension() == Level.NETHER;
+        return inNether || getRawLight(this) <= 9;
     }
 
     public static AttributeSupplier.Builder createAttributes() {

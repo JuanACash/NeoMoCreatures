@@ -1,6 +1,5 @@
 package com.example.neomocreatures.entity;
 
-
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.monster.MoCHorseMobEntity;
 import com.example.neomocreatures.init.ModItems;
@@ -85,12 +84,12 @@ public class MoCSilverSkeletonEntity extends Monster {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new SkeletonAttackGoal(this, ATTACK_SPEED));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, ATTACK_SPEED, true));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new SkeletonTargetGoal<>(this, Player.class, false));
-        this.targetSelector.addGoal(3, new SkeletonTargetGoal<>(this, IronGolem.class, false));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, false));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, false));
     }
 
     @Override
@@ -231,20 +230,7 @@ public class MoCSilverSkeletonEntity extends Monster {
         }
     }
 
-
     // ---------------------------------------------------------------------
     // Darkness-gated goals
     // ---------------------------------------------------------------------
-
-    private static final class SkeletonAttackGoal extends MeleeAttackGoal {
-        SkeletonAttackGoal(MoCSilverSkeletonEntity skeleton, double speedModifier) {
-            super(skeleton, speedModifier, true);
-        }
-    }
-
-    private static final class SkeletonTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        SkeletonTargetGoal(MoCSilverSkeletonEntity skeleton, Class<T> targetClass, boolean mustSee) {
-            super(skeleton, targetClass, mustSee);
-        }
-    }
 }

@@ -1,6 +1,9 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
+import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
+import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.entity.ai.HerdFollowGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
@@ -42,9 +45,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -171,12 +171,14 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new PassivePanicGoal(this, PANIC_SPEED));
-        this.goalSelector.addGoal(FLEE_PRIORITY, new PassiveFleeGoal(this));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, PANIC_SPEED, this::isPassiveInWater));
+        this.goalSelector.addGoal(FLEE_PRIORITY, new ConditionalAvoidEntityGoal<>(this, LivingEntity.class, FLEE_DISTANCE,
+                FLEE_FAR_SPEED, FLEE_NEAR_SPEED, MoCSmallFishEntity::isBigEnoughToFleeFrom, this::isPassiveInWater));
         this.goalSelector.addGoal(WANDER_PRIORITY, new DepthBandSwimGoal(this, WANDER_SPEED, WANDER_INTERVAL,
                 MIN_CRUISE_DEPTH, MAX_CRUISE_DEPTH));
 
-        this.goalSelector.addGoal(3, new PiranhaAttackGoal(this, ATTACK_SPEED));
+        this.goalSelector.addGoal(3, new ConditionalMeleeAttackGoal(this, ATTACK_SPEED, false,
+                () -> this.isInWater() && this.getVariant().isAggressive(), () -> true));
         this.goalSelector.addGoal(4, new PiranhaHerdGoal(this, HERD_SPEED, HERD_MIN_RANGE, HERD_MAX_RANGE, HERD_EXECUTION_CHANCE));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new PiranhaTargetPlayerGoal(this));
@@ -184,6 +186,11 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
 
     private static boolean isBigEnoughToFleeFrom(LivingEntity entity) {
         return entity.getBbHeight() > FLEE_SIZE_THRESHOLD || entity.getBbWidth() > FLEE_SIZE_THRESHOLD;
+    }
+
+    /** Peaceful species flee and panic, but only in water: stranded on land a small fish does not move at all. */
+    private boolean isPassiveInWater() {
+        return this.isInWater() && !this.getVariant().isAggressive();
     }
 
     // ---------------------------------------------------------------------
@@ -241,27 +248,10 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         // The whole group must be one species, like a real school — pick once for the first fish and
         // reuse it for the rest of the group, instead of rolling separately for each individual.
-        SmallFishVariant variant;
-        if (spawnGroupData instanceof SchoolGroupData schoolData) {
-            variant = schoolData.variant;
-        } else {
-            variant = pickVariantForBiome(level);
-            spawnGroupData = new SchoolGroupData(variant);
-        }
-        this.setVariant(variant);
-        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
-    }
-
-    /** Carries the species picked for the first fish of a spawn group to the rest of that group.
-     *  Must extend AgeableMobGroupData, not just implement SpawnGroupData: AgeableMob.finalizeSpawn()
-     *  casts whatever is passed in back to that exact type. */
-    private static final class SchoolGroupData extends AgeableMob.AgeableMobGroupData {
-        private final SmallFishVariant variant;
-
-        SchoolGroupData(SmallFishVariant variant) {
-            super(false);
-            this.variant = variant;
-        }
+        VariantGroupData<SmallFishVariant> school = VariantGroupData.of(spawnGroupData, SmallFishVariant.class,
+                () -> pickVariantForBiome(level));
+        this.setVariant(school.variant());
+        return super.finalizeSpawn(level, difficulty, spawnType, school);
     }
 
     /** Picks uniformly among the species allowed in the biome this individual is spawning in. */
@@ -409,7 +399,6 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
         };
     }
 
-
     /** Wiki: 1-3 experience, awarded only when a player or a tamed wolf made the kill (vanilla's rule). */
     @Override
     protected int getBaseExperienceReward() {
@@ -497,53 +486,6 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
     // ---------------------------------------------------------------------
     // Variant-gated goals
     // ---------------------------------------------------------------------
-
-    /** Only the 7 passive variants panic when hurt; the piranha stands its ground. */
-    private static final class PassivePanicGoal extends PanicGoal {
-        private final MoCSmallFishEntity fish;
-
-        PassivePanicGoal(MoCSmallFishEntity fish, double speedModifier) {
-            super(fish, speedModifier);
-            this.fish = fish;
-        }
-
-        @Override
-        public boolean canUse() {
-            // Wiki: stranded on land, a small fish does not move at all until it suffocates.
-            return this.fish.isInWater() && !this.fish.getVariant().isAggressive() && super.canUse();
-        }
-    }
-
-    /** Only the 7 passive variants flee from bigger things; the piranha attacks them instead. */
-    private static final class PassiveFleeGoal extends AvoidEntityGoal<LivingEntity> {
-        private final MoCSmallFishEntity fish;
-
-        PassiveFleeGoal(MoCSmallFishEntity fish) {
-            super(fish, LivingEntity.class, FLEE_DISTANCE, FLEE_FAR_SPEED, FLEE_NEAR_SPEED,
-                    MoCSmallFishEntity::isBigEnoughToFleeFrom);
-            this.fish = fish;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.fish.isInWater() && !this.fish.getVariant().isAggressive() && super.canUse();
-        }
-    }
-
-    /** Only the piranha variant fights. */
-    private static final class PiranhaAttackGoal extends MeleeAttackGoal {
-        private final MoCSmallFishEntity fish;
-
-        PiranhaAttackGoal(MoCSmallFishEntity fish, double speedModifier) {
-            super(fish, speedModifier, false);
-            this.fish = fish;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.fish.isInWater() && this.fish.getVariant().isAggressive() && super.canUse();
-        }
-    }
 
     /** Only the piranha variant sticks to its group. */
     private static final class PiranhaHerdGoal extends HerdFollowGoal {

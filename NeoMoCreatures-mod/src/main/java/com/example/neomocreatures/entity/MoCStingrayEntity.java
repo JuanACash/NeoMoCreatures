@@ -1,10 +1,11 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +15,6 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -28,7 +28,6 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
@@ -39,7 +38,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 /**
@@ -107,7 +105,7 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
         // WaterAnimal does this; without it vanilla's random destination picker rejects almost every
         // water position for this mob, and the stingray never finds anywhere to swim to.
         this.setPathfindingMalus(PathType.WATER, 0.0F);
-        this.moveControl = new StingrayMoveControl(this);
+        this.moveControl = new AquaticMoveControl(this, SWIM_MAX_TURN_DEGREES, VERTICAL_STEERING, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -370,42 +368,6 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
 
         private boolean isWater(BlockPos pos) {
             return this.mob.level().getFluidState(pos).is(FluidTags.WATER);
-        }
-    }
-
-    /** Same as vanilla fish: swims toward the path target, steering vertically a little at a time. */
-    private static final class StingrayMoveControl extends MoveControl {
-        private final MoCStingrayEntity ray;
-
-        StingrayMoveControl(MoCStingrayEntity ray) {
-            super(ray);
-            this.ray = ray;
-        }
-
-        @Override
-        public void tick() {
-            if (this.operation != MoveControl.Operation.MOVE_TO || this.ray.getNavigation().isDone()
-                    || !this.ray.isInWater()) {
-                // A stranded ray does not move at all.
-                this.ray.setSpeed(0.0F);
-                return;
-            }
-            float speed = (float) (this.speedModifier * this.ray.getAttributeValue(Attributes.MOVEMENT_SPEED));
-            this.ray.setSpeed(Mth.lerp(0.125F, this.ray.getSpeed(), speed));
-
-            double dx = this.wantedX - this.ray.getX();
-            double dy = this.wantedY - this.ray.getY();
-            double dz = this.wantedZ - this.ray.getZ();
-            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (distance > 1.0E-5D) {
-                this.ray.setDeltaMovement(this.ray.getDeltaMovement()
-                        .add(0.0D, this.ray.getSpeed() * (dy / distance) * VERTICAL_STEERING, 0.0D));
-            }
-            if (dx != 0.0D || dz != 0.0D) {
-                float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
-                this.ray.setYRot(this.rotlerp(this.ray.getYRot(), targetYaw, SWIM_MAX_TURN_DEGREES));
-                this.ray.yBodyRot = this.ray.getYRot();
-            }
         }
     }
 

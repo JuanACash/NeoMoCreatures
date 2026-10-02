@@ -196,15 +196,10 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
                                         MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         // The whole group must be one colour — pick once for the first jellyfish and reuse it for
         // the rest of the group, instead of rolling separately for each individual.
-        JellyfishVariant variant;
-        if (spawnGroupData instanceof SchoolGroupData schoolData) {
-            variant = schoolData.variant;
-        } else {
-            variant = pickVariantForBiome(level);
-            spawnGroupData = new SchoolGroupData(variant);
-        }
-        this.setVariant(variant);
-        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        VariantGroupData<JellyfishVariant> school = VariantGroupData.of(spawnGroupData, JellyfishVariant.class,
+                () -> pickVariantForBiome(level));
+        this.setVariant(school.variant());
+        return super.finalizeSpawn(level, difficulty, spawnType, school);
     }
 
     /** Picks uniformly among the colours allowed in the biome this individual is spawning in. */
@@ -218,18 +213,6 @@ public class MoCJellyfishEntity extends TamableAnimal implements StorablePet {
             return JellyfishVariant.randomWild(this.random);
         }
         return eligible.get(this.random.nextInt(eligible.size()));
-    }
-
-    /** Carries the colour picked for the first jellyfish of a spawn group to the rest of that group.
-     *  Must extend AgeableMobGroupData, not just implement SpawnGroupData: AgeableMob.finalizeSpawn()
-     *  casts whatever is passed in back to that exact type. */
-    private static final class SchoolGroupData extends AgeableMob.AgeableMobGroupData {
-        private final JellyfishVariant variant;
-
-        SchoolGroupData(JellyfishVariant variant) {
-            super(false);
-            this.variant = variant;
-        }
     }
 
     // ---------------------------------------------------------------------

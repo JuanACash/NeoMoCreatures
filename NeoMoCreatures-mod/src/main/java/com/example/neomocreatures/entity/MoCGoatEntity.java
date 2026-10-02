@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -43,7 +44,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -163,7 +163,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         this.goalSelector.addGoal(0, new FloatGoal(this));
         // Wiki: female goats and kids are passive — they flee instead of
         // fighting (see setTarget()'s block on retaliation for them).
-        this.goalSelector.addGoal(1, new NonMalePanicGoal(this, 1.2D));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, 1.2D, () -> this.isBaby() || !this.isMale()));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         // Wiki: "Male goats will fight between themselves."
         this.goalSelector.addGoal(3, new GoatDuelGoal(this));
@@ -567,20 +567,6 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         @Override
         public boolean canContinueToUse() {
             return false; // one-shot trigger — the anger-timer/MeleeAttackGoal take it from here
-        }
-    }
-
-    private static class NonMalePanicGoal extends PanicGoal {
-        private final MoCGoatEntity goat;
-
-        NonMalePanicGoal(MoCGoatEntity goat, double speedModifier) {
-            super(goat, speedModifier);
-            this.goat = goat;
-        }
-
-        @Override
-        public boolean canUse() {
-            return (this.goat.isBaby() || !this.goat.isMale()) && super.canUse();
         }
     }
 

@@ -1,9 +1,14 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
+import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.entity.wyvern.WyvernVariant;
+import com.example.neomocreatures.entity.wyvern.ai.WyvernLandGoal;
+import com.example.neomocreatures.entity.wyvern.ai.WyvernMoveControl;
+import com.example.neomocreatures.entity.wyvern.ai.WyvernSoarGoal;
 import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -15,13 +20,10 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import java.util.EnumSet;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -36,7 +38,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -58,14 +59,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -77,13 +74,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount {
 
     private static final double AGGRO_RADIUS = 14.0D;
     private static final int POISON_DURATION_TICKS = 200;
@@ -517,223 +512,16 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(2, new WyvernMeleeAttackGoal(this, 1.2D, true));
+        this.goalSelector.addGoal(2, new ConditionalMeleeAttackGoal(this, 1.2D, true, () -> !this.isVehicle()));
         this.goalSelector.addGoal(4, new WyvernLandGoal(this));
         this.goalSelector.addGoal(5, new WyvernSoarGoal(this));
-        this.goalSelector.addGoal(6, new WyvernGroundWanderGoal(this, 1.0D));
+        this.goalSelector.addGoal(6, new ConditionalStrollGoal(this, 1.0D, () -> !this.isVehicle() && !this.getIsFlying()));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, (int) AGGRO_RADIUS,
                 false, false, target -> !this.isTame() && !this.isVehicle()));
-    }
-
-        /** Ghast: RandomFloatAroundGoal — drifts to random points around it, a few blocks above the ground. */
-    private static final class WyvernSoarGoal extends Goal {
-        private final MoCWyvernEntity wyvern;
-
-        WyvernSoarGoal(MoCWyvernEntity wyvern) {
-            this.wyvern = wyvern;
-            this.setFlags(EnumSet.of(Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!this.wyvern.canFlyFreely() || this.wyvern.wantsToLand()) {
-                return false;
-            }
-            MoveControl control = this.wyvern.getMoveControl();
-            if (!control.hasWanted()) {
-                return true;
-            }
-            double distanceSqr = this.wyvern.distanceToSqr(control.getWantedX(), control.getWantedY(), control.getWantedZ());
-            return distanceSqr < ARRIVED_DISTANCE_SQR || distanceSqr > LOST_DISTANCE_SQR;
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return false;
-        }
-
-        @Override
-        public void start() {
-            RandomSource random = this.wyvern.getRandom();
-            double x = this.wyvern.getX() + (random.nextDouble() * 2.0D - 1.0D) * SOAR_RANGE;
-            double z = this.wyvern.getZ() + (random.nextDouble() * 2.0D - 1.0D) * SOAR_RANGE;
-            int ground = this.wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(x), Mth.floor(z));
-            double y = ground + MIN_SOAR_ALTITUDE + random.nextInt(SOAR_ALTITUDE_RANGE);
-            this.wyvern.getMoveControl().setWantedPosition(x, y, z, 1.0D);
-        }
-    }
-
-    /** Parrot-like landing: once a flight is over it glides down to firm ground nearby and walks again. */
-    private static final class WyvernLandGoal extends Goal {
-        private final MoCWyvernEntity wyvern;
-        @Nullable
-        private BlockPos landingSpot;
-        private int retryTicks;
-
-        WyvernLandGoal(MoCWyvernEntity wyvern) {
-            this.wyvern = wyvern;
-            this.setFlags(EnumSet.of(Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.wyvern.canFlyFreely() && this.wyvern.wantsToLand();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return this.canUse();
-        }
-
-        @Override
-        public void start() {
-            this.findLandingSpot();
-        }
-
-        @Override
-        public void stop() {
-            this.landingSpot = null;
-        }
-
-        @Override
-        public boolean requiresUpdateEveryTick() {
-            return true;
-        }
-
-        @Override
-        public void tick() {
-            if (this.wyvern.onGround() || this.isAboutToTouchDown()) {
-                this.wyvern.setIsFlying(false);
-                return;
-            }
-            if (this.landingSpot == null || --this.retryTicks <= 0) {
-                this.findLandingSpot();
-                return;
-            }
-            this.wyvern.getMoveControl().setWantedPosition(
-                    this.landingSpot.getX() + 0.5D, this.landingSpot.getY() + 1.0D, this.landingSpot.getZ() + 0.5D, 1.0D);
-        }
-
-        /** A dry, sturdy spot within 8 blocks; over water or lava it just keeps flying a little longer. */
-        private void findLandingSpot() {
-            this.retryTicks = LANDING_RETRY_TICKS;
-            RandomSource random = this.wyvern.getRandom();
-            Level level = this.wyvern.level();
-            int x = this.wyvern.getBlockX() + random.nextInt(LANDING_SEARCH_RANGE * 2 + 1) - LANDING_SEARCH_RANGE;
-            int z = this.wyvern.getBlockZ() + random.nextInt(LANDING_SEARCH_RANGE * 2 + 1) - LANDING_SEARCH_RANGE;
-            BlockPos spot = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-            BlockPos ground = spot.below();
-            if (level.getFluidState(ground).isEmpty() && level.getBlockState(ground).isFaceSturdy(level, ground, Direction.UP)) {
-                this.landingSpot = spot;
-            } else {
-                this.landingSpot = null;
-                this.wyvern.extendFlight();
-            }
-        }
-
-        /** Something solid right under its feet — close enough to put its legs down. */
-        private boolean isAboutToTouchDown() {
-            AABB below = this.wyvern.getBoundingBox().move(0.0D, -TOUCHDOWN_HEIGHT, 0.0D);
-            return !this.wyvern.level().noCollision(this.wyvern, below);
-        }
-    }
-
-    /**
-     * Ghast-style free flight: every few ticks a small push towards its destination, with air drag doing
-     * the rest, so it glides in smooth curves and turns to face where it is flying. Checks the way is
-     * clear first and gives up on blocked destinations. On the ground (or ridden) it moves like any mob.
-     */
-    private static final class WyvernMoveControl extends MoveControl {
-        private final MoCWyvernEntity wyvern;
-        private int impulseCooldown;
-
-        WyvernMoveControl(MoCWyvernEntity wyvern) {
-            super(wyvern);
-            this.wyvern = wyvern;
-        }
-
-        @Override
-        public void tick() {
-            if (!this.wyvern.getIsFlying() || this.wyvern.isVehicle()) {
-                super.tick();
-                return;
-            }
-            if (this.operation == Operation.MOVE_TO && --this.impulseCooldown <= 0) {
-                this.impulseCooldown = MIN_IMPULSE_INTERVAL + this.wyvern.getRandom().nextInt(IMPULSE_INTERVAL_RANGE);
-                Vec3 toTarget = new Vec3(this.wantedX - this.wyvern.getX(), this.wantedY - this.wyvern.getY(),
-                        this.wantedZ - this.wyvern.getZ());
-                double distance = toTarget.length();
-                Vec3 direction = toTarget.normalize();
-                if (distance * distance < ARRIVED_DISTANCE_SQR || !this.canReach(direction, Mth.ceil(distance))) {
-                    this.operation = Operation.WAIT;
-                } else {
-                    this.wyvern.setDeltaMovement(this.wyvern.getDeltaMovement().add(direction.scale(FLIGHT_IMPULSE * this.speedModifier)));
-                }
-            }
-            this.faceFlightDirection();
-        }
-
-        private boolean canReach(Vec3 direction, int steps) {
-            AABB box = this.wyvern.getBoundingBox();
-            for (int i = 1; i < steps; i++) {
-                box = box.move(direction);
-                if (!this.wyvern.level().noCollision(this.wyvern, box)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private void faceFlightDirection() {
-            Vec3 motion = this.wyvern.getDeltaMovement();
-            if (motion.horizontalDistanceSqr() > 1.0E-4D) {
-                float yaw = (float) (Mth.atan2(motion.z, motion.x) * Mth.RAD_TO_DEG) - 90.0F;
-                this.wyvern.setYRot(this.rotlerp(this.wyvern.getYRot(), yaw, TURN_SPEED));
-                this.wyvern.yBodyRot = this.wyvern.getYRot();
-            }
-        }
-    }
-
-    private static class WyvernGroundWanderGoal extends WaterAvoidingRandomStrollGoal {
-        private final MoCWyvernEntity wyvern;
-
-        WyvernGroundWanderGoal(MoCWyvernEntity wyvern, double speedModifier) {
-            super(wyvern, speedModifier);
-            this.wyvern = wyvern;
-        }
-
-        @Override
-        public boolean canUse() {
-            return !this.wyvern.isVehicle() && !this.wyvern.getIsFlying() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return !this.wyvern.isVehicle() && !this.wyvern.getIsFlying() && super.canContinueToUse();
-        }
-    }
-
-    private static class WyvernMeleeAttackGoal extends MeleeAttackGoal {
-        private final MoCWyvernEntity wyvern;
-
-        WyvernMeleeAttackGoal(MoCWyvernEntity wyvern, double speedModifier, boolean followEvenIfNotSeen) {
-            super(wyvern, speedModifier, followEvenIfNotSeen);
-            this.wyvern = wyvern;
-        }
-
-        @Override
-        public boolean canUse() {
-            return !this.wyvern.isVehicle() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return !this.wyvern.isVehicle() && super.canContinueToUse();
-        }
     }
 
     @Override
@@ -1120,10 +908,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         }
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }
@@ -1225,47 +1015,30 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     // Free flight (not ridden) — ghast-style gliding, parrot-style takeoffs and landings
     // ---------------------------------------------------------------------
 
-    /** Ghast: a push of 0.1 towards its destination every 2-6 ticks, with 0.91 air drag — smooth, floaty flight. */
-    private static final double FLIGHT_IMPULSE = 0.1D;
+    /** Ghast-like 0.91 air drag while flying on its own (the impulses come from WyvernMoveControl). */
     private static final double AIR_DRAG = 0.91D;
-    private static final int MIN_IMPULSE_INTERVAL = 2;
-    private static final int IMPULSE_INTERVAL_RANGE = 5;
-    /** How close (squared) it has to get to a destination before picking a new one. */
-    private static final double ARRIVED_DISTANCE_SQR = 1.0D;
-    /** Ghast: gives up on a destination more than 60 blocks away (squared). */
-    private static final double LOST_DISTANCE_SQR = 3600.0D;
-    /** Ghast: new destinations are picked up to 16 blocks away horizontally. */
-    private static final double SOAR_RANGE = 16.0D;
-    /** Cruising height above the ground while soaring: 4 to 13 blocks. */
-    private static final int MIN_SOAR_ALTITUDE = 4;
-    private static final int SOAR_ALTITUDE_RANGE = 10;
     /** Parrot-like: on the ground it takes off now and then (about every 30 s on average). */
     private static final int TAKE_OFF_CHANCE = 600;
     private static final double TAKE_OFF_BOOST = 0.4D;
     /** Each flight lasts 20-50 s before it looks for a place to land. */
     private static final int MIN_FLIGHT_TICKS = 400;
     private static final int FLIGHT_TICKS_RANGE = 600;
-    /** Landing spots are searched within 8 blocks, retried every 5 s; it touches down within 1.5 blocks of the ground. */
-    private static final int LANDING_SEARCH_RANGE = 8;
-    private static final int LANDING_RETRY_TICKS = 100;
-    private static final double TOUCHDOWN_HEIGHT = 1.5D;
-    private static final float TURN_SPEED = 10.0F;
 
     /** Server-side: ticks left in the current free flight before it looks for somewhere to land. */
     private int flightTicks;
 
     /** Flying on its own: not ridden, not ordered to sit, and not chasing anything. */
-    private boolean canFlyFreely() {
+    public boolean canFlyFreely() {
         return this.getIsFlying() && !this.isVehicle() && !this.isOrderedToSit() && this.getTarget() == null;
     }
 
-    private boolean wantsToLand() {
+    public boolean wantsToLand() {
         return this.flightTicks <= 0;
     }
 
     /** Nowhere to land (water, lava): keep soaring a little longer before trying again. */
-    private void extendFlight() {
-        this.flightTicks = LANDING_RETRY_TICKS;
+    public void extendFlight() {
+        this.flightTicks = WyvernLandGoal.LANDING_RETRY_TICKS;
     }
 
     /** Parrot-like takeoff: a hop into the air, then it glides like a ghast. */

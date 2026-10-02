@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.rat.RatVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -28,7 +29,6 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -88,8 +88,8 @@ public class MoCRatEntity extends Monster {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new RatTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new RatTargetGoal<>(this, IronGolem.class, true));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, IronGolem.class, true, this::isDarkEnoughToHunt));
     }
 
     @Override
@@ -213,7 +213,6 @@ public class MoCRatEntity extends Monster {
                 MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
     }
 
-
     // ---------------------------------------------------------------------
     // Darkness-gated goals
     // ---------------------------------------------------------------------
@@ -237,22 +236,13 @@ public class MoCRatEntity extends Monster {
         }
     }
 
-    private static final class RatTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCRatEntity rat;
-
-        RatTargetGoal(MoCRatEntity rat, Class<T> targetClass, boolean mustSee) {
-            super(rat, targetClass, mustSee);
-            this.rat = rat;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.rat.getBrightness() < MAX_ATTACK_BRIGHTNESS && super.canUse();
-        }
-    }
-
     /** No getBrightness() in 1.21.1 — same helper already used elsewhere. */
     private float getBrightness() {
         return this.level().getMaxLocalRawBrightness(this.blockPosition()) / 15.0F;
+    }
+
+    /** Only hunts while the light around it is dim enough. */
+    private boolean isDarkEnoughToHunt() {
+        return this.getBrightness() < MAX_ATTACK_BRIGHTNESS;
     }
 }

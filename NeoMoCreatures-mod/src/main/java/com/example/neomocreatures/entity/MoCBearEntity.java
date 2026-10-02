@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -60,7 +61,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -330,7 +330,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PandaOnlyPanicGoal(this, 1.4D));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, 1.4D,
+                () -> this.getVariant().getTemperament() == BearVariant.Temperament.PASSIVE));
         this.goalSelector.addGoal(2, new FollowSameVariantAdultGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
@@ -349,7 +350,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         return isTame() && isAnyMeat(stack);
     }
 
-
     @Override
     public boolean canMate(Animal otherAnimal) {
         if (otherAnimal == this || !(otherAnimal instanceof MoCBearEntity other)) {
@@ -360,7 +360,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         }
         return !hasNearbyThirdBear(other) && !other.hasNearbyThirdBear(this);
     }
-
 
     private boolean hasNearbyThirdBear(MoCBearEntity partner) {
         return !this.level().getEntitiesOfClass(MoCBearEntity.class,
@@ -406,15 +405,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         }
     }
 
-    /** Carries the variant chosen for the first spawned member to the rest of its group — same fix
-     *  MoCBigCatEntity uses so a herd never ends up with mixed species. */
-    private static final class BearGroupData implements SpawnGroupData {
-        final BearVariant variant;
-        BearGroupData(BearVariant variant) {
-            this.variant = variant;
-        }
-    }
-
     @Nullable
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
@@ -422,11 +412,10 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         SpawnGroupData resultGroupData = spawnGroupData;
 
         if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
-            BearVariant variant = spawnGroupData instanceof BearGroupData shared
-                    ? shared.variant
-                    : pickVariantForBiome(level, this.blockPosition());
-            resultGroupData = new BearGroupData(variant);
-            setVariant(variant);
+            VariantGroupData<BearVariant> group = VariantGroupData.of(spawnGroupData, BearVariant.class,
+                    () -> pickVariantForBiome(level, this.blockPosition()));
+            resultGroupData = group;
+            setVariant(group.variant());
 
             // Wiki: "Bear cubs will occasionally spawn with adults." Same 1-in-4
             // roll MoCBigCatEntity uses for its own wild groups.
@@ -791,20 +780,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
                 this.timeToRecalcPath = 10;
                 this.cub.getNavigation().moveTo(this.adult, this.speedModifier);
             }
-        }
-    }
-
-    private static class PandaOnlyPanicGoal extends PanicGoal {
-    private final MoCBearEntity bear;
-
-    PandaOnlyPanicGoal(MoCBearEntity bear, double speedModifier) {
-            super(bear, speedModifier);
-            this.bear = bear;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.bear.getVariant().getTemperament() == BearVariant.Temperament.PASSIVE && super.canUse();
         }
     }
 

@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
+import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -56,10 +58,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -174,7 +174,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new ElephantMeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(2, new ConditionalMeleeAttackGoal(this, 1.0D, false, () -> !this.isVehicle()));
         // Calves stick close to the nearest adult instead of wandering off on their own.
         this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.1D) {
             @Override
@@ -182,51 +182,11 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
                 return !MoCElephantEntity.this.isTame() && super.canUse();
             }
         });
-        this.goalSelector.addGoal(4, new ElephantWanderGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new ConditionalStrollGoal(this, 1.0D, () -> !this.isVehicle()));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-    }
-
-    /** Stops fighting while a player is actively riding and steering it. */
-    private static class ElephantMeleeAttackGoal extends MeleeAttackGoal {
-        private final MoCElephantEntity elephant;
-
-        ElephantMeleeAttackGoal(MoCElephantEntity elephant, double speedModifier, boolean followEvenIfNotSeen) {
-            super(elephant, speedModifier, followEvenIfNotSeen);
-            this.elephant = elephant;
-        }
-
-        @Override
-        public boolean canUse() {
-            return !this.elephant.isVehicle() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return !this.elephant.isVehicle() && super.canContinueToUse();
-        }
-    }
-
-    /** Stops wandering off on its own while being ridden. */
-    private static class ElephantWanderGoal extends WaterAvoidingRandomStrollGoal {
-        private final MoCElephantEntity elephant;
-
-        ElephantWanderGoal(MoCElephantEntity elephant, double speedModifier) {
-            super(elephant, speedModifier);
-            this.elephant = elephant;
-        }
-
-        @Override
-        public boolean canUse() {
-            return !this.elephant.isVehicle() && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return !this.elephant.isVehicle() && super.canContinueToUse();
-        }
     }
 
     /** Sneaking near a tamed, harnessed elephant sits it for a short while so it can be mounted. */

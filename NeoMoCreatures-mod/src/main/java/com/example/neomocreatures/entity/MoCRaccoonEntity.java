@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -37,7 +38,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -86,7 +86,7 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new RaccoonCubPanicGoal(this, 1.0D));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, 1.0D, this::isBaby));
         // Cubs flee from players; adults are merely neutral and don't flee on sight.
         this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 6.0F, 1.0D, 1.2D,
                 (Predicate<LivingEntity>) livingEntity -> this.isBaby()));
@@ -115,20 +115,6 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
             return;
         }
         super.setTarget(target);
-    }
-
-    private static class RaccoonCubPanicGoal extends PanicGoal {
-        private final MoCRaccoonEntity raccoon;
-
-        RaccoonCubPanicGoal(MoCRaccoonEntity raccoon, double speedModifier) {
-            super(raccoon, speedModifier);
-            this.raccoon = raccoon;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.raccoon.isBaby() && super.canUse();
-        }
     }
 
     @Override
@@ -241,7 +227,6 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
             }
             return InteractionResult.SUCCESS;
         }
-
 
         if (this.isTame() && this.isOwnedBy(player) && isTamingItem(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {

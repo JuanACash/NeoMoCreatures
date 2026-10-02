@@ -1,12 +1,13 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.MoCLootUtil;
-
 import java.util.EnumSet;
 
 import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -25,7 +26,6 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -40,7 +40,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -134,7 +133,7 @@ public class MoCCrocodileEntity extends TamableAnimal {
         this.setPathfindingMalus(PathType.WATER, 0.0F);
         // Default MoveControl only corrects height by jumping, which is exactly why it was bobbing
         // at the surface / sinking instead of swimming to a submerged target.
-        this.moveControl = new CrocodileSwimMoveControl(this);
+        this.moveControl = new DeepSwimMoveControl(this, this::isSwimmingDeep, 1.0F);
     }
 
     /** Amphibious, like vanilla's turtle: paths across dry land and through open water alike. */
@@ -301,8 +300,6 @@ public class MoCCrocodileEntity extends TamableAnimal {
             this.entityData.set(DATA_ROLL_ANGLE, 0.0F);
         }
     }
-
-    /** Original: "TODO replace with move to water AI" — a plain nearest-water search and path to it. */
     private void tickSeekWater() {
         if (this.waterSeekCooldown-- > 0) {
             return;
@@ -418,49 +415,6 @@ public class MoCCrocodileEntity extends TamableAnimal {
         // LivingEntity.aiStep() regardless of our travel() override, and it's what was winning
         // against our own swim movement, making the crocodile just sink.
         return false;
-    }
-
-    /** Moves smoothly toward the nav target on all three axes instead of jumping to correct height. */
-    private static final class CrocodileSwimMoveControl extends MoveControl {
-        private final MoCCrocodileEntity crocodile;
-
-        CrocodileSwimMoveControl(MoCCrocodileEntity crocodile) {
-            super(crocodile);
-            this.crocodile = crocodile;
-        }
-
-        @Override
-        public void tick() {
-            if (!this.crocodile.isSwimmingDeep()) {
-                super.tick();
-                return;
-            }
-
-            if (this.operation != MoveControl.Operation.MOVE_TO || this.crocodile.getNavigation().isDone()) {
-                // Idle in water: damp existing motion toward zero instead of pushing up or down, so
-                // it neither rockets to the surface nor sinks like a stone while it has nowhere to go.
-                this.crocodile.setDeltaMovement(this.crocodile.getDeltaMovement().multiply(1.0D, 0.8D, 1.0D));
-                this.crocodile.setSpeed(0.0F);
-                return;
-            }
-
-            double dx = this.wantedX - this.crocodile.getX();
-            double dy = this.wantedY - this.crocodile.getY();
-            double dz = this.wantedZ - this.crocodile.getZ();
-            double distSqr = dx * dx + dy * dy + dz * dz;
-            if (distSqr < 2.5E-7D) {
-                this.crocodile.setSpeed(0.0F);
-                return;
-            }
-
-            float speed = (float) (this.speedModifier * this.crocodile.getAttributeValue(Attributes.MOVEMENT_SPEED));
-            Vec3 desired = new Vec3(dx, dy, dz).normalize().scale(speed);
-            this.crocodile.setDeltaMovement(this.crocodile.getDeltaMovement().lerp(desired, 0.125D));
-
-            float yRotTarget = (float) (Mth.atan2(dz, dx) * (180D / Math.PI)) - 90.0F;
-            this.crocodile.setYRot(this.rotlerp(this.crocodile.getYRot(), yRotTarget, 90.0F));
-            this.crocodile.yBodyRot = this.crocodile.getYRot();
-        }
     }
 
     // ---------------------------------------------------------------------

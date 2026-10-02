@@ -1,24 +1,19 @@
 package com.example.neomocreatures.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
-
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.client.ModKeyMappings;
+import com.example.neomocreatures.breeding.MoCHorseGenetics;
+import com.example.neomocreatures.client.ClientRiderInput;
+import com.example.neomocreatures.entity.horse.HorseBreedingHandler;
+import com.example.neomocreatures.entity.horse.HorseEffects;
 import com.example.neomocreatures.entity.horse.HorseEssenceHandler;
+import com.example.neomocreatures.entity.horse.HorseFlightController;
 import com.example.neomocreatures.entity.horse.HorseSounds;
 import com.example.neomocreatures.entity.horse.HorseStats;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
@@ -27,12 +22,16 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -46,8 +45,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -64,7 +61,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -88,14 +84,14 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class MoCHorseEntity extends AbstractHorse implements StorablePet {
+public class MoCHorseEntity extends AbstractHorse implements StorablePet, AscendingMount, DescendingMount {
 
     private static final EntityDataAccessor<Integer> DATA_SPECIES =
             SynchedEntityData.defineId(MoCHorseEntity.class, EntityDataSerializers.INT);
@@ -165,7 +161,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     private int fallImmuneTicks = 0;
 
     private static final int UNSET = -1;
-    private static final int GESTATION_TICKS = 300;
 
     private static final float SUGAR_LUMP_GROWTH_FRACTION = 0.10F;
     private static final int FULL_GROWTH_TICKS = 24000;
@@ -179,17 +174,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     private static final float RIDER_FORWARD = -0.15F;
     private static final float RIDER_HEIGHT = 0.7F;
 
-    private static final double FLYER_THRUST = 0.3D;     // vertical thrust per tick while ascending/descending
-    private static final float  FLYER_FRICTION = 0.91F;  // horizontal friction per tick
-    private static final double FLYER_FALL_SPEED = 0.6D; // vertical damping (acts as "terminal velocity")
-    private static final double FLYER_GRAVITY_PULL = 0.055D; // constant downward pull each tick
-    private static final double PEGASUS_THRUST_BONUS = 0.05D;   // extra thrust when ascending/descending
-    private static final float  PEGASUS_FRICTION = 0.93F;       // less friction = more horizontal speed
-    private static final double DARK_PEGASUS_THRUST_BONUS = 0.025D;
-    private static final float  DARK_PEGASUS_FRICTION = 0.92F;
 
 
-    private int gestationProgress = 0;
 
     private static final int WING_FLAP_PERIOD_TICKS = 21; // must match the model's 0.3F (2π/0.3 ≈ 20.94)
 
@@ -209,6 +195,18 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     /** Right-click behaviour of the four essences. */
     private final HorseEssenceHandler essenceHandler = new HorseEssenceHandler(this);
+
+    /** Mate search, gestation and foal spawning. */
+    private final HorseBreedingHandler breedingHandler = new HorseBreedingHandler(this);
+
+    /** Particles and the nightmare's fire trail. */
+    private final HorseEffects effects = new HorseEffects(this);
+
+    /** Flight, gliding and buoyancy. */
+    private final HorseFlightController flight = new HorseFlightController(this);
+
+    /** The name tag only shows within 8 blocks. */
+    private static final double NAME_VISIBLE_DISTANCE_SQR = 64.0D;
 
     public static final int GRAZE_DURATION_TICKS = 100;
 
@@ -480,6 +478,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return 1.0F - Math.min(1.0F, this.getVanishTicks() / (float) duration);
     }
 
+    /** Length of the current vanish (normal or amulet capture), for the vanish spiral. */
+    public int getVanishDurationTicks() {
+        return this.entityData.get(DATA_VANISH_DURATION_TICKS);
+    }
+
     public void startVanish() {
         this.entityData.set(DATA_VANISH_TICKS, 1);
         this.entityData.set(DATA_VANISH_DURATION_TICKS, VANISH_DURATION_TICKS);
@@ -635,8 +638,9 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, UNDEAD_TRANSFORM_DURATION_TICKS);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
-        this.descendHeld = held;
+        this.flight.setDescendHeld(held);
     }
 
     public void setSpecies(Species species) {
@@ -1405,10 +1409,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
                 || getSpecies() == Species.GHOST || getSpecies() == Species.GHOST_WINGED) && !isUndead();
     }
 
-    private boolean descendHeld = false;
-
-    private boolean ascendHeld = false;
-
     private int shuffleCounter = 0;
 
     public boolean isDancing() {
@@ -1430,8 +1430,9 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         return false;
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
-        this.ascendHeld = held;
+        this.flight.setAscendHeld(held);
     }
 
     private int nightmareTicks = 0;
@@ -1504,31 +1505,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
     private void setUndeadLocked(boolean locked) {
         this.entityData.set(DATA_UNDEAD_LOCKED, locked);
-    }
-
-    private void nightmareFireEffect() {
-        BlockPos pos = new BlockPos(
-                Mth.floor(this.getX()),
-                Mth.floor(this.getBoundingBox().minY),
-                Mth.floor(this.getZ())
-        ).offset(-1, 0, -1);
-
-        if (this.level().getBlockState(pos).isAir()) {
-            this.level().setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
-        }
-    }
-
-    private void unicornJumpTrail() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return;
-        }
-        SimpleParticleType particle =
-                getSpecies() == Species.FAIRY_HORSE
-                        ? ModParticles.starFxForFairyColor(getFairyColor())
-                        : ModParticles.STAR_FX.get();
-        serverLevel.sendParticles(particle,
-                this.getX(), this.getY() + 0.2D, this.getZ(),
-                1, 0.3D, 0.1D, 0.3D, 0.01D);
     }
 
     @Nullable
@@ -1752,7 +1728,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
     private void tickNightmareBehavior() {
         if (getSpecies() == Species.NIGHTMARE && getNightmareTicks() > 0) {
             if (this.random.nextInt(2) == 0) {
-                nightmareFireEffect();
+                this.effects.placeFireTrail();
             }
             if (!this.isVehicle()) {
                 float yaw = this.nightmareFleeYaw * ((float) Math.PI / 180F);
@@ -1786,55 +1762,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
      * client: dance notes, the fade-out spiral, undead decay motes, and
      * nightmare embers.
      */
-    private void tickClientSideParticles() {
-        if (isDancing() && this.random.nextInt(4) == 0) {
-            double dx = this.random.nextGaussian() * 0.5D;
-            double dy = this.random.nextGaussian() * -0.1D;
-            double dz = this.random.nextGaussian() * 0.02D;
-            this.level().addParticle(ParticleTypes.NOTE,
-                    this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
-                    this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
-                    this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
-                    dx, dy, dz);
-        }
-
-        if (isVanishing()) {
-            int duration = this.entityData.get(DATA_VANISH_DURATION_TICKS);
-            float progress = this.getVanishTicks() / (float) duration;
-            double maxRadius = this.getBbWidth() * 1.3D;
-            double radius = maxRadius * Math.pow(1.0D - progress, 2.0D);
-            double spinSpeed = 0.5D + progress * 2.5D;
-
-            int points = 8;
-            double baseAngle = this.getVanishTicks() * spinSpeed;
-            for (int i = 0; i < points; i++) {
-                double angle = baseAngle + (2 * Math.PI * i / points);
-                double px = this.getX() + Math.cos(angle) * radius;
-                double pz = this.getZ() + Math.sin(angle) * radius;
-                double py = this.getY() + 0.1D;
-                this.level().addParticle(ModParticles.VANISH_FX.get(), px, py, pz, 0.0D, 0.01D, 0.0D);
-            }
-        }
-        if (isUndead() && !isSkeletonStage() && !isUndeadLocked() && this.random.nextInt(8) == 0) {
-            this.level().addParticle(ModParticles.UNDEAD_DECAY.get(),
-                    this.getX() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
-                    this.getY() + this.random.nextDouble() * this.getBbHeight(),
-                    this.getZ() + (this.random.nextDouble() - 0.5) * this.getBbWidth(),
-                    0.0D, 0.0D, 0.0D);
-        }
-
-        if (getSpecies() == Species.NIGHTMARE && this.random.nextInt(50) == 0) {
-            double vx = this.random.nextGaussian() * 0.02D;
-            double vy = this.random.nextGaussian() * 0.02D;
-            double vz = this.random.nextGaussian() * 0.02D;
-            this.level().addParticle(ParticleTypes.LAVA,
-                    this.getX() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
-                    this.getY() + 0.5D + this.random.nextFloat() * this.getBbHeight(),
-                    this.getZ() + this.random.nextFloat() * this.getBbWidth() - this.getBbWidth(),
-                    vx, vy, vz);
-        }
-    }
-
     @Override
     public void tick() {
         super.tick();
@@ -1870,101 +1797,17 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
 
             if ((getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE)
                     && this.isVehicle() && !this.onGround()) {
-                unicornJumpTrail();
+                this.effects.spawnJumpTrail();
             }
         } else {
-            tickClientSideParticles();
+            this.effects.tickClientParticles();
         }
 
         if (this.level().isClientSide || !this.isTamed() || this.isBaby() || isSterileHybrid()) {
             return;
         }
-        tryBreed();
+        this.breedingHandler.tick();
     }
-    private void tryBreed() {
-        if (!this.isInLove()) {
-            gestationProgress = 0;
-            return;
-        }
-
-        List<MoCHorseEntity> mates = this.level().getEntitiesOfClass(
-                MoCHorseEntity.class, this.getBoundingBox().inflate(4.0D, 2.0D, 4.0D),
-                other -> other != this && other.isTamed() && !other.isBaby()
-                        && !other.isSterileHybrid() && other.isInLove()
-                        && MoCHorseGenetics.canBreed(this.getSpecies(), this.getCoat(), other.getSpecies(), other.getCoat()));
-
-        if (mates.isEmpty()) {
-            gestationProgress = 0;
-            return;
-        }
-
-        gestationProgress++;
-        if (gestationProgress < GESTATION_TICKS) {
-            return;
-        }
-
-        MoCHorseEntity mate = mates.get(0);
-        if (this.getUUID().compareTo(mate.getUUID()) > 0) {
-            return;
-        }
-
-        // No third horse within 8 blocks horizontally — checked last, right
-        // before actually spawning, so gestation progress isn't lost while
-        // waiting for the area to clear; it just keeps retrying each tick.
-        boolean crowded = !this.level().getEntitiesOfClass(
-                MoCHorseEntity.class, this.getBoundingBox().inflate(8.0D, 4.0D, 8.0D),
-                other -> other != this && other != mate).isEmpty();
-        if (crowded) {
-            return;
-        }
-
-        gestationProgress = 0;
-
-        boolean isFairyBreeding = (this.getSpecies() == Species.UNICORN && mate.getSpecies() == Species.PEGASUS)
-                || (this.getSpecies() == Species.PEGASUS && mate.getSpecies() == Species.UNICORN)
-                || (this.getSpecies() == Species.FAIRY_HORSE && mate.getSpecies() == Species.FAIRY_HORSE);
-
-        Species foalSpecies = MoCHorseGenetics.resolveOffspringSpecies(this.getSpecies(), mate.getSpecies());
-        Coat foalCoat = (foalSpecies == Species.HORSE && this.getSpecies() == Species.HORSE && mate.getSpecies() == Species.HORSE)
-                ? MoCHorseGenetics.resolveOffspringCoat(this.getCoat(), mate.getCoat())
-                : Coat.WHITE;
-
-        MoCHorseGenetics.FairyColor foalFairyColor = MoCHorseGenetics.FairyColor.WHITE;
-        if (this.getSpecies() == Species.FAIRY_HORSE && mate.getSpecies() == Species.FAIRY_HORSE) {
-            if (this.getFairyColor() == mate.getFairyColor()) {
-                foalFairyColor = this.getFairyColor();
-            } else {
-                foalSpecies = Species.HORSE_BUG; // colores distintos -> easter egg
-            }
-        }
-
-        MoCHorseEntity foal = ModEntities.MOC_HORSE.get().create(this.level());
-        if (foal == null) return;
-
-        foal.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
-        foal.setSpecies(foalSpecies);
-        foal.setCoat(foalCoat);
-        if (foalSpecies == Species.FAIRY_HORSE) {
-            foal.setFairyColor(foalFairyColor);
-        }
-        foal.setHealth((float) foal.getMaxHealth());
-        foal.setAge(-24000);
-        if (this.getOwnerUUID() != null) {
-            foal.setOwnerUUID(this.getOwnerUUID());
-            foal.setTamed(true);
-            NamingHelper.promptRename(foal, this.getOwnerUUID());
-        }
-        this.level().addFreshEntity(foal);
-
-        if (isFairyBreeding) {
-            this.startVanish();
-            mate.startVanish();
-        } else {
-            this.resetLove();
-            mate.resetLove();
-        }
-    }
-
     public void dropSaddleAndArmor() {
         ItemStack saddle = this.inventory.getItem(0);
         if (!saddle.isEmpty()) {
@@ -2115,8 +1958,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
             return false;
         }
         if (this.level().isClientSide) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            return player != null && this.distanceToSqr(player) < 64.0D;
+            return ClientRiderInput.isLocalPlayerWithin(this, NAME_VISIBLE_DISTANCE_SQR);
         }
         return super.shouldShowName();
     }
@@ -2129,124 +1971,12 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet {
         super.lavaHurt();
     }
 
-     /**
-     * Movement while actually flying/gliding (in the air, mounted or
-     * not): friction depending on species, and two falling modes —
-     * floating in water/lava with no gravity pull, or falling with
-     * normal flyer gravity.
-     */
-    private void applyFlightMovement(Vec3 travelVector) {
-        float friction = switch (getSpecies()) {
-            case PEGASUS -> isUndead() ? FLYER_FRICTION : PEGASUS_FRICTION;
-            case DARK_PEGASUS -> DARK_PEGASUS_FRICTION;
-            case FAIRY_HORSE -> PEGASUS_FRICTION;
-            default -> FLYER_FRICTION;
-        };
-
-        boolean floatingInWater = this.isInWater() && !isSkeletonStage();
-        boolean floatingInLava = this.isInLava() && !isSkeletonStage();
-
-        this.move(MoverType.SELF, this.getDeltaMovement());
-        this.moveRelative(friction / 10F, travelVector);
-
-        if (floatingInWater || floatingInLava) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(friction, FLYER_FALL_SPEED, friction));
-            double fluidHeight = floatingInLava
-                    ? this.getFluidHeight(FluidTags.LAVA)
-                    : this.getFluidHeight(FluidTags.WATER);
-            if (this.getDeltaMovement().y < 0 && !this.onGround() && fluidHeight >= 0.5) {
-                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-            }
-            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
-                    && controllingRider.isShiftKeyDown()) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-            }
-        } else {
-            this.setDeltaMovement(this.getDeltaMovement()
-                    .multiply(friction, FLYER_FALL_SPEED, friction)
-                    .subtract(0.0D, FLYER_GRAVITY_PULL, 0.0D));
-        }
-    }
-
-    /**
-     * Floating while standing in water (any species) or lava (nightmare
-     * only) while mounted and not a skeleton: prevents it from sinking
-     * suddenly and lets a sneaking rider push it down on purpose.
-     */
-    private void applyGroundedFluidBuoyancy() {
-        if (this.isInWater() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(FluidTags.WATER);
-            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
-                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-            }
-            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
-                    && controllingRider.isShiftKeyDown()) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-            }
-        }
-
-        if (this.isInLava() && this.isVehicle() && !isSkeletonStage()) {
-            double submergedFraction = this.getFluidHeight(FluidTags.LAVA);
-            if (this.getDeltaMovement().y < 0 && !this.onGround() && submergedFraction >= 0.5) {
-                this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0.0, 1));
-            }
-            if (this.getControllingPassenger() instanceof LivingEntity controllingRider
-                    && controllingRider.isShiftKeyDown()) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08, 0));
-            }
-        }
-    }
-
     @Override
     public void travel(Vec3 travelVector) {
-        boolean isBatFlyer = (getSpecies() == Species.BATHORSE || getSpecies() == Species.PEGASUS
-                || getSpecies() == Species.DARK_PEGASUS || getSpecies() == Species.FAIRY_HORSE || getSpecies() == Species.GHOST_WINGED)
-                && this.isTamed() && !isTransforming();
-        boolean canControlFlight = isBatFlyer && this.isVehicle();
-
-        boolean flyingMount = isFlyingNow();
-
-        boolean ascend = this.ascendHeld;
-        boolean descend = this.descendHeld;
-        if (this.level().isClientSide
-                && this.getControllingPassenger() == Minecraft.getInstance().player) {
-            ascend = Minecraft.getInstance().options.keyJump.isDown();
-            descend = ModKeyMappings.DESCEND.isDown();
+        Vec3 vanillaTravel = this.flight.travel(travelVector);
+        if (vanillaTravel != null) {
+            super.travel(vanillaTravel);
         }
-
-        if (!this.isVehicle() && this.getGrazeTicks() > 0) {
-            this.getNavigation().stop();
-            super.travel(Vec3.ZERO);
-            return;
-        }
-
-        if (canControlFlight) {
-            double thrust = FLYER_THRUST + switch (getSpecies()) {
-                case PEGASUS -> isUndead() ? 0.0D : PEGASUS_THRUST_BONUS;
-                case DARK_PEGASUS -> DARK_PEGASUS_THRUST_BONUS;
-                case FAIRY_HORSE -> PEGASUS_THRUST_BONUS;
-                default -> 0.0D;
-            };
-            if (ascend) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, thrust, 0.0D));
-            } else if (descend) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -thrust, 0.0D));
-            }
-        }
-        this.setNoGravity(flyingMount);
-
-        if (flyingMount) {
-            applyFlightMovement(travelVector);
-            return;
-        }
-
-        applyGroundedFluidBuoyancy();
-
-        if ((getSpecies() == Species.UNICORN || getSpecies() == Species.GHOST) && this.getDeltaMovement().y < -0.1D && !this.onGround()) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
-        }
-
-        super.travel(travelVector);
     }
 
     @Override

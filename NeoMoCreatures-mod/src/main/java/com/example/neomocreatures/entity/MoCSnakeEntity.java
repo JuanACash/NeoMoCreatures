@@ -16,7 +16,6 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -438,15 +437,12 @@ public class MoCSnakeEntity extends TamableAnimal
      * Entity.playSound() is a no-op when called from client code: ClientLevel
      * only actually plays it if the "excluding player" argument is exactly
      * the local player, and Entity.playSound() always passes null. This is
-     * the local-sound path instead (same pattern already used by
-     * MoCHorseEntity), needed for fRattle/bodyswing since those are ticked
-     * client-only in tickCosmeticAnimation().
+     * the local-sound path instead, needed for fRattle/bodyswing since those
+     * are ticked client-only in tickCosmeticAnimation(). Level.playLocalSound()
+     * is common code (a no-op on the server), so no client class is touched.
      */
     private void playLocalSound(SoundEvent sound, float volume, float pitch) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) {
-            mc.level.playLocalSound(this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch, false);
-        }
+        this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch, false);
     }
 
     /** 1:1 port of the client-only half of the original's tick(): fTongue/fMouth/fRattle ramps, movInt reroll, and the bite/bodyswing countdown. */
@@ -561,25 +557,16 @@ public class MoCSnakeEntity extends TamableAnimal
         return wasHurt;
     }
 
-    /** Carries the variant chosen for the first spawned member to the rest of its group — same fix MoCBearEntity/MoCBigCatEntity use so a group never ends up mixed species. */
-    private static final class SnakeGroupData implements SpawnGroupData {
-        final SnakeVariant variant;
-        SnakeGroupData(SnakeVariant variant) {
-            this.variant = variant;
-        }
-    }
-
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                          MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         SpawnGroupData resultGroupData = spawnGroupData;
 
         if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
-            SnakeVariant variant = spawnGroupData instanceof SnakeGroupData shared
-                    ? shared.variant
-                    : pickVariantForBiome(level, this.blockPosition());
-            resultGroupData = new SnakeGroupData(variant);
-            setVariant(variant);
+            VariantGroupData<SnakeVariant> group = VariantGroupData.of(spawnGroupData, SnakeVariant.class,
+                    () -> pickVariantForBiome(level, this.blockPosition()));
+            resultGroupData = group;
+            setVariant(group.variant());
         } else {
             // SPAWN_EGG / mob spawner / command spawns: uniformly random,
             // same as before (see SnakeSpawnEggItem, which sets its own

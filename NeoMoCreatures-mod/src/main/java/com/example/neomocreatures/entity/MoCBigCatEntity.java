@@ -93,7 +93,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * saddle, and chest still come in later steps.
  */
 public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
-        HasCustomInventoryScreen, StorablePet {
+        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount {
 
     private static final float BABY_SCALE = 0.5F;
     private static final double SPRINT_SPEED_BONUS = 0.15D;
@@ -533,10 +533,12 @@ protected void registerGoals() {
         return isAirborne() && !isGliding();
     }
 
+    @Override
     public void setAscendHeld(boolean held) {
         this.entityData.set(DATA_ASCEND_HELD, held);
     }
 
+    @Override
     public void setDescendHeld(boolean held) {
         this.entityData.set(DATA_DESCEND_HELD, held);
     }
@@ -589,33 +591,20 @@ protected void registerGoals() {
 
     private enum WildFamily { SNOW_LEOPARD, LEOPARD, PANTHER, TIGER, LION }
 
-    /** Carries the family chosen for the first spawned member to the rest of its herd — the actual
-     *  fix for tigers/leopards/panthers showing up mixed together in the same group. */
-    private static final class BigCatGroupData implements SpawnGroupData {
-        final WildFamily family;
-        BigCatGroupData(WildFamily family) {
-            this.family = family;
-        }
-    }
-
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
             DifficultyInstance difficulty,
             MobSpawnType spawnReason,
             @Nullable SpawnGroupData spawnGroupData) {
-        BigCatGroupData resultGroupData = null;
+        SpawnGroupData resultGroupData = null;
 
         if (spawnReason == MobSpawnType.NATURAL
                 || spawnReason == MobSpawnType.CHUNK_GENERATION) {
-            WildFamily family;
-            if (spawnGroupData instanceof BigCatGroupData shared) {
-                family = shared.family;
-            } else {
-                family = pickFamilyForBiome(level, this.blockPosition());
-            }
-            resultGroupData = new BigCatGroupData(family);
-            setVariant(rollVariantForFamily(family));
+            VariantGroupData<WildFamily> group = VariantGroupData.of(spawnGroupData, WildFamily.class,
+                    () -> pickFamilyForBiome(level, this.blockPosition()));
+            resultGroupData = group;
+            setVariant(rollVariantForFamily(group.variant()));
         } else {
             setVariant(BigCatVariant.randomLion(this.random)); // /summon, mob spawner, etc.
         }

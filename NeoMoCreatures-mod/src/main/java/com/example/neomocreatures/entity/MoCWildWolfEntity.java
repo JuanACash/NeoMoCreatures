@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.wildwolf.WildWolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -18,7 +19,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -27,7 +27,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.IronGolem;
@@ -108,16 +107,16 @@ public class MoCWildWolfEntity extends Monster {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new WolfAttackGoal(this, ATTACK_SPEED));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, ATTACK_SPEED, false));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new WolfTargetGoal<>(this, Player.class, false));
-        this.targetSelector.addGoal(3, new WolfTargetGoal<>(this, IronGolem.class, true));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Pig.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Cow.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Sheep.class, false));
-        this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, Chicken.class, false));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, false, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, IronGolem.class, true, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Pig.class, false, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Cow.class, false, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Sheep.class, false, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Chicken.class, false, this::isDarkEnoughToHunt));
     }
 
     public WildWolfVariant getVariant() {
@@ -237,35 +236,17 @@ public class MoCWildWolfEntity extends Monster {
         MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
     }
 
-
     // ---------------------------------------------------------------------
     // Darkness-gated goals (attacks on sight, but only while it's dark)
     // ---------------------------------------------------------------------
 
-    /** Wiki: once it starts fighting, it keeps going even if the light rises afterward — no
-     *  give-up-on-light behaviour here, unlike the Ogre. */
-    private static final class WolfAttackGoal extends MeleeAttackGoal {
-        WolfAttackGoal(MoCWildWolfEntity wolf, double speedModifier) {
-            super(wolf, speedModifier, false);
-        }
-    }
-
-    private static final class WolfTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCWildWolfEntity wolf;
-
-        WolfTargetGoal(MoCWildWolfEntity wolf, Class<T> targetClass, boolean mustSee) {
-            super(wolf, targetClass, mustSee);
-            this.wolf = wolf;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.wolf.getBrightness() < MAX_ATTACK_BRIGHTNESS && super.canUse();
-        }
-    }
-
     /** No getBrightness() in 1.21.1 — same helper already used on the Ogre. */
     private float getBrightness() {
         return this.level().getMaxLocalRawBrightness(this.blockPosition()) / 15.0F;
+    }
+
+    /** Only hunts while the light around it is dim enough. */
+    private boolean isDarkEnoughToHunt() {
+        return this.getBrightness() < MAX_ATTACK_BRIGHTNESS;
     }
 }

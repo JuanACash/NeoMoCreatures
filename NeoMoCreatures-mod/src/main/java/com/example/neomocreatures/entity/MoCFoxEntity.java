@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -45,7 +46,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -109,7 +109,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new FoxCubPanicGoal(this, 1.5D));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, 1.5D, this::isBaby));
         // Wiki: "Fox cubs are passive, and will flee from players" — adults are
         // merely neutral and don't flee on sight, only cubs do.
         this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 6.0F, 1.0D, 1.2D,
@@ -160,20 +160,6 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             return;
         }
         super.setTarget(target);
-    }
-
-    private static class FoxCubPanicGoal extends PanicGoal {
-        private final MoCFoxEntity fox;
-
-        FoxCubPanicGoal(MoCFoxEntity fox, double speedModifier) {
-            super(fox, speedModifier);
-            this.fox = fox;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.fox.isBaby() && super.canUse();
-        }
     }
 
     /**
@@ -338,23 +324,14 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         this.tickGrowth();
     }
 
-    /** Carries the whole group's species to every member, same fix MoCBearEntity uses for its cub groups. */
-    private static final class FoxGroupData implements SpawnGroupData {
-        final boolean snow;
-        FoxGroupData(boolean snow) {
-            this.snow = snow;
-        }
-    }
-
     @Nullable
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
             MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         if (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION) {
-            boolean snow = spawnGroupData instanceof FoxGroupData shared
-                    ? shared.snow
-                    : pickSnowForBiome(level, this.blockPosition());
-            setSnow(snow);
+            VariantGroupData<Boolean> group = VariantGroupData.of(spawnGroupData, Boolean.class,
+                    () -> pickSnowForBiome(level, this.blockPosition()));
+            setSnow(group.variant());
 
             // Wiki: "Cubs may also spawn with adults."
             if (this.random.nextInt(4) == 0) {
@@ -365,7 +342,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             // finalizeSpawn — same fix as MoCBearEntity: it converts the data
             // without checking the type and crashes with anything else.
             super.finalizeSpawn(level, difficulty, spawnType, null);
-            return new FoxGroupData(snow);
+            return group;
         }
 
         if (spawnType == MobSpawnType.SPAWN_EGG) {
@@ -407,7 +384,6 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             setSnow(tag.getBoolean("Snow"));
         }
     }
-
 
     private boolean isTamingFood(ItemStack stack) {
         return stack.is(ModItems.TURKEY_RAW.get());

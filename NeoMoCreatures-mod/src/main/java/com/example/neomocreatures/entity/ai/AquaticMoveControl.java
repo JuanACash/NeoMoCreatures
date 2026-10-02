@@ -17,17 +17,24 @@ public class AquaticMoveControl extends MoveControl {
     private final float maxTurnDegrees;
     /** Share of the forward speed applied as vertical steering toward the path (vanilla fish use 0.1). */
     private final double verticalSteering;
+    /** Rideable swimmers hand control to the rider; others keep swimming whatever they carry. */
+    private final boolean yieldsToRider;
 
     public AquaticMoveControl(Mob mob, float maxTurnDegrees, double verticalSteering) {
+        this(mob, maxTurnDegrees, verticalSteering, true);
+    }
+
+    public AquaticMoveControl(Mob mob, float maxTurnDegrees, double verticalSteering, boolean yieldsToRider) {
         super(mob);
         this.maxTurnDegrees = maxTurnDegrees;
         this.verticalSteering = verticalSteering;
+        this.yieldsToRider = yieldsToRider;
     }
 
     @Override
     public void tick() {
         if (this.operation != MoveControl.Operation.MOVE_TO || this.mob.getNavigation().isDone()
-                || !this.mob.isInWater() || this.mob.getControllingPassenger() != null) {
+                || !this.mob.isInWater() || (this.yieldsToRider && this.mob.getControllingPassenger() != null)) {
             this.mob.setSpeed(0.0F);
             return;
         }

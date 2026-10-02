@@ -1,6 +1,7 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.entity.golem.GolemBody;
 import com.example.neomocreatures.entity.golem.GolemCore;
@@ -39,7 +40,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -152,7 +152,6 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
     /** Server-side source of truth; clients only see the texture indices in DATA_CUBE_TEXTURES. */
     private final GolemBody body = new GolemBody();
 
-
     /** Original tCounter: 0 when idle, counts up while throwing an arm cube (on both sides, for the animation). */
     private int throwTicks;
 
@@ -181,8 +180,8 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, LOOK_DISTANCE));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DarknessTargetGoal<>(this, Player.class));
-        this.targetSelector.addGoal(3, new DarknessTargetGoal<>(this, IronGolem.class));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::isInDarkness));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, IronGolem.class, true, this::isInDarkness));
     }
 
     // ---------------------------------------------------------------------
@@ -816,7 +815,6 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
         MoCLootUtil.dropItems(this, item, baseCount + MoCLootUtil.rollLootingExtras(this.random, lootingLevel));
     }
 
-
     // ---------------------------------------------------------------------
     // Sounds
     // ---------------------------------------------------------------------
@@ -886,21 +884,6 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
                 return false;
             }
             return super.canContinueToUse();
-        }
-    }
-
-    /** Original: AIGolemTarget — only picks new targets while standing in the dark. */
-    private static final class DarknessTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
-        private final MoCBigGolemEntity golem;
-
-        DarknessTargetGoal(MoCBigGolemEntity golem, Class<T> targetClass) {
-            super(golem, targetClass, true);
-            this.golem = golem;
-        }
-
-        @Override
-        public boolean canUse() {
-            return this.golem.isInDarkness() && super.canUse();
         }
     }
 }

@@ -295,14 +295,6 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         return baby;
     }
 
-    /** Carries the chosen variant to the rest of a spawn group — same pattern as MoCSnakeEntity's SnakeGroupData. */
-    private static final class BunnyGroupData implements SpawnGroupData {
-        final BunnyVariant variant;
-        BunnyGroupData(BunnyVariant variant) {
-            this.variant = variant;
-        }
-    }
-
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
@@ -313,11 +305,10 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
 
         if (spawnType == MobSpawnType.NATURAL
                 || spawnType == MobSpawnType.CHUNK_GENERATION) {
-            BunnyVariant variant = spawnGroupData instanceof BunnyGroupData shared
-                    ? shared.variant
-                    : pickVariantForBiome(level, this.blockPosition());
-            resultGroupData = new BunnyGroupData(variant);
-            setVariant(variant);
+            VariantGroupData<BunnyVariant> group = VariantGroupData.of(spawnGroupData, BunnyVariant.class,
+                    () -> pickVariantForBiome(level, this.blockPosition()));
+            resultGroupData = group;
+            setVariant(group.variant());
         } else {
             setVariant(BunnyVariant.random(this.random));
         }

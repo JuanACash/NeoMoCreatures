@@ -1,5 +1,14 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
 import com.example.neomocreatures.entity.kitty.KittyVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -9,14 +18,6 @@ import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -47,7 +48,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -262,7 +262,12 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new UntamedFleeGoal(this));
+        this.goalSelector.addGoal(1, new ConditionalAvoidEntityGoal<>(this, Player.class, 6.0F, 1.0D, 1.3D,
+                // Retaliation always wins over instinctive fleeing — if something
+                // (usually whoever just hit it) is already the target, fight instead.
+                // Recently having eaten also suppresses fleeing for a while.
+                () -> !this.isTame() && this.getTarget() == null && this.fleeImmuneTicks <= 0,
+                () -> this.getTarget() == null && this.fleeImmuneTicks <= 0));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -273,32 +278,6 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new ProtectKittenGoal(this));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Mob.class, true, this::canHuntSmallMob));
-    }
-
-    /** Wild instinct, not retaliation — an untamed kitty occasionally bolts from
-     *  a nearby player even if nothing happened, matching the original's random
-     *  "Untamed"/"Scared" state toggle. Once tamed, it stops caring. */
-    private static class UntamedFleeGoal extends AvoidEntityGoal<Player> {
-        private final MoCKittyEntity kitty;
-
-        UntamedFleeGoal(MoCKittyEntity kitty) {
-            super(kitty, Player.class, 6.0F, 1.0D, 1.3D);
-            this.kitty = kitty;
-        }
-
-        @Override
-        public boolean canUse() {
-            // Retaliation always wins over instinctive fleeing — if something
-            // (usually whoever just hit it) is already the target, fight instead.
-            // Recently having eaten also suppresses fleeing for a while.
-            return !this.kitty.isTame() && this.kitty.getTarget() == null
-                    && this.kitty.fleeImmuneTicks <= 0 && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return this.kitty.getTarget() == null && this.kitty.fleeImmuneTicks <= 0 && super.canContinueToUse();
-        }
     }
 
     private boolean canHuntSmallMob(@Nullable LivingEntity target) {
@@ -1015,7 +994,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
 }
 
     private void tickPlaying() {
-        int boredomChance = 200; // TODO: use getTemper()-based 300 once temperament exists
+        int boredomChance = 200;
         if (this.random.nextInt(boredomChance) == 0) {
             setKittyCareState(STATE_IDLE);
             return;
