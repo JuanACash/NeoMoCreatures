@@ -1870,8 +1870,6 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         }
     }
 
-    /** Spawns 1-3 maggots at the death location. */
-
     /** Drops the chest (if it has one) with all its contents, and the saddle. */
     private void dropChestAndSaddleContents() {
         if (hasChest()) {

@@ -322,11 +322,6 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
     // ---------------------------------------------------------------------
 
     /**
-     * Random swimming that keeps the current depth. Depth is handled by {@link #applyDepthControl()};
-     * targets at other depths would never be reached by the horizontal-only move control.
-     */
-
-    /**
      * Random swimming that picks its destinations on the seabed, so stingrays cruise along the
      * bottom like real ones instead of hovering in mid-water.
      */

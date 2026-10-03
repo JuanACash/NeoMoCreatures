@@ -1,9 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -51,8 +51,7 @@ public class MoCWraithEntity extends Monster {
     private static final double WANDER_SPEED = 1.0D;
     private static final int ATTACK_ANIMATION_TICKS = 10;
     private static final float SUNBURN_DAMAGE = 2.0F;
-    /** Original: a 5% chance, with an easter-egg config toggle this port always leaves on. */
-
+    
     /** 0 = idle; counts up while the arm-swing animation plays. Read by the model/renderer. */
     public int attackCounter;
 

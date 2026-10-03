@@ -1,10 +1,10 @@
 package com.example.neomocreatures.entity.monster;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -293,12 +293,6 @@ public class MoCHorseMobEntity extends Monster {
             }
         }
     }
-
-    /** Keeps the bathorse gliding roughly 1-10 blocks above the ground, like
-     * the original's min/maxFlyingHeight — not a full flight-pathing system
-     * (no FlyingPathNavigation yet), just vertical drift while it walks/chases
-     * normally on the X/Z plane. */
-
 
     public boolean isSoaring() {
         BlockPos pos = BlockPos.containing(

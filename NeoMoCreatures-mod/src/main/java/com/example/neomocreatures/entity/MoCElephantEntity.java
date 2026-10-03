@@ -369,7 +369,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             this.level().playSound(null, this.blockPosition(),
                     SoundEvents.ITEM_BREAK, SoundSource.NEUTRAL, 1.0F, 1.0F);
             tuskStack = ItemStack.EMPTY;
-            this.entityData.set(DATA_TUSK_TIER, 0);
+            this.entityData.set(DATA_TUSK_TIER, ElephantTusks.NONE);
         }
     }
 
@@ -485,7 +485,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         builder.define(DATA_HARNESSED, false);
         builder.define(DATA_SITTING_SYNCED, false);
         builder.define(DATA_CHEST_COUNT, 0);
-        builder.define(DATA_TUSK_TIER, 0);
+        builder.define(DATA_TUSK_TIER, ElephantTusks.NONE);
         builder.define(DATA_GARMENT, false);
         builder.define(DATA_HOWDAH, false);
         builder.define(DATA_PLATFORM, false);
@@ -673,7 +673,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 this.spawnAtLocation(tuskStack.copy());
                 tuskStack = ItemStack.EMPTY;
-                this.entityData.set(DATA_TUSK_TIER, 0);
+                this.entityData.set(DATA_TUSK_TIER, ElephantTusks.NONE);
                 this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;

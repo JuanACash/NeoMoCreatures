@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
@@ -20,10 +24,6 @@ import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -76,7 +76,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount, EquippedPet {
@@ -797,16 +796,14 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         }
     }
 
-    /** Spawns 1-3 maggots at the death location. */
-
-    /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
     /** Saddle, armor, chest and everything inside it. */
     @Override
     public void dropAllEquipment() {
         this.dropSaddleAndArmor();
         this.dropChestAndContents();
     }
-
+    
+    /** Saddle and armor always drop if equipped, regardless of what killed the wyvern. Never affected by Looting. */
     public void dropSaddleAndArmor() {
         if (this.isSaddled()) {
             Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
