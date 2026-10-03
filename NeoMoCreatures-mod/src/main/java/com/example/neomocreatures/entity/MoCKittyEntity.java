@@ -1,6 +1,5 @@
 package com.example.neomocreatures.entity;
 
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -9,8 +8,9 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
+import com.example.neomocreatures.entity.kitty.KittyCareController;
+import com.example.neomocreatures.entity.kitty.KittyCareState;
 import com.example.neomocreatures.entity.kitty.KittyVariant;
-import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -19,7 +19,6 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageUtil;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -27,9 +26,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -79,28 +76,11 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
     private static final int SWING_TICKS_MAX = 10;
     private static final double EAT_NEARBY_ITEM_RANGE = 8.0D;
     private static final int FLEE_IMMUNITY_TICKS = 6000; // 5 minutes — "for a while" after eating
-    private static final int STATE_SEEKING_BED = 3;
-    private static final int STATE_IN_BED = 4;
-    private static final int STATE_IDLE = 7;
-    private static final int STATE_AGGRESSIVE = 13;
-    private static final double CARE_SEARCH_RADIUS = 18.0D;
-    private static final int STATE_SEEKING_LITTER = 5;
-    private static final int STATE_IN_LITTER = 6;
-    private static final int STATE_HELD_LEAD = 14;
-    private static final int STATE_HELD_PLAYER = 15;
-    private static final int STATE_PLAYING = 8;
-    private static final int STATE_CURIOUS = 11;
-    private static final int STATE_LOOKING_FOR_MATE = 9;
-    private static final int STATE_MATING = 18;
-    private static final int STATE_SEEKING_BIRTH_BED = 19;
-    private static final int STATE_GIVING_BIRTH = 20;
-    private static final int STATE_DEFENDING_KITTENS = 21;
-    private static final int STATE_SLEEPING = 12;
-    private static final int STATE_WANTS_TREE = 16;
-    private static final int STATE_STUCK_IN_TREE = 17;
 
     private int fleeImmuneTicks;
-    private int careTimer;
+
+    /** Tamed-kitty needs: bed, litter box, play, mating, birth and trees. */
+    private final KittyCareController care = new KittyCareController(this);
     private int pickupCooldown;
     private float lastAppliedScale = -1F;
 
@@ -122,9 +102,6 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Nullable
     private Player heldBy;
 
-    @Nullable
-    private BlockPos treeTarget;
-    private boolean onTree;
 
     public MoCKittyEntity(EntityType<? extends MoCKittyEntity> type, Level level) {
         super(type, level);
@@ -137,13 +114,10 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         builder.define(DATA_SWING_TICKS, 0);
         builder.define(DATA_HAS_EATEN, false);
         builder.define(DATA_SITTING, false);
-        builder.define(DATA_KITTY_CARE_STATE, STATE_IDLE);
+        builder.define(DATA_KITTY_CARE_STATE, KittyCareState.STATE_IDLE);
         builder.define(DATA_SHOW_EMOTE_ICON, false);
         builder.define(DATA_HELD_BY, Optional.empty());
     }
-
-    @Nullable
-    private MoCKittyEntity matePartner;
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
@@ -201,7 +175,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         return this.entityData.get(DATA_SITTING);
     }
 
-    private void setSitting(boolean sitting) {
+    public void setSitting(boolean sitting) {
         this.entityData.set(DATA_SITTING, sitting);
     }
 
@@ -233,20 +207,32 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         return this.entityData.get(DATA_KITTY_CARE_STATE);
     }
 
+    /** Randomly shows/hides the care emote icon above the kitty. */
+    public void toggleEmoteIcon() {
+        this.entityData.set(DATA_SHOW_EMOTE_ICON, !showEmoteIcon());
+    }
+
+    /** Pairs this kitty with another one that is ready to mate. */
+    public void setMatePartner(@Nullable MoCKittyEntity partner) {
+        this.care.setMatePartner(partner);
+    }
+
+    /** Starts the paw-swing animation (playing, mating). */
+    public void startSwing() {
+        this.entityData.set(DATA_SWING_TICKS, SWING_TICKS_MAX);
+    }
+
     public boolean showEmoteIcon() {
         return this.entityData.get(DATA_SHOW_EMOTE_ICON);
     }
 
-    private void setKittyCareState(int state) {
-        if (state == STATE_AGGRESSIVE && getKittyState() != STATE_AGGRESSIVE) {
+    public void setKittyCareState(int state) {
+        if (state == KittyCareState.STATE_AGGRESSIVE && getKittyState() != KittyCareState.STATE_AGGRESSIVE) {
             this.playSound(ModSounds.KITTY_UPSET.get(), 1.0F, 1.0F);
         }
         this.entityData.set(DATA_KITTY_CARE_STATE, state);
-        this.careTimer = 0;
+        this.care.resetTimer();
     }
-
-    @Nullable
-    private ItemEntity playTarget;
 
     @Override
     public boolean isFood(ItemStack stack) {
@@ -467,7 +453,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
                 tickEatNearbyFood();
             }
-            tickKittyCare();
+            this.care.tick();
         }
     }
 
@@ -534,332 +520,15 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         this.fleeImmuneTicks = FLEE_IMMUNITY_TICKS;
     }
 
-    /** Steps 3/4/13 of the original's state machine: seek a filled bed when idle
-     *  or aggressive, eat in it, calm down. Litter box (5/6) comes in a later step. */
-    private void tickKittyCare() {
-        if (this.random.nextInt(200) == 0) {
-            this.entityData.set(DATA_SHOW_EMOTE_ICON, !showEmoteIcon());
-        }
-        if (!this.isTame() || this.isBaby()) {
-            return;
-        }
-        switch (getKittyState()) {
-            case STATE_SEEKING_BED -> tickSeekingBed();
-            case STATE_IN_BED -> tickInBed();
-            case STATE_SEEKING_LITTER -> tickSeekingLitter();
-            case STATE_IN_LITTER -> tickInLitter();
-            case STATE_AGGRESSIVE -> tickAggressive();
-            case STATE_CURIOUS -> tickCurious();
-            case STATE_PLAYING -> tickPlaying();
-            case STATE_LOOKING_FOR_MATE -> tickLookingForMate();
-            case STATE_MATING -> tickMating();
-            case STATE_SEEKING_BIRTH_BED -> tickSeekingBirthBed();
-            case STATE_GIVING_BIRTH -> tickGivingBirth();
-            case STATE_DEFENDING_KITTENS -> tickDefendingKittens();
-            case STATE_HELD_LEAD, STATE_HELD_PLAYER -> tickHeld();
-            case STATE_SLEEPING -> tickSleeping();
-            case STATE_WANTS_TREE -> tickWantsTree();
-            case STATE_STUCK_IN_TREE -> tickStuckInTree();
-            default -> tickIdleCare();
-        }
-    }
-
-    private void tickIdleCare() {
-        if (!this.level().isDay() && this.random.nextInt(500) == 0) {
-            MoCKittyBedEntity bed = findAnyBed(18.0D);
-            if (bed == null) {
-                setKittyCareState(STATE_SLEEPING);
-            } else {
-                double dist = bed.distanceTo(this);
-                if (dist > 2.0F) {
-                    this.getNavigation().moveTo(bed, 1.0D);
-                } else if (this.startRiding(bed)) {
-                    setKittyCareState(STATE_SLEEPING);
-                }
-            }
-            return;
-        }
-        if (this.random.nextInt(20) == 0) {
-            Player nearby = this.level().getNearestPlayer(this, 12D);
-            if (nearby != null && nearby.getMainHandItem().is(ModItems.WOOL_BALL.get())) {
-                setKittyCareState(STATE_CURIOUS);
-                return;
-            }
-        }
-        if (this.getHealth() < this.getMaxHealth() || this.random.nextInt(3000) == 0) {
-            setKittyCareState(STATE_SEEKING_BED);
-            return;
-        }
-        if (this.level().canSeeSky(this.blockPosition()) && this.random.nextInt(4000) == 0) {
-            setKittyCareState(STATE_WANTS_TREE);
-        }
-    }
-
-    private void tickSeekingBed() {
-        this.careTimer++;
-        if (this.careTimer > 500) {
-            if (this.random.nextInt(200) == 0) {
-                setKittyCareState(STATE_AGGRESSIVE);
-                return;
-            }
-            if (this.random.nextInt(500) == 0) {
-                setKittyCareState(STATE_IDLE);
-                return;
-            }
-        }
-        if (this.random.nextInt(20) != 0) {
-            return;
-        }
-        approachAndUseBed();
-    }
-
-    private void tickInBed() {
-        if (!(this.getVehicle() instanceof MoCKittyBedEntity bed)) {
-            setKittyCareState(STATE_IDLE);
-            return;
-        }
-        lockRotationToVehicle(bed);
-        if (!bed.hasFood() && !bed.hasMilk()) {
-            this.heal(this.getMaxHealth());
-            this.stopRiding();
-            setKittyCareState(STATE_SEEKING_LITTER);
-            return;
-        }
-        if (this.random.nextInt(2500) == 0) {
-            this.heal(this.getMaxHealth());
-            this.stopRiding();
-            setKittyCareState(STATE_IDLE);
-        }
-    }
-
-    private void tickAggressive() {
-        MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
-        if (bed != null) {
-            this.setTarget(null);
-            double dist = bed.distanceTo(this);
-            if (dist > 2.0F) {
-                this.getNavigation().moveTo(bed, 1.0D);
-            } else if (this.startRiding(bed)) {
-                setKittyCareState(STATE_IN_BED);
-            }
-            return;
-        }
-        Player nearest = this.level().getNearestPlayer(this, CARE_SEARCH_RADIUS);
-        this.setTarget(nearest);
-        if (nearest == null || this.random.nextInt(500) == 0) {
-            setKittyCareState(STATE_IDLE);
-        }
-    }
-
-    private void tickLookingForMate() {
-        this.careTimer++;
-        if (this.random.nextInt(20) == 0) {
-            MoCKittyEntity candidate = this.level().getEntitiesOfClass(MoCKittyEntity.class,
-                            this.getBoundingBox().inflate(16.0D, 6.0D, 16.0D),
-                            k -> k != this && k.getKittyState() == STATE_LOOKING_FOR_MATE)
-                    .stream()
-                    .min(Comparator.comparingDouble(this::distanceToSqr))
-                    .orElse(null);
-            if (candidate != null) {
-                if (this.distanceToSqr(candidate) < 4.0D) {
-                    this.matePartner = candidate;
-                    candidate.matePartner = this;
-                    setKittyCareState(STATE_MATING);
-                    candidate.setKittyCareState(STATE_MATING);
-                } else {
-                    this.getNavigation().moveTo(candidate, 1.0D);
-                }
-            }
-        }
-        if (this.careTimer > 2000) {
-            setKittyCareState(STATE_IDLE);
-        }
-    }
-
-    private void tickMating() {
-        if (this.matePartner == null || !this.matePartner.isAlive() || this.matePartner.getKittyState() != STATE_MATING) {
-            setKittyCareState(STATE_LOOKING_FOR_MATE);
-            return;
-        }
-        if (this.random.nextInt(50) == 0) {
-            this.entityData.set(DATA_SWING_TICKS, SWING_TICKS_MAX);
-        }
-        double dist = this.matePartner.distanceTo(this);
-        if (dist < 5.0D) {
-            this.careTimer++;
-        }
-        if (this.careTimer > 500 && this.random.nextInt(50) == 0) {
-            this.matePartner.setKittyCareState(STATE_IDLE);
-            setKittyCareState(STATE_SEEKING_BIRTH_BED);
-        }
-    }
-
-    private void tickSeekingBirthBed() {
-        if (this.random.nextInt(20) != 0) {
-            return;
-        }
-        MoCKittyBedEntity bed = findAnyBed(CARE_SEARCH_RADIUS);
-        if (bed == null) {
-            return;
-        }
-        double dist = bed.distanceTo(this);
-        if (dist > 2.0F) {
-            this.getNavigation().moveTo(bed, 1.0D);
-            return;
-        }
-        if (this.startRiding(bed)) {
-            setKittyCareState(STATE_GIVING_BIRTH);
-        }
-    }
-
-    private void tickGivingBirth() {
-        if (this.getVehicle() == null) {
-            setKittyCareState(STATE_SEEKING_BIRTH_BED);
-            return;
-        }
-        this.setYRot(180F);
-        this.careTimer++;
-        if (this.careTimer <= 1000) {
-            return;
-        }
-        int litterSize = this.random.nextInt(3) + 1;
-        for (int i = 0; i < litterSize; i++) {
-            MoCKittyEntity kitten = ModEntities.MOC_KITTY.get().create((ServerLevel) this.level());
-            if (kitten == null) {
-                continue;
-            }
-            KittyVariant kittenVariant = this.random.nextBoolean() ? getVariant() : KittyVariant.rollNatural(this.random);
-            kitten.setVariant(kittenVariant);
-            kitten.moveTo(this.getX(), this.getY(), this.getZ(), 0F, 0F);
-            kitten.setBaby(true);
-            this.level().addFreshEntity(kitten);
-            this.playSound(SoundEvents.CHICKEN_EGG, 1.0F, 1.0F);
-            if (this.getOwnerUUID() != null) {
-                kitten.setOwnerUUID(this.getOwnerUUID());
-                kitten.setTame(true, true);
-                NamingHelper.promptRename(kitten, this.getOwnerUUID());
-            }
-        }
-        this.stopRiding();
-        setKittyCareState(STATE_DEFENDING_KITTENS);
-    }
-
-    private void tickDefendingKittens() {
-        this.careTimer++;
-        if (this.careTimer > 2000) {
-            boolean anyKittensNearby = !this.level().getEntitiesOfClass(MoCKittyEntity.class,
-                    this.getBoundingBox().inflate(24.0D, 8.0D, 24.0D), MoCKittyEntity::isBaby).isEmpty();
-            if (!anyKittensNearby) {
-                setKittyCareState(STATE_IDLE);
-                return;
-            }
-            this.careTimer = 1000;
-        }
-    }
-
-    private void tickSleeping() {
-        setSitting(true);
-        // Like eating: keep its rotation locked to the bed, or its look-around AI turns it and the
-        // renderer drags the whole sleeping body along (a passenger's body follows a head turned past 50°).
-        if (this.getVehicle() != null) {
-            lockRotationToVehicle(this.getVehicle());
-        }
-        if (this.random.nextInt(100) == 0) {
-            this.playSound(ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
-        }
-        this.careTimer++;
-        if (this.level().isDay() || (this.careTimer > 500 && this.random.nextInt(500) == 0)) {
-            setSitting(false);
-            if (this.isVehicle() || this.getVehicle() != null) {
-                this.stopRiding();
-            }
-            setKittyCareState(STATE_IDLE);
-        }
-    }
-
-    /**
-     * Simplified from the original: it walks toward a nearby tree and "arrives"
-     * there instead of literally climbing through leaves block by block (the
-     * original disables collision to crawl up through leaves, which needs APIs
-     * that don't map cleanly to the modern pathfinder without real risk of
-     * getting a kitty stuck inside a tree).
-     */
-    private void tickWantsTree() {
-        this.careTimer++;
-        if (this.careTimer > 500) {
-            setKittyCareState(this.onTree ? STATE_STUCK_IN_TREE : STATE_IDLE);
-            return;
-        }
-        if (this.treeTarget == null && this.random.nextInt(50) == 0) {
-            this.treeTarget = findNearbyTreeTop(18);
-        }
-        if (this.treeTarget == null) {
-            return;
-        }
-        this.getNavigation().moveTo(this.treeTarget.getX() + 0.5D, this.treeTarget.getY(), this.treeTarget.getZ() + 0.5D, 1.0D);
-        if (this.blockPosition().closerThan(this.treeTarget, 2.0D)) {
-            this.onTree = true;
-            this.treeTarget = null;
-        }
-    }
-
-    private void tickStuckInTree() {
-        if (this.random.nextInt(100) == 0) {
-            setKittyCareState(STATE_IDLE);
-            this.onTree = false;
-            return;
-        }
-        Player nearby = this.level().getNearestPlayer(this, 2.0D);
-        if (nearby != null) {
-            setKittyCareState(STATE_IDLE);
-            this.onTree = false;
-        }
-    }
-
-    @Nullable
-    private BlockPos findNearbyTreeTop(int radius) {
-        BlockPos base = this.blockPosition();
-        for (int i = 0; i < 10; i++) {
-            int dx = this.random.nextInt(radius * 2 + 1) - radius;
-            int dz = this.random.nextInt(radius * 2 + 1) - radius;
-            BlockPos.MutableBlockPos pos = base.offset(dx, 10, dz).mutable();
-            for (int y = base.getY() + 10; y > base.getY() - 5; y--) {
-                pos.setY(y);
-                if (this.level().getBlockState(pos).is(BlockTags.LEAVES)) {
-                    return pos.immutable();
-                }
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private MoCKittyBedEntity findAnyBed(double radius) {
-        MoCKittyBedEntity best = null;
-        double bestDistSqr = radius * radius;
-        for (MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
-                MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
-            if (bed.isVehicle()) {
-                continue;
-            }
-            double d = bed.distanceToSqr(this);
-            if (d < bestDistSqr) {
-                bestDistSqr = d;
-                best = bed;
-            }
-        }
-        return best;
-    }
-
     /** Mirrors the original's pickable()/whipable() — aggressive, already-held,
      *  or busy giving birth/defending kittens are never pick-uppable. */
     private boolean canBePickedUp() {
         int state = getKittyState();
-        return state != STATE_AGGRESSIVE && state != STATE_HELD_LEAD && state != STATE_HELD_PLAYER;
+        return state != KittyCareState.STATE_AGGRESSIVE && state != KittyCareState.STATE_HELD_LEAD && state != KittyCareState.STATE_HELD_PLAYER;
     }
 
     private boolean isWhipable() {
-        return getKittyState() != STATE_AGGRESSIVE;
+        return getKittyState() != KittyCareState.STATE_AGGRESSIVE;
     }
 
     public boolean isHeld() {
@@ -887,8 +556,8 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         this.noPhysics = false;
         this.heldBy = null;
     }
-    
-    private void tickHeld() {
+
+    public void tickHeld() {
         if (!isHeld()) {
             return;
         }
@@ -901,7 +570,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
         if (!this.level().isClientSide && holder.isShiftKeyDown()) {
             stopHolding();
-            setKittyCareState(STATE_IDLE);
+            setKittyCareState(KittyCareState.STATE_IDLE);
             return;
         }
 
@@ -932,143 +601,6 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             return;
         }
         super.pushEntities();
-    }
-
-    private void approachAndUseBed() {
-        MoCKittyBedEntity bed = findFilledBed(CARE_SEARCH_RADIUS);
-        if (bed == null) {
-            return;
-        }
-        double dist = bed.distanceTo(this);
-        if (dist > 2.0F) {
-            this.getNavigation().moveTo(bed, 1.0D);
-            return;
-        }
-        if (this.startRiding(bed)) {
-            setKittyCareState(STATE_IN_BED);
-        }
-    }
-
-    private void tickSeekingLitter() {
-        this.careTimer++;
-        if (this.careTimer > 2000 && this.random.nextInt(1000) == 0) {
-            setKittyCareState(STATE_AGGRESSIVE);
-            return;
-        }
-        if (this.random.nextInt(20) != 0) {
-            return;
-        }
-        MoCLitterBoxEntity box = findCleanLitterBox(CARE_SEARCH_RADIUS);
-        if (box == null) {
-            return;
-        }
-        double dist = box.distanceTo(this);
-        if (dist > 2.0F) {
-            this.getNavigation().moveTo(box, 1.0D);
-            return;
-        }
-        if (this.startRiding(box)) {
-            setKittyCareState(STATE_IN_LITTER);
-        }
-    }
-
-    private void tickCurious() {
-    Player nearby = this.level().getNearestPlayer(this, 18D);
-    if (nearby == null || this.random.nextInt(10) != 0) {
-        return;
-    }
-    if (!nearby.getMainHandItem().is(ModItems.WOOL_BALL.get())) {
-        setKittyCareState(STATE_IDLE);
-        return;
-    }
-    double dist = nearby.distanceTo(this);
-    if (dist > 5.0F) {
-        this.getNavigation().moveTo(nearby, 1.0D);
-    }
-}
-
-    private void tickPlaying() {
-        int boredomChance = 200;
-        if (this.random.nextInt(boredomChance) == 0) {
-            setKittyCareState(STATE_IDLE);
-            return;
-        }
-        if (this.playTarget == null || !this.playTarget.isAlive()) {
-            setKittyCareState(STATE_IDLE);
-            return;
-        }
-        double dist = this.playTarget.distanceTo(this);
-        if (dist < 1.5D) {
-            this.entityData.set(DATA_SWING_TICKS, SWING_TICKS_MAX);
-            if (this.random.nextInt(10) == 0) {
-                Vec3 push = this.playTarget.position().subtract(this.position()).normalize().scale(0.3D);
-                this.playTarget.setDeltaMovement(push.x, 0.15D, push.z);
-            }
-        } else {
-            this.getNavigation().moveTo(this.playTarget, 1.0D);
-        }
-    }
-
-    private void tickInLitter() {
-        if (!(this.getVehicle() instanceof MoCLitterBoxEntity box)) {
-            setKittyCareState(STATE_IDLE);
-            return;
-        }
-        lockRotationToVehicle(box);
-        this.careTimer++;
-        if (this.careTimer <= 300) {
-            if (this.random.nextInt(40) == 0) {
-                this.playSound(SoundEvents.SAND_BREAK, 1.0F, 1.0F);
-            }
-            return;
-        }
-        this.playSound(SoundEvents.SLIME_BLOCK_PLACE, 1.0F, 1.0F);
-        box.setUsedLitter(true);
-        this.stopRiding();
-        setKittyCareState(STATE_IDLE);
-    }
-
-    private void lockRotationToVehicle(Entity vehicle) {
-        this.setYRot(vehicle.getYRot());
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
-        this.setXRot(0F);
-    }
-
-    @Nullable
-    private MoCLitterBoxEntity findCleanLitterBox(double radius) {
-        MoCLitterBoxEntity best = null;
-        double bestDistSqr = radius * radius;
-        for (MoCLitterBoxEntity box : this.level().getEntitiesOfClass(
-                MoCLitterBoxEntity.class, this.getBoundingBox().inflate(radius))) {
-            if (box.isVehicle() || box.isUsedLitter()) {
-                continue;
-            }
-            double d = box.distanceToSqr(this);
-            if (d < bestDistSqr) {
-                bestDistSqr = d;
-                best = box;
-            }
-        }
-        return best;
-    }
-
-    @Nullable
-    private MoCKittyBedEntity findFilledBed(double radius) {
-        MoCKittyBedEntity best = null;
-        double bestDistSqr = radius * radius;
-        for (MoCKittyBedEntity bed : this.level().getEntitiesOfClass(
-                MoCKittyBedEntity.class, this.getBoundingBox().inflate(radius))) {
-            if (bed.isVehicle() || (!bed.hasFood() && !bed.hasMilk())) {
-                continue;
-            }
-            double d = bed.distanceToSqr(this);
-            if (d < bestDistSqr) {
-                bestDistSqr = d;
-                best = bed;
-            }
-        }
-        return best;
     }
 
     private static boolean isTamingFish(ItemStack stack) {
@@ -1150,7 +682,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
         if (tag.contains("KittyCareState")) {
             int savedState = tag.getInt("KittyCareState");
-            this.entityData.set(DATA_KITTY_CARE_STATE, savedState == STATE_HELD_PLAYER ? STATE_IDLE : savedState);
+            this.entityData.set(DATA_KITTY_CARE_STATE, savedState == KittyCareState.STATE_HELD_PLAYER ? KittyCareState.STATE_IDLE : savedState);
         }
         this.setNoAi(false);
         this.setNoGravity(false);
@@ -1185,7 +717,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && getKittyState() == STATE_CURIOUS && stack.is(ModItems.WOOL_BALL.get())) {
+        if (this.isTame() && getKittyState() == KittyCareState.STATE_CURIOUS && stack.is(ModItems.WOOL_BALL.get())) {
             if (!this.level().isClientSide) {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -1200,13 +732,13 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                         this.random.nextFloat() * 0.05D,
                         (this.random.nextFloat() - this.random.nextFloat()) * 0.3D);
                 this.level().addFreshEntity(ball);
-                this.playTarget = ball;
-                setKittyCareState(STATE_PLAYING);
+                this.care.setPlayTarget(ball);
+                setKittyCareState(KittyCareState.STATE_PLAYING);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && getKittyState() == STATE_IDLE
+        if (this.isTame() && getKittyState() == KittyCareState.STATE_IDLE
                 && (stack.is(Items.CAKE) || stack.is(Items.COOKED_COD) || stack.is(Items.COOKED_SALMON))) {
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
@@ -1214,7 +746,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-                setKittyCareState(STATE_LOOKING_FOR_MATE);
+                setKittyCareState(KittyCareState.STATE_LOOKING_FOR_MATE);
             }
             return InteractionResult.SUCCESS;
         }
@@ -1223,7 +755,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 && !PetCarryUtil.isAlreadyCarryingAPet(player)) {
             if (!this.level().isClientSide) {
                 startHolding(player);
-                setKittyCareState(STATE_HELD_PLAYER);
+                setKittyCareState(KittyCareState.STATE_HELD_PLAYER);
                 this.pickupCooldown = 10;
             }
             return InteractionResult.SUCCESS;

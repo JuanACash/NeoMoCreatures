@@ -7,10 +7,9 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.egg.EggHatchable;
-import com.example.neomocreatures.entity.egg.MoCEggEntity;
+import com.example.neomocreatures.entity.ostrich.OstrichBreedingHandler;
 import com.example.neomocreatures.entity.ostrich.OstrichEquipment;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
-import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
@@ -88,8 +87,6 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
     private static final int GROWTH_TICKS = 48000;
     private static final float BABY_SCALE = 0.4F;
     private static final float BABY_HITBOX_SCALE = 0.5F;
-    private static final int EGG_APPEAR_TICKS = 2400;
-    private static final double PAIR_RADIUS = 8.0D;
     private static final float JUMP_VELOCITY = 0.63F;
     private static final double RIDER_BACK_OFFSET = 0.15D;
     private static final int TRANSFORM_DURATION_TICKS = 100;
@@ -153,17 +150,13 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
     private ResourceLocation saddleItemId;
 
     private int hidingCounter;
+    /** Wild breeding: partner search, egg countdown and laying. */
+    private final OstrichBreedingHandler breeding = new OstrichBreedingHandler(this);
     private float lastAppliedScale = -1F;
-    private int eggAppearCounter;
-    private int pairingType;
     private int jumpDebounceCounter;
     private boolean wasAscendHeldLastTick;
     private boolean jumpPending;
 
-    @Nullable
-    private UUID feederUUID;
-    @Nullable
-    private UUID partnerUUID;
     @Nullable
     private UUID grudgeTargetUUID;
 
@@ -296,6 +289,11 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
 
     private void setFlagColor(int colorId) {
         this.entityData.set(DATA_FLAG_COLOR, colorId);
+    }
+
+    /** True while this wild ostrich is about to lay an egg. */
+    public boolean isLayingEgg() {
+        return this.breeding.isLayingEgg();
     }
 
     public int getEssence() {
@@ -774,13 +772,13 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.isTame() && !this.isBaby() && eggAppearCounter <= 0
+        if (!this.isTame() && !this.isBaby() && !this.breeding.isLayingEgg()
                 && getVariant() != OstrichVariant.MALE
                 && stack.is(Items.MELON_SEEDS)) {
             startTalking();
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                tryStartBreeding(player, stack);
+                this.breeding.tryStart(stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -907,91 +905,6 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         return super.mobInteract(player, hand);
     }
 
-
-    private void tryStartBreeding(Player player, ItemStack stack) {
-        MoCOstrichEntity partner = findValidPartner();
-        if (partner == null) {
-            return;
-        }
-
-        stack.shrink(1);
-        this.feederUUID = player.getUUID();
-        this.partnerUUID = partner.getUUID();
-        this.eggAppearCounter = EGG_APPEAR_TICKS;
-
-        OstrichVariant mine = getVariant();
-        OstrichVariant theirs = partner.getVariant();
-        if (mine == OstrichVariant.WHITE && theirs == OstrichVariant.WHITE) {
-            this.pairingType = 2;
-        } else if (mine == OstrichVariant.WHITE || theirs == OstrichVariant.WHITE) {
-            this.pairingType = 1;
-        } else {
-            this.pairingType = 0;
-        }
-    }
-
-    @Nullable
-    private MoCOstrichEntity findValidPartner() {
-        OstrichVariant mine = getVariant();
-        List<MoCOstrichEntity> nearby = this.level().getEntitiesOfClass(MoCOstrichEntity.class,
-                this.getBoundingBox().inflate(PAIR_RADIUS),
-                other -> other != this && !other.isTame() && !other.isBaby() && other.eggAppearCounter <= 0);
-
-        for (MoCOstrichEntity other : nearby) {
-            OstrichVariant theirs = other.getVariant();
-            boolean iAmValidLayer;
-            if (mine == OstrichVariant.FEMALE && theirs == OstrichVariant.MALE) {
-                iAmValidLayer = true;
-            } else if (mine == OstrichVariant.WHITE && theirs == OstrichVariant.MALE) {
-                iAmValidLayer = true;
-            } else if (mine == OstrichVariant.FEMALE && theirs == OstrichVariant.WHITE) {
-                iAmValidLayer = true;
-            } else if (mine == OstrichVariant.WHITE && theirs == OstrichVariant.WHITE) {
-                iAmValidLayer = true;
-            } else {
-                iAmValidLayer = false;
-            }
-            if (iAmValidLayer) {
-                return other;
-            }
-        }
-        return null;
-    }
-
-    private void tickBreeding() {
-        if (eggAppearCounter <= 0) {
-            return;
-        }
-        if (--eggAppearCounter == 0) {
-            MoCEggEntity egg =
-                    ModEntities.MOC_EGG.get().create((ServerLevel) this.level());
-            if (egg != null) {
-                egg.moveTo(this.getX(), this.getY(), this.getZ(), 0F, 0F);
-                egg.setHatchEntityId(BuiltInRegistries.ENTITY_TYPE.getKey(
-                        ModEntities.MOC_OSTRICH.get()));
-                egg.setHatchVariant(rollDestinedVariant().name());
-                egg.setSourceItemId(BuiltInRegistries.ITEM.getKey(
-                        ModItems.OSTRICH_EGG.get()));
-                egg.setRequiresLight(false);
-                egg.setRequirePickupToTame(true);
-                this.level().addFreshEntity(egg);
-            }
-            feederUUID = null;
-            partnerUUID = null;
-        }
-    }
-
-    private OstrichVariant rollDestinedVariant() {
-        if (pairingType == 2) {
-            return OstrichVariant.WHITE;
-        } else if (pairingType == 1) {
-            return this.random.nextFloat() < 0.25F ? OstrichVariant.WHITE
-                    : (this.random.nextBoolean() ? OstrichVariant.MALE : OstrichVariant.FEMALE);
-        } else {
-            return this.random.nextBoolean() ? OstrichVariant.MALE : OstrichVariant.FEMALE;
-        }
-    }
-
     public static void alertNearbyOstriches(Level level, Vec3 pos, Player thief, double radius) {
         List<MoCOstrichEntity> nearby = level.getEntitiesOfClass(MoCOstrichEntity.class,
                 new AABB(pos, pos).inflate(radius),
@@ -1112,7 +1025,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         tickGrowth();
         if (!this.level().isClientSide) {
             tickIdleCounters();
-            tickBreeding();
+            this.breeding.tick();
             tickAscendFlapSound();
             if (hidingCounter > 0 && --hidingCounter == 0) {
                 setHiding(false);

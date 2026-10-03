@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCKittyBedEntity;
 import com.example.neomocreatures.entity.MoCKittyEntity;
+import com.example.neomocreatures.entity.kitty.KittyCareState;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -104,7 +105,7 @@ public class MoCKittyModel extends HierarchicalModel<MoCKittyEntity> {
             headParts[i].visible = i != 7 && i != 8;
         }
         headParts[7].visible = false;
-        headParts[8].visible = kittyState == 12;
+        headParts[8].visible = kittyState == KittyCareState.STATE_SLEEPING;
 
         float headYRot = netHeadYaw / ModelAnimations.DEGREES_PER_RADIAN;
         float headXRot = headPitch / ModelAnimations.DEGREES_PER_RADIAN;

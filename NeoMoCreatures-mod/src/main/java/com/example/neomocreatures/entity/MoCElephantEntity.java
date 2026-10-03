@@ -1,7 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
+import com.example.neomocreatures.entity.elephant.ElephantTusks;
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -12,11 +18,6 @@ import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.Set;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -74,7 +75,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -297,7 +297,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         BlockPos min = BlockPos.containing(path.minX, this.getY(), path.minZ);
         BlockPos max = BlockPos.containing(path.maxX, this.getY(), path.maxZ);
 
-        float hardnessCap = bulldozerHardnessCap();
+        float hardnessCap = ElephantTusks.hardnessCap(getTuskTier(), getVariant().isMammoth());
         int blocksHigh = Mth.ceil(this.getBbHeight()); // clears its own full height, not a fixed count
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int z = min.getZ(); z <= max.getZ(); z++) {
@@ -432,30 +432,6 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         return this.entityData.get(DATA_TUSK_TIER);
     }
 
-    private boolean isTuskItem(ItemStack stack) {
-        return stack.is(ModItems.TUSKS_WOOD.get())
-                || stack.is(ModItems.TUSKS_IRON.get())
-                || stack.is(ModItems.TUSKS_DIAMOND.get());
-    }
-
-    private int tuskTierFor(ItemStack stack) {
-        if (stack.is(ModItems.TUSKS_DIAMOND.get())) {
-            return 3;
-        }
-        return stack.is(ModItems.TUSKS_IRON.get()) ? 2 : 1;
-    }
-
-    /** Elephant/mammoth hardness ceiling per tier — obsidian/bedrock are always excluded regardless. */
-    private float bulldozerHardnessCap() {
-        float base = switch (getTuskTier()) {
-            case 1 -> 2.0F;
-            case 2 -> 6.0F;
-            case 3 -> 30.0F;
-            default -> 0.0F;
-        };
-        return getVariant().isMammoth() ? base * 1.5F : base;
-    }
-
     public boolean isSittingSynced() {
         return this.entityData.get(DATA_SITTING_SYNCED);
     }
@@ -543,7 +519,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             @Nullable SpawnGroupData spawnGroupData) {
         ElephantVariant variant = (spawnReason == MobSpawnType.NATURAL
                 || spawnReason == MobSpawnType.CHUNK_GENERATION)
-                ? variantForBiome(level, this.blockPosition())
+                ? ElephantVariant.forBiome(level.getBiome(this.blockPosition()), this.random)
                 : ElephantVariant.randomSpawnable(this.random);
         setVariant(variant);
         // Both adults and babies spawn naturally, per the wiki.
@@ -551,35 +527,6 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             this.setAge(-GROWTH_TICKS);
         }
         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
-    }
-
-    /**
-     * Asian in sparse jungle, African in savanna plateau, either mammoth in the cold
-     * biomes listed on the wiki. A herd's 2nd/3rd member can land a few blocks into a
-     * neighboring biome that isn't one of those exact ones — the fallback below picks
-     * by the actual biome temperature instead of pure random, so it never picks
-     * something thematically wrong (e.g. an African in the snow) just because of that drift.
-     */
-    private ElephantVariant variantForBiome(ServerLevelAccessor level, BlockPos pos) {
-        var biome = level.getBiome(pos);
-        if (biome.is(ModTags.ELEPHANT_ASIAN_BIOMES)) {
-            return ElephantVariant.ASIAN;
-        }
-        if (biome.is(ModTags.ELEPHANT_AFRICAN_BIOMES)) {
-            return ElephantVariant.AFRICAN;
-        }
-        if (biome.is(ModTags.ELEPHANT_MAMMOTH_BIOMES)) {
-            return this.random.nextBoolean() ? ElephantVariant.MAMMOTH_WOOLLY : ElephantVariant.MAMMOTH_SONGHUA;
-        }
-
-        float temperature = biome.value().getBaseTemperature();
-        if (temperature <= 0.15F) {
-            return this.random.nextBoolean() ? ElephantVariant.MAMMOTH_WOOLLY : ElephantVariant.MAMMOTH_SONGHUA;
-        }
-        if (temperature >= 1.0F) {
-            return ElephantVariant.AFRICAN;
-        }
-        return ElephantVariant.ASIAN;
     }
 
     @Override
@@ -710,10 +657,10 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && tuskStack.isEmpty() && isTuskItem(stack)) {
+        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && tuskStack.isEmpty() && ElephantTusks.isTuskItem(stack)) {
             if (!this.level().isClientSide) {
                 tuskStack = stack.copyWithCount(1);
-                this.entityData.set(DATA_TUSK_TIER, tuskTierFor(tuskStack));
+                this.entityData.set(DATA_TUSK_TIER, ElephantTusks.tierFor(tuskStack));
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -967,7 +914,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         }
         if (tag.contains("ElephantTusks", 10)) {
             tuskStack = ItemStack.parse(this.registryAccess(), tag.getCompound("ElephantTusks")).orElse(ItemStack.EMPTY);
-            this.entityData.set(DATA_TUSK_TIER, tuskStack.isEmpty() ? 0 : tuskTierFor(tuskStack));
+            this.entityData.set(DATA_TUSK_TIER, tuskStack.isEmpty() ? ElephantTusks.NONE : ElephantTusks.tierFor(tuskStack));
         }
         if (tag.contains("ElephantGarment")) {
             setGarment(tag.getBoolean("ElephantGarment"));
@@ -1038,7 +985,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         if (!tuskStack.isEmpty()) {
             this.spawnAtLocation(tuskStack.copy());
             tuskStack = ItemStack.EMPTY;
-            this.entityData.set(DATA_TUSK_TIER, 0);
+            this.entityData.set(DATA_TUSK_TIER, ElephantTusks.NONE);
         }
     }
 

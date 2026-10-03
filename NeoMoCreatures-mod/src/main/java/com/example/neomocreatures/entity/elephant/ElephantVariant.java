@@ -1,6 +1,10 @@
 package com.example.neomocreatures.entity.elephant;
 
+import com.example.neomocreatures.init.ModTags;
+
+import net.minecraft.core.Holder;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 
 /**
  * The 5 elephant/mammoth species from the original mod. ASIAN_DECORATED is
@@ -87,4 +91,33 @@ public enum ElephantVariant {
     public static ElephantVariant randomSpawnable(RandomSource random) {
         return SPAWNABLE[random.nextInt(SPAWNABLE.length)];
     }
+
+    /**
+     * Asian in sparse jungle, African in savanna plateau, either mammoth in the cold
+     * biomes listed on the wiki. A herd's 2nd/3rd member can land a few blocks into a
+     * neighboring biome that isn't one of those exact ones — the fallback below picks
+     * by the actual biome temperature instead of pure random, so it never picks
+     * something thematically wrong (e.g. an African in the snow) just because of that drift.
+     */
+    public static ElephantVariant forBiome(Holder<Biome> biome, RandomSource random) {
+        if (biome.is(ModTags.ELEPHANT_ASIAN_BIOMES)) {
+            return ASIAN;
+        }
+        if (biome.is(ModTags.ELEPHANT_AFRICAN_BIOMES)) {
+            return AFRICAN;
+        }
+        if (biome.is(ModTags.ELEPHANT_MAMMOTH_BIOMES)) {
+            return random.nextBoolean() ? MAMMOTH_WOOLLY : MAMMOTH_SONGHUA;
+        }
+
+        float temperature = biome.value().getBaseTemperature();
+        if (temperature <= 0.15F) {
+            return random.nextBoolean() ? MAMMOTH_WOOLLY : MAMMOTH_SONGHUA;
+        }
+        if (temperature >= 1.0F) {
+            return AFRICAN;
+        }
+        return ASIAN;
+    }
+
 }
