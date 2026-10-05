@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:silver_axe" },
+  "result": { "id": "neomocreatures:ancient_silver_nugget", "count": 1 },
+  "experience": 0.25,
+  "cookingtime": 200
+}

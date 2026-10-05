@@ -1,11 +1,11 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.init.ModTags;
-
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -18,6 +18,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -35,7 +36,6 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
 
 /**
  * Step 1 port of drzhark.mocreatures.entity.neutral.MoCEntityElephant: walks,
@@ -266,7 +266,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, ne
      * it's clearly moving — comparing positions directly is reliable either way.
      */
     private void tickTuskBulldozer() {
-        if (tuskStack.isEmpty() || this.isBaby() || !this.isVehicle() || !(this.level() instanceof ServerLevel level)
+        if (!Config.CREATURES.elephantBulldozer.get() || tuskStack.isEmpty() || this.isBaby() || !this.isVehicle() || !(this.level() instanceof ServerLevel level)
                 || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
             lastTuskCheckX = this.getX();
             lastTuskCheckZ = this.getZ();

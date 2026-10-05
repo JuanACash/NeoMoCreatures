@@ -1,22 +1,37 @@
 package com.example.neomocreatures.entity;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
+import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.entity.golem.GolemBody;
 import com.example.neomocreatures.entity.golem.GolemCore;
 import com.example.neomocreatures.entity.golem.GolemState;
+import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -27,33 +42,17 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import com.example.neomocreatures.entity.golem.GolemBlockPicker;
-
-import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.world.Difficulty;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.neoforged.neoforge.common.CommonHooks;
-import java.util.List;
-import com.example.neomocreatures.init.ModItems;
-
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import com.example.neomocreatures.NeoMoCreatures;
-
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.util.Mth;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.neoforge.common.CommonHooks;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityGolem} (the Big Golem). A giant built
@@ -372,7 +371,8 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
     }
 
     private boolean canSummonForReal(BlockPos pos, BlockState state) {
-        return GolemBlockPicker.isLiftable(this.level(), pos, true)
+        return Config.MONSTERS.golemDestroyBlocks.get()
+                && GolemBlockPicker.isLiftable(this.level(), pos, true)
                 && state.getDestroySpeed(this.level(), pos) <= MAX_SUMMON_HARDNESS
                 && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)
                 && CommonHooks.canEntityDestroy(this.level(), pos, this);

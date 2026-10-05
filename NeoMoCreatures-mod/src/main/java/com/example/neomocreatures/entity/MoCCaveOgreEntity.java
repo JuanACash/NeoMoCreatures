@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
@@ -45,7 +47,7 @@ public class MoCCaveOgreEntity extends MoCOgreEntity {
 
     @Override
     public double getDestroyRadius() {
-        return 3.0D;
+        return Config.MONSTERS.caveOgreStrength.get();
     }
 
     /**

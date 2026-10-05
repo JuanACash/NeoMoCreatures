@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
@@ -34,8 +35,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -55,11 +56,11 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.minecraft.world.level.LevelReader;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityTurtle}.
@@ -223,7 +224,9 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         Component name = this.getCustomName();
         if (name != this.lastCheckedName) {
             this.lastCheckedName = name;
-            this.cachedBrother = name == null ? null : TmntBrother.fromName(name.getString());
+            this.cachedBrother = name == null || !Config.GENERAL.easterEggs.get()
+                    ? null
+                    : TmntBrother.fromName(name.getString());
         }
         return this.cachedBrother;
     }

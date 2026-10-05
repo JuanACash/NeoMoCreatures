@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "neomocreatures:shark_teeth" }],
+  "result": { "id": "minecraft:bone_meal", "count": 1 }
+}

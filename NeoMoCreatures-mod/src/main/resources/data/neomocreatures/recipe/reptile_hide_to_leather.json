@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "neomocreatures:reptile_hide" }],
+  "result": { "id": "minecraft:leather", "count": 1 }
+}

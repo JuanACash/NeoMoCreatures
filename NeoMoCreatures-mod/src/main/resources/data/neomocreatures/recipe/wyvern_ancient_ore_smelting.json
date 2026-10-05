@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:wyvern_ancient_ore" },
+  "result": { "id": "neomocreatures:ancient_silver_ingot", "count": 1 },
+  "experience": 0.2,
+  "cookingtime": 200
+}

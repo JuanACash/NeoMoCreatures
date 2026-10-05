@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "neomocreatures:ore_firestone" }],
+  "result": { "id": "neomocreatures:firestone_chunk", "count": 4 }
+}

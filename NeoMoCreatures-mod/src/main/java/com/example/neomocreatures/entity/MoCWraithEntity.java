@@ -2,17 +2,17 @@ package com.example.neomocreatures.entity;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
@@ -26,7 +26,6 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -90,7 +89,7 @@ public class MoCWraithEntity extends Monster {
 
     /** Original: selectType() — a 5% chance for the "Scratch" easter egg. */
     public void rollScratchEasterEgg() {
-        if (this.random.nextInt(100) < 5) {
+        if (Config.GENERAL.easterEggs.get() && this.random.nextInt(100) < 5) {
             this.setCustomName(Component.literal("Scratch"));
         }
     }

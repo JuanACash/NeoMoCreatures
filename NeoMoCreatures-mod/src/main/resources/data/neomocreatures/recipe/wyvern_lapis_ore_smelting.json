@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:wyvern_lapis_ore" },
+  "result": { "id": "minecraft:lapis_lazuli", "count": 1 },
+  "experience": 0.4,
+  "cookingtime": 200
+}

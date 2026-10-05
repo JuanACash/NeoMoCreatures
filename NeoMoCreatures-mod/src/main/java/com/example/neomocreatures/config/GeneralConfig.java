@@ -21,7 +21,7 @@ public final class GeneralConfig {
                 .define("weaponEffects", true);
 
         easterEggs = builder
-                .comment("Enables easter eggs, such as the wraith named Scratch.")
+                .comment("Enables easter eggs: the wraith named Scratch, Ninja Turtle names and the zebra shuffle record.")
                 .define("easterEggs", true);
 
         builder.pop();

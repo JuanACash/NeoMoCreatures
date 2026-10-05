@@ -1,5 +1,6 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,6 +26,11 @@ public class ScorpArmorSetBonusHandler {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
         if (player.level().isClientSide || player.tickCount % REFRESH_INTERVAL != 0) {
+            return;
+        }
+
+        // Skip the whole set bonus check when the option is turned off in the config
+        if (!Config.GENERAL.armorSetEffects.get()) {
             return;
         }
 

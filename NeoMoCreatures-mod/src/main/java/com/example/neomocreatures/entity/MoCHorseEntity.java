@@ -1,11 +1,10 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.init.ModTags;
-
 import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
@@ -13,6 +12,7 @@ import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -1583,7 +1583,7 @@ public class MoCHorseEntity extends AbstractHorse {
             return InteractionResult.SUCCESS;
         }
 
-        if (getSpecies() == Species.ZEBRA && !stack.isEmpty() &&stack.has(DataComponents.JUKEBOX_PLAYABLE)) {
+        if (Config.GENERAL.easterEggs.get() && getSpecies() == Species.ZEBRA && !stack.isEmpty() && stack.has(DataComponents.JUKEBOX_PLAYABLE)) {
             if (!this.level().isClientSide) {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
@@ -1743,6 +1743,9 @@ public class MoCHorseEntity extends AbstractHorse {
     }
 
     private boolean isNearPlayingShuffleRecord() {
+        if (!Config.GENERAL.easterEggs.get()) {
+            return false;
+        }
         BlockPos center = this.blockPosition();
         for (BlockPos pos : BlockPos.betweenClosed(center.offset(-6, -6, -6), center.offset(6, 6, 6))) {
             if (this.level().getBlockEntity(pos) instanceof JukeboxBlockEntity jukebox

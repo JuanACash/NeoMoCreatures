@@ -2,6 +2,8 @@ package com.example.neomocreatures.item;
 
 import java.util.function.Supplier;
 
+import com.example.neomocreatures.Config;
+
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.AxeItem;
@@ -30,7 +32,7 @@ public class ScorpionAxeItem extends AxeItem {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         boolean result = super.hurtEnemy(stack, target, attacker);
-        if (!target.level().isClientSide) {
+        if (!target.level().isClientSide && Config.GENERAL.weaponEffects.get()) {
             if (this.effect != null) {
                 target.addEffect(this.effect.get());
             }

@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smoking",
+  "ingredient": { "item": "neomocreatures:turkey_raw" },
+  "result": { "id": "neomocreatures:turkey_cooked", "count": 1 },
+  "experience": 0.35,
+  "cookingtime": 100
+}

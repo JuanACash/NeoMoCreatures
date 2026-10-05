@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:wyvwood_log" },
+  "result": { "id": "minecraft:charcoal", "count": 1 },
+  "experience": 0.15,
+  "cookingtime": 200
+}

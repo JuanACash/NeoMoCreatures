@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
+
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -8,7 +10,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
@@ -40,7 +41,7 @@ public class MoCFireOgreEntity extends MoCOgreEntity {
 
     @Override
     public double getDestroyRadius() {
-        return 2.0D;
+        return Config.MONSTERS.fireOgreStrength.get();
     }
 
     @Override
