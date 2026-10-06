@@ -32,7 +32,7 @@ added — always trying to stay true to how the mod felt.
 - **Aquatic life** — sharks, dolphins, manta rays, stingrays, jellyfish and many kinds of fish, with
   eggs and a fish net.
 - **Critters and insects** — ants, bees, butterflies, crickets, dragonflies, fireflies, flies,
-  grasshoppers, snails, crabs, moles, mice, the thieving filch lizard, the tree-planting ent...
+  grasshoppers, snails, crabs, moles, mice, the tree-planting ent...
 - **Hostile mobs** — green, cave and fire ogres, werewolves, wraiths and flame wraiths, horse mobs,
   manticores, scorpions, silver skeletons, wild wolves, rats, crocodiles, and the block-throwing
   **Mini Golem** and **Big Golem**.
@@ -43,11 +43,11 @@ added — always trying to stay true to how the mod felt.
 
 - Golems never tear out containers or unbreakable blocks, respect `mobGriefing` and protected
   areas, and always give the blocks they took back to the world.
-- Creatures carrying stolen or held items never lose them when they despawn or die.
+- Creatures carrying held items never lose them when they despawn or die.
 - Babies and differently-sized variants appear at their real size immediately.
 - Smoother, ghast-like flight for wild wyverns.
-- Spawns, drop lists and the filch lizard's steal list are data-driven (biome modifiers, tags and
-  loot tables), so they can be tweaked with a datapack.
+- Spawns and drop lists are data-driven (biome modifiers, tags and loot tables), so they can be
+  tweaked with a datapack.
 
 ## Requirements
 
@@ -87,6 +87,11 @@ many people:
 - **[Mo' Creatures 1.16.5 by multision](https://github.com/multision/mocreaturesdev)** — the main
   reference for this port. Maintained by **multision** and **TheidenHD**, building on the
   Mo' Creatures Extended team (**ACGaming**, **IcarussOne**, **xJon**).
+- **[Mo' Creatures Extended](https://github.com/Elite-Modding-Team/MoCreaturesExtended)** — the
+  1.12.2 continuation by **ACGaming**, **IcarussOne**, **Tomanex**, **DemonLexe** and **xJon**.
+  Reference for the content added after the original: the wyvwood and wyvern stone decorative
+  blocks (doors, trapdoors, fences, slabs, stairs, walls, buttons, pressure plates and the
+  gleaming glass pane), with their textures and recipes, adapted for NeoForge 1.21.1.
 - **[VExt Mod](https://github.com/Lord-of-the-Rings-Middle-Earth-Mod/VExt-Mod)** — reference for
   the Wyvern Lair trees.
 
