@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:wyvwood_planks"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:wyvwood_slab",
+    "count": 6
+  }
+}

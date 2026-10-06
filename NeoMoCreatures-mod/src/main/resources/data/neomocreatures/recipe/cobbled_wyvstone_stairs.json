@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "X  ",
+    "XX ",
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:cobbled_wyvstone"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:cobbled_wyvstone_stairs",
+    "count": 4
+  }
+}

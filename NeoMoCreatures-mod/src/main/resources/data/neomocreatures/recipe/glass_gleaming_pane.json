@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["XXX", "XXX"],
+  "key": {
+    "X": { "item": "neomocreatures:glass_gleaming" }
+  },
+  "result": { "id": "neomocreatures:glass_gleaming_pane", "count": 16 }
+}

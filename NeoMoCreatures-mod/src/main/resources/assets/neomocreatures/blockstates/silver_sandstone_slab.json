@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "neomocreatures:block/silver_sandstone_slab"
+    },
+    "type=double": {
+      "model": "neomocreatures:block/silver_sandstone"
+    },
+    "type=top": {
+      "model": "neomocreatures:block/silver_sandstone_slab_top"
+    }
+  }
+}

@@ -7,12 +7,10 @@ import com.example.neomocreatures.block.WyvGrassBlock;
 import com.example.neomocreatures.block.WyvSaplingBlock;
 import com.example.neomocreatures.block.WyvTallGrassBlock;
 import com.example.neomocreatures.block.WyvernNestBlock;
-import com.example.neomocreatures.block.OgreLairGrassBlock;
-import com.example.neomocreatures.block.OgreLairTallGrassBlock;
 
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ColoredFallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -22,18 +20,7 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.ColoredFallingBlock;
-import net.minecraft.world.level.block.FallingBlock;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.minecraft.world.level.block.ColoredFallingBlock;
-import com.example.neomocreatures.block.WyvernNestBlock;
-import net.minecraft.world.level.block.TransparentBlock;
-import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 
 public class ModBlocks {
 
@@ -229,6 +216,7 @@ public class ModBlocks {
         fire.setFlammable(LEAVES_OGRE_LAIR.get(), 30, 60);
         fire.setFlammable(TALL_WYVGRASS.get(), 60, 100);
         fire.setFlammable(TALL_GRASS_OGRE_LAIR.get(), 60, 100);
+        WyvwoodBlocks.registerFlammability(fire);
     }
 
 }

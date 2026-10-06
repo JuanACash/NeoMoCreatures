@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:deep_wyvstone"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:deep_wyvstone_slab",
+    "count": 6
+  }
+}

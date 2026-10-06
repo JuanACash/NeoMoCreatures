@@ -1,13 +1,13 @@
 package com.example.neomocreatures.init;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 
 public class ModTags {
 
@@ -26,8 +26,6 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_HIDE = tag("repairs_hide_armor");
     public static final TagKey<Item> RAW_FISHES = tag("raw_fishes");
     public static final TagKey<Item> COOKED_FISHES = tag("cooked_fishes");
-    /** Items the Filch Lizard steals from players and picks up off the ground. */
-    public static final TagKey<Item> FILCH_LIZARD_STEALS = tag("filch_lizard_steals");
 
     private static TagKey<Block> blockTag(String name) {
         return BlockTags.create(ResourceLocation.fromNamespaceAndPath(com.example.neomocreatures.NeoMoCreatures.MODID, name));
@@ -84,7 +82,5 @@ public class ModTags {
     public static final TagKey<Biome> SMALL_FISH_HIPPOTANG_BIOMES = biomeTag("variants/small_fish_hippotang");
     public static final TagKey<Biome> SMALL_FISH_MANDARIN_BIOMES = biomeTag("variants/small_fish_mandarin");
     public static final TagKey<Biome> SMALL_FISH_PIRANHA_BIOMES = biomeTag("variants/small_fish_piranha");
-    public static final TagKey<Biome> FILCH_LIZARD_RED_BIOMES = biomeTag("variants/filch_lizard_red");
-    public static final TagKey<Biome> FILCH_LIZARD_SANDY_BIOMES = biomeTag("variants/filch_lizard_sandy");
 
 }

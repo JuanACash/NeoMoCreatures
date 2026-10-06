@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "neomocreatures:block/mossy_cobbled_deep_wyvstone_slab"
+    },
+    "type=double": {
+      "model": "neomocreatures:block/mossy_cobbled_deep_wyvstone"
+    },
+    "type=top": {
+      "model": "neomocreatures:block/mossy_cobbled_deep_wyvstone_slab_top"
+    }
+  }
+}

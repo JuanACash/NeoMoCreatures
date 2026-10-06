@@ -7,7 +7,6 @@ import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
-import net.neoforged.fml.config.ModConfig;
 import com.example.neomocreatures.network.ModNetworking;
 import com.mojang.logging.LogUtils;
 
@@ -19,11 +18,11 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 
@@ -46,12 +45,14 @@ public class NeoMoCreatures {
                     output.accept(ModItems.COBBLED_DEEP_WYVSTONE_ITEM.get());
                     output.accept(ModItems.MOSSY_COBBLED_WYVSTONE_ITEM.get());
                     output.accept(ModItems.MOSSY_COBBLED_DEEP_WYVSTONE_ITEM.get());
+                    com.example.neomocreatures.init.WyvstoneBlocks.addToCreativeTab(output);
                     output.accept(ModItems.WYVDIRT_ITEM.get());
                     output.accept(ModItems.WYVGRASS_ITEM.get());
                     output.accept(ModItems.TALL_WYVGRASS_ITEM.get());
                     output.accept(ModItems.WYVWOOD_LOG_ITEM.get());
                     output.accept(ModItems.WYVWOOD_LEAVES_ITEM.get());
                     output.accept(ModItems.WYVWOOD_PLANKS_ITEM.get());
+                    com.example.neomocreatures.init.WyvwoodBlocks.addToCreativeTab(output);
                     output.accept(ModItems.WYVWOOD_SAPLING_ITEM.get());
                     output.accept(ModItems.WYVERN_DIAMOND_ORE_ITEM.get());
                     output.accept(ModItems.WYVERN_EMERALD_ORE_ITEM.get());
@@ -69,10 +70,12 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SILVER_SANDSTONE_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_CARVED_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_SMOOTH_ITEM.get());
+                    com.example.neomocreatures.init.SilverSandstoneBlocks.addToCreativeTab(output);
                     // ==== Loose pieces ====
                     output.accept(ModItems.ORE_FIRESTONE_ITEM.get());
                     output.accept(ModItems.FIRESTONE_CHUNK.get());
                     output.accept(ModItems.GLASS_GLEAMING_ITEM.get());
+                    com.example.neomocreatures.init.GleamingGlassBlocks.addToCreativeTab(output);
                     output.accept(ModItems.BLOCK_WYVERN_NEST_ITEM.get());
 
                     output.accept(ModItems.MOC_EGG.get());
@@ -309,7 +312,6 @@ public class NeoMoCreatures {
                     output.accept(ModItems.TURTLE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
                     output.accept(ModItems.CROCODILE_SPAWN_EGG.get());
-                    output.accept(ModItems.FILCH_LIZARD_SPAWN_EGG.get());
                     output.accept(ModItems.DOLPHIN_SPAWN_EGG.get());
                     output.accept(ModItems.SHARK_SPAWN_EGG.get());
                     output.accept(ModItems.MANTA_RAY_SPAWN_EGG.get());
@@ -379,6 +381,10 @@ public class NeoMoCreatures {
     }
 
     private void registerDeferredRegistries(IEventBus modEventBus) {
+        com.example.neomocreatures.init.WyvwoodBlocks.init();
+        com.example.neomocreatures.init.WyvstoneBlocks.init();
+        com.example.neomocreatures.init.SilverSandstoneBlocks.init();
+        com.example.neomocreatures.init.GleamingGlassBlocks.init();
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         com.example.neomocreatures.init.ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
@@ -440,7 +446,6 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModEntities::registerEntSpawnPlacements);
         modEventBus.addListener(ModEntities::registerMiniGolemSpawnPlacements);
         modEventBus.addListener(ModEntities::registerBigGolemSpawnPlacements);
-        modEventBus.addListener(ModEntities::registerFilchLizardSpawnPlacements);
     }
 
     private void registerNetworkingAndClient(IEventBus modEventBus) {

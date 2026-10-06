@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "neomocreatures:wyvstone_wall",
+    "neomocreatures:cobbled_wyvstone_wall",
+    "neomocreatures:deep_wyvstone_wall",
+    "neomocreatures:cobbled_deep_wyvstone_wall",
+    "neomocreatures:mossy_cobbled_wyvstone_wall",
+    "neomocreatures:mossy_cobbled_deep_wyvstone_wall",
+    "neomocreatures:silver_sandstone_wall"
+  ]
+}

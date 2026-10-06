@@ -6,7 +6,6 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class CreatureConfig {
 
     public final ModConfigSpec.BooleanValue elephantBulldozer;
-    public final ModConfigSpec.IntValue filchLizardSpawnItemChance;
     public final ModConfigSpec.IntValue wyvernEggDropChance;
     public final ModConfigSpec.BooleanValue staticBed;
     public final ModConfigSpec.BooleanValue staticLitter;
@@ -18,9 +17,6 @@ public final class CreatureConfig {
                 .comment("Makes elephants with tusks destroy blocks in front of them when ridden.")
                 .define("elephantBulldozer", true);
 
-        filchLizardSpawnItemChance = builder
-                .comment("Percentage for a filch lizard to spawn already carrying an item.")
-                .defineInRange("filchLizardSpawnItemChance", 25, 0, 100);
 
         wyvernEggDropChance = builder
                 .comment("Base percentage for a wyvern to drop its egg. Looting still adds its bonus on top.")

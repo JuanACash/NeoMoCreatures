@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_bottom_right_open",
+  "textures": {
+    "bottom": "neomocreatures:block/door_wyvwood_lower",
+    "top": "neomocreatures:block/door_wyvwood_upper"
+  }
+}

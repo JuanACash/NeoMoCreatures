@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "neomocreatures:wyvwood_stairs",
+    "neomocreatures:wyvstone_stairs",
+    "neomocreatures:cobbled_wyvstone_stairs",
+    "neomocreatures:deep_wyvstone_stairs",
+    "neomocreatures:cobbled_deep_wyvstone_stairs",
+    "neomocreatures:mossy_cobbled_wyvstone_stairs",
+    "neomocreatures:mossy_cobbled_deep_wyvstone_stairs",
+    "neomocreatures:silver_sandstone_stairs"
+  ]
+}

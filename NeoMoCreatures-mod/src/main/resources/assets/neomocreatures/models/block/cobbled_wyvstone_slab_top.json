@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "neomocreatures:block/cobblestone_wyvern",
+    "top": "neomocreatures:block/cobblestone_wyvern",
+    "side": "neomocreatures:block/cobblestone_wyvern"
+  }
+}

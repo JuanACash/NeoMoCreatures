@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/pressure_plate_up",
+  "textures": {
+    "texture": "neomocreatures:block/stone_wyvern_deep"
+  }
+}

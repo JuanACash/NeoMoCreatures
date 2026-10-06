@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_fence_gate",
+  "textures": {
+    "texture": "neomocreatures:block/wood_planks_wyvwood"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "neomocreatures:wyvwood_button",
+    "neomocreatures:wyvstone_button",
+    "neomocreatures:deep_wyvstone_button"
+  ]
+}

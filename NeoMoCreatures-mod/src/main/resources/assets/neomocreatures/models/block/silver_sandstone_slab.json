@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "neomocreatures:block/sandstone_silver_bottom",
+    "top": "neomocreatures:block/sandstone_silver_top",
+    "side": "neomocreatures:block/sandstone_silver_normal"
+  }
+}

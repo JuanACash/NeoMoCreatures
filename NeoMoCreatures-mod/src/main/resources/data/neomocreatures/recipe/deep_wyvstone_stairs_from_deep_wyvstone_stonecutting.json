@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "neomocreatures:deep_wyvstone"
+  },
+  "result": {
+    "id": "neomocreatures:deep_wyvstone_stairs",
+    "count": 1
+  }
+}

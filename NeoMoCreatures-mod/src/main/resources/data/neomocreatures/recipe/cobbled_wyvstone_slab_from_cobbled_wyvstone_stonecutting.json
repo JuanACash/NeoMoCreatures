@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "neomocreatures:cobbled_wyvstone"
+  },
+  "result": {
+    "id": "neomocreatures:cobbled_wyvstone_slab",
+    "count": 2
+  }
+}
