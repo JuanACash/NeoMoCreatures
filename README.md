@@ -32,7 +32,7 @@ added — always trying to stay true to how the mod felt.
 - **Aquatic life** — sharks, dolphins, manta rays, stingrays, jellyfish and many kinds of fish, with
   eggs and a fish net.
 - **Critters and insects** — ants, bees, butterflies, crickets, dragonflies, fireflies, flies,
-  grasshoppers, snails, crabs, moles, mice, the thieving filch lizard, the tree-planting ent...
+  grasshoppers, snails, crabs, moles, mice,the ent...
 - **Hostile mobs** — green, cave and fire ogres, werewolves, wraiths and flame wraiths, horse mobs,
   manticores, scorpions, silver skeletons, wild wolves, rats, crocodiles, and the block-throwing
   **Mini Golem** and **Big Golem**.
