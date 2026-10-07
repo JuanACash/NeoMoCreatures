@@ -1,5 +1,7 @@
 package com.example.neomocreatures;
 
+import org.slf4j.Logger;
+
 import com.example.neomocreatures.client.ModClientParticles;
 import com.example.neomocreatures.client.ModKeyMappings;
 import com.example.neomocreatures.client.NightmareOverlayHandler;
@@ -20,12 +22,12 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModSpawnPlacements;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
 import com.example.neomocreatures.network.ModNetworking;
+import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
-
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -36,10 +38,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-import com.mojang.logging.LogUtils;
-
-import org.slf4j.Logger;
 
 
 @Mod(NeoMoCreatures.MODID)
@@ -324,7 +322,6 @@ public class NeoMoCreatures {
                     output.accept(ModItems.TURTLE_SPAWN_EGG.get());
                     output.accept(ModItems.KOMODO_DRAGON_SPAWN_EGG.get());
                     output.accept(ModItems.CROCODILE_SPAWN_EGG.get());
-                    output.accept(ModItems.FILCH_LIZARD_SPAWN_EGG.get());
                     output.accept(ModItems.DOLPHIN_SPAWN_EGG.get());
                     output.accept(ModItems.SHARK_SPAWN_EGG.get());
                     output.accept(ModItems.MANTA_RAY_SPAWN_EGG.get());

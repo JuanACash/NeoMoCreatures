@@ -21,7 +21,6 @@ import static com.example.neomocreatures.init.ModEntities.MOC_DRAGONFLY;
 import static com.example.neomocreatures.init.ModEntities.MOC_DUCK;
 import static com.example.neomocreatures.init.ModEntities.MOC_ELEPHANT;
 import static com.example.neomocreatures.init.ModEntities.MOC_ENT;
-import static com.example.neomocreatures.init.ModEntities.MOC_FILCH_LIZARD;
 import static com.example.neomocreatures.init.ModEntities.MOC_FIREFLY;
 import static com.example.neomocreatures.init.ModEntities.MOC_FIRE_OGRE;
 import static com.example.neomocreatures.init.ModEntities.MOC_FISHY;
@@ -165,7 +164,6 @@ public final class ModSpawnPlacements {
         place(event, MOC_MINI_GOLEM.get(), SpawnPlacementTypes.ON_GROUND, Monster::checkMonsterSpawnRules);
         place(event, MOC_BIG_GOLEM.get(), SpawnPlacementTypes.ON_GROUND, Monster::checkMonsterSpawnRules);
         // Original MoCEntityAnimal rule: solid ground (sand included, not just grass) and light above 8.
-        place(event, MOC_FILCH_LIZARD.get(), SpawnPlacementTypes.ON_GROUND, solidGroundInLight());
     }
 
     // ---------------------------------------------------------------------

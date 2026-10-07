@@ -54,8 +54,6 @@ public class ModTags {
     public static final TagKey<Item> FOX_HEALING_FOOD = tag("fox_healing_food");
     /** Seeds birds eat (healing, pre-taming); the same set as the vanilla parrot used to accept. */
     public static final TagKey<Item> BIRD_SEEDS = tag("bird_seeds");
-    /** Items the Filch Lizard steals from players and picks up off the ground. */
-    public static final TagKey<Item> FILCH_LIZARD_STEALS = tag("filch_lizard_steals");
 
     private static TagKey<Block> blockTag(String name) {
         return BlockTags.create(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));
@@ -118,6 +116,5 @@ public class ModTags {
     public static final TagKey<Biome> SMALL_FISH_HIPPOTANG_BIOMES = biomeTag("variants/small_fish_hippotang");
     public static final TagKey<Biome> SMALL_FISH_MANDARIN_BIOMES = biomeTag("variants/small_fish_mandarin");
     public static final TagKey<Biome> SMALL_FISH_PIRANHA_BIOMES = biomeTag("variants/small_fish_piranha");
-    public static final TagKey<Biome> FILCH_LIZARD_RED_BIOMES = biomeTag("variants/filch_lizard_red");
-    public static final TagKey<Biome> FILCH_LIZARD_SANDY_BIOMES = biomeTag("variants/filch_lizard_sandy");
+
 }

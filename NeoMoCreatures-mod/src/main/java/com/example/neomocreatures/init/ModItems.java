@@ -1,5 +1,10 @@
 package com.example.neomocreatures.init;
 
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
@@ -35,11 +40,6 @@ import com.example.neomocreatures.item.WhipItem;
 import com.example.neomocreatures.item.WildHorseSpawnEggItem;
 import com.example.neomocreatures.item.WyvernSpawnEggItem;
 
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
-
-import javax.annotation.Nullable;
-
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -66,7 +66,6 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -213,7 +212,6 @@ public class ModItems {
     public static final DeferredItem<Item> ENT_SPAWN_EGG = spawnEgg("ent_spawn_egg", ModEntities.MOC_ENT, 0x957546, 0x58823D);
     public static final DeferredItem<Item> MINI_GOLEM_SPAWN_EGG = spawnEgg("minigolem_spawn_egg", ModEntities.MOC_MINI_GOLEM, 0x787878, 0x81E4E5);
     public static final DeferredItem<Item> BIG_GOLEM_SPAWN_EGG = spawnEgg("biggolem_spawn_egg", ModEntities.MOC_BIG_GOLEM, 0x4A4A4A, 0x00CCBB);
-    public static final DeferredItem<Item> FILCH_LIZARD_SPAWN_EGG = spawnEgg("filchlizard_spawn_egg", ModEntities.MOC_FILCH_LIZARD, 0x97854C, 0x552616);
     public static final DeferredItem<Item> HEART_OF_UNDEAD = ITEMS.registerSimpleItem("heart_of_undead", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_FIRE = ITEMS.registerSimpleItem("heart_of_fire", new Item.Properties());
     public static final DeferredItem<Item> HEART_OF_DARKNESS = ITEMS.registerSimpleItem("heart_of_darkness", new Item.Properties());

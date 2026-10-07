@@ -22,7 +22,6 @@ import com.example.neomocreatures.entity.MoCDragonflyEntity;
 import com.example.neomocreatures.entity.MoCDuckEntity;
 import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.MoCEntEntity;
-import com.example.neomocreatures.entity.MoCFilchLizardEntity;
 import com.example.neomocreatures.entity.MoCFireOgreEntity;
 import com.example.neomocreatures.entity.MoCFireflyEntity;
 import com.example.neomocreatures.entity.MoCFishyEntity;
@@ -72,7 +71,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -575,13 +573,6 @@ public class ModEntities {
                 .eyeHeight(4.02F)
                 .clientTrackingRange(10)
                 .build("moc_big_golem"));
-
-    public static final DeferredHolder<EntityType<?>, EntityType<MoCFilchLizardEntity>> MOC_FILCH_LIZARD =
-        ENTITY_TYPES.register("moc_filch_lizard", () -> EntityType.Builder
-                .of(MoCFilchLizardEntity::new, MobCategory.CREATURE)
-                .sized(0.6F, 0.5F)
-                .clientTrackingRange(8)
-                .build("moc_filch_lizard"));
 
     // Generic egg — sits still, hatches into whatever HatchEntityType it was
     // set to (see MoCEggEntity). Same tiny size no matter what's inside.
