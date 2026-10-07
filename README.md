@@ -46,8 +46,6 @@ added — always trying to stay true to how the mod felt.
 - Creatures carrying stolen or held items never lose them when they despawn or die.
 - Babies and differently-sized variants appear at their real size immediately.
 - Smoother, ghast-like flight for wild wyverns.
-- Spawns, drop lists and the filch lizard's steal list are data-driven (biome modifiers, tags and
-  loot tables), so they can be tweaked with a datapack.
 
 ## Requirements
 
