@@ -8,6 +8,8 @@ public final class GeneralConfig {
     public final ModConfigSpec.BooleanValue armorSetEffects;
     public final ModConfigSpec.BooleanValue weaponEffects;
     public final ModConfigSpec.BooleanValue easterEggs;
+    public final ModConfigSpec.BooleanValue hideTamedNames;
+    public final ModConfigSpec.BooleanValue hideHealthBar;
 
     public GeneralConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("general")).push("general");
@@ -26,6 +28,16 @@ public final class GeneralConfig {
                 .comment("Enables easter eggs: the wraith named Scratch, Ninja Turtle names and the zebra shuffle record.")
                 .translation(ConfigTranslations.of("easterEggs"))
                 .define("easterEggs", true);
+
+        hideTamedNames = builder
+                .comment("Hides the name tag of all tamed creatures.")
+                .translation(ConfigTranslations.of("hideTamedNames"))
+                .define("hideTamedNames", false);
+
+        hideHealthBar = builder
+                .comment("Hides the health bar shown above tamed creatures.")
+                .translation(ConfigTranslations.of("hideHealthBar"))
+                .define("hideHealthBar", false);
 
         builder.pop();
     }

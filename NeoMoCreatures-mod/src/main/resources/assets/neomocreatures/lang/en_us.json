@@ -39,6 +39,8 @@
   "neomocreatures.configuration.enableHunters": "Enable Hunters",
   "neomocreatures.configuration.attackHorses": "Attack Horses",
   "neomocreatures.configuration.attackWolves": "Attack Wolves",
+  "neomocreatures.configuration.hideTamedNames": "Hide Tamed Names",
+  "neomocreatures.configuration.hideHealthBar": "Hide Health Bar",
   "block.neomocreatures.wyvstone": "Wyvstone",
   "block.neomocreatures.cobbled_wyvstone": "Cobbled Wyvstone",
   "block.neomocreatures.deep_wyvstone": "Deep Wyvstone",
