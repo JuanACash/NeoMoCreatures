@@ -2421,23 +2421,24 @@ public class MoCHorseEntity extends AbstractHorse {
         }
 
         if (getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) {
-            dropChanceItems(ModItems.UNICORN_HORN.get(), 0.25F);
+            dropChanceItems(ModItems.UNICORN_HORN.get());
         }
         if (isGhostSpecies) {
-            dropChanceItems(Items.GHAST_TEAR, 0.25F);
+            dropChanceItems(Items.GHAST_TEAR);
         }
         if (isUndead()) {
-            dropChanceItems(ModItems.HEART_OF_UNDEAD.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_UNDEAD.get());
         }
         if (getSpecies() == Species.NIGHTMARE) {
-            dropChanceItems(ModItems.HEART_OF_FIRE.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_FIRE.get());
         }
         if (getSpecies() == Species.BATHORSE) {
-            dropChanceItems(ModItems.HEART_OF_DARKNESS.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_DARKNESS.get());
         }
     }
 
-    private void dropChanceItems(net.minecraft.world.item.Item item, float chancePerRoll) {
+    private void dropChanceItems(net.minecraft.world.item.Item item) {
+        float chancePerRoll = Config.CREATURES.rareItemDropChance.get() / 100.0F;
         for (int i = 0; i < 2; i++) {
             if (this.random.nextFloat() < chancePerRoll) {
                 this.spawnAtLocation(item);

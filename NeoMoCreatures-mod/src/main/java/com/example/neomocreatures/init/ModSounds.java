@@ -225,6 +225,12 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_SHOOT = register("moc_golem.shoot");
     public static final DeferredHolder<SoundEvent, SoundEvent> GOLEM_EXPLODE = register("moc_golem.explode");
 
+    //Legacy Sounds
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAT_DEATH_LEGACY = register("moc_rat.death_legacy");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_AMBIENT_LEGACY = register("moc_wraith.ambient_legacy");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_HURT_LEGACY = register("moc_wraith.hurt_legacy");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WRAITH_DEATH_LEGACY = register("moc_wraith.death_legacy");
+
     private static DeferredHolder<SoundEvent, SoundEvent> register(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

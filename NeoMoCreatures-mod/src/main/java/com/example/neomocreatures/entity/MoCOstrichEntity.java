@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 
 import net.minecraft.nbt.CompoundTag;
@@ -1244,7 +1245,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, com
                 default -> null;
             };
             if (essenceHeartItem != null) {
-                float chance = 0.25F + lootingLevel * 0.1F;
+                float chance = Config.CREATURES.rareItemDropChance.get() / 100.0F + lootingLevel * 0.1F;
                 if (this.random.nextFloat() < chance) {
                     int heartCount = 1 + this.random.nextInt(2) + this.random.nextInt(lootingLevel + 1);
                     for (int i = 0; i < heartCount; i++) {

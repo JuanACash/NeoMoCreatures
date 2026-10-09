@@ -26,23 +26,10 @@ public class MoCScorpionRenderer extends MobRenderer<MoCScorpionEntity, MoCScorp
     @Override
     public void render(MoCScorpionEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
                         MultiBufferSource buffer, int packedLight) {
-        net.minecraft.world.entity.player.Player holder = entity.isHeld() ? entity.getHolder() : null;
-        if (holder != null) {
-            net.minecraft.world.phys.Vec3 scorpionPos = entity.getPosition(partialTicks);
-            net.minecraft.world.phys.Vec3 look = holder.getViewVector(partialTicks);
-            net.minecraft.world.phys.Vec3 handPos = holder.getEyePosition(partialTicks)
-                    .add(look.scale(0.6D))
-                    .add(0.0D, -0.35D, 0.0D);
-            net.minecraft.world.phys.Vec3 delta = handPos.subtract(scorpionPos);
-
-            poseStack.pushPose();
-            poseStack.translate(delta.x, delta.y + 0.15D, delta.z);
-            poseStack.mulPose(Axis.XP.rotationDegrees(90F));
-            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-            poseStack.popPose();
-            return;
-        }
+        poseStack.pushPose();
+        HeldScorpionPose.applyIfHeld(entity, partialTicks, poseStack);
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        poseStack.popPose();
     }
 
     @Override

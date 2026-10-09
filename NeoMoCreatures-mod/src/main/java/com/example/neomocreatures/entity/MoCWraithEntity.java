@@ -166,17 +166,23 @@ public class MoCWraithEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_AMBIENT.get();
+        return Config.LEGACY.legacySounds.get()
+                ? com.example.neomocreatures.init.ModSounds.WRAITH_AMBIENT_LEGACY.get()
+                : com.example.neomocreatures.init.ModSounds.WRAITH_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_HURT.get();
+        return Config.LEGACY.legacySounds.get()
+                ? com.example.neomocreatures.init.ModSounds.WRAITH_HURT_LEGACY.get()
+                : com.example.neomocreatures.init.ModSounds.WRAITH_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return com.example.neomocreatures.init.ModSounds.WRAITH_DEATH.get();
+        return Config.LEGACY.legacySounds.get()
+                ? com.example.neomocreatures.init.ModSounds.WRAITH_DEATH_LEGACY.get()
+                : com.example.neomocreatures.init.ModSounds.WRAITH_DEATH.get();
     }
 
     // ---------------------------------------------------------------------
