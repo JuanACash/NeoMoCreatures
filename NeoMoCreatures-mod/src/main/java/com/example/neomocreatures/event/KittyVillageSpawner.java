@@ -1,5 +1,6 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.MoCKittyEntity;
 import com.example.neomocreatures.init.ModEntities;
 
@@ -51,6 +52,9 @@ public class KittyVillageSpawner {
                     level.random.nextInt(SEARCH_RADIUS * 2) - SEARCH_RADIUS);
 
             if (!level.isVillage(candidate)) {
+                continue;
+            }
+            if (level.random.nextInt(100) >= Config.CREATURES.kittyVillageSpawnChance.get()) {
                 continue;
             }
 

@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity.egg;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 
@@ -176,6 +177,9 @@ public class MoCEggEntity extends Mob {
     }
 
     private void notifyNearbyPlayer() {
+        if (!Config.CREATURES.eggWarningMessages.get()) {
+            return;
+        }
         Player player = this.level().getNearestPlayer(this, WATCH_RADIUS);
         if (player != null) {
             player.sendSystemMessage(Component.translatable("msg.neomocreatures.egg_hatching",

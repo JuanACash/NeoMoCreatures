@@ -131,7 +131,10 @@ public class MoCHorseEntity extends AbstractHorse {
     private int fallImmuneTicks = 0;
 
     private static final int UNSET = -1;
-    private static final int GESTATION_TICKS = 300;
+    /** Gestation time when easyHorseBreeding is off: 5 minutes. */
+    private static final int SLOW_GESTATION_TICKS = 6000;
+    /** Gestation time when easyHorseBreeding is on: 15 seconds. */
+    private static final int EASY_GESTATION_TICKS = 300;
 
     private static final float SUGAR_LUMP_GROWTH_FRACTION = 0.10F;
     private static final int FULL_GROWTH_TICKS = 24000;
@@ -2207,16 +2210,20 @@ public class MoCHorseEntity extends AbstractHorse {
         }
         tryBreed();
     }
+    private static int gestationTicks() {
+        return Config.CREATURES.easyHorseBreeding.get() ? EASY_GESTATION_TICKS : SLOW_GESTATION_TICKS;
+    }
+
     private void tryBreed() {
-        if (!this.isInLove()) {
-            gestationProgress = 0;
+        // Love lasts about 30 seconds, but a gestation that already started keeps running without it.
+        if (!this.isInLove() && gestationProgress == 0) {
             return;
         }
 
         List<MoCHorseEntity> mates = this.level().getEntitiesOfClass(
                 MoCHorseEntity.class, this.getBoundingBox().inflate(4.0D, 2.0D, 4.0D),
                 other -> other != this && other.isTamed() && !other.isBaby()
-                        && !other.isSterileHybrid() && other.isInLove()
+                        && !other.isSterileHybrid() && (other.isInLove() || other.gestationProgress > 0)
                         && MoCHorseGenetics.canBreed(this.getSpecies(), this.getCoat(), other.getSpecies(), other.getCoat()));
 
         if (mates.isEmpty()) {
@@ -2225,7 +2232,7 @@ public class MoCHorseEntity extends AbstractHorse {
         }
 
         gestationProgress++;
-        if (gestationProgress < GESTATION_TICKS) {
+        if (gestationProgress < gestationTicks()) {
             return;
         }
 
