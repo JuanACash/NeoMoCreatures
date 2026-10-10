@@ -92,6 +92,9 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("wraith_spawns", 100);
         DEFAULT_WEIGHTS.put("flame_wraith_spawns", 35);
         DEFAULT_WEIGHTS.put("wyvern_spawns_mountains", 2);
+        DEFAULT_WEIGHTS.put("wyvern_spawns_lair", 70);
+        DEFAULT_WEIGHTS.put("wyvern_mother_spawns_lair", 5);
+        DEFAULT_WEIGHTS.put("wyvern_tier2_spawns_lair", 25);
     }
 
     private final Map<String, ModConfigSpec.IntValue> weights = new LinkedHashMap<>();

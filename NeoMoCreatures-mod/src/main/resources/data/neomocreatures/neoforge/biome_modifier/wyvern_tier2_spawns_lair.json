@@ -1,0 +1,8 @@
+{
+  "type": "neomocreatures:config_spawns",
+  "option": "wyvern_tier2_spawns_lair",
+  "biomes": "#neomocreatures:is_wyvern_lair",
+  "spawners": [
+    { "type": "neomocreatures:wyvern_tier2", "weight": 25, "minCount": 1, "maxCount": 1 }
+  ]
+}
