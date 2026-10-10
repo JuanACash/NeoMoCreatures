@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bass_spawns",
   "biomes": "#neomocreatures:spawns/bass",
   "spawners": [
     {

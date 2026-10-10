@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "snake_spawns_plains",
   "biomes": "#neomocreatures:spawns/snake_plains",
   "spawners": [
     {

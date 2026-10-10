@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "snake_spawns_everywhere",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
     { "type": "neomocreatures:moc_snake", "weight": 6, "minCount": 2, "maxCount": 4 }

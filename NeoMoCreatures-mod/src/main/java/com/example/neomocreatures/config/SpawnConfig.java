@@ -18,7 +18,6 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("bear_spawns_panda", 20);
         DEFAULT_WEIGHTS.put("bear_spawns_polar", 12);
         DEFAULT_WEIGHTS.put("bee_spawns", 15);
-        DEFAULT_WEIGHTS.put("big_golem_spawns", 70);
         DEFAULT_WEIGHTS.put("bigcat_spawns_forest", 24);
         DEFAULT_WEIGHTS.put("bigcat_spawns_jungle", 38);
         DEFAULT_WEIGHTS.put("bigcat_spawns_savanna", 12);
@@ -28,7 +27,6 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("bunny_spawns_overworld", 10);
         DEFAULT_WEIGHTS.put("bunny_spawns_wyvernlair", 3);
         DEFAULT_WEIGHTS.put("butterfly_spawns", 15);
-        DEFAULT_WEIGHTS.put("cave_ogre_spawns", 80);
         DEFAULT_WEIGHTS.put("cod_spawns", 10);
         DEFAULT_WEIGHTS.put("crab_spawns", 11);
         DEFAULT_WEIGHTS.put("cricket_spawns", 15);
@@ -41,18 +39,16 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("elephant_spawns_asian", 28);
         DEFAULT_WEIGHTS.put("elephant_spawns_mammoth", 6);
         DEFAULT_WEIGHTS.put("ent_spawns", 20);
-        DEFAULT_WEIGHTS.put("fire_ogre_spawns", 80);
-        DEFAULT_WEIGHTS.put("fire_ogre_spawns_nether", 40);
         DEFAULT_WEIGHTS.put("firefly_spawns", 15);
         DEFAULT_WEIGHTS.put("fishy_spawns", 12);
         DEFAULT_WEIGHTS.put("fishy_spawns_ocean", 12);
-        DEFAULT_WEIGHTS.put("flame_wraith_spawns", 35);
         DEFAULT_WEIGHTS.put("fly_spawns", 15);
         DEFAULT_WEIGHTS.put("fox_spawns_normal", 24);
         DEFAULT_WEIGHTS.put("fox_spawns_snow", 24);
         DEFAULT_WEIGHTS.put("goat_spawns", 10);
+        DEFAULT_WEIGHTS.put("big_golem_spawns", 70);
+        DEFAULT_WEIGHTS.put("mini_golem_spawns", 95);
         DEFAULT_WEIGHTS.put("grasshopper_spawns", 15);
-        DEFAULT_WEIGHTS.put("green_ogre_spawns", 80);
         DEFAULT_WEIGHTS.put("hellrat_spawns", 35);
         DEFAULT_WEIGHTS.put("horse_spawns_donkey", 6);
         DEFAULT_WEIGHTS.put("horse_spawns_tier1", 6);
@@ -65,9 +61,12 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("manta_ray_spawns", 10);
         DEFAULT_WEIGHTS.put("manticore_spawns_nether", 40);
         DEFAULT_WEIGHTS.put("manticore_spawns_overworld", 90);
-        DEFAULT_WEIGHTS.put("mini_golem_spawns", 95);
         DEFAULT_WEIGHTS.put("mole_spawns", 8);
         DEFAULT_WEIGHTS.put("mouse_spawns", 15);
+        DEFAULT_WEIGHTS.put("cave_ogre_spawns", 80);
+        DEFAULT_WEIGHTS.put("fire_ogre_spawns", 80);
+        DEFAULT_WEIGHTS.put("fire_ogre_spawns_nether", 40);
+        DEFAULT_WEIGHTS.put("green_ogre_spawns", 80);
         DEFAULT_WEIGHTS.put("ostrich_spawns", 12);
         DEFAULT_WEIGHTS.put("raccoon_spawns", 10);
         DEFAULT_WEIGHTS.put("rat_spawns", 100);
@@ -91,6 +90,7 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("werewolf_spawns_nether", 25);
         DEFAULT_WEIGHTS.put("wild_wolf_spawns", 100);
         DEFAULT_WEIGHTS.put("wraith_spawns", 100);
+        DEFAULT_WEIGHTS.put("flame_wraith_spawns", 35);
         DEFAULT_WEIGHTS.put("wyvern_spawns_mountains", 2);
     }
 

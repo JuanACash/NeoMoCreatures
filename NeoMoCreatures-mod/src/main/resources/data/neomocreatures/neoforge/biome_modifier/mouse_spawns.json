@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "mouse_spawns",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
     { "type": "neomocreatures:moc_mouse", "weight": 15, "minCount": 2, "maxCount": 4 }

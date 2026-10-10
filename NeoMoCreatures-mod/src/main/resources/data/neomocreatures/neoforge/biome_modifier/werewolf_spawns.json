@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "werewolf_spawns",
   "biomes": {
     "type": "neoforge:and",
     "values": [

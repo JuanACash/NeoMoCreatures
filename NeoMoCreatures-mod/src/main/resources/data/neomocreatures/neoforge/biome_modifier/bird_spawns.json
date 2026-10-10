@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bird_spawns",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
     { "type": "neomocreatures:moc_bird", "weight": 15, "minCount": 2, "maxCount": 4 }

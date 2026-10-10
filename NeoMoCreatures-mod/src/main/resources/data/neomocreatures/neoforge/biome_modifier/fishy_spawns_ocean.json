@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "fishy_spawns_ocean",
   "biomes": "#minecraft:is_ocean",
   "spawners": [
     { "type": "neomocreatures:moc_fishy", "weight": 12, "minCount": 1, "maxCount": 6 }

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "wyvern_spawns_mountains",
   "biomes": "#neomocreatures:spawns/wyvern_mountains",
   "spawners": [
     {

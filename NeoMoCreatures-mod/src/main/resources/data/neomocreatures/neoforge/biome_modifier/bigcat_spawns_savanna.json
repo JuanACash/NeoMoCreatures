@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bigcat_spawns_savanna",
   "biomes": "#neomocreatures:spawns/bigcat_savanna",
   "spawners": [
     {

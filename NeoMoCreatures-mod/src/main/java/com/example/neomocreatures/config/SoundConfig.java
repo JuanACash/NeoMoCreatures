@@ -3,6 +3,7 @@ package com.example.neomocreatures.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.Nullable;
 
@@ -19,6 +20,11 @@ public final class SoundConfig {
     private static final String WYVERN_GROUP = "wyvern";
     private static final Set<String> SILENT_ENTITIES =
             Set.of("moc_egg", "moc_kitty_bed", "moc_litter_box", "moc_throwable_rock", "moc_summoned_rock");
+    /** Sort names for groups whose label is not simply their id ("Golem (Big)", "Wraith (Flame)"). */
+    private static final Map<String, String> SORT_OVERRIDES = Map.of(
+            "moc_big_golem", "golem big",
+            "moc_mini_golem", "golem mini",
+            "moc_flame_wraith", "wraith flame");
     private static final int DEFAULT_PERCENT = 100;
     private static final int MAX_PERCENT = 200;
 
@@ -27,11 +33,15 @@ public final class SoundConfig {
     public SoundConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("sounds")).push("sounds");
 
+        Map<String, String> groups = new TreeMap<>();
         for (var holder : ModEntities.ENTITY_TYPES.getEntries()) {
             String group = groupOf(holder.getId());
-            if (group == null || volumes.containsKey(group)) {
-                continue;
+            if (group != null) {
+                groups.put(sortKey(group), group);
             }
+        }
+
+        for (String group : groups.values()) {
             volumes.put(group, builder
                     .comment("Volume percentage for every sound this creature makes. 0 mutes it, 100 is the default, 200 is double.")
                     .translation(ConfigTranslations.of("sound." + group))
@@ -61,4 +71,14 @@ public final class SoundConfig {
         }
         return path.startsWith("wyvern") ? WYVERN_GROUP : path;
     }
+
+    /** Name used to order the config entries alphabetically, matching the label shown in the menu. */
+    private static String sortKey(String group) {
+        String override = SORT_OVERRIDES.get(group);
+        if (override != null) {
+            return override;
+        }
+        return (group.startsWith("moc_") ? group.substring(4) : group).replace('_', ' ');
+    }
+
 }

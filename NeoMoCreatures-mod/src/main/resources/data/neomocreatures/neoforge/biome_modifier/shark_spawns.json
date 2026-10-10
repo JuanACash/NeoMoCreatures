@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "shark_spawns",
   "biomes": ["minecraft:deep_ocean", "minecraft:deep_lukewarm_ocean", "minecraft:deep_cold_ocean", "minecraft:deep_frozen_ocean"],
   "spawners": [
     { "type": "neomocreatures:moc_shark", "weight": 5, "minCount": 1, "maxCount": 3 }

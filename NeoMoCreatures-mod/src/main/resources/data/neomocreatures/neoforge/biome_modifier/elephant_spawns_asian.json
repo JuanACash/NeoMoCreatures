@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "elephant_spawns_asian",
   "biomes": "#neomocreatures:spawns/elephant_asian",
   "spawners": [
     {
