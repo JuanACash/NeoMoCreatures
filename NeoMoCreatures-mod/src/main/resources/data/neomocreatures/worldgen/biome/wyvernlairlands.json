@@ -24,26 +24,7 @@
   },
   "spawners": {
     "monster": [],
-    "creature": [
-                {
-                  "type": "neomocreatures:wyvern",
-                  "weight": 70,
-                  "minCount": 1,
-                  "maxCount": 1
-                },
-                {
-                  "type": "neomocreatures:wyvern_tier2",
-                  "weight": 25,
-                  "minCount": 1,
-                  "maxCount": 1
-                },
-                {
-                  "type": "neomocreatures:wyvern_mother",
-                  "weight": 5,
-                  "minCount": 1,
-                  "maxCount": 1
-                }
-              ],
+    "creature": [],
     "ambient": [],
     "underground_water_creature": [],
     "water_creature": [],

@@ -47,6 +47,8 @@ public class MoCGoatRenderer extends MobRenderer<MoCGoatEntity, MoCGoatModel> {
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 }

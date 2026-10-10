@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.rat.RatVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -18,7 +19,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -200,7 +200,9 @@ public class MoCRatEntity extends Monster {
 
     @Override
     protected SoundEvent getDeathSound() {
-        return ModSounds.RAT_DEATH.get();
+        return Config.LEGACY.legacySounds.get()
+                ? ModSounds.RAT_DEATH_LEGACY.get()
+                : ModSounds.RAT_DEATH.get();
     }
 
     // ---------------------------------------------------------------------

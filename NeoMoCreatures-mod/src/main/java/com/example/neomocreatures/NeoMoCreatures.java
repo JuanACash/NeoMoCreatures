@@ -3,6 +3,7 @@ package com.example.neomocreatures;
 import org.slf4j.Logger;
 
 import com.example.neomocreatures.client.ModKeyMappings;
+import com.example.neomocreatures.init.ModBiomeModifiers;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -386,6 +387,7 @@ public class NeoMoCreatures {
         com.example.neomocreatures.init.SilverSandstoneBlocks.init();
         com.example.neomocreatures.init.GleamingGlassBlocks.init();
         ITEMS.register(modEventBus);
+        com.example.neomocreatures.init.ModConditions.CONDITIONS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         com.example.neomocreatures.init.ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
         com.example.neomocreatures.init.ModBlocks.BLOCKS.register(modEventBus);
@@ -397,6 +399,7 @@ public class NeoMoCreatures {
 
     private void registerEntitiesAndSounds(IEventBus modEventBus) {
         ModEntities.ENTITY_TYPES.register(modEventBus);
+        ModBiomeModifiers.BIOME_MODIFIERS.register(modEventBus);
         ModEntities.registerAttributes(modEventBus);
         ModSounds.SOUND_EVENTS.register(modEventBus);
         modEventBus.addListener(ModEntities::registerSpawnPlacements);

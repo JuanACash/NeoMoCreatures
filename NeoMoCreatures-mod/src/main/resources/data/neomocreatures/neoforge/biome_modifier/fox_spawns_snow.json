@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "fox_spawns_snow",
   "biomes": "#neomocreatures:spawns/fox_snow",
   "spawners": [
     {

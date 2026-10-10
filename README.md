@@ -65,6 +65,8 @@ added — always trying to stay true to how the mod felt.
 
 The mod is required on both the client and the server.
 
+You can also download the JAR file from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neo-mo-creatures). Simply download it and drop it into your `mods` folder.
+
 ## Building from source
 
 ```bash

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bunny_spawns_overworld",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
     { "type": "neomocreatures:moc_bunny", "weight": 10, "minCount": 4, "maxCount": 6 }

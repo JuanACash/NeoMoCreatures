@@ -652,5 +652,27 @@
     "sounds": [
       "neomocreatures:moc_wild_wolf/wild_wolf_death"
     ]
+  },
+  "moc_rat.death_legacy": {
+    "sounds": ["neomocreatures:moc_rat/rat_dying_legacy"]
+  },
+  "moc_wraith.ambient_legacy": {
+    "sounds": [
+      "neomocreatures:moc_wraith/wraith_haunt_legacy1",
+      "neomocreatures:moc_wraith/wraith_haunt_legacy2",
+      "neomocreatures:moc_wraith/wraith_haunt_legacy3"
+    ]
+  },
+  "moc_wraith.hurt_legacy": {
+    "sounds": [
+      "neomocreatures:moc_wraith/wraith_hurt_legacy1",
+      "neomocreatures:moc_wraith/wraith_hurt_legacy2"
+    ]
+  },
+  "moc_wraith.death_legacy": {
+    "sounds": [
+      "neomocreatures:moc_wraith/wraith_dying_legacy1",
+      "neomocreatures:moc_wraith/wraith_dying_legacy2"
+    ]
   }
 }

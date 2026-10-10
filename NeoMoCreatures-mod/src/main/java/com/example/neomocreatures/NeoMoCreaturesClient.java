@@ -1,6 +1,14 @@
 package com.example.neomocreatures;
 
 import com.example.neomocreatures.client.*;
+import com.example.neomocreatures.client.legacy.LegacyRendererSelector;
+import com.example.neomocreatures.client.legacy.MoCLegacyBigCatManeModel;
+import com.example.neomocreatures.client.legacy.MoCLegacyBigCatModel;
+import com.example.neomocreatures.client.legacy.MoCLegacyBigCatRenderer;
+import com.example.neomocreatures.client.legacy.MoCLegacyScorpionModel;
+import com.example.neomocreatures.client.legacy.MoCLegacyScorpionRenderer;
+import com.example.neomocreatures.client.legacy.MoCLegacySharkModel;
+import com.example.neomocreatures.client.legacy.MoCLegacySharkRenderer;
 import com.example.neomocreatures.init.ModBlocks;
 import com.example.neomocreatures.init.ModEntities;
 
@@ -37,8 +45,11 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCEggRenderer.MOC_EGG_LAYER, MoCEggModel::createBodyLayer);
                 event.registerLayerDefinition(MoCElephantRenderer.MOC_ELEPHANT_LAYER, MoCElephantModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBigCatRenderer.MOC_BIG_CAT_LAYER, MoCBigCatModel::createBodyLayer);
+                event.registerLayerDefinition(MoCLegacyBigCatRenderer.MOC_LEGACY_BIG_CAT_LAYER, MoCLegacyBigCatModel::createBodyLayer);
+                event.registerLayerDefinition(MoCLegacyBigCatRenderer.MOC_LEGACY_BIG_CAT_MANE_LAYER, MoCLegacyBigCatManeModel::createBodyLayer);
                 event.registerLayerDefinition(MoCManticoreRenderer.MOC_MANTICORE_LAYER, MoCManticoreModel::createBodyLayer);
                 event.registerLayerDefinition(MoCScorpionRenderer.MOC_SCORPION_LAYER, MoCScorpionModel::createBodyLayer);
+                event.registerLayerDefinition(MoCLegacyScorpionRenderer.MOC_LEGACY_SCORPION_LAYER, MoCLegacyScorpionModel::createBodyLayer);
                 event.registerLayerDefinition(MoCOstrichRenderer.MOC_OSTRICH_LAYER, MoCOstrichModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBearRenderer.MOC_BEAR_LAYER, MoCBearModel::createBodyLayer);
                 event.registerLayerDefinition(MoCFoxRenderer.MOC_FOX_LAYER, MoCFoxModel::createBodyLayer);
@@ -53,6 +64,7 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCBunnyRenderer.MOC_BUNNY_LAYER, MoCBunnyModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBirdRenderer.MOC_BIRD_LAYER, MoCBirdModel::createBodyLayer);
                 event.registerLayerDefinition(MoCSharkRenderer.MOC_SHARK_LAYER, MoCSharkModel::createBodyLayer);
+                event.registerLayerDefinition(MoCLegacySharkRenderer.MOC_LEGACY_SHARK_LAYER, MoCLegacySharkModel::createBodyLayer);
                 event.registerLayerDefinition(MoCTurtleRenderer.MOC_TURTLE_LAYER, MoCTurtleModel::createBodyLayer);
                 event.registerLayerDefinition(MoCStingrayRenderer.MOC_STINGRAY_LAYER, MoCStingrayModel::createBodyLayer);
                 event.registerLayerDefinition(MoCDolphinRenderer.MOC_DOLPHIN_LAYER, MoCDolphinModel::createBodyLayer);
@@ -108,9 +120,15 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.WYVERN_MOTHER_TAMED.get(), MoCWyvernRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_EGG.get(), MoCEggRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_ELEPHANT.get(), MoCElephantRenderer::new);
-                event.registerEntityRenderer(ModEntities.MOC_BIG_CAT.get(), MoCBigCatRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_BIG_CAT.get(), LegacyRendererSelector.of(
+                        () -> Config.LEGACY.legacyBigCatModels.get(),
+                        MoCLegacyBigCatRenderer::new,
+                        MoCBigCatRenderer::new));
                 event.registerEntityRenderer(ModEntities.MOC_MANTICORE.get(), MoCManticoreRenderer::new);
-                event.registerEntityRenderer(ModEntities.MOC_SCORPION.get(), MoCScorpionRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_SCORPION.get(), LegacyRendererSelector.of(
+                        () -> Config.LEGACY.legacyScorpionModel.get(),
+                        MoCLegacyScorpionRenderer::new,
+                        MoCScorpionRenderer::new));
                 event.registerEntityRenderer(ModEntities.MOC_OSTRICH.get(), MoCOstrichRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BEAR.get(), MoCBearRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_FOX.get(), MoCFoxRenderer::new);
@@ -124,7 +142,10 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_SNAKE.get(), MoCSnakeRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BUNNY.get(), MoCBunnyRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BIRD.get(), MoCBirdRenderer::new);
-                event.registerEntityRenderer(ModEntities.MOC_SHARK.get(), MoCSharkRenderer::new);
+                event.registerEntityRenderer(ModEntities.MOC_SHARK.get(), LegacyRendererSelector.of(
+                        () -> Config.LEGACY.legacySharkModel.get(),
+                        MoCLegacySharkRenderer::new,
+                        MoCSharkRenderer::new));
                 event.registerEntityRenderer(ModEntities.MOC_TURTLE.get(), MoCTurtleRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_STINGRAY.get(), MoCStingrayRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_DOLPHIN.get(), MoCDolphinRenderer::new);

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "mini_golem_spawns",
   "biomes": {
     "type": "neoforge:and",
     "values": [

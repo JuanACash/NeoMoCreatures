@@ -61,6 +61,8 @@ public class MoCBunnyRenderer extends MobRenderer<MoCBunnyEntity, MoCBunnyModel>
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 }

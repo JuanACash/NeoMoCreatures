@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bear_spawns_panda",
   "biomes": "#neomocreatures:spawns/bear_panda",
   "spawners": [
     {

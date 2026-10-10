@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "fire_ogre_spawns_nether",
   "biomes": "#minecraft:is_nether",
   "spawners": [
     { "type": "neomocreatures:moc_fire_ogre", "weight": 40, "minCount": 1, "maxCount": 2 }

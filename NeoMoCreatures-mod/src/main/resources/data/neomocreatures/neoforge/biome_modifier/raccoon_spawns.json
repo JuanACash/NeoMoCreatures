@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "raccoon_spawns",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
     { "type": "neomocreatures:moc_raccoon", "weight": 10, "minCount": 4, "maxCount": 4 }

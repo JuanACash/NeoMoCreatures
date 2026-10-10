@@ -2,6 +2,7 @@ package com.example.neomocreatures.client;
 
 import org.joml.Matrix4f;
 
+import com.example.neomocreatures.Config;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -37,9 +38,14 @@ public final class TameableOverlayRenderer {
         return false;
     }
 
+    /** Returns false when the config hides name tags and the entity is tamed. */
+    public static boolean shouldRenderName(LivingEntity entity) {
+        return !(Config.GENERAL.hideTamedNames.get() && isOwnedAndTamed(entity));
+    }
+
     public static void renderHealthBar(LivingEntity entity, PoseStack poseStack, MultiBufferSource buffer,
                                         int packedLight, EntityRenderDispatcher dispatcher) {
-        if (!isOwnedAndTamed(entity) || dispatcher.distanceToSqr(entity) > SHOW_DISTANCE_SQR) {
+if (Config.GENERAL.hideHealthBar.get() || !isOwnedAndTamed(entity) || dispatcher.distanceToSqr(entity) > SHOW_DISTANCE_SQR) {
             return;
         }
 

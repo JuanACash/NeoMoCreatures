@@ -36,6 +36,8 @@ public class MoCRaccoonRenderer extends MobRenderer<MoCRaccoonEntity, MoCRaccoon
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 }

@@ -1,14 +1,14 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.init.ModTags;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,12 +19,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -125,7 +123,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled {
         // Excludes both this mod's own foxes AND vanilla's net.minecraft...Fox —
         // "hunt anything smaller than them" was never meant to include other foxes.
         // Wiki: "Tamed foxes stop attacking other mobs too."
-        if (this.isBaby() || this.isTame() || target instanceof MoCFoxEntity
+        if (this.isBaby() || this.isTame() || !HuntingRules.canHunt(target) || target instanceof MoCFoxEntity
                 || target instanceof net.minecraft.world.entity.animal.Fox) {
             return false;
         }

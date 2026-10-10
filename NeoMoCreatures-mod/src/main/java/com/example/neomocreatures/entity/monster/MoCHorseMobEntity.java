@@ -2,6 +2,7 @@ package com.example.neomocreatures.entity.monster;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;
@@ -266,9 +267,12 @@ public class MoCHorseMobEntity extends Monster {
 
         // Base 0-2, Looting raises the max (same as vanilla: +1 to the cap per level).
         int commonDropCount = this.random.nextInt(3 + lootingLevel);
-        // Base 25% (1 in 4), Looting reduces the denominator to make it more likely, floored at 1 (100%).
-        int rareChanceDenominator = Math.max(1, 4 - lootingLevel);
-        boolean heartDrops = this.random.nextInt(rareChanceDenominator) == 0;
+        // Configurable base chance as a "1 in N" denominator; Looting lowers N, floored at 1 (100%).
+        int rareChancePercent = Config.CREATURES.rareItemDropChance.get();
+        int rareChanceDenominator = rareChancePercent <= 0
+                ? 0
+                : Math.max(1, Math.round(100.0F / rareChancePercent) - lootingLevel);
+        boolean heartDrops = rareChanceDenominator > 0 && this.random.nextInt(rareChanceDenominator) == 0;
         int heartCount = heartDrops ? 1 + this.random.nextInt(2) : 0;
 
         switch (getVariant()) {

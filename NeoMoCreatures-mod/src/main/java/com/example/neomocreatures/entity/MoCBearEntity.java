@@ -1,12 +1,12 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModTags;
 
-import com.example.neomocreatures.entity.bear.BearVariant;
-
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
@@ -16,6 +16,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -27,19 +28,17 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-
-import javax.annotation.Nullable;
 
 public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.minecraft.world.entity.HasCustomInventoryScreen,
         net.minecraft.world.entity.PlayerRideableJumping {
@@ -269,6 +268,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, net.mi
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
         if (this.isTame()) {
             return false; // A tamed bear never hunts other animals on its own.
+        }
+        if (!HuntingRules.canHunt(target)) {
+            return false;
         }
         return !(target instanceof MoCBearEntity) && !(target instanceof MoCBigCatEntity)
                 && !(target instanceof net.minecraft.world.entity.animal.PolarBear)

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "horse_spawns_tier1",
   "biomes": "#neomocreatures:spawns/horse_tier1",
   "spawners": [
     {

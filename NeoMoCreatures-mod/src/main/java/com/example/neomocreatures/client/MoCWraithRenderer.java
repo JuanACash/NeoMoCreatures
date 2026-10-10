@@ -1,9 +1,9 @@
 package com.example.neomocreatures.client;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCFlameWraithEntity;
 import com.example.neomocreatures.entity.MoCWraithEntity;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -47,6 +47,9 @@ public class MoCWraithRenderer extends MobRenderer<MoCWraithEntity, MoCWraithMod
     @Override
     public ResourceLocation getTextureLocation(MoCWraithEntity entity) {
         String texture = entity instanceof MoCFlameWraithEntity ? "wraith_flame" : "wraith";
+        if (Config.MONSTERS.alphaWraithEyes.get()) {
+            texture += "_alpha";
+        }
         return ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "textures/entity/moc_wraith/" + texture + ".png");
     }
 }

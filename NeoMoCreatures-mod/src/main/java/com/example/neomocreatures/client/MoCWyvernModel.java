@@ -764,7 +764,9 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
         this.tail5.xRot = 8F / R;
 
         // ---- tail side-to-side wave ----
-        float t = limbSwing / 2F;
+        // Airborne: time-based wave, because limbSwing speeds up on every hit
+        // and made the tail jitter. On the ground it still follows the walk cycle.
+        float t = entity.isAirborne() ? ageInTicks * 0.1F : limbSwing / 2F;
         float amplitude = 0.15F;
         float w = 0.9F;
         float k = 0.6F;
@@ -810,7 +812,9 @@ public class MoCWyvernModel extends HierarchicalModel<MoCWyvernEntity> {
                 : Mth.cos(limbSwing * 0.5F) * 0.1F;
 
         if (onAir) {
-            float speedMov = limbSwingAmount * 0.5F;
+            // Airborne legs stay in a fixed tucked pose: limbSwingAmount is
+            // spiked by vanilla on every hit and made the legs jitter.
+            float speedMov = 0F;
             // Bird-like tucked leg: the thigh (upleg) stays close to
             // vertical/straight against the body, and the trail-back happens
             // from the knee down (mid/lower leg + foot), not by swinging the

@@ -1105,8 +1105,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, net.
             lootingLevel = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantmentLevel(looting, killer);
         }
 
-        float eggChance = Config.CREATURES.wyvernEggDropChance.get() / 100.0F + lootingLevel * 0.03F;
-        if (this.random.nextFloat() < eggChance) {
+        int baseChancePercent = getVariant().isMother()
+                ? Config.CREATURES.motherWyvernEggDropChance.get()
+                : Config.CREATURES.wyvernEggDropChance.get();
+        float eggChance = baseChancePercent / 100.0F + lootingLevel * 0.03F;        if (this.random.nextFloat() < eggChance) {
             this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
         }
     }

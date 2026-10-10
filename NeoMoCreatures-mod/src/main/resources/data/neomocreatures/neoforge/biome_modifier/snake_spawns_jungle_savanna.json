@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "snake_spawns_jungle_savanna",
   "biomes": "#neomocreatures:spawns/snake_jungle_savanna",
   "spawners": [
     {

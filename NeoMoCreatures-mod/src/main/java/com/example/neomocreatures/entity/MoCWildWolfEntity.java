@@ -1,12 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import java.util.function.BooleanSupplier;
+
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.wildwolf.WildWolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -15,10 +18,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -28,6 +29,8 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
@@ -38,7 +41,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.core.Holder;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityWWolf}. Neutral: only actively hunts
@@ -115,6 +118,10 @@ public class MoCWildWolfEntity extends Monster {
         this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Cow.class, false));
         this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Sheep.class, false));
         this.targetSelector.addGoal(4, new WolfTargetGoal<>(this, net.minecraft.world.entity.animal.Chicken.class, false));
+        this.targetSelector.addGoal(5, new WolfTargetGoal<>(this, Wolf.class, false,
+                () -> Config.CREATURES.attackWolves.get()));
+        this.targetSelector.addGoal(5, new WolfTargetGoal<>(this, AbstractHorse.class, false,
+                () -> Config.CREATURES.attackHorses.get()));
     }
 
     public WildWolfVariant getVariant() {
@@ -261,14 +268,23 @@ public class MoCWildWolfEntity extends Monster {
     private static final class WolfTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
         private final MoCWildWolfEntity wolf;
 
+        private final BooleanSupplier enabled;
+
         WolfTargetGoal(MoCWildWolfEntity wolf, Class<T> targetClass, boolean mustSee) {
+            this(wolf, targetClass, mustSee, () -> true);
+        }
+
+        WolfTargetGoal(MoCWildWolfEntity wolf, Class<T> targetClass, boolean mustSee, BooleanSupplier enabled) {
             super(wolf, targetClass, mustSee);
             this.wolf = wolf;
+            this.enabled = enabled;
         }
 
         @Override
         public boolean canUse() {
-            return this.wolf.getBrightness() < MAX_ATTACK_BRIGHTNESS && super.canUse();
+            return this.enabled.getAsBoolean()
+                    && this.wolf.getBrightness() < MAX_ATTACK_BRIGHTNESS
+                    && super.canUse();
         }
     }
 
