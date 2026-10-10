@@ -64,6 +64,8 @@ public class MoCLegacyScorpionRenderer extends MobRenderer<MoCScorpionEntity, Mo
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 }

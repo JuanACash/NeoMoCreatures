@@ -75,7 +75,9 @@ public class MoCTurtleRenderer extends MobRenderer<MoCTurtleEntity, MoCTurtleMod
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 
     private static ResourceLocation texture(String fileName) {

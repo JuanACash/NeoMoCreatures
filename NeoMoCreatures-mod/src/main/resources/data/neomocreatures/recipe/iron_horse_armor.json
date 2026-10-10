@@ -1,0 +1,13 @@
+{
+  "neoforge:conditions": [
+    { "type": "neomocreatures:config", "option": "craftable_horse_armor" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["  #", "#*#", "###"],
+  "key": {
+    "#": { "item": "minecraft:iron_ingot" },
+    "*": { "item": "minecraft:black_wool" }
+  },
+  "result": { "id": "minecraft:iron_horse_armor", "count": 1 }
+}

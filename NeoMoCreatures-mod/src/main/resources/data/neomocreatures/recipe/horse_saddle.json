@@ -1,4 +1,7 @@
 {
+  "neoforge:conditions": [
+    { "type": "neomocreatures:config", "option": "craftable_saddles" }
+  ],
   "type": "minecraft:crafting_shaped",
   "pattern": [
     "CCC",

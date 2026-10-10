@@ -10,6 +10,8 @@ public final class GeneralConfig {
     public final ModConfigSpec.BooleanValue easterEggs;
     public final ModConfigSpec.BooleanValue hideTamedNames;
     public final ModConfigSpec.BooleanValue hideHealthBar;
+    public final ModConfigSpec.BooleanValue craftableHorseArmor;
+    public final ModConfigSpec.BooleanValue craftableSaddles;
 
     public GeneralConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("general")).push("general");
@@ -38,6 +40,16 @@ public final class GeneralConfig {
                 .comment("Hides the health bar shown above tamed creatures.")
                 .translation(ConfigTranslations.of("hideHealthBar"))
                 .define("hideHealthBar", false);
+
+        craftableHorseArmor = builder
+                .comment("Adds recipes to craft the iron, golden and diamond horse armor. Needs a data reload (/reload) to apply.")
+                .translation(ConfigTranslations.of("craftableHorseArmor"))
+                .define("craftableHorseArmor", true);
+
+        craftableSaddles = builder
+                .comment("Allows crafting the Mo' Creatures horse saddle.")
+                .translation(ConfigTranslations.of("craftableSaddles"))
+                .define("craftableSaddles", true);
 
         builder.pop();
     }

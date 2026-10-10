@@ -80,7 +80,9 @@ public class MoCLegacyBigCatRenderer extends MobRenderer<MoCBigCatEntity, MoCLeg
             return;
         }
         TameableOverlayRenderer.renderHealthBar(entity, poseStack, buffer, packedLight, this.entityRenderDispatcher);
-        super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        if (TameableOverlayRenderer.shouldRenderName(entity)) {
+            super.renderNameTag(entity, displayName, poseStack, buffer, packedLight, partialTick);
+        }
     }
 
     /** Draws the legacy mane shell; every cat without a mane gets the near-empty female layer, as in the original. */

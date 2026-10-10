@@ -4,6 +4,8 @@ import com.example.neomocreatures.config.CreatureConfig;
 import com.example.neomocreatures.config.GeneralConfig;
 import com.example.neomocreatures.config.LegacyConfig;
 import com.example.neomocreatures.config.MonsterConfig;
+import com.example.neomocreatures.config.SoundConfig;
+import com.example.neomocreatures.config.SpawnConfig;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -15,6 +17,8 @@ public class Config {
     public static final CreatureConfig CREATURES = new CreatureConfig(BUILDER);
     public static final MonsterConfig MONSTERS = new MonsterConfig(BUILDER);
     public static final LegacyConfig LEGACY = new LegacyConfig(BUILDER);
+    public static final SoundConfig SOUNDS = new SoundConfig(BUILDER);
+    public static final SpawnConfig SPAWNS = new SpawnConfig(BUILDER);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }

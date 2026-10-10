@@ -1,0 +1,13 @@
+{
+  "neoforge:conditions": [
+    { "type": "neomocreatures:config", "option": "craftable_horse_armor" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["  #", "#*#", "###"],
+  "key": {
+    "#": { "item": "minecraft:diamond" },
+    "*": { "item": "minecraft:blue_wool" }
+  },
+  "result": { "id": "minecraft:diamond_horse_armor", "count": 1 }
+}

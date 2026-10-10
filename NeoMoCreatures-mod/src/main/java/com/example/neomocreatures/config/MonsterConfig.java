@@ -6,6 +6,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class MonsterConfig {
 
     public final ModConfigSpec.BooleanValue golemDestroyBlocks;
+    public final ModConfigSpec.BooleanValue miniGolemCobblestoneOnly;
     public final ModConfigSpec.DoubleValue ogreStrength;
     public final ModConfigSpec.DoubleValue fireOgreStrength;
     public final ModConfigSpec.DoubleValue caveOgreStrength;
@@ -18,6 +19,11 @@ public final class MonsterConfig {
                 .comment("Allows golems to pick up blocks. Still requires mobGriefing to be enabled.")
                 .translation(ConfigTranslations.of("golemDestroyBlocks"))
                 .define("golemDestroyBlocks", true);
+
+        miniGolemCobblestoneOnly = builder
+                .comment("Mini golems no longer tear blocks out of the world: they always throw a cobblestone block that leaves no loot.")
+                .translation(ConfigTranslations.of("miniGolemCobblestoneOnly"))
+                .define("miniGolemCobblestoneOnly", false);
 
         ogreStrength = builder
                 .comment("Block destruction radius of green ogres.")
