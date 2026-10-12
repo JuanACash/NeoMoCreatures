@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "tag": "neomocreatures:chitin_scorpion" }],
+  "result": { "id": "minecraft:bone_meal", "count": 2 }
+}

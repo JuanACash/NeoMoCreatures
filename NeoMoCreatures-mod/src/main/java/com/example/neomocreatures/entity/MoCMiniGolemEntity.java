@@ -1,14 +1,15 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import java.util.Optional;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -37,9 +38,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-
 import net.neoforged.neoforge.common.CommonHooks;
+
 /**
  * Port of {@code drzhark.mocreatures.entity.hostile.MoCEntityMiniGolem}. A small stone golem that
  * only goes looking for players and iron golems while standing in the dark; out in bright light it
@@ -169,6 +171,10 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
 
     /** Original: acquireTRock() — lifts a nearby block over its head. */
     private void tryGrabRock() {
+        if (Config.MONSTERS.miniGolemCobblestoneOnly.get()) {
+            this.conjureCobblestoneRock();
+            return;
+        }
         GolemBlockPicker.findLiftableBlock(this, GRAB_RADIUS, GRAB_ATTEMPTS).ifPresent(pos -> {
             BlockState state = this.level().getBlockState(pos);
             boolean tearsOut = this.canTearOut(pos);
@@ -179,6 +185,13 @@ public class MoCMiniGolemEntity extends Monster implements RockThrower {
             this.heldBlockDropsLoot = tearsOut;
             this.holdTicks = 0;
         });
+    }
+
+    /** Lifts a cobblestone copy: no block is removed from the world and nothing drops. */
+    private void conjureCobblestoneRock() {
+        this.setHeldBlock(Blocks.COBBLESTONE.defaultBlockState());
+        this.heldBlockDropsLoot = false;
+        this.holdTicks = 0;
     }
 
     /** When it may not grief (gamerule or a protection mod), it lifts a copy instead: the world keeps the block, the copy never drops. */

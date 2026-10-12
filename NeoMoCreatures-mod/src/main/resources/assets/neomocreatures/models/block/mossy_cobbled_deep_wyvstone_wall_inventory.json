@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/wall_inventory",
+  "textures": {
+    "wall": "neomocreatures:block/mossy_cobblestone_wyvern_deep"
+  }
+}

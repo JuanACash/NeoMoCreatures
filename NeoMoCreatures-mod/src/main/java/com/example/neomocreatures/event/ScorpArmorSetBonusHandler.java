@@ -1,5 +1,6 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.world.effect.MobEffectInstance;
@@ -7,7 +8,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -27,6 +27,9 @@ public class ScorpArmorSetBonusHandler {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
         if (player.level().isClientSide || player.tickCount % REFRESH_INTERVAL != 0) {
+            return;
+        }
+        if (!Config.GENERAL.armorSetEffects.get()) {
             return;
         }
 

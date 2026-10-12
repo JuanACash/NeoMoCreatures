@@ -1,12 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.wildwolf.WildWolfVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.Holder;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -32,6 +33,8 @@ import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
@@ -117,6 +120,10 @@ public class MoCWildWolfEntity extends Monster {
         this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Cow.class, false, this::isDarkEnoughToHunt));
         this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Sheep.class, false, this::isDarkEnoughToHunt));
         this.targetSelector.addGoal(4, new ConditionalTargetGoal<>(this, Chicken.class, false, this::isDarkEnoughToHunt));
+        this.targetSelector.addGoal(5, new ConditionalTargetGoal<>(this, Wolf.class, false,
+                () -> Config.CREATURES.attackWolves.get() && this.isDarkEnoughToHunt()));
+        this.targetSelector.addGoal(5, new ConditionalTargetGoal<>(this, AbstractHorse.class, false,
+                () -> Config.CREATURES.attackHorses.get() && this.isDarkEnoughToHunt()));
     }
 
     public WildWolfVariant getVariant() {

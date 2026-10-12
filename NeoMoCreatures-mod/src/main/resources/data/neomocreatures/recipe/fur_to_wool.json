@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["XX"],
+  "key": {
+    "X": { "item": "neomocreatures:fur" }
+  },
+  "result": { "id": "minecraft:white_wool", "count": 1 }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "neomocreatures:silver_sandstone"
+  },
+  "result": {
+    "id": "neomocreatures:silver_sandstone_wall",
+    "count": 1
+  }
+}

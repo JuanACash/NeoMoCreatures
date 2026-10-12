@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "small_fish_spawns",
   "biomes": "#neomocreatures:spawns/small_fish",
   "spawners": [
     {

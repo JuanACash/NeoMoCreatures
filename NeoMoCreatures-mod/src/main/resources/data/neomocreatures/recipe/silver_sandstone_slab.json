@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:silver_sandstone"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:silver_sandstone_slab",
+    "count": 6
+  }
+}

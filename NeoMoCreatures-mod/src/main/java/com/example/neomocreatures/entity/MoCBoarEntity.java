@@ -1,15 +1,16 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
-import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
-import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
-
 import java.util.EnumSet;
 
 import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
+import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
+import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -120,9 +121,14 @@ public class MoCBoarEntity extends Animal {
         // and occasionally goes after a few specific small mobs — not in the decompiled source,
         // which had no target-selector goal at all.
         this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, 10, false, false, null, this::isGrownAdult));
-        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCFoxEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
-        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCRaccoonEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
-        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::isGrownAdult));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCFoxEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCRaccoonEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
+        this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
+    }
+
+    /** Attacking players is aggression; the small-mob goals are hunting and follow enableHunters. */
+    private boolean canHuntSmallMobs() {
+        return this.isGrownAdult() && HuntingRules.isHuntingEnabled();
     }
 
     @Override

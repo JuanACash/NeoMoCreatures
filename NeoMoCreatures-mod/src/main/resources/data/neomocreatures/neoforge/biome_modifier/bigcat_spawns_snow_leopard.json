@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "bigcat_spawns_snow_leopard",
   "biomes": "#neomocreatures:spawns/bigcat_snow_leopard",
   "spawners": [
     {

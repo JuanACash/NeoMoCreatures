@@ -1,19 +1,28 @@
 package com.example.neomocreatures;
 
+import com.example.neomocreatures.config.CreatureConfig;
+import com.example.neomocreatures.config.GeneralConfig;
+import com.example.neomocreatures.config.LegacyConfig;
+import com.example.neomocreatures.config.MonsterConfig;
+import com.example.neomocreatures.config.SoundConfig;
+import com.example.neomocreatures.config.SpawnConfig;
+
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/**
- * Common mod config. Empty for now — add real values here whenever something needs to be tweakable
- * without recompiling (e.g. spawn rates, armour damage, breeding with vanilla horses, etc).
- *
- * Example of what a real value looks like, so the syntax doesn't have to be looked up:
- *
- * public static final ModConfigSpec.BooleanValue ALLOW_VANILLA_BREEDING = BUILDER
- *         .comment("Whether Mo' Creatures horses can breed with vanilla horses/donkeys")
- *         .define("allowVanillaBreeding", false);
- */
-public class Config {
+/** Common mod config. Each section lives in its own class under the config package. */
+public final class Config {
+
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
+    public static final GeneralConfig GENERAL = new GeneralConfig(BUILDER);
+    public static final CreatureConfig CREATURES = new CreatureConfig(BUILDER);
+    public static final MonsterConfig MONSTERS = new MonsterConfig(BUILDER);
+    public static final LegacyConfig LEGACY = new LegacyConfig(BUILDER);
+    public static final SoundConfig SOUNDS = new SoundConfig(BUILDER);
+    public static final SpawnConfig SPAWNS = new SpawnConfig(BUILDER);
+
     static final ModConfigSpec SPEC = BUILDER.build();
+
+    private Config() {
+    }
 }

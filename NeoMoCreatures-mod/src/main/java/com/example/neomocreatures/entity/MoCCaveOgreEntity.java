@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,7 @@ public class MoCCaveOgreEntity extends MoCOgreEntity {
 
     @Override
     public double getDestroyRadius() {
-        return 3.0D;
+        return Config.MONSTERS.caveOgreStrength.get();
     }
 
     /**

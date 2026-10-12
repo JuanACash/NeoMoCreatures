@@ -3,6 +3,13 @@
     "neomocreatures:wyvwood_log",
     "neomocreatures:wyvwood_planks",
     "neomocreatures:log_ogre_lair",
-    "neomocreatures:wood_planks_ogre_lair"
+    "neomocreatures:wood_planks_ogre_lair",
+    "neomocreatures:wyvwood_door",
+    "neomocreatures:wyvwood_trapdoor",
+    "neomocreatures:wyvwood_button",
+    "neomocreatures:wyvwood_fence",
+    "neomocreatures:wyvwood_fence_gate",
+    "neomocreatures:wyvwood_slab",
+    "neomocreatures:wyvwood_stairs"
   ]
 }

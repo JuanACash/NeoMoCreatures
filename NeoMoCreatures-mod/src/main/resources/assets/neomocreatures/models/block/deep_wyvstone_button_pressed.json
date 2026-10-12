@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button_pressed",
+  "textures": {
+    "texture": "neomocreatures:block/stone_wyvern_deep"
+  }
+}

@@ -1,5 +1,11 @@
 package com.example.neomocreatures.client;
 
+import org.joml.Matrix4f;
+
+import com.example.neomocreatures.Config;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -8,11 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
-
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-
-import org.joml.Matrix4f;
 
 /**
  * Draws a small green/red health bar above a tamed creature's name tag,
@@ -38,9 +39,15 @@ public final class TameableOverlayRenderer {
         return false;
     }
 
+    /** Returns false when the config hides the name tag of tamed creatures and this entity is tamed. */
+    public static boolean shouldRenderName(LivingEntity entity) {
+        return !(Config.GENERAL.hideTamedNames.get() && isOwnedAndTamed(entity));
+    }
+
     public static void renderHealthBar(LivingEntity entity, PoseStack poseStack, MultiBufferSource buffer,
                                         int packedLight, EntityRenderDispatcher dispatcher) {
-        if (!isOwnedAndTamed(entity) || dispatcher.distanceToSqr(entity) > SHOW_DISTANCE_SQR) {
+        if (Config.GENERAL.hideHealthBar.get() || !isOwnedAndTamed(entity)
+                || dispatcher.distanceToSqr(entity) > SHOW_DISTANCE_SQR) {
             return;
         }
 

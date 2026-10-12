@@ -7,6 +7,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
@@ -285,6 +286,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
         if (this.isTame()) {
             return false; // A tamed bear never hunts other animals on its own.
+        }
+        if (!HuntingRules.canHunt(target)) {
+            return false;
         }
         return !(target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))
                 && !(target instanceof Bee);

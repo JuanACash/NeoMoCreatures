@@ -1,5 +1,11 @@
 package com.example.neomocreatures.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.golem.GolemBlockPicker;
@@ -9,11 +15,6 @@ import com.example.neomocreatures.entity.golem.GolemState;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -51,7 +52,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-
 import net.neoforged.neoforge.common.CommonHooks;
 
 /**
@@ -370,7 +370,8 @@ public class MoCBigGolemEntity extends Monster implements RockThrower {
     }
 
     private boolean canSummonForReal(BlockPos pos, BlockState state) {
-        return GolemBlockPicker.isLiftable(this.level(), pos, true)
+        return Config.MONSTERS.golemDestroyBlocks.get()
+                && GolemBlockPicker.isLiftable(this.level(), pos, true)
                 && state.getDestroySpeed(this.level(), pos) <= MAX_SUMMON_HARDNESS
                 && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)
                 && CommonHooks.canEntityDestroy(this.level(), pos, this);

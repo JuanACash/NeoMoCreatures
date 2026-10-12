@@ -1,17 +1,18 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-import java.util.function.Predicate;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -103,7 +104,7 @@ public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, Sto
     }
 
     private boolean canHuntTarget(@Nullable LivingEntity target) {
-        if (this.isBaby() || this.isTame() || target instanceof MoCRaccoonEntity) {
+        if (this.isBaby() || this.isTame() || !HuntingRules.canHunt(target) || target instanceof MoCRaccoonEntity) {
             return false;
         }
         return target.getBbWidth() <= 0.7F && target.getBbHeight() <= 0.7F;

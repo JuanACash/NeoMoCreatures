@@ -30,14 +30,7 @@ public class ScorpionAxeItem extends AxeItem {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         boolean result = super.hurtEnemy(stack, target, attacker);
-        if (!target.level().isClientSide) {
-            if (this.effect != null) {
-                target.addEffect(this.effect.get());
-            }
-            if (this.fireSeconds > 0) {
-                target.igniteForSeconds(this.fireSeconds);
-            }
-        }
+        ScorpionHitEffects.apply(target, this.effect, this.fireSeconds);
         return result;
     }
 }

@@ -1,13 +1,5 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetCarryUtil;
-import com.example.neomocreatures.util.PetStorageUtil;
-
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Locale;
@@ -16,6 +8,15 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
+
+import com.example.neomocreatures.Config;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -56,7 +57,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -222,7 +222,9 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         Component name = this.getCustomName();
         if (name != this.lastCheckedName) {
             this.lastCheckedName = name;
-            this.cachedBrother = name == null ? null : TmntBrother.fromName(name.getString());
+            this.cachedBrother = name == null || !Config.GENERAL.easterEggs.get()
+                    ? null
+                    : TmntBrother.fromName(name.getString());
         }
         return this.cachedBrother;
     }

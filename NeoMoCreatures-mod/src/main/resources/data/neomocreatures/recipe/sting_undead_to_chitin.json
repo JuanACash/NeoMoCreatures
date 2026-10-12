@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "neomocreatures:scorp_sting_undead" }],
+  "result": { "id": "neomocreatures:chitin_undead", "count": 1 }
+}

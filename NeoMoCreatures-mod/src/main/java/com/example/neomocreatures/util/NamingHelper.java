@@ -1,15 +1,15 @@
 package com.example.neomocreatures.util;
 
-import com.example.neomocreatures.network.OpenNamingScreenPayload;
-
 import java.util.UUID;
+
+import com.example.neomocreatures.Config;
+import com.example.neomocreatures.network.OpenNamingScreenPayload;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -24,7 +24,9 @@ public final class NamingHelper {
     }
 
     public static void promptRename(Entity entity, UUID ownerUUID) {
-        if (ownerUUID == null || !(entity.level() instanceof ServerLevel serverLevel)) {
+        if (!Config.CREATURES.alwaysNamePets.get()
+                || ownerUUID == null
+                || !(entity.level() instanceof ServerLevel serverLevel)) {
             return;
         }
         ServerPlayer owner = serverLevel.getServer().getPlayerList().getPlayer(ownerUUID);

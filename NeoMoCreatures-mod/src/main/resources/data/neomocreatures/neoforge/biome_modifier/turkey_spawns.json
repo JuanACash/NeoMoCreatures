@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "turkey_spawns",
   "biomes": "#neomocreatures:spawns/turkey",
   "spawners": [
     {

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "snake_spawns_desert_badlands",
   "biomes": "#neomocreatures:spawns/snake_desert_badlands",
   "spawners": [
     {

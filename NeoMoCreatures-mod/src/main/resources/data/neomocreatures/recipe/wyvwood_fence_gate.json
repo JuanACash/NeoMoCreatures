@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "*X*",
+    "*X*"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:wyvwood_planks"
+    },
+    "*": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:wyvwood_fence_gate",
+    "count": 1
+  }
+}

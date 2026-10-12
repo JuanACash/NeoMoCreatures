@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "manta_ray_spawns",
   "biomes": [
     "minecraft:ocean",
     "minecraft:deep_ocean",

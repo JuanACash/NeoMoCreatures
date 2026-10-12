@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 
@@ -125,7 +126,7 @@ public class MoCKittyBedEntity extends Mob {
 
     @Override
     public boolean isPushable() {
-        return !this.isRemoved();
+        return !this.isRemoved() && !Config.CREATURES.staticBed.get();
     }
 
     @Override

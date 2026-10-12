@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCLootUtil;
 
@@ -37,7 +38,7 @@ public class MoCFireOgreEntity extends MoCOgreEntity {
 
     @Override
     public double getDestroyRadius() {
-        return 2.0D;
+        return Config.MONSTERS.fireOgreStrength.get();
     }
 
     @Override

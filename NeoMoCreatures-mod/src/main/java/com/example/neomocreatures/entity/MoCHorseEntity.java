@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
@@ -677,6 +678,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
 
     public boolean isSterileHybrid() {
         return getSpecies().isSterile();
+    }
+
+    /** True while this horse carries a foal in gestation (see {@link HorseBreedingHandler}). */
+    public boolean isGestating() {
+        return this.breedingHandler.isGestating();
     }
 
     public int getSyncedAge() {
@@ -1916,23 +1922,24 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         }
 
         if (getSpecies() == Species.UNICORN || getSpecies() == Species.FAIRY_HORSE) {
-            dropChanceItems(ModItems.UNICORN_HORN.get(), 0.25F);
+            dropChanceItems(ModItems.UNICORN_HORN.get());
         }
         if (isGhostSpecies) {
-            dropChanceItems(Items.GHAST_TEAR, 0.25F);
+            dropChanceItems(Items.GHAST_TEAR);
         }
         if (isUndead()) {
-            dropChanceItems(ModItems.HEART_OF_UNDEAD.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_UNDEAD.get());
         }
         if (getSpecies() == Species.NIGHTMARE) {
-            dropChanceItems(ModItems.HEART_OF_FIRE.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_FIRE.get());
         }
         if (getSpecies() == Species.BATHORSE) {
-            dropChanceItems(ModItems.HEART_OF_DARKNESS.get(), 0.25F);
+            dropChanceItems(ModItems.HEART_OF_DARKNESS.get());
         }
     }
 
-    private void dropChanceItems(Item item, float chancePerRoll) {
+    private void dropChanceItems(Item item) {
+        float chancePerRoll = Config.CREATURES.rareItemDropChance.get() / 100.0F;
         for (int i = 0; i < 2; i++) {
             if (this.random.nextFloat() < chancePerRoll) {
                 this.spawnAtLocation(item);

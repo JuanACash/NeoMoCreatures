@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "neomocreatures:block/wyvstone_slab"
+    },
+    "type=double": {
+      "model": "neomocreatures:block/wyvstone"
+    },
+    "type=top": {
+      "model": "neomocreatures:block/wyvstone_slab_top"
+    }
+  }
+}

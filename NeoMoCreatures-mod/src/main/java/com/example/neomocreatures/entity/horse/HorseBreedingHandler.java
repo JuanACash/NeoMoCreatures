@@ -9,6 +9,7 @@ import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.Config;
 
 /**
  * Mo' Creatures style breeding: two tamed adult horses in love that stay close together
@@ -17,8 +18,10 @@ import com.example.neomocreatures.util.NamingHelper;
  */
 public final class HorseBreedingHandler {
 
-    /** Ticks two horses in love must stay together before the foal appears (15 seconds). */
-    private static final int GESTATION_TICKS = 300;
+    /** Gestation time with easyHorseBreeding off: 5 minutes. */
+    private static final int SLOW_GESTATION_TICKS = 6000;
+    /** Gestation time with easyHorseBreeding on: 15 seconds. */
+    private static final int EASY_GESTATION_TICKS = 300;
 
     private static final double MATE_SEARCH_XZ = 4.0D;
     private static final double MATE_SEARCH_Y = 2.0D;
@@ -38,15 +41,15 @@ public final class HorseBreedingHandler {
     }
 
     public void tick() {
-        if (!this.horse.isInLove()) {
-            this.gestationProgress = 0;
+        // Love lasts about 30 seconds, but a gestation that already started keeps running without it.
+        if (!this.horse.isInLove() && !this.isGestating()) {
             return;
         }
 
         List<MoCHorseEntity> mates = this.horse.level().getEntitiesOfClass(
                 MoCHorseEntity.class, this.horse.getBoundingBox().inflate(MATE_SEARCH_XZ, MATE_SEARCH_Y, MATE_SEARCH_XZ),
                 other -> other != this.horse && other.isTamed() && !other.isBaby()
-                        && !other.isSterileHybrid() && other.isInLove()
+                        && !other.isSterileHybrid() && (other.isInLove() || other.isGestating())
                         && MoCHorseGenetics.canBreed(this.horse.getSpecies(), this.horse.getCoat(),
                                 other.getSpecies(), other.getCoat()));
 
@@ -56,7 +59,7 @@ public final class HorseBreedingHandler {
         }
 
         this.gestationProgress++;
-        if (this.gestationProgress < GESTATION_TICKS) {
+        if (this.gestationProgress < gestationTicks()) {
             return;
         }
 
@@ -78,6 +81,15 @@ public final class HorseBreedingHandler {
 
         this.gestationProgress = 0;
         this.spawnFoal(mate);
+    }
+
+    /** True while a gestation is running, even if the love timer already ran out. */
+    public boolean isGestating() {
+        return this.gestationProgress > 0;
+    }
+
+    private static int gestationTicks() {
+        return Config.CREATURES.easyHorseBreeding.get() ? EASY_GESTATION_TICKS : SLOW_GESTATION_TICKS;
     }
 
     private void spawnFoal(MoCHorseEntity mate) {

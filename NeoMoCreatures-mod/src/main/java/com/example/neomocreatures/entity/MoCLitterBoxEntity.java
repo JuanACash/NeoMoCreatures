@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCTickUtil;
 
@@ -93,7 +94,7 @@ public class MoCLitterBoxEntity extends Mob {
 
     @Override
     public boolean isPushable() {
-        return !this.isRemoved();
+        return !this.isRemoved() && !Config.CREATURES.staticLitter.get();
     }
 
     @Override

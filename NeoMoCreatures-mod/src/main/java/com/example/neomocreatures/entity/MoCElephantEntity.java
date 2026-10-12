@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
 import com.example.neomocreatures.entity.elephant.ElephantTusks;
@@ -266,7 +267,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
      * it's clearly moving — comparing positions directly is reliable either way.
      */
     private void tickTuskBulldozer() {
-        if (tuskStack.isEmpty() || this.isBaby() || !this.isVehicle() || !(this.level() instanceof ServerLevel level)
+        if (!Config.CREATURES.elephantBulldozer.get() || tuskStack.isEmpty() || this.isBaby() || !this.isVehicle() || !(this.level() instanceof ServerLevel level)
                 || !level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
             lastTuskCheckX = this.getX();
             lastTuskCheckZ = this.getZ();

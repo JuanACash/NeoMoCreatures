@@ -5,6 +5,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
 import com.example.neomocreatures.entity.bigcat.BigCatWildFamily;
 import com.example.neomocreatures.init.ModEntities;
@@ -186,7 +187,8 @@ protected void registerGoals() {
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        if (!canHunt(target) || (target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))) {
+        if (!canHunt(target) || !HuntingRules.canHunt(target)
+                || (target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))) {
             return false;
         }
         return target != null && target.getBbHeight() < MAX_PREY_SIZE && target.getBbWidth() < MAX_PREY_SIZE;

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "cricket_spawns",
   "biomes": "#neomocreatures:spawns/cricket",
   "spawners": [
     {

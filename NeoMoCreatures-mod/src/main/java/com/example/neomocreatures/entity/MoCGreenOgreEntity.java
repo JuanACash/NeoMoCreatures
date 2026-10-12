@@ -1,5 +1,6 @@
 package com.example.neomocreatures.entity;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.server.level.ServerLevel;
@@ -36,7 +37,7 @@ public class MoCGreenOgreEntity extends MoCOgreEntity {
 
     @Override
     public double getDestroyRadius() {
-        return 2.5D;
+        return Config.MONSTERS.ogreStrength.get();
     }
 
     /** 0-2 obsidian, scaling with Looting; 0-1 diamond at a 5% chance per roll, boosted by Looting. */

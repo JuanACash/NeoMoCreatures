@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "horse_spawns_donkey",
   "biomes": "#neomocreatures:spawns/horse_donkey",
   "spawners": [
     {

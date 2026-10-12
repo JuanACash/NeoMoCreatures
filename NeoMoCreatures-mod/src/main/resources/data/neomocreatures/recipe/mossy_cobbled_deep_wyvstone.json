@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "neomocreatures:cobbled_deep_wyvstone" },
+    { "item": "neomocreatures:tall_wyvgrass" }
+  ],
+  "result": { "id": "neomocreatures:mossy_cobbled_deep_wyvstone", "count": 1 }
+}

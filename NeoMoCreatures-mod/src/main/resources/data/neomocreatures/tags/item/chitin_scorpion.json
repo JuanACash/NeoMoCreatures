@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "neomocreatures:chitin",
+    "neomocreatures:chitin_black",
+    "neomocreatures:chitin_frost",
+    "neomocreatures:chitin_nether",
+    "neomocreatures:chitin_undead"
+  ]
+}

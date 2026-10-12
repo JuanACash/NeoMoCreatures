@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button_inventory",
+  "textures": {
+    "texture": "neomocreatures:block/wood_planks_wyvwood"
+  }
+}

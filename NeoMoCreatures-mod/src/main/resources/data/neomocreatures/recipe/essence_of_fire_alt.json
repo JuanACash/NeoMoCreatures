@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["A", "B", "C"],
+  "key": {
+    "A": { "item": "neomocreatures:firestone_chunk" },
+    "B": { "item": "neomocreatures:heart_of_fire" },
+    "C": { "item": "minecraft:glass_bottle" }
+  },
+  "result": { "id": "neomocreatures:essence_of_fire", "count": 1 }
+}

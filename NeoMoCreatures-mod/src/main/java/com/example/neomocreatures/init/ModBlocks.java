@@ -23,7 +23,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -221,6 +220,7 @@ public class ModBlocks {
         fire.setFlammable(LEAVES_OGRE_LAIR.get(), 30, 60);
         fire.setFlammable(TALL_WYVGRASS.get(), 60, 100);
         fire.setFlammable(TALL_GRASS_OGRE_LAIR.get(), 60, 100);
+        WyvwoodBlocks.registerFlammability(fire);
     }
 
 }

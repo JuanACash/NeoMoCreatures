@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
@@ -869,7 +870,10 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
 
         int lootingLevel = MoCLootUtil.getLootingLevel(killer);
 
-        if (MoCLootUtil.rollChance(this.random, 0.10F, 0.03F, lootingLevel)) {
+        int baseChancePercent = getVariant().isMother()
+                ? Config.CREATURES.motherWyvernEggDropChance.get()
+                : Config.CREATURES.wyvernEggDropChance.get();
+        if (MoCLootUtil.rollChance(this.random, baseChancePercent / 100.0F, 0.03F, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
         }
     }

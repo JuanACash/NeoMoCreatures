@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "neomocreatures:scorp_sting_dirt" }],
+  "result": { "id": "neomocreatures:chitin", "count": 1 }
+}

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.ostrich.OstrichBreedingHandler;
 import com.example.neomocreatures.entity.ostrich.OstrichEquipment;
@@ -1097,7 +1098,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
                 default -> null;
             };
             if (essenceHeartItem != null) {
-                if (MoCLootUtil.rollChance(this.random, 0.25F, 0.1F, lootingLevel)) {
+                if (MoCLootUtil.rollChance(this.random, Config.CREATURES.rareItemDropChance.get() / 100.0F, 0.1F, lootingLevel)) {
                     MoCLootUtil.dropItems(this, essenceHeartItem, 1 + MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
                 }
             }

@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "turtle_spawns",
   "biomes": "#neomocreatures:spawns/turtle",
   "spawners": [
     {

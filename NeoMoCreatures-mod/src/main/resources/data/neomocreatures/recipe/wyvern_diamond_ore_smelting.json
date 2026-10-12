@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": { "item": "neomocreatures:wyvern_diamond_ore" },
+  "result": { "id": "minecraft:diamond", "count": 1 },
+  "experience": 1.0,
+  "cookingtime": 200
+}

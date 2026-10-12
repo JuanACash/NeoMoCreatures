@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "minecraft:stone_button"
+    },
+    {
+      "item": "neomocreatures:deep_wyvstone"
+    }
+  ],
+  "result": {
+    "id": "neomocreatures:deep_wyvstone_button",
+    "count": 1
+  }
+}

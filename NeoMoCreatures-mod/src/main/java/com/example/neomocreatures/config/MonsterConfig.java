@@ -1,0 +1,54 @@
+package com.example.neomocreatures.config;
+
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+/** Options for hostile mobs. */
+public final class MonsterConfig {
+
+    private static final String SECTION = "monsters";
+    private static final double MIN_RADIUS = 0.0D;
+    private static final double MAX_RADIUS = 10.0D;
+
+    public final ModConfigSpec.BooleanValue golemDestroyBlocks;
+    public final ModConfigSpec.BooleanValue miniGolemCobblestoneOnly;
+    public final ModConfigSpec.DoubleValue ogreStrength;
+    public final ModConfigSpec.DoubleValue fireOgreStrength;
+    public final ModConfigSpec.DoubleValue caveOgreStrength;
+    public final ModConfigSpec.BooleanValue alphaWraithEyes;
+
+    public MonsterConfig(ModConfigSpec.Builder builder) {
+        builder.translation(ConfigTranslations.of(SECTION)).push(SECTION);
+
+        golemDestroyBlocks = builder
+                .comment("Allows golems to pick up blocks. Still requires mobGriefing to be enabled.")
+                .translation(ConfigTranslations.of("golemDestroyBlocks"))
+                .define("golemDestroyBlocks", true);
+
+        miniGolemCobblestoneOnly = builder
+                .comment("Mini golems no longer tear blocks out of the world: they always throw a cobblestone block that leaves no loot.")
+                .translation(ConfigTranslations.of("miniGolemCobblestoneOnly"))
+                .define("miniGolemCobblestoneOnly", false);
+
+        ogreStrength = builder
+                .comment("Block destruction radius of green ogres.")
+                .translation(ConfigTranslations.of("ogreStrength"))
+                .defineInRange("ogreStrength", 2.5D, MIN_RADIUS, MAX_RADIUS);
+
+        fireOgreStrength = builder
+                .comment("Block destruction radius of fire ogres.")
+                .translation(ConfigTranslations.of("fireOgreStrength"))
+                .defineInRange("fireOgreStrength", 2.0D, MIN_RADIUS, MAX_RADIUS);
+
+        caveOgreStrength = builder
+                .comment("Block destruction radius of cave ogres.")
+                .translation(ConfigTranslations.of("caveOgreStrength"))
+                .defineInRange("caveOgreStrength", 3.0D, MIN_RADIUS, MAX_RADIUS);
+
+        alphaWraithEyes = builder
+                .comment("Uses the alternative wraith textures with translucent eyes. Applies right away.")
+                .translation(ConfigTranslations.of("alphaWraithEyes"))
+                .define("alphaWraithEyes", false);
+
+        builder.pop();
+    }
+}

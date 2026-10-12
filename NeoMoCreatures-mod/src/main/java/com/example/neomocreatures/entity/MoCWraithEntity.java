@@ -2,7 +2,9 @@ package com.example.neomocreatures.entity;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.LegacySoundSelector;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
@@ -91,7 +93,7 @@ public class MoCWraithEntity extends Monster {
 
     /** Original: selectType() — a 5% chance for the "Scratch" easter egg. */
     public void rollScratchEasterEgg() {
-        if (this.random.nextInt(100) < 5) {
+        if (Config.GENERAL.easterEggs.get() && this.random.nextInt(100) < 5) {
             this.setCustomName(Component.literal("Scratch"));
         }
     }
@@ -168,17 +170,17 @@ public class MoCWraithEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return ModSounds.WRAITH_AMBIENT.get();
+        return LegacySoundSelector.choose(ModSounds.WRAITH_AMBIENT, ModSounds.WRAITH_AMBIENT_LEGACY);
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return ModSounds.WRAITH_HURT.get();
+        return LegacySoundSelector.choose(ModSounds.WRAITH_HURT, ModSounds.WRAITH_HURT_LEGACY);
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return ModSounds.WRAITH_DEATH.get();
+        return LegacySoundSelector.choose(ModSounds.WRAITH_DEATH, ModSounds.WRAITH_DEATH_LEGACY);
     }
 
     // ---------------------------------------------------------------------

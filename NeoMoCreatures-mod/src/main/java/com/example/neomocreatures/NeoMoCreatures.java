@@ -11,8 +11,11 @@ import com.example.neomocreatures.event.KittyVillageSpawner;
 import com.example.neomocreatures.event.NightmareRiderFireImmunityHandler;
 import com.example.neomocreatures.event.ScorpArmorSetBonusHandler;
 import com.example.neomocreatures.event.ScorpionHoldReleaseHandler;
+import com.example.neomocreatures.init.GleamingGlassBlocks;
 import com.example.neomocreatures.init.ModArmorMaterials;
+import com.example.neomocreatures.init.ModBiomeModifiers;
 import com.example.neomocreatures.init.ModBlocks;
+import com.example.neomocreatures.init.ModConditions;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModEntityAttributes;
 import com.example.neomocreatures.init.ModFeatures;
@@ -21,6 +24,9 @@ import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModSpawnPlacements;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
+import com.example.neomocreatures.init.SilverSandstoneBlocks;
+import com.example.neomocreatures.init.WyvstoneBlocks;
+import com.example.neomocreatures.init.WyvwoodBlocks;
 import com.example.neomocreatures.network.ModNetworking;
 import com.mojang.logging.LogUtils;
 
@@ -59,12 +65,14 @@ public class NeoMoCreatures {
                     output.accept(ModItems.COBBLED_DEEP_WYVSTONE_ITEM.get());
                     output.accept(ModItems.MOSSY_COBBLED_WYVSTONE_ITEM.get());
                     output.accept(ModItems.MOSSY_COBBLED_DEEP_WYVSTONE_ITEM.get());
+                    WyvstoneBlocks.addToCreativeTab(output);
                     output.accept(ModItems.WYVDIRT_ITEM.get());
                     output.accept(ModItems.WYVGRASS_ITEM.get());
                     output.accept(ModItems.TALL_WYVGRASS_ITEM.get());
                     output.accept(ModItems.WYVWOOD_LOG_ITEM.get());
                     output.accept(ModItems.WYVWOOD_LEAVES_ITEM.get());
                     output.accept(ModItems.WYVWOOD_PLANKS_ITEM.get());
+                    WyvwoodBlocks.addToCreativeTab(output);
                     output.accept(ModItems.WYVWOOD_SAPLING_ITEM.get());
                     output.accept(ModItems.WYVERN_DIAMOND_ORE_ITEM.get());
                     output.accept(ModItems.WYVERN_EMERALD_ORE_ITEM.get());
@@ -82,10 +90,12 @@ public class NeoMoCreatures {
                     output.accept(ModItems.SILVER_SANDSTONE_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_CARVED_ITEM.get());
                     output.accept(ModItems.SILVER_SANDSTONE_SMOOTH_ITEM.get());
+                    SilverSandstoneBlocks.addToCreativeTab(output);
                     // ==== Loose pieces ====
                     output.accept(ModItems.ORE_FIRESTONE_ITEM.get());
                     output.accept(ModItems.FIRESTONE_CHUNK.get());
                     output.accept(ModItems.GLASS_GLEAMING_ITEM.get());
+                    GleamingGlassBlocks.addToCreativeTab(output);
                     output.accept(ModItems.BLOCK_WYVERN_NEST_ITEM.get());
 
                     output.accept(ModItems.MOC_EGG.get());
@@ -391,6 +401,10 @@ public class NeoMoCreatures {
     }
 
     private void registerDeferredRegistries(IEventBus modEventBus) {
+        WyvwoodBlocks.init();
+        WyvstoneBlocks.init();
+        SilverSandstoneBlocks.init();
+        GleamingGlassBlocks.init();
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
@@ -399,6 +413,8 @@ public class NeoMoCreatures {
         ModParticles.PARTICLE_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModFeatures.FEATURES.register(modEventBus);
+        ModConditions.CONDITIONS.register(modEventBus);
+        ModBiomeModifiers.BIOME_MODIFIERS.register(modEventBus);
     }
 
     private void registerEntitiesAndSounds(IEventBus modEventBus) {

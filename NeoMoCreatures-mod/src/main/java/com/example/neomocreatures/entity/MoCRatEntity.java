@@ -1,12 +1,13 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.rat.RatVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.LegacySoundSelector;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -197,7 +198,7 @@ public class MoCRatEntity extends Monster {
 
     @Override
     protected SoundEvent getDeathSound() {
-        return ModSounds.RAT_DEATH.get();
+        return LegacySoundSelector.choose(ModSounds.RAT_DEATH, ModSounds.RAT_DEATH_LEGACY);
     }
 
     // ---------------------------------------------------------------------

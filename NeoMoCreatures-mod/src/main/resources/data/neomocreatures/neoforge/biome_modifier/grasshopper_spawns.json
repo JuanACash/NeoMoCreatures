@@ -1,5 +1,6 @@
 {
-  "type": "neoforge:add_spawns",
+  "type": "neomocreatures:config_spawns",
+  "option": "grasshopper_spawns",
   "biomes": "#neomocreatures:spawns/grasshopper",
   "spawners": [
     {
