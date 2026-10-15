@@ -1,16 +1,5 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.bird.BirdVariant;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.init.ModTags;
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetCarryUtil;
-import com.example.neomocreatures.util.PetStorageUtil;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,10 +7,23 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.bird.BirdVariant;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.PetStorageUtil;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -188,7 +190,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("BirdVariant", 8)) {
+        if (tag.contains("BirdVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(BirdVariant.valueOf(tag.getString("BirdVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -322,11 +324,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Bird", true);
         tag.putString("BirdVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeIdentity(tag, this, owner);
         return tag;
     }
 
@@ -481,6 +479,9 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             if (bird.isTame() || bird.isHeld() || bird.hasEatenSeeds) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(bird, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             List<ItemEntity> items = bird.level().getEntitiesOfClass(ItemEntity.class,
                     bird.getBoundingBox().inflate(SEED_SEARCH_RADIUS),
                     item -> item.isAlive() && isSeed(item.getItem()));
@@ -600,13 +601,6 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             this.setVariant(BirdVariant.valueOf(tag.getString("BirdVariant")));
         } catch (IllegalArgumentException ignored) {
         }
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreIdentity(tag, this);
     }
 }

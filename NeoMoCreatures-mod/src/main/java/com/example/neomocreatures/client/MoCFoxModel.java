@@ -2,7 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCFoxEntity;
 
-
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -85,8 +84,8 @@ public class MoCFoxModel extends HierarchicalModel<MoCFoxEntity> {
     @Override
     public void setupAnim(MoCFoxEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
-        this.head.xRot = headPitch * ((float) Math.PI / 180F);
+        this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
+        this.head.xRot = headPitch * Mth.DEG_TO_RAD;
 
         float legAngle = ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F);
         float legAngleOpposite = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;

@@ -16,6 +16,7 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
@@ -128,7 +129,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     /** Server-side countdown until a flipped turtle rights itself. */
     private int struggleTicks;
     private int pickupCooldown;
-    private float lastAppliedScale = -1F;
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync(SCALE_CHANGE_THRESHOLD);
 
     /** Cache for {@link #getTmntBrother()}: the name is compared by identity, so it is only parsed when it changes. */
     @Nullable
@@ -254,11 +255,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
                 && this.random.nextInt(GROWTH_STEP_ODDS) == 0) {
             scaleAttribute.setBaseValue(Math.min(MAX_SCALE, scaleAttribute.getBaseValue() + GROWTH_STEP));
         }
-        float current = (float) scaleAttribute.getValue();
-        if (Math.abs(this.lastAppliedScale - current) > SCALE_CHANGE_THRESHOLD) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
-        }
+        this.hitboxSync.sync(this);
     }
 
     @Override
@@ -593,10 +590,8 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     private void captureIntoAmulet(Player player, InteractionHand hand) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(AMULET_KEY, true);
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeIdentity(tag, this, player.getUUID());
         tag.putFloat("Scale", this.getGrowthScale());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", player.getUUID());
 
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), tag);
     }
@@ -990,16 +985,9 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     /** Restores the data saved by {@link #captureIntoAmulet} when a Pet Amulet releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth(tag.getFloat("Health"));
+        PetStorageTags.restoreIdentity(tag, this);
         if (tag.contains("Scale")) {
             this.setGrowthScale(tag.getFloat("Scale"));
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

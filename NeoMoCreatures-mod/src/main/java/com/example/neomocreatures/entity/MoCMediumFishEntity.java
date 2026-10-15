@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
@@ -7,14 +9,12 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -43,7 +43,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -121,7 +120,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
     private static final EntityDataAccessor<Float> DATA_GROWN_SCALE =
             SynchedEntityData.defineId(MoCMediumFishEntity.class, EntityDataSerializers.FLOAT);
 
-    private float lastAppliedScale = -1.0F;
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync();
     private int outOfWaterTicks;
 
     protected MoCMediumFishEntity(EntityType<? extends MoCMediumFishEntity> type, Level level) {
@@ -213,11 +212,7 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
                 scale.setBaseValue(target);
             }
         }
-        float current = (float) scale.getValue();
-        if (this.lastAppliedScale != current) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
-        }
+        this.hitboxSync.sync(this);
     }
 
     @Override
@@ -407,11 +402,9 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
         tag.putBoolean(NET_KEY, true);
         // Which of the 3 species this is, so a single "release" path can spawn the right one back.
         tag.putString("EntityId", BuiltInRegistries.ENTITY_TYPE.getKey(this.getType()).toString());
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeIdentity(tag, this, owner.getUUID());
         tag.putInt("Age", this.getAge());
         tag.putFloat("GrownScale", this.entityData.get(DATA_GROWN_SCALE));
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", owner.getUUID());
         return tag;
     }
 
@@ -419,16 +412,8 @@ public abstract class MoCMediumFishEntity extends TamableAnimal implements EggHa
      *  wiki tames on release from a net regardless of whether it was tame when caught. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
         this.setAge(tag.getInt("Age"));
         this.entityData.set(DATA_GROWN_SCALE, tag.getFloat("GrownScale"));
-        this.setHealth(tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-            this.setCustomNameVisible(true);
-        }
+        PetStorageTags.restoreIdentity(tag, this, true);
     }
 }

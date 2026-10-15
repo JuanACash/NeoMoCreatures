@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.komodo.KomodoSitGoal;
@@ -10,15 +14,12 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -46,7 +47,6 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -68,7 +68,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -185,7 +184,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     private void travelRiddenInWater(Player rider, Vec3 travelVector) {
         this.tickRidden(rider, travelVector);
         Vec3 input = this.getRiddenInput(rider, travelVector);
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double dx = -Math.sin(yaw) * input.z + Math.cos(yaw) * input.x;
         double dz = Math.cos(yaw) * input.z + Math.sin(yaw) * input.x;
 
@@ -342,40 +341,15 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     public void aiStep() {
         super.aiStep();
         tickMouthAnimation();
-        tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, this.individualAdultScale);
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
 
-    private float lastAppliedScale = -1F;
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction() * this.individualAdultScale;
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
 
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, this.individualAdultScale);
     }
 
     @Nullable
@@ -413,7 +387,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         if (tag.contains("KomodoSaddled")) {
             setSaddled(tag.getBoolean("KomodoSaddled"));
         }
-        if (tag.contains("KomodoSaddleItem", 8)) {
+        if (tag.contains("KomodoSaddleItem", Tag.TAG_STRING)) {
             this.saddleItemId = ResourceLocation.parse(tag.getString("KomodoSaddleItem"));
         }
     }
@@ -538,7 +512,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
         double height = this.isSwimmingDeep() ? RIDER_HEIGHT_SWIMMING : RIDER_HEIGHT;
@@ -639,13 +613,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("KomodoDragon", true);
         tag.putFloat("IndividualAdultScale", this.individualAdultScale);
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -676,18 +644,6 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         if (tag.contains("IndividualAdultScale")) {
             this.setIndividualAdultScale(tag.getFloat("IndividualAdultScale"));
         }
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

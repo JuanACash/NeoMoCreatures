@@ -18,10 +18,12 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -105,12 +107,33 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     private static final int WHIP_CHARGE_DURATION_TICKS = 60; // 3 seconds, same as the unicorn's charge
     private static final int WHIP_SPEED_AMPLIFIER = 1;
     private static final int SAFE_FALL_BLOCKS = 3;
+
+    private static final int TOTAL_CHEST_SLOTS = 54;
+    private static final int LARGE_CHEST_SLOTS = 18;
+    private static final int SMALL_CHEST_SLOTS = 9;
+    /** The first chests are large, the later ones (mammoth only) are small. */
+    private static final int LARGE_CHEST_COUNT = 2;
+
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 30.0D;
+    /** Squared horizontal speed under which the hazard check is skipped. */
+    private static final double HAZARD_CHECK_MIN_MOTION_SQR = 0.0004D;
+
+    // Idle animation timers (read client-side by MoCElephantModel).
+    /** 1 in N chance per tick that an idle animation starts. */
+    private static final int IDLE_ANIMATION_ODDS = 200;
+    private static final int TAIL_ANIMATION_TICKS = 8;
+    private static final int TRUNK_ANIMATION_TICKS = 38;
+    private static final int TRUNK_ANIMATION_MAX_START = 10;
+    private static final int EAR_ANIMATION_TICKS = 30;
+    private static final int EAR_ANIMATION_MAX_START = 20;
+    private static final int EAT_ANIMATION_TICKS = 20;
     // First 2 chests give 18 slots each, the 3rd and 4th (mammoth only) give 9 each —
     // 18+18+9+9 = 54, exactly vanilla's ChestMenu row limit, so all 4 stay fully usable.
-    private final SimpleContainer chestInventory = new SimpleContainer(54);
+    private final SimpleContainer chestInventory = new SimpleContainer(TOTAL_CHEST_SLOTS);
 
     private static int slotsForChestIndex(int index) {
-        return index < 2 ? 18 : 9;
+        return index < LARGE_CHEST_COUNT ? LARGE_CHEST_SLOTS : SMALL_CHEST_SLOTS;
     }
 
     /** Total slots occupied by the first `count` chests combined. */
@@ -223,7 +246,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             return;
         }
         Vec3 motion = this.getDeltaMovement();
-        if (motion.x * motion.x + motion.z * motion.z < 0.0004D) {
+        if (motion.x * motion.x + motion.z * motion.z < HAZARD_CHECK_MIN_MOTION_SQR) {
             return;
         }
         Vec3 dir = new Vec3(motion.x, 0.0D, motion.z).normalize();
@@ -376,8 +399,8 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 30.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.MOVEMENT_SPEED, 0.2D)
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
@@ -857,7 +880,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, (float) getVariant().getRenderScale());
         if (!this.level().isClientSide) {
             tickIdleCounters();
             tickHarnessSit();
@@ -895,7 +918,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         if (tag.contains("TameProgress")) {
             this.entityData.set(DATA_TAME_PROGRESS, tag.getInt("TameProgress"));
         }
-        if (tag.contains("ElephantVariant", 8)) {
+        if (tag.contains("ElephantVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(ElephantVariant.valueOf(tag.getString("ElephantVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -911,9 +934,9 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             setChestCount(tag.getInt("ElephantChestCount"));
         }
         if (tag.contains("ElephantChestItems", 9)) {
-            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ElephantChestItems", 10), this.registryAccess());
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ElephantChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
-        if (tag.contains("ElephantTusks", 10)) {
+        if (tag.contains("ElephantTusks", Tag.TAG_COMPOUND)) {
             tuskStack = ItemStack.parse(this.registryAccess(), tag.getCompound("ElephantTusks")).orElse(ItemStack.EMPTY);
             this.entityData.set(DATA_TUSK_TIER, tuskStack.isEmpty() ? ElephantTusks.NONE : ElephantTusks.tierFor(tuskStack));
         }
@@ -931,33 +954,33 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     /** Random idle counters for the tail swish / ear flap / trunk sway — read client-side by MoCElephantModel. */
     private void tickIdleCounters() {
         int tail = this.entityData.get(DATA_TAIL_TICKS);
-        if (tail > 0 && ++tail > 8) {
+        if (tail > 0 && ++tail > TAIL_ANIMATION_TICKS) {
             tail = 0;
         }
-        if (tail == 0 && this.random.nextInt(200) == 0) {
+        if (tail == 0 && this.random.nextInt(IDLE_ANIMATION_ODDS) == 0) {
             tail = 1;
         }
         this.entityData.set(DATA_TAIL_TICKS, tail);
 
         int trunk = this.entityData.get(DATA_TRUNK_TICKS);
-        if (trunk > 0 && ++trunk > 38) {
+        if (trunk > 0 && ++trunk > TRUNK_ANIMATION_TICKS) {
             trunk = 0;
         }
-        if (trunk == 0 && this.random.nextInt(200) == 0) {
-            trunk = this.random.nextInt(10) + 1;
+        if (trunk == 0 && this.random.nextInt(IDLE_ANIMATION_ODDS) == 0) {
+            trunk = this.random.nextInt(TRUNK_ANIMATION_MAX_START) + 1;
         }
         this.entityData.set(DATA_TRUNK_TICKS, trunk);
 
         int ear = this.entityData.get(DATA_EAR_TICKS);
-        if (ear > 0 && ++ear > 30) {
+        if (ear > 0 && ++ear > EAR_ANIMATION_TICKS) {
             ear = 0;
         }
-        if (ear == 0 && this.random.nextInt(200) == 0) {
-            ear = this.random.nextInt(20) + 1;
+        if (ear == 0 && this.random.nextInt(IDLE_ANIMATION_ODDS) == 0) {
+            ear = this.random.nextInt(EAR_ANIMATION_MAX_START) + 1;
         }
         this.entityData.set(DATA_EAR_TICKS, ear);
         int eat = this.entityData.get(DATA_EAT_TICKS);
-        if (eat > 0 && ++eat > 20) {
+        if (eat > 0 && ++eat > EAT_ANIMATION_TICKS) {
             eat = 0;
         }
         this.entityData.set(DATA_EAT_TICKS, eat);
@@ -994,13 +1017,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("ElephantVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -1009,38 +1026,12 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         dropAllEquipment();
         PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
-    
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
 
-    private float lastAppliedScale = -1F;
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction() * (float) getVariant().getRenderScale();
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
 
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, (float) getVariant().getRenderScale());
     }
 
     @Override
@@ -1096,7 +1087,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         }
         int seatIndex = this.getPassengers().indexOf(passenger);
         float seatForward = RIDER_FORWARD + (seatIndex == 1 ? PLATFORM_BACK_SEAT_FORWARD : 0F);
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * seatForward;
         double z = this.getZ() + Math.cos(yaw) * seatForward;
         double y = this.getY() + RIDER_HEIGHT * this.getScale()
@@ -1163,18 +1154,6 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(ElephantVariant.valueOf(tag.getString("ElephantVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
@@ -11,15 +15,13 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -50,7 +52,6 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -69,7 +70,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
@@ -80,6 +80,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     private static final int GROWTH_TICKS = 72000;
     private static final float BABY_SCALE = 0.5F;
     private static final float ADULT_SCALE = 1.35F;
+    private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, ADULT_SCALE);
 
     private static final float RIDER_HEIGHT = 0.6F;
     private static final float RIDER_FORWARD = 0.1F;
@@ -88,6 +89,20 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     private static final double RIDDEN_DESCEND_THRUST = 0.3D;
     private static final double RIDDEN_FLYER_FALL_SPEED = 0.6D;
     private static final double RIDDEN_FLYER_GRAVITY_PULL = 0.02D;
+    private static final float RIDDEN_FLYER_MOVE_SPEED = RIDDEN_FLYER_FRICTION / 10F;
+
+    private static final int CHEST_SLOTS = 9;
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 40.0D;
+    private static final float MAX_LIGHT_LEVEL = 15.0F;
+    /** Ticks between wing-flap sounds while flying with a rider. */
+    private static final int RIDE_WING_FLAP_TICKS = 20;
+
+    // Idle animation timers (read client-side by MoCManticoreModel).
+    /** 1 in N chance per tick that the tail animation starts. */
+    private static final int IDLE_ANIMATION_ODDS = 200;
+    private static final int TAIL_ANIMATION_TICKS = 10;
+    private static final int MOUTH_ANIMATION_TICKS = 30;
 
     private boolean huntingFlying;
     private int rideWingFlapCounter;
@@ -111,7 +126,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
             SynchedEntityData.defineId(MoCManticoreEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private final SimpleContainer chestInventory = new SimpleContainer(9);
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
     @Nullable
     private ResourceLocation saddleItemId;
 
@@ -136,7 +151,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     }
 
     private static float getBrightness(MoCManticoreEntity manticore) {
-        return manticore.level().getMaxLocalRawBrightness(manticore.blockPosition()) / 15.0F;
+        return manticore.level().getMaxLocalRawBrightness(manticore.blockPosition()) / MAX_LIGHT_LEVEL;
     }
 
     /** Hunts players only while wild and not sitting: anywhere in the Nether, otherwise in darkness. */
@@ -150,8 +165,8 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 40.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.MOVEMENT_SPEED, 0.35D)
                 .add(Attributes.FLYING_SPEED, 0.35D)
                 .add(Attributes.ATTACK_DAMAGE, 8.0D)
@@ -334,7 +349,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("ManticoreVariant", 8)) {
+        if (tag.contains("ManticoreVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(ManticoreVariant.valueOf(tag.getString("ManticoreVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -346,14 +361,14 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         if (tag.contains("ManticoreSaddled")) {
             setSaddled(tag.getBoolean("ManticoreSaddled"));
         }
-        if (tag.contains("ManticoreSaddleItem", 8)) {
+        if (tag.contains("ManticoreSaddleItem", Tag.TAG_STRING)) {
             this.saddleItemId = ResourceLocation.parse(tag.getString("ManticoreSaddleItem"));
         }
         if (tag.contains("ManticoreHasChest")) {
             setHasChest(tag.getBoolean("ManticoreHasChest"));
         }
         if (tag.contains("ManticoreChestItems", 9)) {
-            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ManticoreChestItems", 10), this.registryAccess());
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ManticoreChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }
 
@@ -530,7 +545,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
         double y = this.getY() + RIDER_HEIGHT * this.getScale();
@@ -564,7 +579,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
             this.setNoGravity(true);
             this.setDeltaMovement(this.getDeltaMovement().add(0.0D, RIDDEN_ASCEND_THRUST, 0.0D));
             if (!this.level().isClientSide) {
-                if (++rideWingFlapCounter >= 20) {
+                if (++rideWingFlapCounter >= RIDE_WING_FLAP_TICKS) {
                     rideWingFlapCounter = 0;
                     this.playSound(ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
                 }
@@ -582,7 +597,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     @Override
     public void travel(Vec3 travelVector) {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player && !this.onGround()) {
-            this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
+            this.moveRelative(RIDDEN_FLYER_MOVE_SPEED, travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
             Vec3 delta = this.getDeltaMovement()
                     .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)
@@ -650,13 +665,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("ManticoreVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -786,43 +795,15 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         }
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private float lastAppliedScale = -1F;
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction() * ADULT_SCALE;
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this);
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this);
         if (!this.level().isClientSide) {
             if (!this.isTame() && this.level().getDifficulty() == Difficulty.PEACEFUL) {
                 this.discard();
@@ -838,16 +819,16 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
 
     private void tickIdleCounters() {
         int tail = this.entityData.get(DATA_TAIL_TICKS);
-        if (tail > 0 && ++tail > 10) {
+        if (tail > 0 && ++tail > TAIL_ANIMATION_TICKS) {
             tail = 0;
         }
-        if (tail == 0 && this.random.nextInt(200) == 0) {
+        if (tail == 0 && this.random.nextInt(IDLE_ANIMATION_ODDS) == 0) {
             tail = 1;
         }
         this.entityData.set(DATA_TAIL_TICKS, tail);
 
         int mouth = this.entityData.get(DATA_MOUTH_TICKS);
-        if (mouth > 0 && ++mouth > 30) {
+        if (mouth > 0 && ++mouth > MOUTH_ANIMATION_TICKS) {
             mouth = 0;
         }
         this.entityData.set(DATA_MOUTH_TICKS, mouth);
@@ -873,19 +854,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(ManticoreVariant.valueOf(tag.getString("ManticoreVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 
     /** The fire manticore shields its rider from fire. */

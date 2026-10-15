@@ -1,6 +1,7 @@
 package com.example.neomocreatures.entity;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.entity.kitty.KittyCareState;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 
@@ -44,6 +45,16 @@ public class MoCKittyBedEntity extends Mob {
     private static final EntityDataAccessor<Float> DATA_MILK_LEVEL =
             SynchedEntityData.defineId(MoCKittyBedEntity.class, EntityDataSerializers.FLOAT);
 
+    private static final double BASE_MAX_HEALTH = 20.0D;
+    /** Rotating a bed snaps it to multiples of this angle. */
+    private static final float ROTATION_STEP_DEGREES = 90.0F;
+    /** How much of the bowl a resting kitty eats per tick. */
+    private static final float EAT_RATE_PER_TICK = 0.003F;
+    /** Milk level at which the bowl counts as fully eaten and empties. */
+    private static final float BOWL_EMPTY_LEVEL = 2.0F;
+    /** Height of a resting kitty above the bed's origin. */
+    private static final double RIDER_OFFSET_Y = 0.2D;
+
     public MoCKittyBedEntity(EntityType<? extends MoCKittyBedEntity> type, Level level) {
         super(type, level);
         this.setNoAi(true);
@@ -60,7 +71,7 @@ public class MoCKittyBedEntity extends Mob {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 20.0D);
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH);
     }
 
     /** Placed furniture, not a wild mob: it must never despawn when players wander off. */
@@ -169,7 +180,7 @@ public class MoCKittyBedEntity extends Mob {
                 return InteractionResult.SUCCESS;
             }
             if (!this.level().isClientSide) {
-                this.setYRot(Math.round(this.getYRot() / 90.0F) * 90.0F + 90.0F);
+                this.setYRot(Math.round(this.getYRot() / ROTATION_STEP_DEGREES) * ROTATION_STEP_DEGREES + ROTATION_STEP_DEGREES);
                 this.setYHeadRot(this.getYRot());
                 this.playSound(SoundEvents.ITEM_FRAME_ROTATE_ITEM, 1.0F, 1.0F);
             }
@@ -183,9 +194,10 @@ public class MoCKittyBedEntity extends Mob {
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        moveFunction.accept(passenger, this.getX(), this.getY() + 0.2D, this.getZ());
+        moveFunction.accept(passenger, this.getX(), this.getY() + RIDER_OFFSET_Y, this.getZ());
     }
 
+    /** Sheet color ids follow the original mod, which uses the vanilla dye order (0 = white). */
     private static Item itemForSheetColor(int colorId) {
         return switch (colorId) {
             case 1 -> ModItems.KITTY_BED_ORANGE.get();
@@ -212,9 +224,9 @@ public class MoCKittyBedEntity extends Mob {
         super.tick();
         if (!this.level().isClientSide && (hasFood() || hasMilk()) && this.isVehicle()
                 && this.getFirstPassenger() instanceof MoCKittyEntity kitty
-                && kitty.getKittyState() != 12) {
-            this.setMilkLevel(this.getMilkLevel() + 0.003F);
-            if (this.getMilkLevel() > 2.0F) {
+                && kitty.getKittyState() != KittyCareState.STATE_SLEEPING) {
+            this.setMilkLevel(this.getMilkLevel() + EAT_RATE_PER_TICK);
+            if (this.getMilkLevel() > BOWL_EMPTY_LEVEL) {
                 this.setMilkLevel(0.0F);
                 setHasMilk(false);
                 setHasFood(false);

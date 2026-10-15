@@ -2,7 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCGoatEntity;
 
-
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -179,12 +178,12 @@ public class MoCGoatModel extends HierarchicalModel<MoCGoatEntity> {
         }
 
         float clampedYaw = Mth.clamp(netHeadYaw, -20F, 20F);
-        this.head.yRot = clampedYaw * ((float) Math.PI / 180F);
+        this.head.yRot = clampedYaw * Mth.DEG_TO_RAD;
 
         boolean angry = entity.isAngry();
         int attackTicks = entity.getAttackTicks();
         // Original: baseAngle = 30° + headPitch, the resting forward/down tilt.
-        float restingHeadXRot = (30F / ModelAnimations.DEGREES_PER_RADIAN) + (headPitch * ((float) Math.PI / 180F));
+        float restingHeadXRot = (30F / ModelAnimations.DEGREES_PER_RADIAN) + (headPitch * Mth.DEG_TO_RAD);
         // head's pivot is FIXED (see the "disconnected head" fix earlier —
         // it's an independent part, not a child of neck, so its position
         // never follows neck's rotation). Rotating it further and further

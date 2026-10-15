@@ -13,11 +13,12 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -41,7 +42,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -101,6 +101,20 @@ public class MoCSnakeEntity extends TamableAnimal
     private static final int VENOM_DURATION_TICKS = 150;
     private static final int VENOM_AMPLIFIER = 2;
 
+    private static final double BASE_MAX_HEALTH = 10.0D;
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    /** Ticks between searches for a player target (vanilla "random interval"). */
+    private static final int TARGET_CHECK_INTERVAL = 10;
+    private static final int PICKUP_COOLDOWN_TICKS = 10;
+    /** movInt picks one of this many idle animation variants. */
+    private static final int IDLE_ANIMATION_VARIANTS = 10;
+    /** 1 in N chance per tick that a swimming snake plays its swim sound. */
+    private static final int SWIM_SOUND_ODDS = 20;
+    // Client animation, 1 in N chance per tick.
+    private static final int TONGUE_FLICK_ODDS = 50;
+    private static final int MOUTH_OPEN_ODDS = 100;
+    private static final int IDLE_REROLL_ODDS = 50;
+
     /** Ticks from hatch to full (variant) adult size — same pattern as MoCKomodoDragonEntity. */
     private static final int GROWTH_TICKS = 48000;
     /** Fraction of the variant's adult size a freshly-hatched baby starts at. */
@@ -125,8 +139,8 @@ public class MoCSnakeEntity extends TamableAnimal
     /** Original's public {@code bodyswing}: counts down from 2 during a bite, resets to 2.5. */
     public float bodyswing = 2.0F;
     private int movInt;
-    /** Only used to avoid a redundant refreshDimensions() call every tick — see tickGrowth(). */
-    private float lastAppliedScale = -1F;
+    private final AgeGrowthScaler growth =
+            new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F, SCALE_CHANGE_THRESHOLD);
 
     // Computed independently on both sides every tick (see tickNearPlayer())
     // — not synced, because both sides derive it the same deterministic way,
@@ -137,7 +151,7 @@ public class MoCSnakeEntity extends TamableAnimal
 
     public MoCSnakeEntity(EntityType<? extends MoCSnakeEntity> type, Level level) {
         super(type, level);
-        this.movInt = this.random.nextInt(10);
+        this.movInt = this.random.nextInt(IDLE_ANIMATION_VARIANTS);
         // Original overrides isAmphibian()/canBreatheUnderwater() to let the
         // snake wander freely between land and water without hesitating at
         // the shoreline; zeroing the water malus is what actually achieves
@@ -176,7 +190,7 @@ public class MoCSnakeEntity extends TamableAnimal
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
-        this.pickupCooldown = 10;
+        this.pickupCooldown = PICKUP_COOLDOWN_TICKS;
     }
 
     /** Same approach as MoCKittyEntity: repositions the real entity next to the player's head every tick instead of using real riding (Player has no passenger attachment point). */
@@ -247,7 +261,7 @@ public class MoCSnakeEntity extends TamableAnimal
                 // bookkeeping, which never triggers once we're hard-locking
                 // Y here instead of letting normal gravity/ground contact
                 // happen — so the swim sound has to be driven from here.
-                if (moving && this.random.nextInt(20) == 0) {
+                if (moving && this.random.nextInt(SWIM_SOUND_ODDS) == 0) {
                     this.playSound(ModSounds.SNAKE_SWIM.get(), 1.0F, 1.0F);
                 }
             }
@@ -279,16 +293,16 @@ public class MoCSnakeEntity extends TamableAnimal
         // actual bite in attackEntityAsMob() unless the snake was bold,
         // wild and pissed. Gating the goal itself on the same 3 conditions
         // is equivalent and avoids a target-then-do-nothing dead end.
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, false, false,
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, TARGET_CHECK_INTERVAL, false, false,
                 target -> this.isPissed() && this.getVariant().isBold() && !this.isTame() && !this.isBaby()));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 3.0D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
                 .add(Attributes.SCALE, 1.0D);
     }
 
@@ -308,42 +322,13 @@ public class MoCSnakeEntity extends TamableAnimal
         this.entityData.set(DATA_VARIANT, variant.getId());
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
     /** Below this, a scale change is float noise from the per-tick age increment, not worth a refreshDimensions() call. */
     private static final float SCALE_CHANGE_THRESHOLD = 0.01F;
 
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction() * getVariant().getSizeFactor();
-            if (Math.abs((float) scaleAttr.getBaseValue() - newScale) > SCALE_CHANGE_THRESHOLD) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        // refreshDimensions() rebuilds the hitbox and briefly disrupts
-        // pathfinding — calling it every single tick (which the old version
-        // above did, since currentScale drifts by a tiny float amount every
-        // tick during growth) made babies effectively unable to navigate.
-        if (Math.abs(this.lastAppliedScale - currentScale) > SCALE_CHANGE_THRESHOLD) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
 
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, getVariant().getSizeFactor());
     }
 
     public float getTongueOff() {
@@ -403,7 +388,7 @@ public class MoCSnakeEntity extends TamableAnimal
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, getVariant().getSizeFactor());
         if (this.pickupCooldown > 0) {
             this.pickupCooldown--;
         }
@@ -472,10 +457,10 @@ public class MoCSnakeEntity extends TamableAnimal
                 this.fRattle = 0F;
             }
         }
-        if (this.random.nextInt(50) == 0 && this.fTongue == 0F) {
+        if (this.random.nextInt(TONGUE_FLICK_ODDS) == 0 && this.fTongue == 0F) {
             this.fTongue = 0.1F;
         }
-        if (this.random.nextInt(100) == 0 && this.fMouth == 0F) {
+        if (this.random.nextInt(MOUTH_OPEN_ODDS) == 0 && this.fMouth == 0F) {
             this.fMouth = 0.1F;
         }
         if (getVariant() == SnakeVariant.RATTLE) {
@@ -484,8 +469,8 @@ public class MoCSnakeEntity extends TamableAnimal
                 this.fRattle = 0.1F;
             }
         }
-        if (!isResting() && this.random.nextInt(50) == 0) {
-            this.movInt = this.random.nextInt(10);
+        if (!isResting() && this.random.nextInt(IDLE_REROLL_ODDS) == 0) {
+            this.movInt = this.random.nextInt(IDLE_ANIMATION_VARIANTS);
         }
         if (isBiting()) {
             this.bodyswing -= 0.5F;
@@ -614,7 +599,7 @@ public class MoCSnakeEntity extends TamableAnimal
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("SnakeVariant", 8)) {
+        if (tag.contains("SnakeVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(SnakeVariant.valueOf(tag.getString("SnakeVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -673,13 +658,7 @@ public class MoCSnakeEntity extends TamableAnimal
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Snake", true);
         tag.putInt("SnakeVariant", getVariant().getId());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -787,18 +766,6 @@ public class MoCSnakeEntity extends TamableAnimal
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(SnakeVariant.byId(tag.getInt("SnakeVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

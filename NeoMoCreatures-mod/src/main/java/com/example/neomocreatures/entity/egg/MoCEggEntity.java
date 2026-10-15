@@ -11,6 +11,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -275,7 +276,7 @@ public class MoCEggEntity extends Mob {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("HatchEntityType", 8)) {
+        if (tag.contains("HatchEntityType", Tag.TAG_STRING)) {
             this.hatchEntityId = ResourceLocation.parse(tag.getString("HatchEntityType"));
         }
         if (tag.contains("RequiresLight")) {
@@ -284,8 +285,8 @@ public class MoCEggEntity extends Mob {
         if (tag.contains("RequiresWater")) {
             this.requiresWater = tag.getBoolean("RequiresWater");
         }
-        this.hatchVariant = tag.contains("HatchVariant", 8) ? tag.getString("HatchVariant") : null;
-        this.sourceItemId = tag.contains("SourceItem", 8) ? ResourceLocation.parse(tag.getString("SourceItem")) : null;
+        this.hatchVariant = tag.contains("HatchVariant", Tag.TAG_STRING) ? tag.getString("HatchVariant") : null;
+        this.sourceItemId = tag.contains("SourceItem", Tag.TAG_STRING) ? ResourceLocation.parse(tag.getString("SourceItem")) : null;
     }
 
     @Override

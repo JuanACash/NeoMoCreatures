@@ -12,17 +12,17 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -82,7 +82,8 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
             SynchedEntityData.defineId(MoCBunnyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
-    private float lastAppliedScale = -1F;
+    private final AgeGrowthScaler growth =
+            new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F, SCALE_CHANGE_THRESHOLD);
     /** Ticks until the next hop while moving — original's jumpTimer. */
     private int jumpTimer;
     /** How long after being released before it can be picked up again — avoids an instant re-grab flicker. */
@@ -146,7 +147,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("BunnyVariant", 8)) {
+        if (tag.contains("BunnyVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(BunnyVariant.valueOf(tag.getString("BunnyVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -158,13 +159,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Bunny", true);
         tag.putString("BunnyVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -191,7 +186,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this);
         if (this.pickupCooldown > 0) {
             this.pickupCooldown--;
         }
@@ -244,35 +239,9 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
     }
 
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float target = getGrowthFraction();
-            if (Math.abs((float) scaleAttr.getBaseValue() - target) > SCALE_CHANGE_THRESHOLD) {
-                scaleAttr.setBaseValue(target);
-            }
-        }
-        float current = (float) scaleAttr.getValue();
-        if (Math.abs(this.lastAppliedScale - current) > SCALE_CHANGE_THRESHOLD) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
-    }
-
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
+        this.growth.tick(this);
     }
 
     @Override
@@ -520,18 +489,6 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
             this.setVariant(BunnyVariant.valueOf(tag.getString("BunnyVariant")));
         } catch (IllegalArgumentException ignored) {
         }
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setBaby(!tag.getBoolean("Adult"));
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

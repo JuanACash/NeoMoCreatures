@@ -18,11 +18,13 @@ import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -686,7 +688,7 @@ protected void registerGoals() {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("BigCatVariant", 8)) {
+        if (tag.contains("BigCatVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(BigCatVariant.valueOf(tag.getString("BigCatVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -710,14 +712,14 @@ protected void registerGoals() {
         if (tag.contains("BigCatSaddled")) {
             setSaddled(tag.getBoolean("BigCatSaddled"));
         }
-        if (tag.contains("BigCatSaddleItem", 8)) {
+        if (tag.contains("BigCatSaddleItem", Tag.TAG_STRING)) {
             this.saddleItemId = ResourceLocation.parse(tag.getString("BigCatSaddleItem"));
         }
         if (tag.contains("BigCatHasChest")) {
             setHasChest(tag.getBoolean("BigCatHasChest"));
         }
         if (tag.contains("BigCatChestItems", 9)) {
-            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("BigCatChestItems", 10), this.registryAccess());
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("BigCatChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
         if (tag.contains("BigCatWings")) {
             this.entityData.set(DATA_HAS_WINGS, tag.getBoolean("BigCatWings"));
@@ -772,7 +774,7 @@ protected void registerGoals() {
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this, getVariant().getGrowthTicks(), BABY_SCALE, (float) getVariant().getRenderScale());
         if (!this.level().isClientSide) {
             tickIdleCounters();
             tickSprintSpeed();
@@ -868,15 +870,9 @@ protected void registerGoals() {
     private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("BigCatVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
+        PetStorageTags.writeCommon(tag, this, owner);
         tag.putBoolean("Wings", hasWings());
         tag.putBoolean("Medallion", hasMedallion());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
         return tag;
     }
 
@@ -992,38 +988,11 @@ protected void registerGoals() {
         this.entityData.set(DATA_MOUTH_TICKS, mouth);
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        int growthTicks = getVariant().getGrowthTicks();
-        float progress = Mth.clamp((this.getAge() + growthTicks) / (float) growthTicks, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private float lastAppliedScale = -1F;
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction() * (float) getVariant().getRenderScale();
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
 
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this, getVariant().getGrowthTicks(), BABY_SCALE, (float) getVariant().getRenderScale());
     }
 
     @Override
@@ -1077,7 +1046,7 @@ protected void registerGoals() {
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
         float extraHeight = getVariant() == BigCatVariant.LIGER ? LIGER_RIDER_HEIGHT_BONUS : 0F;
@@ -1228,24 +1197,12 @@ protected void registerGoals() {
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(BigCatVariant.valueOf(tag.getString("BigCatVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
+        PetStorageTags.restoreCommon(tag, this);
         if (tag.getBoolean("Wings")) {
             this.setWings(true);
         }
         if (tag.getBoolean("Medallion")) {
             this.setMedallion(true);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
         }
     }
 }

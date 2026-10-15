@@ -24,7 +24,7 @@ public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorse
         String fileName = switch (entity.getVariant()) {
             case UNDEAD -> {
                 int stage = entity.getDecayStage(); // 0-3
-                int frame = 1 + (entity.tickCount / 20) % 7; // 1-7, cambia cada 10 ticks
+                int frame = 1 + (entity.tickCount / 20) % 7; // 1-7
                 yield "horseundead" + stage + frame;
             }
             case SKELETON -> "horseskeleton";

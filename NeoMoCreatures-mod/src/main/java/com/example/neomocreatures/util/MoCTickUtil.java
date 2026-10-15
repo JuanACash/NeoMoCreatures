@@ -13,6 +13,12 @@ public final class MoCTickUtil {
     /** Searching for nearby threats or targets: reacts within a quarter of a second. */
     public static final int THREAT_SCAN_INTERVAL = 5;
 
+    /**
+     * Area scans inside {@code Goal.canUse()}. Odd on purpose: goals are only evaluated every
+     * second tick, so an even interval could fall on the skipped ticks.
+     */
+    public static final int GOAL_SCAN_INTERVAL = 5;
+
     private MoCTickUtil() {
         // Utility class, no instances
     }

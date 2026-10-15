@@ -1,20 +1,20 @@
 package com.example.neomocreatures.entity;
 
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -48,7 +48,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -290,12 +289,8 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     private CompoundTag buildNetTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Shark", true);
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeIdentity(tag, this, owner);
         tag.putBoolean("Adult", !this.isBaby());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
         return tag;
     }
 
@@ -396,14 +391,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     /** Restores the data saved by {@link #buildNetTag} when a Fish Net releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
+        PetStorageTags.restoreIdentity(tag, this);
         this.setBaby(!tag.getBoolean("Adult"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
     }
 }

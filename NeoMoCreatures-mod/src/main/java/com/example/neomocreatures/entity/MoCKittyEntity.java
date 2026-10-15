@@ -17,17 +17,16 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -42,7 +41,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -77,12 +75,29 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
     private static final double EAT_NEARBY_ITEM_RANGE = 8.0D;
     private static final int FLEE_IMMUNITY_TICKS = 6000; // 5 minutes — "for a while" after eating
 
+    private static final double BASE_FOLLOW_RANGE = 12.0D;
+    private static final double BASE_MAX_HEALTH = 10.0D;
+
+    /** Squared distance (20 blocks) beyond which an adult stops targeting a threat to a kitten. */
+    private static final double PROTECT_MAX_DISTANCE_SQR = 400.0D;
+    private static final double FOLLOW_MIN_DISTANCE_SQR = 9.0D;
+    private static final double FOLLOW_MAX_DISTANCE_SQR = 256.0D;
+    private static final int PATH_RECALC_TICKS = 10;
+
+    /** Range in which a kitten notices a player for play. */
+    private static final double PLAYFUL_PLAYER_RANGE = 4.0D;
+    /** 1 in N chance per tick that a kitten near a player starts playing. */
+    private static final int PLAYFUL_ODDS = 200;
+
+    private static final int WOOL_BALL_PICKUP_DELAY_TICKS = 30;
+    private static final int PICKUP_COOLDOWN_TICKS = 10;
+
     private int fleeImmuneTicks;
 
     /** Tamed-kitty needs: bed, litter box, play, mating, birth and trees. */
     private final KittyCareController care = new KittyCareController(this);
     private int pickupCooldown;
-    private float lastAppliedScale = -1F;
+    private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCKittyEntity.class, EntityDataSerializers.INT);
@@ -121,8 +136,8 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 12.0D)
-                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.SCALE, 1.0D);
@@ -140,13 +155,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Kitty", true);
         tag.putInt("KittyVariant", getVariant().getId());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -308,10 +317,13 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.kitty.isTame() || this.kitty.isBaby() || this.kitty.getTarget() != null) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(this.kitty, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             for (MoCKittyEntity kitten : this.kitty.level().getEntitiesOfClass(MoCKittyEntity.class,
                     this.kitty.getBoundingBox().inflate(10.0D, 6.0D, 10.0D), MoCKittyEntity::isBaby)) {
                 LivingEntity threat = kitten.getLastHurtByMob();
-                if (threat instanceof Player && threat.isAlive() && this.kitty.distanceToSqr(threat) < 400.0D) {
+                if (threat instanceof Player && threat.isAlive() && this.kitty.distanceToSqr(threat) < PROTECT_MAX_DISTANCE_SQR) {
                     this.kitty.setTarget(threat);
                     break;
                 }
@@ -337,19 +349,23 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.kitten.isBaby() || !this.kitten.isTame()) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(this.kitten, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             List<MoCKittyEntity> nearby = this.kitten.level().getEntitiesOfClass(MoCKittyEntity.class,
                     this.kitten.getBoundingBox().inflate(8.0D, 4.0D, 8.0D), k -> !k.isBaby());
             if (nearby.isEmpty()) {
                 return false;
             }
             this.adult = nearby.get(0);
-            return this.kitten.distanceToSqr(this.adult) > 9.0D;
+            return this.kitten.distanceToSqr(this.adult) > FOLLOW_MIN_DISTANCE_SQR;
         }
 
         @Override
         public boolean canContinueToUse() {
             return this.kitten.isBaby() && this.adult != null && this.adult.isAlive()
-                    && this.kitten.distanceToSqr(this.adult) > 9.0D && this.kitten.distanceToSqr(this.adult) < 256.0D;
+                    && this.kitten.distanceToSqr(this.adult) > FOLLOW_MIN_DISTANCE_SQR
+                                    && this.kitten.distanceToSqr(this.adult) < FOLLOW_MAX_DISTANCE_SQR;
         }
 
         @Override
@@ -365,7 +381,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         @Override
         public void tick() {
             if (--this.timeToRecalcPath <= 0) {
-                this.timeToRecalcPath = 10;
+                this.timeToRecalcPath = PATH_RECALC_TICKS;
                 this.kitten.getNavigation().moveTo(this.adult, 1.0D);
             }
         }
@@ -387,14 +403,17 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.kitten.isBaby()) {
                 return false;
             }
-            this.chasedItem = this.kitten.level().getEntitiesOfClass(ItemEntity.class,
-                            this.kitten.getBoundingBox().inflate(10.0D, 4.0D, 10.0D))
-                    .stream().findFirst().orElse(null);
+            this.chasedItem = null;
+            if (MoCTickUtil.isScanTick(this.kitten, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                this.chasedItem = this.kitten.level().getEntitiesOfClass(ItemEntity.class,
+                                this.kitten.getBoundingBox().inflate(10.0D, 4.0D, 10.0D))
+                        .stream().findFirst().orElse(null);
+            }
             if (this.chasedItem != null) {
                 return true;
             }
-            Player nearby = this.kitten.level().getNearestPlayer(this.kitten, 4.0D);
-            return nearby != null && this.kitten.random.nextInt(200) == 0;
+            Player nearby = this.kitten.level().getNearestPlayer(this.kitten, PLAYFUL_PLAYER_RANGE);
+            return nearby != null && this.kitten.random.nextInt(PLAYFUL_ODDS) == 0;
         }
 
         @Override
@@ -439,7 +458,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         super.aiStep();
         tickHeld();
         if (!this.level().isClientSide) {
-            tickGrowth();
+            this.growth.tick(this);
             int swing = this.entityData.get(DATA_SWING_TICKS);
             if (swing > 0) {
                 this.entityData.set(DATA_SWING_TICKS, swing - 1);
@@ -457,33 +476,9 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
         }
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        float newScale = getGrowthFraction();
-        if (scaleAttr.getBaseValue() != newScale) {
-            scaleAttr.setBaseValue(newScale);
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this);
     }
 
     /** Wild kitty eating dropped cooked fish, same "throw it and step back" pattern as Bear. */
@@ -725,7 +720,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 ItemEntity ball = new ItemEntity(
                         this.level(), this.getX(), this.getY() + 1.0D, this.getZ(),
                         new ItemStack(ModItems.WOOL_BALL.get()));
-                ball.setPickUpDelay(30);
+                ball.setPickUpDelay(WOOL_BALL_PICKUP_DELAY_TICKS);
                 ball.setUnlimitedLifetime();
                 ball.setDeltaMovement(
                         (this.random.nextFloat() - this.random.nextFloat()) * 0.3D,
@@ -756,7 +751,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.level().isClientSide) {
                 startHolding(player);
                 setKittyCareState(KittyCareState.STATE_HELD_PLAYER);
-                this.pickupCooldown = 10;
+                this.pickupCooldown = PICKUP_COOLDOWN_TICKS;
             }
             return InteractionResult.SUCCESS;
         }
@@ -796,18 +791,6 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(KittyVariant.byId(tag.getInt("KittyVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

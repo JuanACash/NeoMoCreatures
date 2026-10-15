@@ -15,18 +15,18 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -38,7 +38,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -184,6 +183,9 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
             if (this.self.isBaby() || this.self.isTame() || this.self.getTarget() != null) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(this.self, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             for (MoCFoxEntity other : findNearbyFoxes()) {
                 LivingEntity threat = other.getLastHurtByMob();
                 if (threat != null && threat.isAlive() && threat != this.self
@@ -286,43 +288,17 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         return dimensions.height * 0.86F;
     }*/
 
-    private float lastAppliedScale = -1F;
+  private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
 
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
-    }
-
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction();
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
+        this.growth.tick(this);
     }
 
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this);
     }
 
     @Nullable
@@ -487,13 +463,7 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Fox", true);
         tag.putBoolean("Snow", isSnow());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -515,18 +485,6 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setSnow(tag.getBoolean("Snow"));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

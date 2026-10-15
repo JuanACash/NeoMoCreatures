@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
@@ -67,7 +68,7 @@ public class MoCEggItem extends Item {
         }
 
         CompoundTag storedTag = context.getItemInHand().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        String storedVariant = storedTag.contains("HatchVariant", 8) ? storedTag.getString("HatchVariant") : null;
+        String storedVariant = storedTag.contains("HatchVariant", Tag.TAG_STRING) ? storedTag.getString("HatchVariant") : null;
         boolean storedWasPickedUp = storedTag.getBoolean("WasPickedUp");
 
         ResourceLocation hatchEntityId;
@@ -79,7 +80,7 @@ public class MoCEggItem extends Item {
             hatchEntityId = BuiltInRegistries.ENTITY_TYPE.getKey(chosen);
             variantId = storedVariant != null ? storedVariant : this.spec.variantId();
         } else {
-            if (!storedTag.contains("HatchEntityType", 8)) {
+            if (!storedTag.contains("HatchEntityType", Tag.TAG_STRING)) {
                 return InteractionResult.PASS;
             }
             hatchEntityId = ResourceLocation.parse(storedTag.getString("HatchEntityType"));

@@ -32,6 +32,36 @@ public final class KittyCareController {
     /** Beds, litter boxes and players are searched within this many blocks. */
     private static final double SEARCH_RADIUS = 18.0D;
 
+    /** Players holding a wool ball are noticed within this many blocks. */
+    private static final double WOOL_BALL_DETECT_RADIUS = 12.0D;
+
+    // "ODDS" = 1 in N chance per tick. "TICKS" = a duration in ticks.
+    private static final int EMOTE_TOGGLE_ODDS = 200;
+    private static final int NIGHT_SLEEP_ODDS = 500;
+    private static final int SEEK_BED_ODDS = 3000;
+    private static final int WANT_TREE_ODDS = 4000;
+    private static final int BED_WAIT_TICKS = 500;
+    private static final int BED_FRUSTRATION_ODDS = 200;
+    private static final int BED_GIVE_UP_ODDS = 500;
+    private static final int EATING_FINISH_ODDS = 2500;
+    private static final int AGGRESSION_END_ODDS = 500;
+    private static final int MATE_SEARCH_TIMEOUT_TICKS = 2000;
+    private static final int MATING_MIN_TICKS = 500;
+    private static final float BIRTH_FACING_YAW = 180.0F;
+    private static final int BIRTH_DURATION_TICKS = 1000;
+    private static final int DEFENDING_RECHECK_TICKS = 2000;
+    private static final int DEFENDING_RECHECK_RESET_TICKS = 1000;
+    private static final int PURR_ODDS = 100;
+    private static final int SLEEP_MIN_TICKS = 500;
+    private static final int WAKE_UP_ODDS = 500;
+    private static final int WANTS_TREE_TIMEOUT_TICKS = 500;
+    private static final int TREE_ESCAPE_ODDS = 100;
+    private static final int LITTER_WAIT_TICKS = 2000;
+    private static final int LITTER_FRUSTRATION_ODDS = 1000;
+    private static final int USING_LITTER_TICKS = 300;
+
+    private static final int PLAY_BOREDOM_ODDS = 200;
+
     private final MoCKittyEntity kitty;
     /** Ticks spent in the current state; reset every time the state changes. */
     private int careTimer;
@@ -63,7 +93,7 @@ public final class KittyCareController {
     /** Steps 3/4/13 of the original's state machine: seek a filled bed when idle
      *  or aggressive, eat in it, calm down. Litter box (5/6) comes in a later step. */
     public void tick() {
-        if (this.kitty.getRandom().nextInt(200) == 0) {
+        if (this.kitty.getRandom().nextInt(EMOTE_TOGGLE_ODDS) == 0) {
             this.kitty.toggleEmoteIcon();
         }
         if (!this.kitty.isTame() || this.kitty.isBaby()) {
@@ -91,8 +121,8 @@ public final class KittyCareController {
     }
 
     private void tickIdleCare() {
-        if (!this.kitty.level().isDay() && this.kitty.getRandom().nextInt(500) == 0) {
-            MoCKittyBedEntity bed = findAnyBed(18.0D);
+        if (!this.kitty.level().isDay() && this.kitty.getRandom().nextInt(NIGHT_SLEEP_ODDS) == 0) {
+            MoCKittyBedEntity bed = findAnyBed(SEARCH_RADIUS);
             if (bed == null) {
                 this.kitty.setKittyCareState(KittyCareState.STATE_SLEEPING);
             } else {
@@ -106,29 +136,29 @@ public final class KittyCareController {
             return;
         }
         if (this.kitty.getRandom().nextInt(20) == 0) {
-            Player nearby = this.kitty.level().getNearestPlayer(this.kitty, 12D);
+            Player nearby = this.kitty.level().getNearestPlayer(this.kitty, WOOL_BALL_DETECT_RADIUS);
             if (nearby != null && nearby.getMainHandItem().is(ModItems.WOOL_BALL.get())) {
                 this.kitty.setKittyCareState(KittyCareState.STATE_CURIOUS);
                 return;
             }
         }
-        if (this.kitty.getHealth() < this.kitty.getMaxHealth() || this.kitty.getRandom().nextInt(3000) == 0) {
+        if (this.kitty.getHealth() < this.kitty.getMaxHealth() || this.kitty.getRandom().nextInt(SEEK_BED_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_SEEKING_BED);
             return;
         }
-        if (this.kitty.level().canSeeSky(this.kitty.blockPosition()) && this.kitty.getRandom().nextInt(4000) == 0) {
+        if (this.kitty.level().canSeeSky(this.kitty.blockPosition()) && this.kitty.getRandom().nextInt(WANT_TREE_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_WANTS_TREE);
         }
     }
 
     private void tickSeekingBed() {
         this.careTimer++;
-        if (this.careTimer > 500) {
-            if (this.kitty.getRandom().nextInt(200) == 0) {
+        if (this.careTimer > BED_WAIT_TICKS) {
+            if (this.kitty.getRandom().nextInt(BED_FRUSTRATION_ODDS) == 0) {
                 this.kitty.setKittyCareState(KittyCareState.STATE_AGGRESSIVE);
                 return;
             }
-            if (this.kitty.getRandom().nextInt(500) == 0) {
+            if (this.kitty.getRandom().nextInt(BED_GIVE_UP_ODDS) == 0) {
                 this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
                 return;
             }
@@ -151,7 +181,7 @@ public final class KittyCareController {
             this.kitty.setKittyCareState(KittyCareState.STATE_SEEKING_LITTER);
             return;
         }
-        if (this.kitty.getRandom().nextInt(2500) == 0) {
+        if (this.kitty.getRandom().nextInt(EATING_FINISH_ODDS) == 0) {
             this.kitty.heal(this.kitty.getMaxHealth());
             this.kitty.stopRiding();
             this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
@@ -172,7 +202,7 @@ public final class KittyCareController {
         }
         Player nearest = this.kitty.level().getNearestPlayer(this.kitty, SEARCH_RADIUS);
         this.kitty.setTarget(nearest);
-        if (nearest == null || this.kitty.getRandom().nextInt(500) == 0) {
+        if (nearest == null || this.kitty.getRandom().nextInt(AGGRESSION_END_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
         }
     }
@@ -197,7 +227,7 @@ public final class KittyCareController {
                 }
             }
         }
-        if (this.careTimer > 2000) {
+        if (this.careTimer > MATE_SEARCH_TIMEOUT_TICKS) {
             this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
         }
     }
@@ -214,7 +244,7 @@ public final class KittyCareController {
         if (dist < 5.0D) {
             this.careTimer++;
         }
-        if (this.careTimer > 500 && this.kitty.getRandom().nextInt(50) == 0) {
+        if (this.careTimer > MATING_MIN_TICKS && this.kitty.getRandom().nextInt(50) == 0) {
             this.matePartner.setKittyCareState(KittyCareState.STATE_IDLE);
             this.kitty.setKittyCareState(KittyCareState.STATE_SEEKING_BIRTH_BED);
         }
@@ -243,9 +273,9 @@ public final class KittyCareController {
             this.kitty.setKittyCareState(KittyCareState.STATE_SEEKING_BIRTH_BED);
             return;
         }
-        this.kitty.setYRot(180F);
+        this.kitty.setYRot(BIRTH_FACING_YAW);
         this.careTimer++;
-        if (this.careTimer <= 1000) {
+        if (this.careTimer <= BIRTH_DURATION_TICKS) {
             return;
         }
         int litterSize = this.kitty.getRandom().nextInt(3) + 1;
@@ -272,14 +302,14 @@ public final class KittyCareController {
 
     private void tickDefendingKittens() {
         this.careTimer++;
-        if (this.careTimer > 2000) {
+        if (this.careTimer > DEFENDING_RECHECK_TICKS) {
             boolean anyKittensNearby = !this.kitty.level().getEntitiesOfClass(MoCKittyEntity.class,
                     this.kitty.getBoundingBox().inflate(24.0D, 8.0D, 24.0D), MoCKittyEntity::isBaby).isEmpty();
             if (!anyKittensNearby) {
                 this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
                 return;
             }
-            this.careTimer = 1000;
+            this.careTimer = DEFENDING_RECHECK_RESET_TICKS;
         }
     }
 
@@ -290,11 +320,11 @@ public final class KittyCareController {
         if (this.kitty.getVehicle() != null) {
             lockRotationToVehicle(this.kitty.getVehicle());
         }
-        if (this.kitty.getRandom().nextInt(100) == 0) {
+        if (this.kitty.getRandom().nextInt(PURR_ODDS) == 0) {
             this.kitty.playSound(ModSounds.KITTY_PURR.get(), 0.7F, 1.0F);
         }
         this.careTimer++;
-        if (this.kitty.level().isDay() || (this.careTimer > 500 && this.kitty.getRandom().nextInt(500) == 0)) {
+        if (this.kitty.level().isDay() || (this.careTimer > SLEEP_MIN_TICKS && this.kitty.getRandom().nextInt(WAKE_UP_ODDS) == 0)) {
             this.kitty.setSitting(false);
             if (this.kitty.isVehicle() || this.kitty.getVehicle() != null) {
                 this.kitty.stopRiding();
@@ -312,7 +342,7 @@ public final class KittyCareController {
      */
     private void tickWantsTree() {
         this.careTimer++;
-        if (this.careTimer > 500) {
+        if (this.careTimer > WANTS_TREE_TIMEOUT_TICKS) {
             this.kitty.setKittyCareState(this.onTree ? KittyCareState.STATE_STUCK_IN_TREE : KittyCareState.STATE_IDLE);
             return;
         }
@@ -330,7 +360,7 @@ public final class KittyCareController {
     }
 
     private void tickStuckInTree() {
-        if (this.kitty.getRandom().nextInt(100) == 0) {
+        if (this.kitty.getRandom().nextInt(TREE_ESCAPE_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
             this.onTree = false;
             return;
@@ -394,7 +424,7 @@ public final class KittyCareController {
 
     private void tickSeekingLitter() {
         this.careTimer++;
-        if (this.careTimer > 2000 && this.kitty.getRandom().nextInt(1000) == 0) {
+        if (this.careTimer > LITTER_WAIT_TICKS && this.kitty.getRandom().nextInt(LITTER_FRUSTRATION_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_AGGRESSIVE);
             return;
         }
@@ -431,8 +461,7 @@ public final class KittyCareController {
 }
 
     private void tickPlaying() {
-        int boredomChance = 200; // TODO: use getTemper()-based 300 once temperament exists
-        if (this.kitty.getRandom().nextInt(boredomChance) == 0) {
+        if (this.kitty.getRandom().nextInt(PLAY_BOREDOM_ODDS) == 0) {
             this.kitty.setKittyCareState(KittyCareState.STATE_IDLE);
             return;
         }
@@ -459,7 +488,7 @@ public final class KittyCareController {
         }
         lockRotationToVehicle(box);
         this.careTimer++;
-        if (this.careTimer <= 300) {
+        if (this.careTimer <= USING_LITTER_TICKS) {
             if (this.kitty.getRandom().nextInt(40) == 0) {
                 this.kitty.playSound(SoundEvents.SAND_BREAK, 1.0F, 1.0F);
             }

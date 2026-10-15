@@ -69,6 +69,21 @@ public class MoCHorseMobEntity extends Monster {
             SynchedEntityData.defineId(MoCHorseMobEntity.class, EntityDataSerializers.INT);
     private static final int MOUTH_OPEN_TICKS = 30;
 
+    private static final double BASE_MAX_HEALTH = 30.0D;
+    private static final double BASE_FOLLOW_RANGE = 16.0D;
+    /** Ticks between searches for a player target (vanilla "random interval"). */
+    private static final int TARGET_CHECK_INTERVAL = 10;
+    private static final int SUNLIGHT_BURN_SECONDS = 8;
+
+    // Natural spawn: a roll in 0..99 picks the variant (<= 40 undead, <= 80 skeleton, else bat horse).
+    private static final int VARIANT_ROLL_BOUND = 100;
+    private static final int UNDEAD_MAX_ROLL = 40;
+    private static final int SKELETON_MAX_ROLL = 80;
+    /** Chance that a spawned nightmare comes with a rider. */
+    private static final float NIGHTMARE_RIDER_CHANCE = 0.3F;
+    /** Chance that a spawned undead, skeleton or bat horse comes with a rider. */
+    private static final float RIDER_CHANCE = 0.15F;
+
 
 
     public MoCHorseMobEntity(EntityType<? extends MoCHorseMobEntity> type, Level level) {
@@ -77,10 +92,10 @@ public class MoCHorseMobEntity extends Monster {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-            .add(Attributes.MAX_HEALTH, 30.0D)
+            .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
             .add(Attributes.MOVEMENT_SPEED, 0.3D)
             .add(Attributes.ATTACK_DAMAGE, 3.0D)
-            .add(Attributes.FOLLOW_RANGE, 16.0D);
+            .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE);
     }
 
     @Override
@@ -112,7 +127,7 @@ public class MoCHorseMobEntity extends Monster {
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * -0.15F;
         double z = this.getZ() + Math.cos(yaw) * -0.15F;
         double y = this.getY() + 0.7F;
@@ -235,7 +250,7 @@ public class MoCHorseMobEntity extends Monster {
             BlockPos pos = BlockPos.containing(this.getX(), this.getEyeY(), this.getZ());
             if (brightness > 0.5F && this.random.nextFloat() * 30.0F < (brightness - 0.4F) * 2.0F
                     && this.level().canSeeSky(pos)) {
-                this.igniteForSeconds(8);
+                this.igniteForSeconds(SUNLIGHT_BURN_SECONDS);
             }
         }
 
@@ -345,7 +360,7 @@ public class MoCHorseMobEntity extends Monster {
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::canTargetPlayer));    }
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, TARGET_CHECK_INTERVAL, true, false, this::canTargetPlayer));   }
 
     @Nullable
     @Override
@@ -353,21 +368,21 @@ public class MoCHorseMobEntity extends Monster {
                                         @Nullable SpawnGroupData spawnGroupData) {
         if (level.getLevel().dimension() == Level.NETHER) {
             setVariant(Variant.NIGHTMARE);
-            if (this.random.nextFloat() < 0.3F) {
+            if (this.random.nextFloat() < NIGHTMARE_RIDER_CHANCE) {
                 spawnRider(level, pickNightmareRiderType(level));
             }
         } else {
             RandomSource random = this.random;
-            int roll = random.nextInt(100);
-            if (roll <= 40) {
+            int roll = random.nextInt(VARIANT_ROLL_BOUND);
+            if (roll <= UNDEAD_MAX_ROLL) {
                 setVariant(Variant.UNDEAD);
                 this.entityData.set(DATA_DECAY_STAGE, this.random.nextInt(4)); // 0-3
-            } else if (roll <= 80) {
+            } else if (roll <= SKELETON_MAX_ROLL) {
                 setVariant(Variant.SKELETON);
             } else {
                 setVariant(Variant.BATHORSE);
             }
-            if (this.random.nextFloat() < 0.15F) {
+            if (this.random.nextFloat() < RIDER_CHANCE) {
                 EntityType<?> riderType = this.random.nextBoolean() ? EntityType.ZOMBIE : EntityType.SKELETON;
                 spawnRider(level, riderType);
             }

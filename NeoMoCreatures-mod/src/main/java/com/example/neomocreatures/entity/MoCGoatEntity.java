@@ -1,23 +1,24 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
-import com.example.neomocreatures.init.ModItems;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.util.MoCExperienceUtil;
-import com.example.neomocreatures.util.MoCLootUtil;
-import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.util.PetStorageUtil;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.PetStorageUtil;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -37,7 +38,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -214,7 +214,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         tickAttackAnimation();
         tickLegStomp();
         tickBleat();
-        tickGrowth();
+        this.growth.tick(this);
     }
 
     private void tickAttackAnimation() {
@@ -249,7 +249,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         }
     }
 
-    private float lastAppliedScale = -1F;
+    private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
 
     /** Also used by the model to gate horn-growth stages by maturity. */
     public float getGrowthFraction() {
@@ -259,27 +259,9 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         return Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
     }
 
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = Mth.lerp(getGrowthFraction(), BABY_SCALE, 1.0F);
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this);
     }
 
     /** Wiki: "usually stay out of water" — no swim animation needed since it never enters deep water on its own. */
@@ -443,6 +425,9 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         @Override
         public boolean canUse() {
             if (this.goat.getTarget() != null) {
+                return false;
+            }
+            if (!MoCTickUtil.isScanTick(this.goat, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
                 return false;
             }
             List<ItemEntity> items = this.goat.level().getEntitiesOfClass(ItemEntity.class,
@@ -662,13 +647,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         tag.putBoolean("Goat", true);
         tag.putBoolean("Male", isMale());
         tag.putInt("Color", getColorIndex());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -686,18 +665,6 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     public void restoreFromStorage(CompoundTag tag) {
         this.setMale(tag.getBoolean("Male"));
         this.setColorIndex(tag.getInt("Color"));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

@@ -1,5 +1,10 @@
 package com.example.neomocreatures.entity;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
@@ -9,16 +14,12 @@ import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -89,7 +90,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     // v^2-proportional to jump height, same relation as the big cat's 0.62F -> 2.7 blocks; ~1.6 blocks target per the wiki.
     private static final float JUMP_VELOCITY = 0.48F;
     private static final float SIDEWAYS_RIDDEN_FACTOR = 0.3F; // wiki: "very slow when moving sideways"
-    private float lastAppliedScale = -1F;
+  private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
@@ -284,35 +285,9 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         };
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        float progress = Mth.clamp((this.getAge() + GROWTH_TICKS) / (float) GROWTH_TICKS, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction();
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this);
     }
 
     @Nullable
@@ -429,7 +404,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
         double y = this.getY() + RIDER_HEIGHT * this.getScale();
@@ -665,7 +640,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("ScorpionVariant", 8)) {
+        if (tag.contains("ScorpionVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(ScorpionVariant.valueOf(tag.getString("ScorpionVariant")));
             } catch (IllegalArgumentException ignored) {
@@ -680,7 +655,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         if (tag.contains("ScorpionSittingSynced")) {
             setSitting(tag.getBoolean("ScorpionSittingSynced"));
         }
-        if (tag.contains("ScorpionSaddleItem", 8)) {
+        if (tag.contains("ScorpionSaddleItem", Tag.TAG_STRING)) {
             this.saddleItemId = ResourceLocation.parse(tag.getString("ScorpionSaddleItem"));
         }
     }
@@ -795,12 +770,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putString("ScorpionVariant", getVariant().name());
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeIdentity(tag, this, owner);
         tag.putBoolean("Adult", !this.isBaby());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
         return tag;
     }
 
@@ -914,7 +885,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     public void aiStep() {
         super.aiStep();
-        tickGrowth();
+        this.growth.tick(this);
         if (!this.level().isClientSide) {
             tickHeld();
             if (this.isNoAi() && !isHeld()) {
@@ -971,15 +942,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(ScorpionVariant.valueOf(tag.getString("ScorpionVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
         this.setBaby(!tag.getBoolean("Adult"));
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreIdentity(tag, this);
     }
 
     /** The nether scorpion shields its rider from fire. */

@@ -1,17 +1,17 @@
 package com.example.neomocreatures.entity;
 
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -37,7 +37,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -344,24 +343,14 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
     private CompoundTag createNetTag(Player owner) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(NET_KEY, true);
-        tag.putFloat("Health", this.getHealth());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", owner.getUUID());
+        PetStorageTags.writeIdentity(tag, this, owner.getUUID());
         return tag;
     }
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created manta ray. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth(tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-            this.setCustomNameVisible(true);
-        }
+        PetStorageTags.restoreIdentity(tag, this, true);
     }
 
     // ---------------------------------------------------------------------

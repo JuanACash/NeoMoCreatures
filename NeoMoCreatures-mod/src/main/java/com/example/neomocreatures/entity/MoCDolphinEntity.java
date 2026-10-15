@@ -1,5 +1,9 @@
 package com.example.neomocreatures.entity;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.breeding.MoCDolphinGenetics;
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
@@ -10,19 +14,16 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-
-import java.util.List;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -65,7 +66,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.fluids.FluidType;
 
@@ -202,8 +202,10 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
     /** Like the original, temper is not saved: a reloaded wild dolphin starts again from the initial value. */
     private int temper = INITIAL_TEMPER;
     private int gestationTicks;
+    /** Cached result of the mate scan, refreshed every few ticks. Not saved. */
+    private boolean mateNearby;
     private int outOfWaterTicks;
-    private float lastAppliedScale = -1.0F;
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync();
 
     public MoCDolphinEntity(EntityType<? extends MoCDolphinEntity> type, Level level) {
         super(type, level);
@@ -305,11 +307,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
                 scale.setBaseValue(target);
             }
         }
-        float current = (float) scale.getValue();
-        if (this.lastAppliedScale != current) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
-        }
+        this.hitboxSync.sync(this);
     }
 
     @Override
@@ -539,8 +537,15 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
      * calf after {@link #GESTATION_TICKS}. Only the parent with the smaller UUID gives birth.
      */
     private void tickBreeding() {
-        MoCDolphinEntity mate = this.isReadyToBreed() ? this.findMate() : null;
-        if (mate == null) {
+        if (!this.isReadyToBreed()) {
+            this.mateNearby = false;
+            this.gestationTicks = 0;
+            return;
+        }
+        if (MoCTickUtil.isScanTick(this, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
+            this.mateNearby = this.findMate() != null;
+        }
+        if (!this.mateNearby) {
             this.gestationTicks = 0;
             return;
         }
@@ -549,8 +554,17 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
             this.spawnHearts();
         }
         if (this.gestationTicks < GESTATION_TICKS
-                || this.getUUID().compareTo(mate.getUUID()) > 0
-                || this.isCrowded(mate)) {
+                || !MoCTickUtil.isScanTick(this, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
+            return;
+        }
+        // Fresh lookup right before birth: the cached flag may be a few ticks old.
+        MoCDolphinEntity mate = this.findMate();
+        if (mate == null) {
+            this.mateNearby = false;
+            this.gestationTicks = 0;
+            return;
+        }
+        if (this.getUUID().compareTo(mate.getUUID()) > 0 || this.isCrowded(mate)) {
             return;
         }
         this.gestationTicks = 0;
@@ -613,27 +627,17 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(NET_KEY, true);
         tag.putString(VARIANT_TAG, this.getVariant().name());
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeIdentity(tag, this, owner.getUUID());
         tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", owner.getUUID());
         return tag;
     }
 
     /** Applies the data stored by {@link #createNetTag} to a freshly created dolphin. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
         this.setVariant(DolphinVariant.byName(tag.getString(VARIANT_TAG)));
         this.setAge(tag.getInt("Age"));
-        this.setHealth(tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-            this.setCustomNameVisible(true);
-        }
+        PetStorageTags.restoreIdentity(tag, this, true);
     }
 
     // ---------------------------------------------------------------------

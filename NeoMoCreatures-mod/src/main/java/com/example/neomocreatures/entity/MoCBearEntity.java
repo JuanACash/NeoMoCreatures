@@ -19,6 +19,7 @@ import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -53,7 +54,6 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreedGoal;
@@ -96,7 +96,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
             SynchedEntityData.defineId(MoCBearEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private final SimpleContainer chestInventory = new SimpleContainer(18);
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
     @Nullable
     private ResourceLocation saddleItemId;
     
@@ -111,8 +111,36 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     private static final float BABY_SCALE = 0.5F;
     private static final double BREED_ISOLATION_RADIUS = 8.0D;
 
+    private static final int CHEST_SLOTS = 18;
+    private static final double BASE_FOLLOW_RANGE = 20.0D;
+    private static final double BASE_MAX_HEALTH = 30.0D;
+
+    /** Parents get this positive age after birth, which works as the breeding cooldown. */
+    private static final int BREEDING_COOLDOWN_TICKS = 6000;
+    /** Squared distance (~31 blocks) within which the owner receives the newborn cub. */
+    private static final double OWNER_HANDOVER_DISTANCE_SQR = 1000.0D;
+    /** Vanilla entity event that spawns love hearts. */
+    private static final byte LOVE_HEARTS_EVENT_ID = 18;
+
+    /** Standing and sitting end after this many ticks. */
+    private static final int STANDING_EXPIRY_TICKS = 100;
+    private static final int SWIPE_REAR_UP_TICKS = 19;
+    private static final int SWIPE_STANDING_START_TICKS = STANDING_EXPIRY_TICKS - SWIPE_REAR_UP_TICKS;
+    /** 1 in N chance per tick that an idle adult rears up when a player is close. */
+    private static final int REAR_UP_ODDS = 200;
+    private static final double PLAYER_NOTICE_RADIUS = 6.0D;
+
+    private static final double FOLLOW_MIN_DISTANCE_SQR = 9.0D;
+    private static final double FOLLOW_MAX_DISTANCE_SQR = 256.0D;
+    private static final int PATH_RECALC_TICKS = 10;
+    private static final double DEFEND_CUB_MAX_DISTANCE_SQR = 400.0D;
+
+    private static final int JUMP_POWER_MAX = 90;
+    private static final float JUMP_SCALE_MIN = 0.4F;
+    private static final float JUMP_SCALE_RANGE = 0.4F;
+
     private int standingTicks;
-    private float lastAppliedScale = -1F;
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
     private float playerJumpPendingScale;
 
     public MoCBearEntity(EntityType<? extends MoCBearEntity> type, Level level) {
@@ -137,8 +165,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 20.0D)
-                .add(Attributes.MAX_HEALTH, 30.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 6.0D)
                 .add(Attributes.SCALE, 1.0D)
@@ -362,18 +390,18 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         baby.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
         level.addFreshEntity(baby);
 
-        this.setAge(6000);
-        partner.setAge(6000);
+        this.setAge(BREEDING_COOLDOWN_TICKS);
+        partner.setAge(BREEDING_COOLDOWN_TICKS);
         this.resetLove();
         partner.resetLove();
-        level.broadcastEntityEvent(this, (byte) 18);
+        level.broadcastEntityEvent(this, LOVE_HEARTS_EVENT_ID);
         if (level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             MoCExperienceUtil.dropExperienceOrb(level, this, this.getRandom().nextInt(7) + 1);
         }
 
         UUID ownerUUID = this.getOwnerUUID();
         Player nearbyOwner = ownerUUID != null ? level.getPlayerByUUID(ownerUUID) : null;
-        if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= 1000.0D) { // squared distance: ~31 blocks
+        if (nearbyOwner != null && nearbyOwner.distanceToSqr(baby) <= OWNER_HANDOVER_DISTANCE_SQR) {
             baby.setOwnerUUID(nearbyOwner.getUUID());
             baby.setTame(true, true);
             NamingHelper.promptRename(baby, nearbyOwner.getUUID());
@@ -413,7 +441,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     public void aiStep() {
         super.aiStep();
         if (!this.level().isClientSide) {
-            tickGrowth();
+            this.growth.tick(this, getVariant().getGrowthTicks(), BABY_SCALE, (float) getVariant().getRenderScale());
             tickBearState();
             tickMouthAndAttack();
             if (MoCTickUtil.isScanTick(this, MoCTickUtil.FOOD_SCAN_INTERVAL)) {
@@ -431,45 +459,15 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
                 // Reuses tickBearState's existing 100-tick expiry for a short rear-up swipe,
                 // instead of adding a second timer.
                 setBearState(STANDING_STATE);
-                this.standingTicks = 81;
+                this.standingTicks = SWIPE_STANDING_START_TICKS;
             }
         }
         return hurt;
     }
 
-    // ---------------------------------------------------------------
-    // Growth — identical pattern to MoCBigCatEntity: smooth scale
-    // interpolation over getVariant().getGrowthTicks(), not a sudden
-    // pop at adulthood.
-    // ---------------------------------------------------------------
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        int growthTicks = getVariant().getGrowthTicks();
-        float progress = Mth.clamp((this.getAge() + growthTicks) / (float) growthTicks, 0.0F, 1.0F);
-        return Mth.lerp(progress, BABY_SCALE, 1.0F);
-    }
-
-    private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-        float newScale = getGrowthFraction() * (float) getVariant().getRenderScale();
-        if (scaleAttr.getBaseValue() != newScale) {
-            scaleAttr.setBaseValue(newScale);
-        }
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
-    }
-
     @Override
     public void updateGrowthScale() {
-        this.tickGrowth();
+        this.growth.tick(this, getVariant().getGrowthTicks(), BABY_SCALE, (float) getVariant().getRenderScale());
     }
 
     // ---------------------------------------------------------------
@@ -485,12 +483,12 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
             this.standingTicks = 0;
             return;
         }
-        if (this.standingTicks > 0 && ++this.standingTicks > 100) {
+        if (this.standingTicks > 0 && ++this.standingTicks > STANDING_EXPIRY_TICKS) {
             this.standingTicks = 0;
             setBearState(FOURS_STATE);
         }
-        if (!this.isBaby() && getBearState() == FOURS_STATE && this.standingTicks == 0 && this.random.nextInt(200) == 0) {
-            Player nearby = this.level().getNearestPlayer(this, 6D);
+        if (!this.isBaby() && getBearState() == FOURS_STATE && this.standingTicks == 0 && this.random.nextInt(REAR_UP_ODDS) == 0) {
+            Player nearby = this.level().getNearestPlayer(this, PLAYER_NOTICE_RADIUS);
             if (nearby != null && this.hasLineOfSight(nearby)) {
                 this.standingTicks = 1;
                 setBearState(getVariant() == BearVariant.PANDA ? SITTING_STATE : STANDING_STATE);
@@ -651,13 +649,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     private CompoundTag buildAmuletTag(UUID owner) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("BearVariant", getVariant().getId());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -694,6 +686,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
             if (!this.cub.isBaby() || this.cub.isTame()) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(this.cub, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             List<MoCBearEntity> nearby = this.cub.level().getEntitiesOfClass(MoCBearEntity.class,
                     this.cub.getBoundingBox().inflate(8.0D, 4.0D, 8.0D),
                     bear -> !bear.isBaby() && bear.getVariant() == this.cub.getVariant());
@@ -701,13 +696,14 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
                 return false;
             }
             this.adult = nearby.get(0);
-            return this.cub.distanceToSqr(this.adult) > 9.0D;
+            return this.cub.distanceToSqr(this.adult) > FOLLOW_MIN_DISTANCE_SQR;
         }
 
         @Override
         public boolean canContinueToUse() {
             return this.cub.isBaby() && !this.cub.isTame() && this.adult != null && this.adult.isAlive()
-                    && this.cub.distanceToSqr(this.adult) > 9.0D && this.cub.distanceToSqr(this.adult) < 256.0D;
+                    && this.cub.distanceToSqr(this.adult) > FOLLOW_MIN_DISTANCE_SQR
+                                    && this.cub.distanceToSqr(this.adult) < FOLLOW_MAX_DISTANCE_SQR;
         }
 
         @Override
@@ -723,7 +719,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         @Override
         public void tick() {
             if (--this.timeToRecalcPath <= 0) {
-                this.timeToRecalcPath = 10;
+                this.timeToRecalcPath = PATH_RECALC_TICKS;
                 this.cub.getNavigation().moveTo(this.adult, this.speedModifier);
             }
         }
@@ -751,11 +747,14 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
                     || this.bear.getTarget() != null) {
                 return false;
             }
+            if (!MoCTickUtil.isScanTick(this.bear, MoCTickUtil.GOAL_SCAN_INTERVAL)) {
+                return false;
+            }
             for (MoCBearEntity cub : this.bear.level().getEntitiesOfClass(MoCBearEntity.class,
                     this.bear.getBoundingBox().inflate(10.0D, 6.0D, 10.0D),
                     b -> b.isBaby() && b.getVariant() == this.bear.getVariant())) {
                 LivingEntity threat = cub.getLastHurtByMob();
-                if (threat != null && threat.isAlive() && this.bear.distanceToSqr(threat) < 400.0D) {
+                if (threat != null && threat.isAlive() && this.bear.distanceToSqr(threat) < DEFEND_CUB_MAX_DISTANCE_SQR) {
                     this.bear.setTarget(threat);
                     break;
                 }
@@ -806,7 +805,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         if (!this.hasPassenger(passenger)) {
             return;
         }
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
         double y = this.getY() + (float) getVariant().getRiderHeight() * this.getScale();
@@ -845,7 +844,9 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         if (jumpPower < 0) {
             jumpPower = 0;
         }
-        this.playerJumpPendingScale = jumpPower >= 90 ? 1.0F : 0.4F + 0.4F * jumpPower / 90.0F;
+        this.playerJumpPendingScale = jumpPower >= JUMP_POWER_MAX
+                                                ? 1.0F
+                                                : JUMP_SCALE_MIN + JUMP_SCALE_RANGE * jumpPower / (float) JUMP_POWER_MAX;
     }
 
     @Override
@@ -975,18 +976,6 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(BearVariant.byId(tag.getInt("BearVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

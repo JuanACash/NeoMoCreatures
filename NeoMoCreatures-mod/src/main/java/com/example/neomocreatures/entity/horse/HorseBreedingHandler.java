@@ -2,14 +2,15 @@ package com.example.neomocreatures.entity.horse;
 
 import java.util.List;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.FairyColor;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
-import com.example.neomocreatures.Config;
 
 /**
  * Mo' Creatures style breeding: two tamed adult horses in love that stay close together
@@ -35,6 +36,8 @@ public final class HorseBreedingHandler {
     private final MoCHorseEntity horse;
     /** Not saved: unloading the horse simply restarts gestation, as before. */
     private int gestationProgress = 0;
+    /** Cached result of the mate scan, refreshed every few ticks. Not saved. */
+    private boolean mateNearby = false;
 
     public HorseBreedingHandler(MoCHorseEntity horse) {
         this.horse = horse;
@@ -43,17 +46,14 @@ public final class HorseBreedingHandler {
     public void tick() {
         // Love lasts about 30 seconds, but a gestation that already started keeps running without it.
         if (!this.horse.isInLove() && !this.isGestating()) {
+            this.mateNearby = false;
             return;
         }
 
-        List<MoCHorseEntity> mates = this.horse.level().getEntitiesOfClass(
-                MoCHorseEntity.class, this.horse.getBoundingBox().inflate(MATE_SEARCH_XZ, MATE_SEARCH_Y, MATE_SEARCH_XZ),
-                other -> other != this.horse && other.isTamed() && !other.isBaby()
-                        && !other.isSterileHybrid() && (other.isInLove() || other.isGestating())
-                        && MoCHorseGenetics.canBreed(this.horse.getSpecies(), this.horse.getCoat(),
-                                other.getSpecies(), other.getCoat()));
-
-        if (mates.isEmpty()) {
+        if (MoCTickUtil.isScanTick(this.horse, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
+            this.mateNearby = !findMates().isEmpty();
+        }
+        if (!this.mateNearby) {
             this.gestationProgress = 0;
             return;
         }
@@ -63,6 +63,13 @@ public final class HorseBreedingHandler {
             return;
         }
 
+        // Fresh lookup right before birth: the cached flag may be a few ticks old.
+        List<MoCHorseEntity> mates = findMates();
+        if (mates.isEmpty()) {
+            this.mateNearby = false;
+            this.gestationProgress = 0;
+            return;
+        }
         MoCHorseEntity mate = mates.get(0);
         // Only one of the two parents spawns the foal: the one with the lower UUID
         if (this.horse.getUUID().compareTo(mate.getUUID()) > 0) {
@@ -72,6 +79,9 @@ public final class HorseBreedingHandler {
         // No third horse within 8 blocks horizontally — checked last, right
         // before actually spawning, so gestation progress isn't lost while
         // waiting for the area to clear; it just keeps retrying each tick.
+        if (!MoCTickUtil.isScanTick(this.horse, MoCTickUtil.THREAT_SCAN_INTERVAL)) {
+            return; // retry on the next scan tick
+        }
         boolean crowded = !this.horse.level().getEntitiesOfClass(
                 MoCHorseEntity.class, this.horse.getBoundingBox().inflate(CROWD_SEARCH_XZ, CROWD_SEARCH_Y, CROWD_SEARCH_XZ),
                 other -> other != this.horse && other != mate).isEmpty();
@@ -86,6 +96,15 @@ public final class HorseBreedingHandler {
     /** True while a gestation is running, even if the love timer already ran out. */
     public boolean isGestating() {
         return this.gestationProgress > 0;
+    }
+
+    private List<MoCHorseEntity> findMates() {
+        return this.horse.level().getEntitiesOfClass(
+                MoCHorseEntity.class, this.horse.getBoundingBox().inflate(MATE_SEARCH_XZ, MATE_SEARCH_Y, MATE_SEARCH_XZ),
+                other -> other != this.horse && other.isTamed() && !other.isBaby()
+                        && !other.isSterileHybrid() && (other.isInLove() || other.isGestating())
+                        && MoCHorseGenetics.canBreed(this.horse.getSpecies(), this.horse.getCoat(),
+                                other.getSpecies(), other.getCoat()));
     }
 
     private static int gestationTicks() {

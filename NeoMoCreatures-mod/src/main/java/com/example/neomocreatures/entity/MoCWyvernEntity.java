@@ -24,10 +24,12 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -89,6 +91,12 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     private static final float BABY_SCALE = 0.4F;
     private static final int TIER_1_GROWTH_TICKS = 24000;
     private static final int SLOW_GROWTH_TICKS = 48000;
+
+    private static final int CHEST_SLOTS = 18;
+    /** Extra egg drop chance (0.03 = 3%) per level of Looting. */
+    private static final float EGG_LOOTING_BONUS_PER_LEVEL = 0.03F;
+    /** 1 in N chance per tick that a fighting wyvern takes off or lands. */
+    private static final int COMBAT_FLIGHT_TOGGLE_ODDS = 20;
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCWyvernEntity.class, EntityDataSerializers.INT);
@@ -353,7 +361,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     }
 
     // 18 slots (2 rows), every tier can carry one, shears can never remove it.
-    private final SimpleContainer chestInventory = new SimpleContainer(18);
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
     /** Which exact item to give back when the saddle is removed with shears — vanilla Saddle vs our HORSE_SADDLE. */
     @Nullable
     private ResourceLocation saddleItemId;
@@ -471,13 +479,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("WyvernVariant", 8)) {
+        if (tag.contains("WyvernVariant", Tag.TAG_STRING)) {
             try {
                 setVariant(WyvernVariant.valueOf(tag.getString("WyvernVariant")));
             } catch (IllegalArgumentException ignored) {
             }
         }
-        if (tag.contains("WyvernTier", 8)) {
+        if (tag.contains("WyvernTier", Tag.TAG_STRING)) {
             try {
                 setTier(WyvernTier.valueOf(tag.getString("WyvernTier")));
             } catch (IllegalArgumentException ignored) {
@@ -495,7 +503,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         if (tag.contains("WyvernSaddled")) {
             setSaddled(tag.getBoolean("WyvernSaddled"));
         }
-        if (tag.contains("WyvernSaddleItem", 8)) {
+        if (tag.contains("WyvernSaddleItem", Tag.TAG_STRING)) {
             this.saddleItemId = ResourceLocation.parse(tag.getString("WyvernSaddleItem"));
         }
         if (tag.contains("WyvernArmorTier")) {
@@ -505,7 +513,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
             setHasChest(true);
         }
         if (tag.contains("WyvernChestItems", 9)) {
-            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("WyvernChestItems", 10), this.registryAccess());
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("WyvernChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }
 
@@ -839,13 +847,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         CompoundTag tag = new CompoundTag();
         tag.putString("WyvernVariant", getVariant().name());
         tag.putString("WyvernTier", getTier().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
+        PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
 
@@ -873,7 +875,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         int baseChancePercent = getVariant().isMother()
                 ? Config.CREATURES.motherWyvernEggDropChance.get()
                 : Config.CREATURES.wyvernEggDropChance.get();
-        if (MoCLootUtil.rollChance(this.random, baseChancePercent / 100.0F, 0.03F, lootingLevel)) {
+        if (MoCLootUtil.rollChance(this.random, baseChancePercent / 100.0F, EGG_LOOTING_BONUS_PER_LEVEL, lootingLevel)) {
             this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
         }
     }
@@ -945,7 +947,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         }
         float forward = RIDER_FORWARD
                 + (getTier() == WyvernTier.MOTHER_TAMED ? MOTHER_TAMED_RIDER_FORWARD_BONUS : 0.0F);
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         double x = this.getX() - Math.sin(yaw) * forward;
         double z = this.getZ() + Math.cos(yaw) * forward;
         double y = this.getY() + RIDER_HEIGHT * getVisualScale()
@@ -1013,6 +1015,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     }
 
     private static final float RIDDEN_FLYER_FRICTION = 0.93F;
+    private static final float RIDDEN_FLYER_MOVE_SPEED = RIDDEN_FLYER_FRICTION / 10F;
     private static final double RIDDEN_ASCEND_THRUST = 0.15D;
     private static final double RIDDEN_DESCEND_THRUST = 0.3D;
     private static final double RIDDEN_FLYER_FALL_SPEED = 0.6D;
@@ -1060,7 +1063,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     public void travel(Vec3 travelVector) {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player && getIsFlying()) {
             this.setNoGravity(true);
-            this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
+            this.moveRelative(RIDDEN_FLYER_MOVE_SPEED, travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
             Vec3 delta = this.getDeltaMovement()
                     .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)
@@ -1124,13 +1127,13 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
 
             boolean solidGroundBelow = this.level().getBlockState(this.blockPosition().below()).canOcclude();
             if (this.getTarget() != null && !this.isOrderedToSit() && !this.isVehicle()) {
-                if (!solidGroundBelow && this.random.nextInt(20) == 0) {
+                if (!solidGroundBelow && this.random.nextInt(COMBAT_FLIGHT_TOGGLE_ODDS) == 0) {
                     // No solid ground to fight from here — take off instead.
                     setIsFlying(true);
                     if (this.onGround()) {
                         this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
                     }
-                } else if (getIsFlying() && solidGroundBelow && this.random.nextInt(20) == 0) {
+                } else if (getIsFlying() && solidGroundBelow && this.random.nextInt(COMBAT_FLIGHT_TOGGLE_ODDS) == 0) {
                     // Ground is available — land to keep fighting from there instead of flying.
                     setIsFlying(false);
                 }
@@ -1144,36 +1147,23 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         super.aiStep();
     }
 
-    private float getGrowthFraction() {
-        if (!this.isBaby()) {
-            return 1.0F;
-        }
-        int growthTicks = getTier() == WyvernTier.TIER_1 ? TIER_1_GROWTH_TICKS : SLOW_GROWTH_TICKS;
-        float progress = Mth.clamp((this.getAge() + growthTicks) / (float) growthTicks, 0.0F, 1.0F);
-        float babyFraction = BABY_SCALE / getTier().getRenderScale();
-        return Mth.lerp(progress, babyFraction, 1.0F);
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
+
+    private int getGrowthTicks() {
+        return getTier() == WyvernTier.TIER_1 ? TIER_1_GROWTH_TICKS : SLOW_GROWTH_TICKS;
     }
 
-    private float lastAppliedScale = -1F;
+    /** Scale fraction a baby starts with, relative to the tier's render scale. */
+    private float getBabyFraction() {
+        return BABY_SCALE / getTier().getRenderScale();
+    }
+
+    private float getGrowthFraction() {
+        return this.growth.targetScale(this, getGrowthTicks(), getBabyFraction(), 1.0F);
+    }
 
     private void tickGrowth() {
-        AttributeInstance scaleAttr = this.getAttribute(Attributes.SCALE);
-        if (scaleAttr == null) {
-            return;
-        }
-
-        if (!this.level().isClientSide) {
-            float newScale = getGrowthFraction();
-            if (scaleAttr.getBaseValue() != newScale) {
-                scaleAttr.setBaseValue(newScale);
-            }
-        }
-
-        float currentScale = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != currentScale) {
-            this.lastAppliedScale = currentScale;
-            this.refreshDimensions();
-        }
+        this.growth.tick(this, getGrowthTicks(), getBabyFraction(), 1.0F);
     }
 
     @Override
@@ -1259,18 +1249,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     @Override
     public void restoreFromStorage(CompoundTag tag) {
         this.setVariant(WyvernVariant.valueOf(tag.getString("WyvernVariant")));
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth((float) tag.getFloat("Health"));
-        if (tag.contains("Age")) {
-            this.setAge(tag.getInt("Age"));
-        } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
-        }
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-        }
+        PetStorageTags.restoreCommon(tag, this);
     }
 }

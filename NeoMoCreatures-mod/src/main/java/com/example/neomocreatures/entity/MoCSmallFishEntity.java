@@ -14,12 +14,12 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -428,9 +428,7 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(NET_KEY, true);
         tag.putString(VARIANT_TAG, this.getVariant().name());
-        tag.putFloat("Health", this.getHealth());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", owner.getUUID());
+        PetStorageTags.writeIdentity(tag, this, owner.getUUID());
         return tag;
     }
 
@@ -438,16 +436,8 @@ public class MoCSmallFishEntity extends TamableAnimal implements EggHatchable, S
      *  wiki tames on release from a net regardless of whether it was tame when caught. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
         this.setVariant(SmallFishVariant.byName(tag.getString(VARIANT_TAG)));
-        this.setHealth(tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-            this.setCustomNameVisible(true);
-        }
+        PetStorageTags.restoreIdentity(tag, this, true);
     }
 
     // ---------------------------------------------------------------------

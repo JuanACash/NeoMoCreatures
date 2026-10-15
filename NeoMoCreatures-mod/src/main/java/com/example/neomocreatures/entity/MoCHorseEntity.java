@@ -28,6 +28,7 @@ import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
@@ -46,6 +47,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -174,6 +176,28 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     private static final float RIDER_FORWARD = -0.15F;
     private static final float RIDER_HEIGHT = 0.7F;
 
+    private static final int CHEST_SLOTS = 27;
+    /** A baby's age: it grows up once it counts back up to zero. */
+    private static final int NEWBORN_AGE_TICKS = -24000;
+    private static final double BASE_MAX_HEALTH = 15.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.225D;
+
+    /** Duration of the nightmare state: 10 seconds. */
+    private static final int NIGHTMARE_TICKS = 200;
+    private static final int ITEM_PICKUP_DELAY_TICKS = 20;
+    private static final int RIDING_TEMPER_BASE_GAIN = 5;
+    private static final int RIDING_TEMPER_RANDOM_GAIN = 20;
+    private static final int BUCKING_TICKS = 20;
+    private static final int UNICORN_CHARGE_SPEED_AMPLIFIER = 2;
+    /** A transformation plays its sound when this many ticks remain. */
+    private static final int TRANSFORM_SOUND_TICK = 60;
+
+    // "ODDS" = 1 in N chance per tick.
+    private static final int GRAZE_ODDS = 1000;
+    private static final int FAIRY_WING_FLAP_ODDS = 150;
+    private static final int PASSIVE_REGEN_ODDS = 300;
+    private static final int ZEBRA_DANCE_START_ODDS = 50;
+
 
 
 
@@ -190,7 +214,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     // menu actually tried to open. Real vanilla donkeys use a custom 15-slot
     // 5x3 layout via their own menu class; 27 is a simplification that
     // works with vanilla's stock ChestMenu with zero extra GUI code.
-    private final SimpleContainer chestInventory = new SimpleContainer(27);
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
 
 
     /** Right-click behaviour of the four essences. */
@@ -248,7 +272,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             }
             // "Occasionally, babies will spawn in herds."
             if (this.random.nextInt(5) == 0) {
-                this.setAge(-24000);
+                this.setAge(NEWBORN_AGE_TICKS);
             }
         }
         return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
@@ -265,8 +289,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 15.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.225D)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
                 .add(Attributes.JUMP_STRENGTH, 0.7D);
     }
 
@@ -372,7 +396,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         // minecraft:saddle (AbstractHorse#readAdditionalSaveData lo revisa
         // (checked via itemstack.is(Items.SADDLE)), so our own saddle item
         // gets discarded — we put it back manually here.
-        if (this.inventory.getItem(0).isEmpty() && tag.contains("SaddleItem", 10)) {
+        if (this.inventory.getItem(0).isEmpty() && tag.contains("SaddleItem", Tag.TAG_COMPOUND)) {
             ItemStack saddle = ItemStack.parse(this.registryAccess(), tag.getCompound("SaddleItem")).orElse(ItemStack.EMPTY);
             if (!saddle.isEmpty() && this.isSaddleable()) {
                 this.inventory.setItem(0, saddle);
@@ -411,7 +435,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             setHasChest(true);
         }
         if (tag.contains("MoCChestItems")) {
-            ListTag items = tag.getList("MoCChestItems", 10);
+            ListTag items = tag.getList("MoCChestItems", Tag.TAG_COMPOUND);
             for (int i = 0; i < items.size(); i++) {
                 CompoundTag itemTag = items.getCompound(i);
                 int slot = itemTag.getInt("Slot");
@@ -525,16 +549,10 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         CompoundTag tag = new CompoundTag();
         tag.putString("Species", getSpecies().name());
         tag.putString("Coat", getCoat().name());
-        tag.putFloat("Health", this.getHealth());
+        PetStorageTags.writeCommon(tag, this, owner);
         tag.putDouble("MaxHealth", this.getAttributeValue(Attributes.MAX_HEALTH));
         tag.putDouble("MovementSpeed", this.getAttributeValue(Attributes.MOVEMENT_SPEED));
         tag.putDouble("JumpStrength", this.getAttributeValue(Attributes.JUMP_STRENGTH));
-        tag.putBoolean("Adult", !this.isBaby());
-        tag.putInt("Age", this.getAge());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        if (owner != null) {
-            tag.putUUID("OwnerUUID", owner);
-        }
         if (getSpecies() == Species.FAIRY_HORSE) {
             tag.putString("FairyColor", getFairyColor().name());
         }
@@ -1264,7 +1282,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
                 openMouth();
                 this.nightmareFleeYaw = this.getYRot();
                 this.getNavigation().stop();
-                setNightmareTicks(200); // 10 segundos
+                setNightmareTicks(NIGHTMARE_TICKS);
             }
             return InteractionResult.SUCCESS;
         }
@@ -1278,7 +1296,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
                 openMouth();
                 ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(),
                         new ItemStack(ModItems.RECORD_SHUFFLE.get()));
-                itemEntity.setPickUpDelay(20);
+                itemEntity.setPickUpDelay(ITEM_PICKUP_DELAY_TICKS);
                 this.level().addFreshEntity(itemEntity);
             }
             return InteractionResult.SUCCESS;
@@ -1318,7 +1336,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     */
     private void attemptRidingTame(Player player) {
         player.startRiding(this);
-        int gained = 5 + this.random.nextInt(20);
+        int gained = RIDING_TEMPER_BASE_GAIN + this.random.nextInt(RIDING_TEMPER_RANDOM_GAIN);
         int newTemper = this.modifyTemper(gained);
         if (newTemper >= this.getMaxTemper()) {
             this.applyOwnership(player);
@@ -1351,7 +1369,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         }
         this.makeMad();
         this.openMouth();
-        this.entityData.set(DATA_BUCKING_TICKS, 20);
+        this.entityData.set(DATA_BUCKING_TICKS, BUCKING_TICKS);
     }
 
     /**
@@ -1366,7 +1384,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         this.makeMad();
         this.openMouth();
         if (!isWingedSpecies()) {
-            this.entityData.set(DATA_BUCKING_TICKS, 20);
+            this.entityData.set(DATA_BUCKING_TICKS, BUCKING_TICKS);
         }
         player.knockback(0.6D, this.getX() - player.getX(), this.getZ() - player.getZ());
     }
@@ -1451,13 +1469,13 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     }
 
     private int unicornChargeTicks = 0;
-    public static final int UNICORN_CHARGE_DURATION_TICKS = 60; // 3 segundos
+    public static final int UNICORN_CHARGE_DURATION_TICKS = 60; // 3 seconds
 
     public void startUnicornCharge() {
         this.unicornChargeTicks = UNICORN_CHARGE_DURATION_TICKS;
         this.entityData.set(DATA_UNICORN_CHARGE_TICKS, UNICORN_CHARGE_DURATION_TICKS);
         this.addEffect(new MobEffectInstance(
-                MobEffects.MOVEMENT_SPEED, 60, 2, false, true));
+                MobEffects.MOVEMENT_SPEED, UNICORN_CHARGE_DURATION_TICKS, UNICORN_CHARGE_SPEED_AMPLIFIER, false, true));
     }
 
     public int getUnicornChargeTicks() {
@@ -1529,7 +1547,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (isTransforming()) {
             int ticks = getTransformTicks() - 1;
             this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
-            if (ticks == 60) {
+            if (ticks == TRANSFORM_SOUND_TICK) {
                 this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
             }
             if (ticks <= 0) {
@@ -1543,7 +1561,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (isColorTransforming()) {
             int ticks = getColorTransformTicks() - 1;
             this.entityData.set(DATA_COLOR_TRANSFORM_TICKS, ticks);
-            if (ticks == 60) {
+            if (ticks == TRANSFORM_SOUND_TICK) {
                 this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
             }
             if (ticks <= 0) {
@@ -1569,7 +1587,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (isUndeadTransforming()) {
             int ticks = getUndeadTransformTicks() - 1;
             this.entityData.set(DATA_UNDEAD_TRANSFORM_TICKS, ticks);
-            if (ticks == 60) {
+            if (ticks == TRANSFORM_SOUND_TICK) {
                 this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
             }
             if (ticks <= 0) {
@@ -1638,8 +1656,8 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             } else {
                 this.entityData.set(DATA_GRAZE_TICKS, this.getGrazeTicks() - 1);
             }
-        } else if (!this.isBaby() && !this.isVehicle() && !isFleeing() && this.random.nextInt(1000) == 0) { //How common is grazing
-            this.entityData.set(DATA_GRAZE_TICKS, 100);
+        } else if (!this.isBaby() && !this.isVehicle() && !isFleeing() && this.random.nextInt(GRAZE_ODDS) == 0) {
+            this.entityData.set(DATA_GRAZE_TICKS, GRAZE_DURATION_TICKS);
         }
     }
 
@@ -1653,7 +1671,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (getSpecies() == Species.FAIRY_HORSE) {
             if (this.getWingFlapTicks() > 0) {
                 this.entityData.set(DATA_WING_FLAP_TICKS, this.getWingFlapTicks() - 1);
-            } else if (this.onGround() && this.random.nextInt(150) == 0) {
+            } else if (this.onGround() && this.random.nextInt(FAIRY_WING_FLAP_ODDS) == 0) {
                 this.entityData.set(DATA_WING_FLAP_TICKS, WING_FLAP_DURATION_TICKS);
             }
         }
@@ -1664,7 +1682,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
      * horse is alive and not at max health.
      */
     private void tickPassiveRegen() {
-        if (this.random.nextInt(300) == 0 && this.getHealth() > 0F && this.getHealth() < this.getMaxHealth()) {
+        if (this.random.nextInt(PASSIVE_REGEN_ODDS) == 0 && this.getHealth() > 0F && this.getHealth() < this.getMaxHealth()) {
             this.heal(1.0F);
         }
     }
@@ -1676,7 +1694,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
      */
     private void tickZebraDancing() {
         if (getSpecies() == Species.ZEBRA && this.isTamed() && !this.isBaby()) {
-            if (shuffleCounter == 0 && this.random.nextInt(50) == 0 && isNearPlayingShuffleRecord()) {
+            if (shuffleCounter == 0 && this.random.nextInt(ZEBRA_DANCE_START_ODDS) == 0 && isNearPlayingShuffleRecord()) {
                 shuffleCounter = 1;
                 setDancing(true);
             }
@@ -1736,7 +1754,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
                 this.effects.placeFireTrail();
             }
             if (!this.isVehicle()) {
-                float yaw = this.nightmareFleeYaw * ((float) Math.PI / 180F);
+                float yaw = this.nightmareFleeYaw * Mth.DEG_TO_RAD;
                 double speed = 0.4D;
                 this.setDeltaMovement(-Math.sin(yaw) * speed, this.getDeltaMovement().y, Math.cos(yaw) * speed);
                 this.setYRot(this.nightmareFleeYaw);
@@ -2011,7 +2029,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             return;
         }
 
-        float yaw = this.getYRot() * ((float) Math.PI / 180F);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
 
         double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
         double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
@@ -2094,7 +2112,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (tag.contains("Age")) {
             this.setAge(tag.getInt("Age"));
         } else {
-            this.setAge(tag.getBoolean("Adult") ? 0 : -24000);
+            this.setAge(tag.getBoolean("Adult") ? 0 : NEWBORN_AGE_TICKS);
         }
         if (tag.contains("Coat")) {
             this.setCoat(MoCHorseGenetics.Coat.valueOf(tag.getString("Coat")));

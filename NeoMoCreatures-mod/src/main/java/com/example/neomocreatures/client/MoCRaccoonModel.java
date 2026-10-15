@@ -2,7 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCRaccoonEntity;
 
-
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -157,8 +156,8 @@ public class MoCRaccoonModel extends HierarchicalModel<MoCRaccoonEntity> {
     @Override
     public void setupAnim(MoCRaccoonEntity entity, float limbSwing, float limbSwingAmount,
                            float ageInTicks, float netHeadYaw, float headPitch) {
-        this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
-        this.head.xRot = headPitch * ((float) Math.PI / 180F);
+        this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
+        this.head.xRot = headPitch * Mth.DEG_TO_RAD;
 
         float rLeg = Mth.cos(limbSwing + (float) Math.PI) * 0.8F * limbSwingAmount;
         float lLeg = Mth.cos(limbSwing) * 0.8F * limbSwingAmount;

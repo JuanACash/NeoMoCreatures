@@ -2,7 +2,6 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.entity.MoCTurkeyEntity;
 
-
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -111,8 +110,8 @@ public class MoCTurkeyModel extends HierarchicalModel<MoCTurkeyEntity> {
         float rightLegRot = Mth.cos((limbSwing * 0.6662F) + (float) Math.PI) * 1.4F * limbSwingAmount;
         float wingFlap = (ModelAnimations.walkSwing(limbSwing, limbSwingAmount, 1.4F)) / 4F;
 
-        this.head.xRot = 0.4833219F + headPitch * ((float) Math.PI / 180F);
-        this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
+        this.head.xRot = 0.4833219F + headPitch * Mth.DEG_TO_RAD;
+        this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
 
         this.legLeft.xRot = leftLegRot;
         this.footLeft.xRot = leftLegRot;

@@ -5,11 +5,11 @@ import javax.annotation.Nullable;
 import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -209,9 +209,7 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
     private void captureInFishNet(Player player, InteractionHand hand, ItemStack emptyNet) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(NET_KEY, true);
-        tag.putFloat("Health", this.getHealth());
-        tag.putString("Name", this.getCustomName() != null ? this.getCustomName().getString() : "");
-        tag.putUUID("OwnerUUID", player.getUUID());
+        PetStorageTags.writeIdentity(tag, this, player.getUUID());
 
         PetStorageUtil.storeConsumingOne(player, hand, emptyNet, this, ModItems.FISH_NET_FULL.get(), tag);
     }
@@ -373,14 +371,6 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
     /** Restores the data saved by {@link #captureInFishNet} when a Fish Net releases this pet. */
     @Override
     public void restoreFromStorage(CompoundTag tag) {
-        this.setTame(true, false);
-        if (tag.hasUUID("OwnerUUID")) {
-            this.setOwnerUUID(tag.getUUID("OwnerUUID"));
-        }
-        this.setHealth(tag.getFloat("Health"));
-        if (tag.contains("Name") && !tag.getString("Name").isEmpty()) {
-            this.setCustomName(Component.literal(tag.getString("Name")));
-            this.setCustomNameVisible(true);
-        }
+        PetStorageTags.restoreIdentity(tag, this, true);
     }
 }
