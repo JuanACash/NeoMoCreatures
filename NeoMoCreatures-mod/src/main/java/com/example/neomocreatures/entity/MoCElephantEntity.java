@@ -933,7 +933,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         if (tag.contains("ElephantChestCount")) {
             setChestCount(tag.getInt("ElephantChestCount"));
         }
-        if (tag.contains("ElephantChestItems", 9)) {
+        if (tag.contains("ElephantChestItems", Tag.TAG_LIST)) {
             MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ElephantChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
         if (tag.contains("ElephantTusks", Tag.TAG_COMPOUND)) {

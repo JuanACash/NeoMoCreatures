@@ -512,7 +512,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         if (tag.getBoolean("WyvernHasChest")) {
             setHasChest(true);
         }
-        if (tag.contains("WyvernChestItems", 9)) {
+        if (tag.contains("WyvernChestItems", Tag.TAG_LIST)) {
             MoCInventoryUtil.loadSlots(chestInventory, tag.getList("WyvernChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }

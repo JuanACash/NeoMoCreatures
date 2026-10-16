@@ -455,7 +455,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         if (tag.hasUUID("OstrichGrudge")) {
             grudgeTargetUUID = tag.getUUID("OstrichGrudge");
         }
-        if (tag.contains("OstrichChestItems", 9)) {
+        if (tag.contains("OstrichChestItems", Tag.TAG_LIST)) {
             MoCInventoryUtil.loadSlots(chestInventory, tag.getList("OstrichChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }

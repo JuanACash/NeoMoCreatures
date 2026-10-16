@@ -367,7 +367,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         if (tag.contains("ManticoreHasChest")) {
             setHasChest(tag.getBoolean("ManticoreHasChest"));
         }
-        if (tag.contains("ManticoreChestItems", 9)) {
+        if (tag.contains("ManticoreChestItems", Tag.TAG_LIST)) {
             MoCInventoryUtil.loadSlots(chestInventory, tag.getList("ManticoreChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
     }

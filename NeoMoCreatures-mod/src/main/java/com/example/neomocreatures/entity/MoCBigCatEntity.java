@@ -733,7 +733,7 @@ protected void registerGoals() {
         if (tag.contains("BigCatHasChest")) {
             setHasChest(tag.getBoolean("BigCatHasChest"));
         }
-        if (tag.contains("BigCatChestItems", 9)) {
+        if (tag.contains("BigCatChestItems", Tag.TAG_LIST)) {
             MoCInventoryUtil.loadSlots(chestInventory, tag.getList("BigCatChestItems", Tag.TAG_COMPOUND), this.registryAccess());
         }
         if (tag.contains("BigCatWings")) {
