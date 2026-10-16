@@ -117,7 +117,8 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
     private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
             SynchedEntityData.defineId(MoCMantaRayEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private float lastAppliedScale = -1.0F;
+    /** The scale attribute is set at creation, so the hitbox has to be refreshed once to match it. */
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync();
     private int outOfWaterTicks;
 
     public MoCMantaRayEntity(EntityType<? extends MoCMantaRayEntity> type, Level level) {
@@ -161,19 +162,10 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
     @Override
     public void aiStep() {
         super.aiStep();
-        this.refreshHitboxOnScaleChange();
+        this.hitboxSync.sync(this);
         if (!this.level().isClientSide) {
             this.tickOutOfWater();
             this.tickWildRider();
-        }
-    }
-
-    /** The scale attribute is set at creation, so the hitbox has to be refreshed once to match it. */
-    private void refreshHitboxOnScaleChange() {
-        float current = this.getScale();
-        if (this.lastAppliedScale != current) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
         }
     }
 

@@ -109,7 +109,8 @@ public class MoCFishyEntity extends TamableAnimal implements StorablePet {
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCFishyEntity.class, EntityDataSerializers.INT);
 
-    private float lastAppliedScale = -1.0F;
+    /** The scale attribute is set at creation, so the hitbox has to be refreshed once to match it. */
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync();
     private int outOfWaterTicks;
 
     public MoCFishyEntity(EntityType<? extends MoCFishyEntity> type, Level level) {
@@ -193,19 +194,10 @@ public class MoCFishyEntity extends TamableAnimal implements StorablePet {
     @Override
     public void aiStep() {
         super.aiStep();
-        this.refreshHitboxOnScaleChange();
+        this.hitboxSync.sync(this);
         if (!this.level().isClientSide) {
             this.tickOutOfWater();
             this.tickRegeneration();
-        }
-    }
-
-    /** The scale attribute is set at creation, so the hitbox has to be refreshed once to match it. */
-    private void refreshHitboxOnScaleChange() {
-        float current = this.getScale();
-        if (this.lastAppliedScale != current) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
         }
     }
 

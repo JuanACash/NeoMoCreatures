@@ -53,6 +53,14 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
 
+    private static final double BASE_FOLLOW_RANGE = 12.0D;
+    private static final double BASE_MAX_HEALTH = 8.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.25D;
+    /** Parents get this positive age after birth, which works as the breeding cooldown. */
+    private static final int BREEDING_COOLDOWN_TICKS = 6000;
+    /** Vanilla entity event that spawns love hearts. */
+    private static final byte LOVE_HEARTS_EVENT_ID = 18;
+
     private static final Ingredient TEMPTATION_ITEMS = Ingredient.of(Items.MELON_SEEDS);
     private static final Ingredient BREEDING_ITEMS = Ingredient.of(Items.WHEAT_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS);
 
@@ -79,9 +87,9 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 12.0D)
-                .add(Attributes.MAX_HEALTH, 8.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
                 .add(Attributes.SCALE, 1.0D);
     }
 
@@ -199,11 +207,11 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
         baby.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
         level.addFreshEntity(baby);
 
-        this.setAge(6000);
-        partner.setAge(6000);
+        this.setAge(BREEDING_COOLDOWN_TICKS);
+        partner.setAge(BREEDING_COOLDOWN_TICKS);
         this.resetLove();
         partner.resetLove();
-        level.broadcastEntityEvent(this, (byte) 18);
+        level.broadcastEntityEvent(this, LOVE_HEARTS_EVENT_ID);
         if (level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             MoCExperienceUtil.dropExperienceOrb(level, this, this.getRandom().nextInt(7) + 1);
         }

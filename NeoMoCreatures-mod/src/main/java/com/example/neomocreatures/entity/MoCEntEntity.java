@@ -1,12 +1,12 @@
 package com.example.neomocreatures.entity;
 
-import com.example.neomocreatures.entity.ent.EntVariant;
-import com.example.neomocreatures.init.ModSounds;
-import com.example.neomocreatures.init.ModTags;
-
 import java.util.List;
 
 import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.ent.EntVariant;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -81,6 +81,17 @@ public class MoCEntEntity extends Animal {
     /** Original: each of the 9 spots around it gets the plant with 1-in-3 odds (1-in-10 for saplings). */
     private static final int PLANT_SPOT_CHANCE = 3;
     private static final int SAPLING_SPOT_CHANCE = 10;
+    /**
+     * pickPlantToGrow rolls 0..PLANT_ROLL_BOUND-1. Each "END" is the exclusive upper bound of that
+     * plant's slice of the roll; the mushrooms get one value each and the rest is the own sapling.
+     */
+    private static final int PLANT_ROLL_BOUND = 20;
+    private static final int SMALL_GRASS_ROLL_END = 8;
+    private static final int TALL_PLANT_ROLL_END = 11;
+    private static final int DANDELION_ROLL_END = 14;
+    private static final int SMALL_FLOWER_ROLL_END = 17;
+    private static final int BROWN_MUSHROOM_ROLL = 17;
+    private static final int RED_MUSHROOM_ROLL = 18;
 
     private static final double CRITTER_SEARCH_HORIZONTAL = 8.0D;
     private static final double CRITTER_SEARCH_VERTICAL = 3.0D;
@@ -180,19 +191,19 @@ public class MoCEntEntity extends Animal {
 
     /** Original odds out of 20: 8 small grass, 3 tall plant, 3 dandelion, 3 small flower, 1 each mushroom, 1 own sapling. */
     private BlockState pickPlantToGrow() {
-        int roll = this.random.nextInt(20);
+        int roll = this.random.nextInt(PLANT_ROLL_BOUND);
         Block block;
-        if (roll < 8) {
+        if (roll < SMALL_GRASS_ROLL_END) {
             block = this.pickRandom(SMALL_GRASSES);
-        } else if (roll < 11) {
+        } else if (roll < TALL_PLANT_ROLL_END) {
             block = this.pickRandom(TALL_PLANTS);
-        } else if (roll < 14) {
+        } else if (roll < DANDELION_ROLL_END) {
             block = Blocks.DANDELION;
-        } else if (roll < 17) {
+        } else if (roll < SMALL_FLOWER_ROLL_END) {
             block = this.pickRandom(SMALL_FLOWERS);
-        } else if (roll == 17) {
+        } else if (roll == BROWN_MUSHROOM_ROLL) {
             block = Blocks.BROWN_MUSHROOM;
-        } else if (roll == 18) {
+        } else if (roll == RED_MUSHROOM_ROLL) {
             block = Blocks.RED_MUSHROOM;
         } else {
             block = this.getVariant().getSapling();

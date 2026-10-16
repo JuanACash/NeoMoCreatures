@@ -82,6 +82,18 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     private static final int LEG_TICKS_DIG_SOUND_AT = 30; // matches the original's movecount == 30 -> GOAT_DIG
     private static final int BLEAT_TICKS_MAX = 15;
 
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 10.0D;
+    /** 1 in N chance per tick that an angry male starts its leg animation. */
+    private static final int LEG_ANIMATION_ODDS = 35;
+    /** Squared horizontal distance under which a ram knockback picks a random direction. */
+    private static final double RAM_MIN_DISTANCE_SQR = 0.0001D;
+    /** 1 in N chance per tick that an idle male looks for a rival to duel. */
+    private static final int DUEL_START_ODDS = 200;
+    private static final double DUEL_RIVAL_RANGE = 14.0D;
+    /** Chance (%) that a naturally spawned goat is a kid. */
+    private static final int BABY_SPAWN_PERCENT = 15;
+
     private static final EntityDataAccessor<Boolean> DATA_MALE =
             SynchedEntityData.defineId(MoCGoatEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_COLOR =
@@ -149,8 +161,8 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.ARMOR, 1.0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.5D)
                 .add(Attributes.ATTACK_KNOCKBACK, 0.1D) // wiki: "a minuscule knockback effect"
@@ -237,7 +249,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             this.entityData.set(DATA_LEG_TICKS, ticks);
         } else if (this.isMale() && !this.isBaby() && this.isAngry()
                 && this.entityData.get(DATA_ATTACK_TICKS) == 0
-                && this.random.nextInt(35) == 0) {
+                && this.random.nextInt(LEG_ANIMATION_ODDS) == 0) {
             this.entityData.set(DATA_LEG_TICKS, 1);
         }
     }
@@ -397,7 +409,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     private void applyRamKnockback(Entity target, float force) {
         double dx = this.getX() - target.getX();
         double dz = this.getZ() - target.getZ();
-        if (dx * dx + dz * dz < 0.0001D) {
+        if (dx * dx + dz * dz < RAM_MIN_DISTANCE_SQR) {
             dx = (this.random.nextDouble() - this.random.nextDouble()) * 0.01D;
             dz = (this.random.nextDouble() - this.random.nextDouble()) * 0.01D;
         }
@@ -534,11 +546,11 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         @Override
         public boolean canUse() {
             if (!this.self.isMale() || this.self.isBaby() || this.self.getTarget() != null
-                    || this.self.getRandom().nextInt(200) != 0) {
+                    || this.self.getRandom().nextInt(DUEL_START_ODDS) != 0) {
                 return false;
             }
             List<MoCGoatEntity> rivals = this.self.level().getEntitiesOfClass(MoCGoatEntity.class,
-                    this.self.getBoundingBox().inflate(14.0D),
+                    this.self.getBoundingBox().inflate(DUEL_RIVAL_RANGE),
                     other -> other != this.self && other.isMale() && !other.isBaby());
             if (rivals.isEmpty()) {
                 return false;
@@ -587,7 +599,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         if ((spawnType == MobSpawnType.NATURAL
                 || spawnType == MobSpawnType.CHUNK_GENERATION
                 || spawnType == MobSpawnType.SPAWN_EGG)
-                && this.random.nextInt(100) < 15) {
+                && this.random.nextInt(100) < BABY_SPAWN_PERCENT) {
             this.setBaby(true);
         }
         setMale(this.random.nextBoolean());

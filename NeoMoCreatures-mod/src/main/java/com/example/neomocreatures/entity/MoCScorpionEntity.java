@@ -90,6 +90,18 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     // v^2-proportional to jump height, same relation as the big cat's 0.62F -> 2.7 blocks; ~1.6 blocks target per the wiki.
     private static final float JUMP_VELOCITY = 0.48F;
     private static final float SIDEWAYS_RIDDEN_FACTOR = 0.3F; // wiki: "very slow when moving sideways"
+
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    /** Wild HP; it becomes {@link #TAMED_MAX_HEALTH} once tamed. */
+    private static final double WILD_MAX_HEALTH = 18.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.3D;
+    private static final double BASE_ATTACK_DAMAGE = 3.0D;
+    /** Natural spawns at or below this Y level become cave scorpions. */
+    private static final int CAVE_SPAWN_MAX_Y = 40;
+    private static final float FULL_TURN_DEGREES = 360F;
+    /** Ticks of the claw swing at which the claw sound plays. */
+    private static final int CLAW_SOUND_FIRST_TICK = 10;
+    private static final int CLAW_SOUND_SECOND_TICK = 20;
   private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
@@ -158,10 +170,10 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 18.0D) // wild HP — bumped to 40 once tamed (taming step)
-                .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.ATTACK_DAMAGE, 3.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, WILD_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
                 .add(Attributes.SCALE, 1.0D);
     }
 
@@ -687,7 +699,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             boolean isNether = level.getLevel().dimension() == Level.NETHER;
             if (isNether) {
                 setVariant(ScorpionVariant.NETHER);
-            } else if (this.blockPosition().getY() <= 40) {
+            } else if (this.blockPosition().getY() <= CAVE_SPAWN_MAX_Y) {
                 setVariant(ScorpionVariant.CAVE);
             } else {
                 var biome = level.getBiome(this.blockPosition());
@@ -745,7 +757,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             if (baby == null) {
                 continue;
             }
-            baby.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * 360F, 0F);
+            baby.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * FULL_TURN_DEGREES, 0F);
             baby.setVariant(getVariant());
             baby.setBaby(true);
             baby.setAge(-GROWTH_TICKS);
@@ -912,7 +924,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
         int claw = this.entityData.get(DATA_CLAW_TICKS);
         if (claw > 0) {
-            if (claw == 10 || claw == 20) {
+            if (claw == CLAW_SOUND_FIRST_TICK || claw == CLAW_SOUND_SECOND_TICK) {
                 this.playSound(ModSounds.SCORPION_CLAW.get(), 1.0F, 1.0F);
             }
             if (++claw > CLAW_SWING_TICKS) {

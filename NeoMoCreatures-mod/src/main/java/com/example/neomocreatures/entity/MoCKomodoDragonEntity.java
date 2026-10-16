@@ -113,6 +113,13 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     private static final double RIDDEN_DESCEND_THRUST = 0.05D;
     private static final float SWIM_SPEED_MULTIPLIER = 1.6F;
 
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 25.0D;
+    private static final double BASE_ARMOR = 4.0D;
+    private static final double BASE_ATTACK_DAMAGE = 5.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.25D;
+    private static final int RANDOM_SWIM_INTERVAL = 10;
+
     /** This individual's rolled adult scale — same for its whole life, persisted below. */
     private float individualAdultScale = ADULT_SCALE;
 
@@ -275,11 +282,11 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 25.0D)
-                .add(Attributes.ARMOR, 4.0D)
-                .add(Attributes.ATTACK_DAMAGE, 5.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.ARMOR, BASE_ARMOR)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
                 .add(Attributes.SCALE, ADULT_SCALE);
     }
 
@@ -293,7 +300,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, true));
         this.goalSelector.addGoal(2, new KomodoSitGoal(this));
         this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.9D));
-        this.goalSelector.addGoal(5, new RandomSwimmingGoal(this, 1.0D, 10));
+        this.goalSelector.addGoal(5, new RandomSwimmingGoal(this, 1.0D, RANDOM_SWIM_INTERVAL));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 

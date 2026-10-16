@@ -66,6 +66,15 @@ public class MoCEggEntity extends Mob {
     /** Wiki-inspired: can't be picked back up in the first few seconds after being placed. */
     private static final int PICKUP_DELAY_TICKS = 60;
 
+    private static final double BASE_MAX_HEALTH = 10.0D;
+    /** The slow timers (unwatched, hatch) advance on a 1-in-N chance per tick. */
+    private static final int TIMER_ADVANCE_ODDS = 20;
+    private static final float FULL_TURN_DEGREES = 360F;
+    /** A newborn's age: it grows up once it counts back up to zero. */
+    private static final int NEWBORN_AGE_TICKS = -24000;
+    /** Radius in which picking up an ostrich egg alerts the adult ostriches. */
+    private static final double OSTRICH_ALERT_RADIUS = 15.0D;
+
     private ResourceLocation hatchEntityId;
     @Nullable
     private String hatchVariant;
@@ -88,7 +97,7 @@ public class MoCEggEntity extends Mob {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 10.0D);
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH);
     }
 
     @Override
@@ -155,7 +164,7 @@ public class MoCEggEntity extends Mob {
             return;
         }
 
-        if (this.random.nextInt(20) == 0) {
+        if (this.random.nextInt(TIMER_ADVANCE_ODDS) == 0) {
             this.unwatchedTicks++;
         }
         if (this.unwatchedTicks > DESPAWN_UNWATCHED_THRESHOLD
@@ -164,7 +173,7 @@ public class MoCEggEntity extends Mob {
             return;
         }
 
-        if (this.random.nextInt(20) == 0) {
+        if (this.random.nextInt(TIMER_ADVANCE_ODDS) == 0) {
             boolean lightOk = !this.requiresLight
                     || this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH;
             // Wiki: shark eggs "can only hatch if they are in the water" — no torch needed.
@@ -200,9 +209,9 @@ public class MoCEggEntity extends Mob {
         EntityType<?> hatchType = BuiltInRegistries.ENTITY_TYPE.get(this.hatchEntityId);
         Entity spawned = hatchType.create(serverLevel);
         if (spawned != null) {
-            spawned.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * 360F, 0F);
+            spawned.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * FULL_TURN_DEGREES, 0F);
             if (spawned instanceof AgeableMob ageable) {
-                ageable.setAge(-24000);
+                ageable.setAge(NEWBORN_AGE_TICKS);
             }
             serverLevel.addFreshEntity(spawned);
 
@@ -251,7 +260,7 @@ public class MoCEggEntity extends Mob {
 
             if (this.hatchEntityId.equals(BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.MOC_OSTRICH.get()))) {
                 MoCOstrichEntity.alertNearbyOstriches(
-                        this.level(), this.position(), player, 15.0D);
+                        this.level(), this.position(), player, OSTRICH_ALERT_RADIUS);
             }
         } else {
             return;

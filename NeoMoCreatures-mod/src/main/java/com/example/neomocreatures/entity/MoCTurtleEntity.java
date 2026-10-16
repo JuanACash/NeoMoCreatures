@@ -144,12 +144,19 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         this.moveControl = new TurtleSwimMoveControl(this);
     }
 
+    private static final double BASE_MAX_HEALTH = 10.0D;
+    private static final double BASE_FOLLOW_RANGE = 12.0D;
+    private static final double BASE_ARMOR = 5.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.15D;
+    /** Head turn speed while looking at the owner. */
+    private static final float LOOK_AT_OWNER_SPEED = 10.0F;
+
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 10.0D)
-                .add(Attributes.FOLLOW_RANGE, 12.0D)
-                .add(Attributes.ARMOR, 5.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.15D)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.ARMOR, BASE_ARMOR)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
                 .add(Attributes.SCALE, WILD_SCALE);
     }
 
@@ -380,6 +387,10 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     private static final int DIVING_DEPTH_REROLL_ODDS = 500;
     /** Caps the rise so a turtle that ends up deep (e.g. spawned underwater) floats up gently instead of shooting out. */
     private static final double MAX_RISE_SPEED = 0.05D;
+    /** Upward push added every tick while the turtle is below its floating depth... */
+    private static final double RISE_BASE_SPEED = 0.001D;
+    /** ...plus this much per block of depth below it. */
+    private static final double RISE_PER_BLOCK_OF_DEPTH = 0.01D;
     /** Upward push when it bumps into a bank while swimming, so it can climb out of the water. */
     private static final double CLIMB_OUT_IMPULSE = 0.1D;
     private static final int MAX_SURFACE_SCAN = 32;
@@ -418,7 +429,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         double depth = surfaceY - this.getY();
         if (depth > this.divingDepth) {
             Vec3 motion = this.getDeltaMovement();
-            double rise = Math.min(Math.max(motion.y, 0.0D) + 0.001D + depth * 0.01D, MAX_RISE_SPEED);
+            double rise = Math.min(Math.max(motion.y, 0.0D) + RISE_BASE_SPEED + depth * RISE_PER_BLOCK_OF_DEPTH, MAX_RISE_SPEED);
             this.setDeltaMovement(motion.x, rise, motion.z);
         }
     }
@@ -825,7 +836,7 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
             if (this.owner == null) {
                 return;
             }
-            this.turtle.getLookControl().setLookAt(this.owner, 10.0F, this.turtle.getMaxHeadXRot());
+            this.turtle.getLookControl().setLookAt(this.owner, LOOK_AT_OWNER_SPEED, this.turtle.getMaxHeadXRot());
             if (--this.repathDelay <= 0) {
                 this.repathDelay = REPATH_INTERVAL_TICKS;
                 this.turtle.getNavigation().moveTo(this.owner, this.speedModifier);

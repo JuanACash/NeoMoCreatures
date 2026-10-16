@@ -77,7 +77,33 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
     private int outOfWaterTicks;
     /** Not in the original — the user's own addition, since baby sharks otherwise render the same size as adults. */
     private static final float BABY_SCALE = 0.5F;
-    private float lastAppliedScale = -1F;
+
+    private static final double BASE_MAX_HEALTH = 30.0D;
+    private static final double BASE_MOVEMENT_SPEED = 1.0D;
+    private static final double BASE_ATTACK_DAMAGE = 5.0D;
+    private static final double BASE_FOLLOW_RANGE = 32.0D;
+
+    private static final int RANDOM_SWIM_INTERVAL = 10;
+    /** Ticks between searches for a target (vanilla "random interval"). */
+    private static final int TARGET_CHECK_INTERVAL = 5;
+    /** A wild shark also hunts players on land within this distance. */
+    private static final float LAND_HUNT_DISTANCE = 16.0F;
+
+    /** Out of water: the shark starts taking damage after this many ticks... */
+    private static final int SUFFOCATION_GRACE_TICKS = 300;
+    /** ...and then every this many ticks. */
+    private static final int SUFFOCATION_INTERVAL_TICKS = 20;
+    private static final float SUFFOCATION_DAMAGE = 2.0F;
+
+    private static final double EGG_BASE_CHANCE = 0.10D;
+    private static final double EGG_LOOTING_BONUS_PER_LEVEL = 0.02D;
+
+    // SharkMoveControl tuning.
+    private static final double BUOYANT_NUDGE = 0.005D;
+    private static final float SPEED_SMOOTHING = 0.125F;
+    private static final double VERTICAL_STEERING = 0.1D;
+    private static final float MAX_TURN_DEGREES = 90.0F;
+    private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync();
 
     public MoCSharkEntity(EntityType<? extends MoCSharkEntity> type, Level level) {
         super(type, level);
@@ -119,15 +145,15 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0D, 10));
+        this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0D, RANDOM_SWIM_INTERVAL));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         // Original: hunts players either swimming or within 16 blocks, and
         // squid, but only while wild and not on peaceful.
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 5, true, false,
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, TARGET_CHECK_INTERVAL, true, false,
                 player -> player != null && !this.isTame() && isReadyToHunt()
-                        && (player.isInWater() || this.distanceTo(player) < 16.0F)));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Squid.class, 5, false, false,
+                        && (player.isInWater() || this.distanceTo(player) < LAND_HUNT_DISTANCE)));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Squid.class, TARGET_CHECK_INTERVAL, false, false,
                 squid -> squid != null && !this.isTame() && isReadyToHunt()));
     }
 
@@ -137,10 +163,10 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 30.0D)
-                .add(Attributes.MOVEMENT_SPEED, 1.0D)
-                .add(Attributes.ATTACK_DAMAGE, 5.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
                 .add(Attributes.SCALE, 1.0D);
     }
 
@@ -183,11 +209,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
                 scaleAttr.setBaseValue(target);
             }
         }
-        float current = (float) scaleAttr.getValue();
-        if (this.lastAppliedScale != current) {
-            this.lastAppliedScale = current;
-            this.refreshDimensions();
-        }
+        this.hitboxSync.sync(this);
     }
 
     @Override
@@ -202,8 +224,8 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
             return;
         }
         this.outOfWaterTicks++;
-        if (this.outOfWaterTicks > 300 && this.outOfWaterTicks % 20 == 0) {
-            this.hurt(this.damageSources().drown(), 2.0F);
+        if (this.outOfWaterTicks > SUFFOCATION_GRACE_TICKS && this.outOfWaterTicks % SUFFOCATION_INTERVAL_TICKS == 0) {
+            this.hurt(this.damageSources().drown(), SUFFOCATION_DAMAGE);
         }
     }
 
@@ -337,7 +359,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
         }
 
         // Wiki: "10% chance to drop an egg... only if difficulty is Easy or higher."
-        double eggChance = Math.min(1.0D, 0.10D + lootingLevel * 0.02D);
+        double eggChance = Math.min(1.0D, EGG_BASE_CHANCE + lootingLevel * EGG_LOOTING_BONUS_PER_LEVEL);
         if (this.level().getDifficulty() != Difficulty.PEACEFUL
                 && this.random.nextDouble() < eggChance) {
             this.spawnAtLocation(new ItemStack(ModItems.SHARK_EGG.get()));
@@ -356,7 +378,7 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
         @Override
         public void tick() {
             if (this.shark.isInWater()) {
-                this.shark.setDeltaMovement(this.shark.getDeltaMovement().add(0.0D, 0.005D, 0.0D));
+                this.shark.setDeltaMovement(this.shark.getDeltaMovement().add(0.0D, BUOYANT_NUDGE, 0.0D));
             }
             if (this.operation == Operation.MOVE_TO && !this.shark.getNavigation().isDone()) {
                 float speed = (float) (this.speedModifier * this.shark.getAttributeValue(Attributes.MOVEMENT_SPEED));
@@ -364,18 +386,18 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
                 // speed instead of gradually lerping toward it — otherwise
                 // the attack speed boost takes many ticks to actually show.
                 boolean hasTarget = this.shark.getTarget() != null && this.shark.getTarget().isAlive();
-                this.shark.setSpeed(hasTarget ? speed : Mth.lerp(0.125F, this.shark.getSpeed(), speed));
+                this.shark.setSpeed(hasTarget ? speed : Mth.lerp(SPEED_SMOOTHING, this.shark.getSpeed(), speed));
                 double dx = this.wantedX - this.shark.getX();
                 double dy = this.wantedY - this.shark.getY();
                 double dz = this.wantedZ - this.shark.getZ();
                 if (dy != 0.0D) {
                     double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
                     this.shark.setDeltaMovement(this.shark.getDeltaMovement()
-                            .add(0.0D, this.shark.getSpeed() * (dy / dist) * 0.1D, 0.0D));
+                            .add(0.0D, this.shark.getSpeed() * (dy / dist) * VERTICAL_STEERING, 0.0D));
                 }
                 if (dx != 0.0D || dz != 0.0D) {
                     float yaw = (float) (Mth.atan2(dz, dx) * (180D / Math.PI)) - 90.0F;
-                    this.shark.setYRot(this.rotlerp(this.shark.getYRot(), yaw, 90.0F));
+                    this.shark.setYRot(this.rotlerp(this.shark.getYRot(), yaw, MAX_TURN_DEGREES));
                     this.shark.yBodyRot = this.shark.getYRot();
                 }
             } else {

@@ -112,12 +112,27 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, Play
     private static final int WING_TRANSFORM_DURATION_TICKS = 100;
     private static final int WING_TRANSFORM_SOUND_TICKS = 60;
     private static final float RIDDEN_FLYER_FRICTION = 0.93F;
+    private static final float RIDDEN_FLYER_MOVE_SPEED = RIDDEN_FLYER_FRICTION / 10F;
     private static final double RIDDEN_ASCEND_THRUST = 0.15D;
     private static final double RIDDEN_DESCEND_THRUST = 0.3D;
     private static final double RIDDEN_FLYER_FALL_SPEED = 0.6D;
     private static final double RIDDEN_FLYER_GRAVITY_PULL = 0.02D;
     private static final int WING_FLAP_BURST_TICKS = 20;
     private static final int SAFE_FALL_BLOCKS = 3;
+
+    private static final int CHEST_SLOTS = 9;
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 30.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.25D;
+    private static final double BASE_ATTACK_DAMAGE = 6.0D;
+    /** Squared horizontal speed under which the hazard check is skipped. */
+    private static final double HAZARD_CHECK_MIN_MOTION_SQR = 0.0004D;
+
+    // Idle animation timers (read client-side by MoCBigCatModel).
+    private static final int TAIL_ANIMATION_TICKS = 10;
+    /** 1 in N chance per tick that the idle tail swish starts. */
+    private static final int TAIL_SWISH_ODDS = 250;
+    private static final int MOUTH_ANIMATION_TICKS = 30;
     private static final float LIGER_RIDER_HEIGHT_BONUS = 0.2F;
 
 
@@ -158,7 +173,7 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, Play
     /** Ticks left before it's hungry again and resumes hunting — 0 means "hungry, will hunt". */
     private int hungerCooldown;
 
-    private final SimpleContainer chestInventory = new SimpleContainer(9);
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
     @Nullable
     private ResourceLocation saddleItemId;
 
@@ -428,10 +443,10 @@ protected void registerGoals() {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
-                .add(Attributes.MAX_HEALTH, 30.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                .add(Attributes.ATTACK_DAMAGE, 6.0D)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
                 .add(Attributes.SCALE, 1.0D);
     }
 
@@ -945,7 +960,7 @@ protected void registerGoals() {
             return;
         }
         Vec3 motion = this.getDeltaMovement();
-        if (motion.x * motion.x + motion.z * motion.z < 0.0004D) {
+        if (motion.x * motion.x + motion.z * motion.z < HAZARD_CHECK_MIN_MOTION_SQR) {
             return;
         }
         Vec3 dir = new Vec3(motion.x, 0.0D, motion.z).normalize();
@@ -973,16 +988,16 @@ protected void registerGoals() {
     /** Random idle tail swish + the mouth-open animation timer. */
     private void tickIdleCounters() {
         int tail = this.entityData.get(DATA_TAIL_TICKS);
-        if (tail > 0 && ++tail > 10) {
+        if (tail > 0 && ++tail > TAIL_ANIMATION_TICKS) {
             tail = 0;
         }
-        if (tail == 0 && this.random.nextInt(250) == 0) {
+        if (tail == 0 && this.random.nextInt(TAIL_SWISH_ODDS) == 0) {
             tail = 1;
         }
         this.entityData.set(DATA_TAIL_TICKS, tail);
 
         int mouth = this.entityData.get(DATA_MOUTH_TICKS);
-        if (mouth > 0 && ++mouth > 30) {
+        if (mouth > 0 && ++mouth > MOUTH_ANIMATION_TICKS) {
             mouth = 0;
         }
         this.entityData.set(DATA_MOUTH_TICKS, mouth);
@@ -1127,7 +1142,7 @@ protected void registerGoals() {
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player && getIsFlying()) {
             this.setNoGravity(true);
-            this.moveRelative(RIDDEN_FLYER_FRICTION / 10F, travelVector);
+            this.moveRelative(RIDDEN_FLYER_MOVE_SPEED, travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
             Vec3 delta = this.getDeltaMovement()
                     .multiply(RIDDEN_FLYER_FRICTION, RIDDEN_FLYER_FALL_SPEED, RIDDEN_FLYER_FRICTION)

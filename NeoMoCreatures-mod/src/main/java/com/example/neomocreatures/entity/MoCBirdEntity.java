@@ -91,6 +91,16 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     private static final int SLOW_FALLING_REFRESH_TICKS = 5;
     private static final double HEAD_HEIGHT_OFFSET = 0.25D;
     private static final double MOUNT_SPEED_BOOST = 4.0D;
+
+    private static final double BASE_MAX_HEALTH = 6.0D;
+    private static final double BASE_FOLLOW_RANGE = 12.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.3D;
+    private static final double BASE_FLYING_SPEED = 0.15D;
+    /** Max turn, in degrees per tick, of the smooth flight move control. */
+    private static final int FLIGHT_MAX_TURN_DEGREES = 10;
+    private static final int PICKUP_COOLDOWN_TICKS = 10;
+    /** Head turn speed while looking at a seed. */
+    private static final float LOOK_AT_SEED_SPEED = 30F;
     private static final ResourceLocation MOUNT_SPEED_MODIFIER_ID =
             ResourceLocation.fromNamespaceAndPath(
                     NeoMoCreatures.MODID, "bird_mount_speed_boost");
@@ -113,7 +123,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         // Same movement style as vanilla's Parrot: smooth flight control
         // instead of the ground-mob default, so it doesn't jerk around
         // while airborne.
-        this.moveControl = new FlyingMoveControl(this, 10, false);
+        this.moveControl = new FlyingMoveControl(this, FLIGHT_MAX_TURN_DEGREES, false);
     }
 
     @Override
@@ -160,10 +170,10 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 6.0D)
-                .add(Attributes.FOLLOW_RANGE, 12.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.FLYING_SPEED, 0.15D);
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.FLYING_SPEED, BASE_FLYING_SPEED);
     }
 
     @Override
@@ -357,7 +367,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         this.setNoAi(false);
         this.setNoGravity(false);
         this.noPhysics = false;
-        this.pickupCooldown = 10;
+        this.pickupCooldown = PICKUP_COOLDOWN_TICKS;
         clearMountSpeedBoost();
     }
 
@@ -507,7 +517,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             if (this.targetSeed == null) {
                 return;
             }
-            bird.getLookControl().setLookAt(this.targetSeed, 30F, 30F);
+            bird.getLookControl().setLookAt(this.targetSeed, LOOK_AT_SEED_SPEED, LOOK_AT_SEED_SPEED);
             bird.getNavigation().moveTo(this.targetSeed.getX(), this.targetSeed.getY(), this.targetSeed.getZ(), 1.0D);
             if (bird.distanceToSqr(this.targetSeed) < EAT_DISTANCE_SQR) {
                 ItemStack stack = this.targetSeed.getItem();
@@ -525,6 +535,9 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     /** Wiki: "attracted to and fly around trees... search for leaves, then logs, then fly towards the top." */
     private static class TreePerchGoal extends Goal {
         private static final int SEARCH_RADIUS = 6;
+        /** After a perch attempt the goal waits this many ticks, plus a random extra. */
+        private static final int COOLDOWN_BASE_TICKS = 100;
+        private static final int COOLDOWN_RANDOM_TICKS = 200;
         private final MoCBirdEntity bird;
         @Nullable
         private BlockPos target;
@@ -540,7 +553,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
             if (bird.isHeld() || this.cooldown-- > 0) {
                 return false;
             }
-            this.cooldown = 100 + bird.random.nextInt(200);
+            this.cooldown = COOLDOWN_BASE_TICKS + bird.random.nextInt(COOLDOWN_RANDOM_TICKS);
             if (bird.random.nextInt(3) != 0) {
                 return false;
             }
