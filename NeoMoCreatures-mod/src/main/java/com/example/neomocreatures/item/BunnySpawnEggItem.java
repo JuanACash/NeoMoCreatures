@@ -3,6 +3,7 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.entity.MoCBunnyEntity;
 import com.example.neomocreatures.entity.bunny.BunnyVariant;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -38,8 +39,8 @@ public class BunnySpawnEggItem extends DeferredSpawnEggItem {
         serverLevel.addFreshEntity(bunny);
 
         var player = context.getPlayer();
-        if (player != null && !player.getAbilities().instabuild) {
-            context.getItemInHand().shrink(1);
+        if (player != null) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, context.getItemInHand());
         }
 
         return InteractionResult.SUCCESS;

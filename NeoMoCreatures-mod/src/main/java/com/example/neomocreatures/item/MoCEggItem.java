@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -101,8 +102,8 @@ public class MoCEggItem extends Item {
         serverLevel.addFreshEntity(egg);
 
         Player player = context.getPlayer();
-        if (player != null && !player.getAbilities().instabuild) {
-            context.getItemInHand().shrink(1);
+        if (player != null) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, context.getItemInHand());
         }
 
         return InteractionResult.SUCCESS;

@@ -3,6 +3,7 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -62,8 +63,8 @@ public class BigCatSpawnEggItem extends DeferredSpawnEggItem {
         serverLevel.addFreshEntity(bigCat);
 
         var player = context.getPlayer();
-        if (player != null && !player.getAbilities().instabuild) {
-            context.getItemInHand().shrink(1);
+        if (player != null) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, context.getItemInHand());
         }
 
         return InteractionResult.SUCCESS;

@@ -47,8 +47,8 @@ public class BearSpawnEggItem extends DeferredSpawnEggItem {
         serverLevel.addFreshEntity(bear);
 
         var player = context.getPlayer();
-        if (player != null && !player.getAbilities().instabuild) {
-            context.getItemInHand().shrink(1);
+        if (player != null) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, context.getItemInHand());
         }
 
         return InteractionResult.SUCCESS;

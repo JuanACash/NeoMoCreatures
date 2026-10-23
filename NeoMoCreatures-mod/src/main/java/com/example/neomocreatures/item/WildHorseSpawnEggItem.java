@@ -59,8 +59,8 @@ public class WildHorseSpawnEggItem extends DeferredSpawnEggItem {
         spawnHorse(serverLevel, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, pick.species(), pick.coat(), false);
 
         Player player = context.getPlayer();
-        if (player != null && !player.getAbilities().instabuild) {
-            context.getItemInHand().shrink(1);
+        if (player != null) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, context.getItemInHand());
         }
 
         return InteractionResult.SUCCESS;
