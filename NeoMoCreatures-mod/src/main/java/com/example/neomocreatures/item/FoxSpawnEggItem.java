@@ -2,6 +2,7 @@ package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.MoCFoxEntity;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -40,9 +41,7 @@ public class FoxSpawnEggItem extends DeferredSpawnEggItem {
             cub.setSnow(adult.isSnow());
             cub.setBaby(true);
             serverLevel.addFreshEntity(cub);
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
+            MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         }
         return InteractionResult.SUCCESS;
     }

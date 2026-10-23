@@ -465,9 +465,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

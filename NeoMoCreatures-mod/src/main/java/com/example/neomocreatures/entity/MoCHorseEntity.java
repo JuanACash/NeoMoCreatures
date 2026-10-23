@@ -30,6 +30,7 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -940,9 +941,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     * specific effect (grow, heal, love, tame...).
     */
     private void consumeFoodItem(Player player, ItemStack stack) {
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
         openMouth();
     }
@@ -1118,9 +1117,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 startFairyColorTransform(DYE_TO_FAIRY_COLOR.get(dyeItem.getDyeColor()));
                 setFairyColorLocked(true);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -1154,9 +1151,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         if (this.isTamed() && !this.isBaby() && wantsChest() && !hasChest() && stack.is(Items.CHEST)) {
             if (!this.level().isClientSide) {
                 setHasChest(true);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
@@ -1278,9 +1273,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
 
         if (this.isTamed() && !this.isBaby() && getSpecies() == Species.NIGHTMARE && stack.is(Items.REDSTONE)) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 openMouth();
                 this.nightmareFleeYaw = this.getYRot();
@@ -1292,9 +1285,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
 
         if (getSpecies() == Species.ZEBRA && !stack.isEmpty() &&stack.has(DataComponents.JUKEBOX_PLAYABLE)) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 openMouth();
                 ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(),
@@ -1871,9 +1862,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     public void consumeEssence(Player player, ItemStack stack) {
         openMouth();
         this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
             player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
         }

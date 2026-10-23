@@ -1,6 +1,7 @@
 package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.entity.EquippedPet;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -47,9 +48,7 @@ public class ScrollOfFreedomItem extends Item {
         target.setCustomName(null);
         target.setCustomNameVisible(false);
 
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         return InteractionResult.SUCCESS;
     }
 }

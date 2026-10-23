@@ -15,6 +15,7 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -689,9 +690,7 @@ public class MoCSnakeEntity extends TamableAnimal
             if (!this.level().isClientSide) {
                 this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

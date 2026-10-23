@@ -12,6 +12,7 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -265,9 +266,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
                 this.tame(player);
                 NamingHelper.promptRename(this, player.getUUID());
                 this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -276,9 +275,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
             if (!this.level().isClientSide) {
                 this.heal(this.getMaxHealth());
                 this.playSound(SoundEvents.GENERIC_EAT, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

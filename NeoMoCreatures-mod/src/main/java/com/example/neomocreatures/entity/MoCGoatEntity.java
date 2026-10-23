@@ -14,6 +14,7 @@ import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -329,9 +330,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             }
             if (!this.level().isClientSide) {
                 this.playSound(SoundEvents.GOAT_MILK, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 player.getInventory().add(new ItemStack(Items.MILK_BUCKET));
             }
             return InteractionResult.SUCCESS;
@@ -342,9 +341,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             if (!this.level().isClientSide) {
                 this.setHealth(this.getMaxHealth());
                 this.playSound(ModSounds.GOAT_EATING.get(), 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -355,9 +352,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
                 this.tame(player);
                 NamingHelper.promptRename(this, player.getUUID());
                 this.playSound(ModSounds.GOAT_EATING.get(), 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

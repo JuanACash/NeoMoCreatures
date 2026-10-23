@@ -19,6 +19,7 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -705,9 +706,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
 
         if (this.isTame() && getKittyState() == KittyCareState.STATE_CURIOUS && stack.is(ModItems.WOOL_BALL.get())) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 ItemEntity ball = new ItemEntity(
                         this.level(), this.getX(), this.getY() + 1.0D, this.getZ(),
                         new ItemStack(ModItems.WOOL_BALL.get()));
@@ -729,9 +728,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 setKittyCareState(KittyCareState.STATE_LOOKING_FOR_MATE);
             }
             return InteractionResult.SUCCESS;
@@ -752,9 +749,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 this.tame(player);
                 this.entityData.set(DATA_HAS_EATEN, false);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 NamingHelper.promptRename(this, player.getUUID());
             }
             return InteractionResult.SUCCESS;
@@ -764,9 +759,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.KITTY_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

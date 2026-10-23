@@ -1,5 +1,7 @@
 package com.example.neomocreatures.item;
 
+import com.example.neomocreatures.util.MoCInventoryUtil;
+
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,9 +42,7 @@ public class ScrollOfSaleItem extends Item {
             horse.setOwnerUUID(null);
         }
 
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         return InteractionResult.SUCCESS;
     }
 }

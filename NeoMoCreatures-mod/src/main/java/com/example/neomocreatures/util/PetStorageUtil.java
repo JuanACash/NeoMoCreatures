@@ -44,9 +44,7 @@ public final class PetStorageUtil {
     public static void storeConsumingOne(Player player, InteractionHand hand, ItemStack emptyItem, Entity pet,
                                          ItemLike filledItem, CompoundTag petData) {
         ItemStack filled = createFilledItem(filledItem, petData);
-        if (!player.getAbilities().instabuild) {
-            emptyItem.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, emptyItem);
         if (emptyItem.isEmpty()) {
             player.setItemInHand(hand, filled);
         } else if (!player.getInventory().add(filled)) {

@@ -4,6 +4,7 @@ import com.example.neomocreatures.Config;
 import com.example.neomocreatures.entity.kitty.KittyCareState;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -147,9 +148,7 @@ public class MoCKittyBedEntity extends Mob {
         if (!stack.isEmpty() && !hasFood() && !hasMilk()) {
             if (stack.is(ModItems.PET_FOOD.get())) {
                 if (!this.level().isClientSide) {
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
+                    MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                     this.playSound(ModSounds.KITTY_BED_POURING_FOOD.get(), 1.0F, 1.0F);
                     setHasMilk(false);
                     setHasFood(true);

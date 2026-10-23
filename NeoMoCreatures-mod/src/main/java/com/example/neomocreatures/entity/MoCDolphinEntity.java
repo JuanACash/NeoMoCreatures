@@ -18,6 +18,7 @@ import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -452,9 +453,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
     private void eatFish(Player player, ItemStack stack) {
         this.heal(this.getMaxHealth());
         this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
     }
 
     private InteractionResult mount(Player player) {

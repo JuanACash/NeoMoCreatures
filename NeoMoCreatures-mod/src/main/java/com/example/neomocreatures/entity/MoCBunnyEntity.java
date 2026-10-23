@@ -13,6 +13,7 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -419,9 +420,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -440,9 +439,7 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 if (!this.isBaby() && !this.isInLove()) {
                     this.setInLove(player);
                 }
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

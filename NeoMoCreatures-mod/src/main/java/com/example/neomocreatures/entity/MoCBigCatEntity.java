@@ -662,9 +662,7 @@ protected void registerGoals() {
         openMouth();
         if (!this.level().isClientSide) {
             this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
+            shrinkUnlessCreative(player, stack);
             if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
                 player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
             }

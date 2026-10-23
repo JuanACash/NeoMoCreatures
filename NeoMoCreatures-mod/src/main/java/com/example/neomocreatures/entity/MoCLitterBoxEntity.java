@@ -3,6 +3,7 @@ package com.example.neomocreatures.entity;
 import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCTickUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -113,9 +114,7 @@ public class MoCLitterBoxEntity extends Mob {
 
         if (!stack.isEmpty() && stack.is(Items.SAND)) {
             if (!this.level().isClientSide) {
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 this.playSound(SoundEvents.SAND_PLACE, 1.0F, 1.0F);
                 setUsedLitter(false);
             }

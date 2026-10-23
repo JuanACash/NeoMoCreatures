@@ -6,6 +6,7 @@ import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -73,9 +74,7 @@ public class WildHorseSpawnEggItem extends DeferredSpawnEggItem {
 
         spawnHorse(serverLevel, target.getX(), target.getY(), target.getZ(), parent.getSpecies(), parent.getCoat(), true);
 
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         return InteractionResult.SUCCESS;
     }
 

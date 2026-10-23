@@ -875,9 +875,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
     private void useEssence(Player player, ItemStack stack) {
         startMouthAnimation();
         if (!this.level().isClientSide) {
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
+            shrinkUnlessCreative(player, stack);
             this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
             if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
                 player.drop(new ItemStack(Items.GLASS_BOTTLE), false);

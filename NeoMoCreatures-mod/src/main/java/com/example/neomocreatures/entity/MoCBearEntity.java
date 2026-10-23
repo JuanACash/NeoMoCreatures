@@ -895,9 +895,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
             if (!this.level().isClientSide) {
                 startTalking();
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
                 this.tame(player);
                 NamingHelper.promptRename(this, player.getUUID());
             }
@@ -909,9 +907,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
                 startTalking();
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -932,9 +928,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
             if (!this.level().isClientSide) {
                 setHasChest(true);
                 this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }

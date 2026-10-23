@@ -3,6 +3,7 @@ package com.example.neomocreatures.item;
 import com.example.neomocreatures.entity.MoCBearEntity;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -71,9 +72,7 @@ public class BearSpawnEggItem extends DeferredSpawnEggItem {
             cub.setVariant(this.variant);
             cub.setBaby(true);
             serverLevel.addFreshEntity(cub);
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
+            MoCInventoryUtil.shrinkUnlessCreative(player, stack);
         }
         return InteractionResult.SUCCESS;
     }
