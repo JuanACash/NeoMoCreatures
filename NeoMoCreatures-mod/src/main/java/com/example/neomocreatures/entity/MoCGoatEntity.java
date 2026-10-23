@@ -7,14 +7,13 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
-import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -307,17 +306,10 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        // Same rename-with-a-book convention used by every other tameable
-        // mob in the mod.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
-        }
-
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
         if (stack.is(Items.BUCKET)) {
@@ -662,12 +654,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
     }
-
-    /** Captures this tamed goat into a Pet Amulet and removes it from the world. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
-    }
-
+    
     // ---------------------------------------------------------------------
     // Pet Amulet / Fish Net storage
     // ---------------------------------------------------------------------

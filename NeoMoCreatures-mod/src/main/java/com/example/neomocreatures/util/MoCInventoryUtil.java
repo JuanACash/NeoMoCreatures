@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -20,6 +21,13 @@ public final class MoCInventoryUtil {
 
     private MoCInventoryUtil() {
         // Utility class, no instances
+    }
+
+    /** Consumes one item from the stack unless the player is in creative mode. */
+    public static void shrinkUnlessCreative(Player player, ItemStack stack) {
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
     }
 
     /** Saves every non-empty slot as {Slot: int, Item: compound}. */

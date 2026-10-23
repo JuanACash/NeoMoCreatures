@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import static com.example.neomocreatures.util.MoCInventoryUtil.shrinkUnlessCreative;
+
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -17,12 +19,12 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -94,7 +96,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * saddle, and chest still come in later steps.
  */
 public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
-        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount, EquippedPet {
+        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount {
 
     private static final float BABY_SCALE = 0.5F;
     private static final double SPRINT_SPEED_BONUS = 0.15D;
@@ -223,20 +225,38 @@ protected void registerGoals() {
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
+        // Each step returns null when it does not apply, so the next one is tried.
+        // Keep the whip first: it also blocks mounting while held, simply because it runs first.
+        InteractionResult result = tryWhip(player, stack);
+        if (result == null) {
+            result = tryFeedingInteractions(player, stack);
         }
+        if (result == null) {
+            result = tryWingEssence(player, stack);
+        }
+        if (result == null) {
+            result = tryEquip(player, stack);
+        }
+        if (result == null) {
+            // Shears remove the saddle. The chest can't be removed by shears, only by death or a pet amulet.
+            result = MountInteractionUtil.tryRemoveSaddle(this, player, stack, false);
+        }
+        if (result == null) {
+            result = tryRideOrOpenChest(player);
+        }
+        return result != null ? result : super.mobInteract(player, hand);
+    }
 
-        // Whip toggles sitting when used directly on a tamed cat — also blocks
-        // mounting while holding it, simply because this check runs first.
-        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
+    /** The whip toggles sitting on a tamed cat. */
+    private InteractionResult tryWhip(Player player, ItemStack stack) {
+        // Only the owner can order the cat to sit or stand.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setSitting(!isSittingSynced());
                 this.setTarget(null);
@@ -250,15 +270,17 @@ protected void registerGoals() {
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Taming a fed cub with the medallion, healing food and breeding food. */
+    private InteractionResult tryFeedingInteractions(Player player, ItemStack stack) {
         if (!this.isTame() && this.isBaby() && hasEaten() && stack.is(ModItems.MEDALLION.get())) {
             if (!this.level().isClientSide) {
                 this.tame(player);
                 this.entityData.set(DATA_HAS_MEDALLION, true);
                 setSitting(false);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
                 NamingHelper.promptRename(this, player.getUUID());
             }
             return InteractionResult.SUCCESS;
@@ -268,9 +290,7 @@ protected void registerGoals() {
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(this.getMaxHealth());
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -280,56 +300,36 @@ protected void registerGoals() {
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.setInLove(player);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
-        if (this.isTame() && this.isOwnedBy(player) && !hasWings() && !isTransforming()
-                && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
-                && getVariant().canGetDarknessWings()) {
+    /** Darkness or light essence gives wings to the variants that can have them. */
+    private InteractionResult tryWingEssence(Player player, ItemStack stack) {
+        if (!(this.isTame() && this.isOwnedBy(player) && !hasWings() && !isTransforming())) {
+            return null;
+        }
+
+        boolean darknessWings = stack.is(ModItems.ESSENCE_OF_DARKNESS.get()) && getVariant().canGetDarknessWings();
+        boolean lightWings = stack.is(ModItems.ESSENCE_OF_LIGHT.get()) && getVariant().canGetLightWings();
+        if (darknessWings || lightWings) {
             if (!this.level().isClientSide) {
                 startWingTransform();
             }
             useEssence(player, stack);
             return InteractionResult.SUCCESS;
         }
-        if (this.isTame() && this.isOwnedBy(player) && !hasWings() && !isTransforming()
-                && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                && getVariant().canGetLightWings()) {
-            if (!this.level().isClientSide) {
-                startWingTransform();
-            }
-            useEssence(player, stack);
-            return InteractionResult.SUCCESS;
-        }
+        return null;
+    }
 
-        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && stack.is(ModTags.MOUNT_SADDLES)) {
-            if (!this.level().isClientSide) {
-                setSaddled(true);
-                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        // Saddle-only — the chest can't be removed by shears, only by death or a pet amulet (later step).
-        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
-            if (!this.level().isClientSide) {
-                setSaddled(false);
-                this.ejectPassengers();
-                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                this.saddleItemId = null;
-                this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-            }
-            return InteractionResult.SUCCESS;
+    /** Saddle and chest. */
+    private InteractionResult tryEquip(Player player, ItemStack stack) {
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasChest()
@@ -337,13 +337,16 @@ protected void registerGoals() {
             if (!this.level().isClientSide) {
                 setHasChest(true);
                 this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Mount when saddled, or open the chest when sneaking. */
+    private InteractionResult tryRideOrOpenChest(Player player) {
+        // Anyone can mount a saddled cat, same as a horse.
         if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
                 setSitting(false);
@@ -352,12 +355,13 @@ protected void registerGoals() {
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+        // Only the owner can open the chest, so nobody can steal the contents.
+        if (!this.level().isClientSide && this.isTame() && this.isOwnedBy(player)
+                && hasChest() && player.isSecondaryUseActive()) {
             openChestMenu(player);
             return InteractionResult.SUCCESS;
         }
-
-        return super.mobInteract(player, hand);
+        return null;
     }
 
     public void setSitting(boolean sitting) {
@@ -496,8 +500,20 @@ protected void registerGoals() {
         return this.entityData.get(DATA_SADDLED);
     }
 
-    private void setSaddled(boolean saddled) {
+    @Override
+    public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     public boolean hasChest() {
@@ -891,10 +907,10 @@ protected void registerGoals() {
         return tag;
     }
 
-    /** Pet Amulet capture: instant, no vanish animation. Medallion/saddle/chest drop on the ground, not saved. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment(false); // keep the medallion — it travels with the cat inside the amulet
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
+    /** On amulet capture the saddle/chest drop on the ground, but the medallion travels with the cat. */
+    @Override
+    public void dropEquipmentForCapture() {
+        dropAllEquipment(false);
     }
 
     private void dropCombatLoot(ServerLevel level, boolean recentlyHitByPlayer) {

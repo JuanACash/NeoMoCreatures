@@ -8,4 +8,13 @@ public interface EquippedPet {
 
     /** Drops every piece of equipment and any chest contents at the pet's position. */
     void dropAllEquipment();
+
+    /**
+     * Drops the equipment that must not travel inside a Pet Amulet.
+     * By default that is everything; pets with gear that should stay with them
+     * (e.g. a medallion) override this method.
+     */
+    default void dropEquipmentForCapture() {
+        dropAllEquipment();
+    }
 }

@@ -8,12 +8,11 @@ import javax.annotation.Nullable;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bunny.BunnyVariant;
 import com.example.neomocreatures.init.ModEntities;
-import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -161,10 +160,6 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
         tag.putString("BunnyVariant", getVariant().name());
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override
@@ -413,8 +408,10 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
         // Wiki: "healed by feeding them carrots".
@@ -446,13 +443,6 @@ public class MoCBunnyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }

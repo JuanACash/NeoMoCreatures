@@ -17,8 +17,8 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -379,17 +379,10 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        // Same rename-with-a-book convention used by every other tameable
-        // mob in the mod (e.g. MoCKomodoDragonEntity#mobInteract).
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
-        }
-
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
         if (!this.isTame() && isTamingFood(stack)) {
@@ -465,11 +458,6 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         tag.putBoolean("Snow", isSnow());
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    /** Captures this tamed fox into a Pet Amulet and removes it from the world. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override

@@ -23,6 +23,9 @@ public class ModNetworking {
     /** Longest name a pet can be given from the naming screen. */
     private static final int MAX_PET_NAME_LENGTH = 32;
 
+    /** Max squared distance (16 blocks) between the player and the pet being renamed. */
+    private static final double MAX_NAMING_DISTANCE_SQR = 16.0 * 16.0;
+
     public static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("1");
 
@@ -57,7 +60,10 @@ public class ModNetworking {
             }
             Player player = context.player();
             Entity entity = player.level().getEntity(payload.entityId());
-            if (entity == null) {
+            // Ignore missing or dead entities, and entities too far away: the client
+            // sends a raw entity id, so the server must not trust it blindly.
+            if (entity == null || !entity.isAlive()
+                    || player.distanceToSqr(entity) > MAX_NAMING_DISTANCE_SQR) {
                 return;
             }
             boolean isOwner = (entity instanceof TamableAnimal tamable

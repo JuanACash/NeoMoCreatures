@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import static com.example.neomocreatures.util.MoCInventoryUtil.shrinkUnlessCreative;
+
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -23,11 +25,11 @@ import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -81,7 +83,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount, EquippedPet {
+public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasCustomInventoryScreen, GrowthScaled, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount {
 
     private static final double AGGRO_RADIUS = 14.0D;
     private static final int POISON_DURATION_TICKS = 200;
@@ -329,8 +331,20 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         return this.entityData.get(DATA_SADDLED);
     }
 
+    @Override
     public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     /** 0 = none, 1 = iron, 2 = gold, 3 = diamond. */
@@ -568,167 +582,196 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        // Every interaction below is for the owner of a tamed wyvern only.
         if (this.isTame() && this.isOwnedBy(player)) {
             ItemStack stack = player.getItemInHand(hand);
-            if (stack.is(Items.BOOK)) {
-                return NamingHelper.renameWithBook(this, player);
-            }
-            if (stack.is(ModItems.WHIP.get())) {
-                if (!this.level().isClientSide) {
-                    this.setSitting(!this.isSittingSynced());
-                    this.setTarget(null);
-                    this.getNavigation().stop();
-                    this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
-                            SoundSource.NEUTRAL, 0.5F,
-                            0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
-                    if (!player.getAbilities().instabuild) {
-                        stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (stack.is(ModItems.PET_AMULET.get())) {
-                if (!this.level().isClientSide) {
-                    capturePetInstant(player, hand);
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
-                startMouthAnimation();
-                if (!this.level().isClientSide) {
-                    this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
-                    this.heal(4.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-            
-            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
-                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(WyvernVariant.MOTHER_DARK);
-                }
-                useEssence(player, stack);
-                return InteractionResult.SUCCESS;
-            }
-            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
-                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(WyvernVariant.MOTHER_UNDEAD);
-                }
-                useEssence(player, stack);
-                return InteractionResult.SUCCESS;
-            }
-            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                    && getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
-                if (!this.level().isClientSide) {
-                    startTransform(WyvernVariant.MOTHER_LIGHT);
-                }
-                useEssence(player, stack);
-                return InteractionResult.SUCCESS;
-            }
-            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_LIGHT.get())
-                    && !getVariant().isMother()) {
-                if (!this.level().isClientSide) {
-                    this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
-                }
-                useEssence(player, stack);
-                return InteractionResult.SUCCESS;
-            }
-            if (this.isTame() && stack.is(ModItems.ESSENCE_OF_FIRE.get())
-                    && getVariant().isMother()) {
-                if (!this.level().isClientSide) {
-                    this.spawnAtLocation(new ItemStack(ModItems.MOTHER_WYVERN_EGG.get()));
-                }
-                useEssence(player, stack);
-                return InteractionResult.SUCCESS;
+
+            // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+            InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+            if (shared != InteractionResult.PASS) {
+                return shared;
             }
 
-            if (!this.isBaby() && !this.isSaddled()
-                    && stack.is(ModTags.MOUNT_SADDLES)) {
-                if (!this.level().isClientSide) {
-                    this.setSaddled(true);
-                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
+            // Each step returns null when it does not apply, so the next one is tried.
+            // Keep this order: item-based steps run before riding, and the sneak actions come last.
+            InteractionResult result = tryWhip(player, stack);
+            if (result == null) {
+                result = tryHealingFood(player, stack);
             }
-            if (!this.isBaby() && this.getArmorTier() == 0
-                    && (stack.is(Items.IRON_HORSE_ARMOR)
-                        || stack.is(Items.GOLDEN_HORSE_ARMOR)
-                        || stack.is(Items.DIAMOND_HORSE_ARMOR))) {
-                int newArmorTier = stack.is(Items.IRON_HORSE_ARMOR) ? 1
-                        : stack.is(Items.GOLDEN_HORSE_ARMOR) ? 2 : 3;
-                if (!this.level().isClientSide) {
-                    this.setArmorTier(newArmorTier);
-                    this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
+            if (result == null) {
+                result = tryEssence(player, stack);
             }
-            if (!this.isBaby() && !hasChest() && stack.is(Items.CHEST)) {
-                if (!this.level().isClientSide) {
-                    setHasChest(true);
-                    this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
+            if (result == null) {
+                result = tryEquip(player, stack);
             }
-            // Shears: armor first, then saddle — same order as the horse.
-            // The chest is NOT removable by shears — no branch for it here.
-            if (this.isTame() && stack.is(Items.SHEARS) && this.getArmorTier() > 0) {
-                if (!this.level().isClientSide) {
-                    Item armorItem = switch (this.getArmorTier()) {
-                        case 1 -> Items.IRON_HORSE_ARMOR;
-                        case 2 -> Items.GOLDEN_HORSE_ARMOR;
-                        default -> Items.DIAMOND_HORSE_ARMOR;
-                    };
-                    this.setArmorTier(0);
-                    this.spawnAtLocation(new ItemStack(armorItem));
-                    this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
-                }
-                return InteractionResult.SUCCESS;
+            if (result == null) {
+                result = tryShearsInteractions(player, stack);
             }
-            if (this.isTame() && stack.is(Items.SHEARS) && this.isSaddled()) {
-                if (!this.level().isClientSide) {
-                    this.setSaddled(false);
-                    this.ejectPassengers();
-                    Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                    this.saddleItemId = null;
-                    this.spawnAtLocation(new ItemStack(saddleItem));
-                    this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-                }
-                return InteractionResult.SUCCESS;
+            if (result == null) {
+                result = tryRideOrSneakActions(player);
             }
-            if (this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
-                if (!this.level().isClientSide) {
-                    this.setSitting(false);
-                    player.startRiding(this);
-                }
-                return InteractionResult.SUCCESS;
-            }
-            if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
-                openChestMenu(player);
-                return InteractionResult.SUCCESS;
-            }
-            if (!this.level().isClientSide && player.isSecondaryUseActive()) {
-                this.setSitting(!this.isSittingSynced());
-                this.setTarget(null);
-                this.getNavigation().stop();
-                return InteractionResult.SUCCESS;
+            if (result != null) {
+                return result;
             }
         }
 
         return super.mobInteract(player, hand);
+    }
+
+    /** The whip toggles sitting. */
+    private InteractionResult tryWhip(Player player, ItemStack stack) {
+        if (stack.is(ModItems.WHIP.get())) {
+            if (!this.level().isClientSide) {
+                this.setSitting(!this.isSittingSynced());
+                this.setTarget(null);
+                this.getNavigation().stop();
+                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
+                        SoundSource.NEUTRAL, 0.5F,
+                        0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
+                if (!player.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Healing food, only while the wyvern is hurt. */
+    private InteractionResult tryHealingFood(Player player, ItemStack stack) {
+        if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+            startMouthAnimation();
+            if (!this.level().isClientSide) {
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.heal(4.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Essences transform a mother wyvern, or make any wyvern drop an egg. */
+    private InteractionResult tryEssence(Player player, ItemStack stack) {
+        // A plain mother wyvern transforms with the dark, undead or light essence.
+        if (getVariant() == WyvernVariant.MOTHER && !isTransforming()) {
+            if (stack.is(ModItems.ESSENCE_OF_DARKNESS.get())) {
+                return transformWithEssence(player, stack, WyvernVariant.MOTHER_DARK);
+            }
+            if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())) {
+                return transformWithEssence(player, stack, WyvernVariant.MOTHER_UNDEAD);
+            }
+            if (stack.is(ModItems.ESSENCE_OF_LIGHT.get())) {
+                return transformWithEssence(player, stack, WyvernVariant.MOTHER_LIGHT);
+            }
+        }
+
+        // Light essence on any non-mother wyvern drops its egg.
+        if (stack.is(ModItems.ESSENCE_OF_LIGHT.get()) && !getVariant().isMother()) {
+            if (!this.level().isClientSide) {
+                this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
+            }
+            useEssence(player, stack);
+            return InteractionResult.SUCCESS;
+        }
+
+        // Fire essence on a mother wyvern drops a mother egg.
+        if (stack.is(ModItems.ESSENCE_OF_FIRE.get()) && getVariant().isMother()) {
+            if (!this.level().isClientSide) {
+                this.spawnAtLocation(new ItemStack(ModItems.MOTHER_WYVERN_EGG.get()));
+            }
+            useEssence(player, stack);
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    private InteractionResult transformWithEssence(Player player, ItemStack stack, WyvernVariant target) {
+        if (!this.level().isClientSide) {
+            startTransform(target);
+        }
+        useEssence(player, stack);
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Saddle, horse armor and chest. */
+    private InteractionResult tryEquip(Player player, ItemStack stack) {
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
+        }
+
+        if (!this.isBaby() && this.getArmorTier() == 0
+                && (stack.is(Items.IRON_HORSE_ARMOR)
+                    || stack.is(Items.GOLDEN_HORSE_ARMOR)
+                    || stack.is(Items.DIAMOND_HORSE_ARMOR))) {
+            int newArmorTier = stack.is(Items.IRON_HORSE_ARMOR) ? 1
+                    : stack.is(Items.GOLDEN_HORSE_ARMOR) ? 2 : 3;
+            if (!this.level().isClientSide) {
+                this.setArmorTier(newArmorTier);
+                this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.isBaby() && !hasChest() && stack.is(Items.CHEST)) {
+            if (!this.level().isClientSide) {
+                setHasChest(true);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Shears: armor first, then saddle — same order as the horse. The chest is NOT removable by shears. */
+    private InteractionResult tryShearsInteractions(Player player, ItemStack stack) {
+        if (!stack.is(Items.SHEARS)) {
+            return null;
+        }
+
+        if (this.getArmorTier() > 0) {
+            if (!this.level().isClientSide) {
+                Item armorItem = switch (this.getArmorTier()) {
+                    case 1 -> Items.IRON_HORSE_ARMOR;
+                    case 2 -> Items.GOLDEN_HORSE_ARMOR;
+                    default -> Items.DIAMOND_HORSE_ARMOR;
+                };
+                this.setArmorTier(0);
+                this.spawnAtLocation(new ItemStack(armorItem));
+                this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+    // Then the saddle (armor always comes off first, same order as the horse).
+        return MountInteractionUtil.tryRemoveSaddle(this, player, stack, false);
+    }
+
+    /** Empty-handed clicks: mount when saddled, or (sneaking) open the chest / toggle sitting. */
+    private InteractionResult tryRideOrSneakActions(Player player) {
+        if (this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            if (!this.level().isClientSide) {
+                this.setSitting(false);
+                player.startRiding(this);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+            openChestMenu(player);
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.level().isClientSide && player.isSecondaryUseActive()) {
+            this.setSitting(!this.isSittingSynced());
+            this.setTarget(null);
+            this.getNavigation().stop();
+            return InteractionResult.SUCCESS;
+        }
+        return null;
     }
 
     @Override
@@ -849,13 +892,6 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
         tag.putString("WyvernTier", getTier().name());
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    /** Pet Amulet capture: instant, no vanish animation. Saddle/armor/chest drop on the ground, not saved. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropSaddleAndArmor();
-        dropChestAndContents();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     /**

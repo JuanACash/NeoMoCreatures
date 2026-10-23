@@ -13,11 +13,11 @@ import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -26,7 +26,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -63,7 +62,6 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -84,7 +82,7 @@ import net.neoforged.neoforge.fluids.FluidType;
  * returns false and {@link #getBreedOffspring} always returns null.
  */
 public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount, EquippedPet {
+        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount {
 
     /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
     private static final int MOUTH_TICKS_MAX = 20;
@@ -276,8 +274,20 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         return this.entityData.get(DATA_SADDLED);
     }
 
-    private void setSaddled(boolean saddled) {
+    @Override
+    public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -429,8 +439,11 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        // Any equipment is dropped on the ground by the helper, never stored in the amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
@@ -448,13 +461,6 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
@@ -468,29 +474,15 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
         // Wiki: "After a Komodo dragon reaches its full size, it can be equipped
         // with a saddle" — gated on adulthood (!isBaby()), same as the tame check.
-        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && stack.is(ModTags.MOUNT_SADDLES)) {
-            if (!this.level().isClientSide) {
-                setSaddled(true);
-                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-            }
-            return InteractionResult.SUCCESS;
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
         }
 
-        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
-            if (!this.level().isClientSide) {
-                setSaddled(false);
-                this.ejectPassengers();
-                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                this.saddleItemId = null;
-                this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-            }
-            return InteractionResult.SUCCESS;
+        // Shears remove the saddle (owner only).
+        InteractionResult unsaddle = MountInteractionUtil.tryRemoveSaddle(this, player, stack, false);
+        if (unsaddle != null) {
+            return unsaddle;
         }
 
         if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
@@ -622,12 +614,6 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         tag.putFloat("IndividualAdultScale", this.individualAdultScale);
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    /** Captures this tamed dragon into a Pet Amulet and removes it from the world. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override

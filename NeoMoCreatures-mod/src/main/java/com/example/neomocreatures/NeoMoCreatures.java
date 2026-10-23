@@ -35,13 +35,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -50,7 +48,6 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class NeoMoCreatures {
     public static final String MODID = "neomocreatures";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
     // Creative tab with all of Mo'Creatures' items already implemented
@@ -108,11 +105,6 @@ public class NeoMoCreatures {
                     output.accept(ModItems.MOUNTAIN_WYVERN_EGG.get());
                     output.accept(ModItems.SEA_WYVERN_EGG.get());
                     output.accept(ModItems.MOTHER_WYVERN_EGG.get());
-                    output.accept(ModItems.DIRT_SCORPION_EGG.get());
-                    output.accept(ModItems.CAVE_SCORPION_EGG.get());
-                    output.accept(ModItems.FROST_SCORPION_EGG.get());
-                    output.accept(ModItems.FIRE_SCORPION_EGG.get());
-                    output.accept(ModItems.UNDEAD_SCORPION_EGG.get());
                     output.accept(ModItems.PLAIN_MANTICORE_EGG.get());
                     output.accept(ModItems.DARK_MANTICORE_EGG.get());
                     output.accept(ModItems.FROST_MANTICORE_EGG.get());
@@ -390,7 +382,6 @@ public class NeoMoCreatures {
         registerNetworkingAndClient(modEventBus);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
-        NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(ScorpArmorSetBonusHandler.class);
         NeoForge.EVENT_BUS.register(NightmareRiderFireImmunityHandler.class);
         NeoForge.EVENT_BUS.register(NightmareOverlayHandler.class);
@@ -405,7 +396,7 @@ public class NeoMoCreatures {
         WyvstoneBlocks.init();
         SilverSandstoneBlocks.init();
         GleamingGlassBlocks.init();
-        ITEMS.register(modEventBus);
+        // Items are registered through ModItems.ITEMS below.
         CREATIVE_MODE_TABS.register(modEventBus);
         ModArmorMaterials.ARMOR_MATERIALS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
@@ -435,8 +426,4 @@ public class NeoMoCreatures {
         LOGGER.info("neomocreatures common setup complete");
     }
 
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("HELLO from server starting");
-    }
 }

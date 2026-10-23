@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import static com.example.neomocreatures.util.MoCInventoryUtil.shrinkUnlessCreative;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -17,12 +19,12 @@ import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -81,7 +83,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount, EquippedPet, FireproofMount {
+        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount, EquippedPet, FireproofMount,
+        SaddledMount {
 
     private static final int HIDE_TICKS = 60;
     private static final int MOUTH_TICKS_MAX = 20;
@@ -284,8 +287,20 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         return this.entityData.get(DATA_SADDLED);
     }
 
-    private void setSaddled(boolean saddled) {
+    @Override
+    public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     public boolean hasChest() {
@@ -719,12 +734,6 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
         return tag;
     }
 
-    /** Pet Amulet capture: instant, no vanish animation. Saddle/helmet/chest drop on the ground, not saved. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
-    }
-
     private void tickUnihornedCharge() {
         if (getEssence() != ESSENCE_UNIHORNED || !this.isVehicle() || this.random.nextInt(UNIHORNED_CHARGE_ODDS) != 0) {
             return;
@@ -742,18 +751,34 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
+        // Each step returns null when it does not apply, so the next one is tried.
+        // Keep this order: item-based steps first, riding last.
+        InteractionResult result = tryWhip(player, stack);
+        if (result == null) {
+            result = tryFeedingInteractions(player, stack);
         }
+        if (result == null) {
+            result = tryAdultOwnerInteractions(player, stack);
+        }
+        if (result == null) {
+            result = tryOpenInventory(player);
+        }
+        if (result == null) {
+            result = tryRide(player, hand, stack);
+        }
+        return result != null ? result : super.mobInteract(player, hand);
+    }
 
-        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
+    /** The whip boosts a ridden ostrich, or buries/unburies the head of a free one. */
+    private InteractionResult tryWhip(Player player, ItemStack stack) {
+        // Only the owner can use the whip on the ostrich.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 if (this.isVehicle()) {
                     applyWhipBoost();
@@ -774,15 +799,17 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Healing food for a tamed ostrich, and melon seeds to make a wild female lay an egg. */
+    private InteractionResult tryFeedingInteractions(Player player, ItemStack stack) {
         if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
             startTalking();
             if (!this.level().isClientSide) {
                 this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
                 this.heal(4.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -797,110 +824,128 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
-        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby()) {
-
-            int essenceRoll = essenceIdFor(stack.getItem());
-            if (essenceRoll != ESSENCE_NONE && !isTransforming() && getEssence() == ESSENCE_NONE) {
-                if (!this.level().isClientSide) {
-                    setPendingEssence(essenceRoll);
-                    this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                    this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
-                    if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
-                        player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-
-            if (!isSaddled() && stack.is(ModTags.MOUNT_SADDLES)) {
-                if (!this.level().isClientSide) {
-                    setSaddled(true);
-                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-
-            int helmetFromItem = OstrichEquipment.helmetIdFor(stack);
-            if (helmetFromItem != HELMET_NONE) {
-                if (getHelmet() != HELMET_NONE) {
-                    // SUCCESS (not FAIL) fully consumes the interaction, so vanilla's own
-                    // item-based armor-equip fallback never gets a chance to sneak the new
-                    // helmet into the entity's real (unused) head equipment slot.
-                    return InteractionResult.SUCCESS;
-                }
-                if (!this.level().isClientSide) {
-                    setHelmet(helmetFromItem);
-                    this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-
-            if (!hasChest() && stack.is(Items.CHEST)) {
-                if (!this.level().isClientSide) {
-                    setHasChest(true);
-                    this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-
-            DyeColor woolColor = OstrichEquipment.dyeColorForWool(stack.getItem());
-            if (hasChest() && woolColor != null && woolColor.getId() != getFlagColor()) {
-                if (!this.level().isClientSide) {
-                    if (getFlagColor() != -1) {
-                        this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
-                    }
-                    setFlagColor(woolColor.getId());
-                    this.playSound(SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
-
-            if (stack.is(Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
-                if (!this.level().isClientSide) {
-                    if (getHelmet() != HELMET_NONE) {
-                        this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
-                        setHelmet(HELMET_NONE);
-                        this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
-                    } else {
-                        setSaddled(false);
-                        this.ejectPassengers();
-                        Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                        this.saddleItemId = null;
-                        this.spawnAtLocation(new ItemStack(saddleItem));
-                        this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-                    }
-                    if (!player.getAbilities().instabuild) {
-                        stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
-                    }
-                }
-                return InteractionResult.SUCCESS;
-            }
+    /** Everything only the owner of a tamed adult can do: essences, equipment and shears. */
+    private InteractionResult tryAdultOwnerInteractions(Player player, ItemStack stack) {
+        if (!(this.isTame() && this.isOwnedBy(player) && !this.isBaby())) {
+            return null;
         }
 
+        InteractionResult result = tryEssence(player, stack);
+        if (result == null) {
+            result = tryEquip(player, stack);
+        }
+        if (result == null) {
+            result = tryShearsInteractions(player, stack);
+        }
+        return result;
+    }
+
+    /** Essence potions: starts the transformation and gives back an empty bottle. */
+    private InteractionResult tryEssence(Player player, ItemStack stack) {
+        int essenceRoll = essenceIdFor(stack.getItem());
+        if (essenceRoll != ESSENCE_NONE && !isTransforming() && getEssence() == ESSENCE_NONE) {
+            if (!this.level().isClientSide) {
+                setPendingEssence(essenceRoll);
+                this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
+                shrinkUnlessCreative(player, stack);
+                this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+                if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                    player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Saddle, helmet, chest and the wool that colors the flag. */
+    private InteractionResult tryEquip(Player player, ItemStack stack) {
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
+        }
+
+        int helmetFromItem = OstrichEquipment.helmetIdFor(stack);
+        if (helmetFromItem != HELMET_NONE) {
+            if (getHelmet() != HELMET_NONE) {
+                // SUCCESS (not FAIL) fully consumes the interaction, so vanilla's own
+                // item-based armor-equip fallback never gets a chance to sneak the new
+                // helmet into the entity's real (unused) head equipment slot.
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.level().isClientSide) {
+                setHelmet(helmetFromItem);
+                this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!hasChest() && stack.is(Items.CHEST)) {
+            if (!this.level().isClientSide) {
+                setHasChest(true);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        DyeColor woolColor = OstrichEquipment.dyeColorForWool(stack.getItem());
+        if (hasChest() && woolColor != null && woolColor.getId() != getFlagColor()) {
+            if (!this.level().isClientSide) {
+                if (getFlagColor() != -1) {
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
+                }
+                setFlagColor(woolColor.getId());
+                this.playSound(SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Shears take off the helmet first, then the saddle. */
+    private InteractionResult tryShearsInteractions(Player player, ItemStack stack) {
+        if (stack.is(Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
+            if (!this.level().isClientSide) {
+                if (getHelmet() != HELMET_NONE) {
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
+                    setHelmet(HELMET_NONE);
+                    this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
+                } else {
+                    setSaddled(false);
+                    this.ejectPassengers();
+                    Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+                    this.saddleItemId = null;
+                    this.spawnAtLocation(new ItemStack(saddleItem));
+                    this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                }
+                if (!player.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Sneaking on your own ostrich opens its inventory. */
+    private InteractionResult tryOpenInventory(Player player) {
         if (this.isTame() && this.isOwnedBy(player) && player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
                 openInventoryFor(player);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Mounts a saddled adult ostrich; anyone can ride it, same as a horse. */
+    private InteractionResult tryRide(Player player, InteractionHand hand, ItemStack stack) {
         if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
             // Before mounting, give priority to whatever the held item wants to do
             // (scrolls, pet amulet, future items with their own interactLivingEntity).
@@ -916,8 +961,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
             }
             return InteractionResult.SUCCESS;
         }
-
-        return super.mobInteract(player, hand);
+        return null;
     }
 
     public static void alertNearbyOstriches(Level level, Vec3 pos, Player thief, double radius) {

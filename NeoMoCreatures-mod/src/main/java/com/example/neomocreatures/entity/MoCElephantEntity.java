@@ -1,5 +1,7 @@
 package com.example.neomocreatures.entity;
 
+import static com.example.neomocreatures.util.MoCInventoryUtil.shrinkUnlessCreative;
+
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,8 +20,8 @@ import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -557,25 +559,46 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
-            }
-            return InteractionResult.SUCCESS;
+        // Each step returns null when it does not apply, so the next one is tried.
+        // Keep this order: riding is checked before equipping (a sitting, harnessed elephant
+        // is mounted even if the player holds a chest), and opening the chest menu (sneak)
+        // wins over equipping tusks.
+        InteractionResult result = tryFeedingInteractions(player, stack);
+        if (result == null) {
+            result = tryEquipHarness(player, stack);
         }
+        if (result == null) {
+            result = tryRide(player);
+        }
+        if (result == null) {
+            result = tryEquipGear(player, stack);
+        }
+        if (result == null) {
+            result = tryOpenChest(player);
+        }
+        if (result == null) {
+            result = tryTuskInteractions(player, stack);
+        }
+        if (result == null) {
+            result = tryShearsInteractions(player, stack);
+        }
+        return result != null ? result : super.mobInteract(player, hand);
+    }
 
+    /** Calf taming progress and healing food. */
+    private InteractionResult tryFeedingInteractions(Player player, ItemStack stack) {
         // Only calves can be tamed — once grown, they refuse the food entirely.
         if (!this.isTame() && this.isBaby() && isTameFood(stack)) {
             if (!this.level().isClientSide) {
                 playEatEffects();
                 int progress = this.entityData.get(DATA_TAME_PROGRESS) + tameFoodValue(stack);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
                 if (progress >= TAME_GOAL) {
                     this.tame(player);
                     setSitting(false);
@@ -592,26 +615,30 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 playEatEffects();
                 this.heal(4.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** The harness is the base every other piece of equipment hangs on. */
+    private InteractionResult tryEquipHarness(Player player, ItemStack stack) {
         // Calves can't be equipped with anything.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasHarness()
                 && stack.is(ModItems.ELEPHANT_HARNESS.get())) {
             if (!this.level().isClientSide) {
                 setHarnessed(true);
                 this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Mounts a sitting, harnessed elephant (not while sneaking). */
+    private InteractionResult tryRide(Player player) {
         if (this.isTame() && this.isOwnedBy(player) && hasHarness() && this.isOrderedToSit()
                 && canAddPassenger(player) && !player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
@@ -619,7 +646,11 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Chests, garment, howdah and platform, in the order they stack on the harness. */
+    private InteractionResult tryEquipGear(Player player, ItemStack stack) {
         // Calves can't be equipped with anything.
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && hasHarness() && !hasGarment()
                 && getChestCount() < getMaxChestCount()
@@ -627,9 +658,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 setChestCount(getChestCount() + 1);
                 this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -641,9 +670,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 setGarment(true);
                 this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -654,9 +681,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 setHowdah(true);
                 this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
@@ -667,33 +692,37 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             if (!this.level().isClientSide) {
                 setPlatform(true);
                 this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Sneak + empty-handed or any item: opens the chest inventory. */
+    private InteractionResult tryOpenChest(Player player) {
         if (this.isTame() && this.isOwnedBy(player) && getChestCount() > 0 && player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
                 openChestMenu(player);
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
+    /** Equips a tusk item, or removes it with a pickaxe. */
+    private InteractionResult tryTuskInteractions(Player player, ItemStack stack) {
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && tuskStack.isEmpty() && ElephantTusks.isTuskItem(stack)) {
             if (!this.level().isClientSide) {
                 tuskStack = stack.copyWithCount(1);
                 this.entityData.set(DATA_TUSK_TIER, ElephantTusks.tierFor(tuskStack));
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
+                shrinkUnlessCreative(player, stack);
                 this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
             }
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && !tuskStack.isEmpty() && stack.is(ItemTags.PICKAXES)) {
+        if (this.isTame() && this.isOwnedBy(player) && !tuskStack.isEmpty() && stack.is(ItemTags.PICKAXES)) {
             if (!this.level().isClientSide) {
                 this.spawnAtLocation(tuskStack.copy());
                 tuskStack = ItemStack.EMPTY;
@@ -702,8 +731,17 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             }
             return InteractionResult.SUCCESS;
         }
+        return null;
+    }
 
-        if (this.isTame() && stack.is(Items.SHEARS) && hasHowdah()) {
+    /** Shears take equipment off, always the piece that nothing else depends on first. */
+    private InteractionResult tryShearsInteractions(Player player, ItemStack stack) {
+        // Only the owner can strip equipment, so nobody can loot another player's elephant.
+        if (!this.isTame() || !this.isOwnedBy(player) || !stack.is(Items.SHEARS)) {
+            return null;
+        }
+
+        if (hasHowdah()) {
             if (!this.level().isClientSide) {
                 setHowdah(false);
                 this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_HOWDAH.get()));
@@ -712,7 +750,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(Items.SHEARS) && hasGarment() && !hasHowdah()) {
+        if (hasGarment() && !hasHowdah()) {
             if (!this.level().isClientSide) {
                 setGarment(false);
                 this.spawnAtLocation(new ItemStack(ModItems.ELEPHANT_GARMENT.get()));
@@ -722,7 +760,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         }
 
         // Chests come off before the harness — shears always remove the most recently added one first.
-        if (this.isTame() && stack.is(Items.SHEARS) && getChestCount() > 0) {
+        if (getChestCount() > 0) {
             if (!this.level().isClientSide) {
                 int removedIndex = getChestCount() - 1;
                 int rangeStart = totalChestSlots(removedIndex);
@@ -738,7 +776,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(Items.SHEARS) && hasPlatform()) {
+        if (hasPlatform()) {
             if (!this.level().isClientSide) {
                 setPlatform(false);
                 if (this.getPassengers().size() > 1) {
@@ -750,11 +788,8 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             return InteractionResult.SUCCESS;
         }
 
-        // Shears removal order matters once more equipment exists (howdah -> garment ->
-        // platform/chests -> tusks -> harness last) — for now harness is the only thing to remove.
         // The harness only comes off once everything that depends on it is already gone.
-        if (this.isTame() && stack.is(Items.SHEARS) && hasHarness()
-                && getChestCount() == 0 && !hasGarment() && !hasPlatform() && tuskStack.isEmpty()) {
+        if (hasHarness() && getChestCount() == 0 && !hasGarment() && !hasPlatform() && tuskStack.isEmpty()) {
             if (!this.level().isClientSide) {
                 setHarnessed(false);
                 this.ejectPassengers();
@@ -763,8 +798,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
             }
             return InteractionResult.SUCCESS;
         }
-
-        return super.mobInteract(player, hand);
+        return null;
     }
 
     /** Same eating sound as horses/wyverns, plus the mouth-open animation (see MoCElephantModel). */
@@ -1019,12 +1053,6 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         tag.putString("ElephantVariant", getVariant().name());
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    /** Pet Amulet capture: instant, no vanish animation. All equipment drops on the ground, not saved. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     private final AgeGrowthScaler growth = new AgeGrowthScaler();

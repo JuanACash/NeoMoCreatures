@@ -1089,7 +1089,10 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     * horse with its permanent color.
     */
     private InteractionResult tryUnequipOrDyeInteraction(Player player, ItemStack stack) {
-        if (this.isTamed() && stack.is(Items.SHEARS) && !this.getItemBySlot(EquipmentSlot.BODY).isEmpty()) {
+        // Only the owner can take equipment off with shears.
+        boolean isOwner = player.getUUID().equals(this.getOwnerUUID());
+
+        if (this.isTamed() && isOwner && stack.is(Items.SHEARS) && !this.getItemBySlot(EquipmentSlot.BODY).isEmpty()) {
             if (!this.level().isClientSide) {
                 ItemStack armor = this.getItemBySlot(EquipmentSlot.BODY);
                 this.setItemSlot(EquipmentSlot.BODY, ItemStack.EMPTY);
@@ -1099,7 +1102,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
         }
 
         /// Shears also remove the saddle.
-        if (this.isTamed() && stack.is(Items.SHEARS) && this.isSaddled()) {
+        if (this.isTamed() && isOwner && stack.is(Items.SHEARS) && this.isSaddled()) {
             if (!this.level().isClientSide) {
                 ItemStack saddle = this.inventory.getItem(0);
                 this.inventory.setItem(0, ItemStack.EMPTY);

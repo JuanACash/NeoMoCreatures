@@ -13,11 +13,11 @@ import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -71,7 +71,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, PlayerRideableJumping,
-        Enemy, StorablePet, EquippedPet, FireproofMount {
+        Enemy, StorablePet, EquippedPet, FireproofMount, SaddledMount {
 
     private static final int STING_CHANCE = 5; // 1 in 5, matches rand.nextInt(5)==0
     private static final int STING_ANIM_TICKS = 50;
@@ -483,8 +483,20 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         return this.entityData.get(DATA_SADDLED);
     }
 
-    private void setSaddled(boolean saddled) {
+    @Override
+    public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     public boolean isSittingSynced() {
@@ -507,7 +519,8 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
         // Whip toggles sitting — only while tamed and not currently being
         // ridden, exactly like the original MoCEntityPetScorpion.
-        if (this.isTame() && stack.is(ModItems.WHIP.get()) && !this.isVehicle()) {
+        // Only the owner can order the scorpion to sit or stand.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get()) && !this.isVehicle()) {
             if (!this.level().isClientSide) {
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);
@@ -523,14 +536,10 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         }
 
         if (this.isTame() && this.isOwnedBy(player)) {
-            if (stack.is(Items.BOOK)) {
-                return NamingHelper.renameWithBook(this, player);
-            }
-            if (stack.is(ModItems.PET_AMULET.get())) {
-                if (!this.level().isClientSide) {
-                    capturePetInstant(player, hand);
-                }
-                return InteractionResult.SUCCESS;
+            // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+            InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+            if (shared != InteractionResult.PASS) {
+                return shared;
             }
             if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
                     && getVariant() != ScorpionVariant.UNDEAD && !isTransforming()) {
@@ -567,17 +576,9 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (!this.isBaby() && !isSaddled()
-                    && stack.is(ModTags.MOUNT_SADDLES)) {
-                if (!this.level().isClientSide) {
-                    setSaddled(true);
-                    this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                }
-                return InteractionResult.SUCCESS;
+            InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+            if (saddle != null) {
+                return saddle;
             }
         }
 
@@ -605,19 +606,10 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
             }
             return InteractionResult.SUCCESS;
         }
-        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
-            if (!this.level().isClientSide) {
-                setSaddled(false);
-                this.ejectPassengers();
-                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                this.saddleItemId = null;
-                this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
-                }
-            }
-            return InteractionResult.SUCCESS;
+        // Shears remove the saddle (owner only) and wear down here.
+        InteractionResult unsaddle = MountInteractionUtil.tryRemoveSaddle(this, player, stack, true);
+        if (unsaddle != null) {
+            return unsaddle;
         }
 
         return super.mobInteract(player, hand);
@@ -785,12 +777,6 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         PetStorageTags.writeIdentity(tag, this, owner);
         tag.putBoolean("Adult", !this.isBaby());
         return tag;
-    }
-
-    /** Pet Amulet capture: instant, no vanish animation. Saddle drops on the ground, not saved. */
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     @Override

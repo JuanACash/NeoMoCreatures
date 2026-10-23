@@ -14,12 +14,12 @@ import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.PetStorageUtil;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -73,7 +73,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
-        HasCustomInventoryScreen, Enemy, StorablePet, AscendingMount, DescendingMount, EquippedPet, FireproofMount {
+        HasCustomInventoryScreen, Enemy, StorablePet, AscendingMount, DescendingMount, EquippedPet, FireproofMount,
+        SaddledMount {
 
     private static final int STING_CHANCE = 5;
     private static final int STING_ANIM_TICKS = 50;
@@ -287,8 +288,20 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         return this.entityData.get(DATA_SADDLED);
     }
 
-    private void setSaddled(boolean saddled) {
+    @Override
+    public void setSaddled(boolean saddled) {
         this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
     }
 
     public boolean hasChest() {
@@ -414,11 +427,15 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(Items.BOOK)) {
-            return NamingHelper.renameWithBook(this, player);
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        // Any equipment is dropped on the ground by the helper, never stored in the amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
         }
 
-        if (this.isTame() && stack.is(ModItems.WHIP.get())) {
+        // Only the owner can order the pet to sit or stand.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
             if (!this.level().isClientSide) {
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);
@@ -429,13 +446,6 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
                 if (!player.getAbilities().instabuild) {
                     stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
                 }
-            }
-            return InteractionResult.SUCCESS;
-        }
-
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.PET_AMULET.get())) {
-            if (!this.level().isClientSide) {
-                capturePetInstant(player, hand);
             }
             return InteractionResult.SUCCESS;
         }
@@ -451,17 +461,9 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !isSaddled()
-                && stack.is(ModTags.MOUNT_SADDLES)) {
-            if (!this.level().isClientSide) {
-                setSaddled(true);
-                this.saddleItemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                this.playSound(SoundEvents.HORSE_SADDLE, 1.0F, 1.0F);
-                if (!player.getAbilities().instabuild) {
-                    stack.shrink(1);
-                }
-            }
-            return InteractionResult.SUCCESS;
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
         }
 
         if (this.isTame() && this.isOwnedBy(player) && !this.isBaby() && !hasChest()
@@ -476,16 +478,10 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
             return InteractionResult.SUCCESS;
         }
 
-        if (this.isTame() && stack.is(Items.SHEARS) && isSaddled()) {
-            if (!this.level().isClientSide) {
-                setSaddled(false);
-                this.ejectPassengers();
-                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
-                this.saddleItemId = null;
-                this.spawnAtLocation(new ItemStack(saddleItem));
-                this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
-            }
-            return InteractionResult.SUCCESS;
+        // Shears remove the saddle (owner only).
+        InteractionResult unsaddle = MountInteractionUtil.tryRemoveSaddle(this, player, stack, false);
+        if (unsaddle != null) {
+            return unsaddle;
         }
 
         if (this.isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
@@ -496,7 +492,9 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
             return InteractionResult.SUCCESS;
         }
 
-        if (!this.level().isClientSide && hasChest() && player.isSecondaryUseActive()) {
+        // Only the owner can open the chest, so nobody can steal the contents.
+        if (!this.level().isClientSide && this.isTame() && this.isOwnedBy(player)
+                && hasChest() && player.isSecondaryUseActive()) {
             openChestMenu(player);
             return InteractionResult.SUCCESS;
         }
@@ -667,11 +665,6 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         tag.putString("ManticoreVariant", getVariant().name());
         PetStorageTags.writeCommon(tag, this, owner);
         return tag;
-    }
-
-    private void capturePetInstant(Player player, InteractionHand hand) {
-        dropAllEquipment();
-        PetStorageUtil.storeReplacingHeldItem(player, hand, this, ModItems.PET_AMULET_FULL.get(), buildAmuletTag(player.getUUID()));
     }
 
     private void dropCombatLoot(ServerLevel level, boolean recentlyHitByPlayer) {
