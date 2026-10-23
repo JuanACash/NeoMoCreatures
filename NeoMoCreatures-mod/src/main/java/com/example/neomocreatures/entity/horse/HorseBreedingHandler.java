@@ -121,7 +121,7 @@ public final class HorseBreedingHandler {
 
         Species foalSpecies = MoCHorseGenetics.resolveOffspringSpecies(species, mateSpecies);
         Coat foalCoat = (foalSpecies == Species.HORSE && species == Species.HORSE && mateSpecies == Species.HORSE)
-                ? MoCHorseGenetics.resolveOffspringCoat(this.horse.getCoat(), mate.getCoat())
+                ? MoCHorseGenetics.resolveOffspringCoat(this.horse.getCoat(), mate.getCoat(), this.horse.getRandom())
                 : Coat.WHITE;
 
         FairyColor foalFairyColor = FairyColor.WHITE;

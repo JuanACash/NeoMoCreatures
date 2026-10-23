@@ -266,7 +266,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
                 Species chosen = options.get(this.random.nextInt(options.size()));
                 setSpecies(chosen);
                 if (chosen == Species.HORSE) {
-                    setCoat(MoCHorseGenetics.randomWildCoat());
+                    setCoat(MoCHorseGenetics.randomWildCoat(this.random));
                 }
                 this.setHealth((float) this.getMaxHealth());
             }
@@ -281,7 +281,7 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
     public MoCHorseEntity(EntityType<? extends MoCHorseEntity> type, Level level) {
         super(type, level);
         Species species = MoCHorseGenetics.WILD_SPECIES[this.random.nextInt(MoCHorseGenetics.WILD_SPECIES.length)];
-        Coat coat = MoCHorseGenetics.randomWildCoat();
+        Coat coat = MoCHorseGenetics.randomWildCoat(this.random);
         setSpecies(species);
         setCoat(coat);
         this.setHealth((float) this.getMaxHealth());

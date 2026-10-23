@@ -2,9 +2,6 @@ package com.example.neomocreatures;
 
 import org.slf4j.Logger;
 
-import com.example.neomocreatures.client.ModClientParticles;
-import com.example.neomocreatures.client.ModKeyMappings;
-import com.example.neomocreatures.client.NightmareOverlayHandler;
 import com.example.neomocreatures.entity.CaveScorpionSpawner;
 import com.example.neomocreatures.event.GrowthScaleJoinHandler;
 import com.example.neomocreatures.event.KittyVillageSpawner;
@@ -379,12 +376,11 @@ public class NeoMoCreatures {
 
         registerDeferredRegistries(modEventBus);
         registerEntitiesAndSounds(modEventBus);
-        registerNetworkingAndClient(modEventBus);
+        registerNetworking(modEventBus);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         NeoForge.EVENT_BUS.register(ScorpArmorSetBonusHandler.class);
         NeoForge.EVENT_BUS.register(NightmareRiderFireImmunityHandler.class);
-        NeoForge.EVENT_BUS.register(NightmareOverlayHandler.class);
         NeoForge.EVENT_BUS.register(ScorpionHoldReleaseHandler.class);
         NeoForge.EVENT_BUS.register(new CaveScorpionSpawner());
         NeoForge.EVENT_BUS.register(KittyVillageSpawner.class);
@@ -415,10 +411,8 @@ public class NeoMoCreatures {
         modEventBus.addListener(ModSpawnPlacements::register);
     }
 
-    private void registerNetworkingAndClient(IEventBus modEventBus) {
+    private void registerNetworking(IEventBus modEventBus) {
         modEventBus.addListener(ModNetworking::register);
-        modEventBus.addListener(ModKeyMappings::register);
-        modEventBus.register(ModClientParticles.class);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

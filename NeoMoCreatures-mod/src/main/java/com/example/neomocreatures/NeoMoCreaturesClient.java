@@ -12,7 +12,6 @@ import com.example.neomocreatures.client.legacy.MoCLegacySharkRenderer;
 import com.example.neomocreatures.init.ModBlocks;
 import com.example.neomocreatures.init.ModEntities;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -28,6 +27,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = NeoMoCreatures.MODID, dist = Dist.CLIENT)
@@ -39,6 +39,12 @@ public class NeoMoCreaturesClient {
         // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
         // Do not forget to add translations for your config options to the en_us.json file.
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+
+        // Client-only registrations. They live here (not in NeoMoCreatures) because this class
+        // never loads on a dedicated server, where KeyMapping, Minecraft and particle providers don't exist.
+        modEventBus.addListener(ModKeyMappings::register);
+        modEventBus.register(ModClientParticles.class);
+        NeoForge.EVENT_BUS.register(NightmareOverlayHandler.class);
 
         // Mo'Creatures: register the placeholder model layer + renderer for our horse
         modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) ->{
@@ -198,11 +204,7 @@ public class NeoMoCreaturesClient {
 
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        // Some client setup code
-        NeoMoCreatures.LOGGER.info("HELLO FROM CLIENT SETUP");
-        NeoMoCreatures.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-
-        // Wyvern block set: render as "cutout" 
+        // Wyvern block set: render as "cutout"
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WYVWOOD_SAPLING.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.TALL_WYVGRASS.get(), RenderType.cutout());

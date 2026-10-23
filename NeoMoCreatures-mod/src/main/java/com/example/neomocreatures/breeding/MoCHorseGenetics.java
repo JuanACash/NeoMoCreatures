@@ -2,7 +2,8 @@ package com.example.neomocreatures.breeding;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+
+import net.minecraft.util.RandomSource;
 
 /**
  * Coat + species genetics for MoC horses, built directly from the
@@ -13,8 +14,6 @@ import java.util.Random;
 public final class MoCHorseGenetics {
 
     private MoCHorseGenetics() {}
-
-    private static final Random RANDOM = new Random();
 
     // ---------------------------------------------------------------
     // Coats (only meaningful when species == HORSE)
@@ -39,8 +38,9 @@ public final class MoCHorseGenetics {
             Coat.WHITE, Coat.CREAMY, Coat.BROWN, Coat.DARKBROWN, Coat.BLACK
     };
 
-    public static Coat randomWildCoat() {
-        return WILD_COATS[RANDOM.nextInt(WILD_COATS.length)];
+    /** Picks a wild coat using the caller's random source (the entity's own, so it follows the game's seeding). */
+    public static Coat randomWildCoat(RandomSource random) {
+        return WILD_COATS[random.nextInt(WILD_COATS.length)];
     }
 
     // ---------------------------------------------------------------
@@ -171,7 +171,7 @@ public final class MoCHorseGenetics {
     }
 
     /** Resolves a foal's coat from two horse parents' coats (species == HORSE on both sides). */
-    public static Coat resolveOffspringCoat(Coat a, Coat b) {
+    public static Coat resolveOffspringCoat(Coat a, Coat b, RandomSource random) {
         if (a == b) {
             return a;
         }
@@ -180,7 +180,7 @@ public final class MoCHorseGenetics {
             return result;
         }
         // Chart's stated fallback: unlisted combos produce either parent, 50/50.
-        return RANDOM.nextBoolean() ? a : b;
+        return random.nextBoolean() ? a : b;
     }
 
     /**
