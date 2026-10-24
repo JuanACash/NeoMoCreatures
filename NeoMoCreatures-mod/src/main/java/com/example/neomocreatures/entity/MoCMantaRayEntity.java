@@ -6,9 +6,11 @@ import com.example.neomocreatures.entity.ai.AquaticMoveControl;
 import com.example.neomocreatures.entity.ai.DepthBandSwimGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.WaterSuffocationUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -171,15 +173,8 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
 
     /** Stranded manta rays cannot move (no water to path through) and eventually suffocate. */
     private void tickOutOfWater() {
-        if (this.isInWaterOrBubble()) {
-            this.outOfWaterTicks = 0;
-            return;
-        }
-        this.outOfWaterTicks++;
-        if (this.outOfWaterTicks > SUFFOCATION_GRACE_TICKS
-                && this.outOfWaterTicks % SUFFOCATION_INTERVAL_TICKS == 0) {
-            this.hurt(this.damageSources().drown(), SUFFOCATION_DAMAGE);
-        }
+        this.outOfWaterTicks = WaterSuffocationUtil.tick(this, this.outOfWaterTicks,
+                SUFFOCATION_GRACE_TICKS, SUFFOCATION_INTERVAL_TICKS, SUFFOCATION_DAMAGE);
     }
 
     // ---------------------------------------------------------------------
@@ -380,12 +375,7 @@ public class MoCMantaRayEntity extends TamableAnimal implements StorablePet, Asc
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
-        this.setYRot(player.getYRot());
-        this.yRotO = this.getYRot();
-        this.setXRot(0.0F);
-        this.setRot(this.getYRot(), this.getXRot());
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_LEVEL);
     }
 
     /**

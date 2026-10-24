@@ -1,15 +1,15 @@
 package com.example.neomocreatures.network;
 
+import java.util.UUID;
+
 import com.example.neomocreatures.client.ClientPayloadHandlers;
 import com.example.neomocreatures.entity.AscendingMount;
 import com.example.neomocreatures.entity.DescendingMount;
+import com.example.neomocreatures.util.PetOwnershipUtil;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
-
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -66,23 +66,14 @@ public class ModNetworking {
                     || player.distanceToSqr(entity) > MAX_NAMING_DISTANCE_SQR) {
                 return;
             }
-            boolean isOwner = (entity instanceof TamableAnimal tamable
-                            && player.getUUID().equals(tamable.getOwnerUUID()))
-                    || (entity instanceof AbstractHorse horse
-                            && player.getUUID().equals(horse.getOwnerUUID()));
-            boolean isAdoptableOwnerless = (entity instanceof TamableAnimal ownerlessTamable
-                            && ownerlessTamable.isTame() && ownerlessTamable.getOwnerUUID() == null)
-                    || (entity instanceof AbstractHorse ownerlessHorse
-                            && ownerlessHorse.isTamed() && ownerlessHorse.getOwnerUUID() == null);
-            if (!isOwner && !isAdoptableOwnerless) {
+            UUID playerId = player.getUUID();
+            // A tamed pet with no owner is adopted by whoever renames it first.
+            boolean adopting = PetOwnershipUtil.isTamedWithoutOwner(entity);
+            if (!adopting && !PetOwnershipUtil.isOwnedBy(entity, playerId)) {
                 return;
             }
-            if (isAdoptableOwnerless) {
-                if (entity instanceof TamableAnimal adoptedTamable) {
-                    adoptedTamable.setOwnerUUID(player.getUUID());
-                } else if (entity instanceof AbstractHorse adoptedHorse) {
-                    adoptedHorse.setOwnerUUID(player.getUUID());
-                }
+            if (adopting) {
+                PetOwnershipUtil.setOwner(entity, playerId);
             }
             entity.setCustomName(Component.literal(payload.name()));
             entity.setCustomNameVisible(true);

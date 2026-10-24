@@ -13,12 +13,13 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
-import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -678,12 +679,7 @@ public class MoCDolphinEntity extends TamableAnimal implements GrowthScaled, Sto
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
-        this.setYRot(player.getYRot());
-        this.yRotO = this.getYRot();
-        this.setXRot(0.0F);
-        this.setRot(this.getYRot(), this.getXRot());
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_LEVEL);
     }
 
     /** Swims where the rider looks; jump goes up, the descend key goes down, and it holds its depth otherwise. */

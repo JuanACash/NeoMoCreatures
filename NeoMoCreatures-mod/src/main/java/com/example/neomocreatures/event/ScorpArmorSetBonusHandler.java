@@ -1,6 +1,7 @@
 package com.example.neomocreatures.event;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.world.effect.MobEffectInstance;
@@ -9,6 +10,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 
@@ -18,6 +20,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
  * every 60 ticks with a 400-tick duration so the effect icon never flickers,
  * similar to how vanilla handles the Turtle Shell / food regeneration.
  */
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class ScorpArmorSetBonusHandler {
 
     private static final int REFRESH_INTERVAL = 60;

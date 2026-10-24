@@ -1,9 +1,11 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCScorpionEntity;
 
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
@@ -12,6 +14,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
  * not just by clicking the scorpion itself. Matches the original's pick-up
  * mechanic.
  */
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class ScorpionHoldReleaseHandler {
 
     @SubscribeEvent

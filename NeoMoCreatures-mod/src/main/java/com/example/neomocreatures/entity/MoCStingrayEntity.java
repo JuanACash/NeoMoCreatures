@@ -7,6 +7,7 @@ import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.WaterSuffocationUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -153,14 +154,8 @@ public class MoCStingrayEntity extends TamableAnimal implements StorablePet {
 
     /** Stranded rays cannot move (no water to path through) and eventually suffocate. */
     private void tickOutOfWater() {
-        if (this.isInWaterOrBubble()) {
-            this.outOfWaterTicks = 0;
-            return;
-        }
-        this.outOfWaterTicks++;
-        if (this.outOfWaterTicks > SUFFOCATION_GRACE_TICKS && this.outOfWaterTicks % SUFFOCATION_INTERVAL_TICKS == 0) {
-            this.hurt(this.damageSources().drown(), SUFFOCATION_DAMAGE);
-        }
+        this.outOfWaterTicks = WaterSuffocationUtil.tick(this, this.outOfWaterTicks,
+                SUFFOCATION_GRACE_TICKS, SUFFOCATION_INTERVAL_TICKS, SUFFOCATION_DAMAGE);
     }
 
     private void tickPoison() {

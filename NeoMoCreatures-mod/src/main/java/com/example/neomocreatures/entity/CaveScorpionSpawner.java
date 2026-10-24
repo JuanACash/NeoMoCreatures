@@ -10,10 +10,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class CaveScorpionSpawner {
 
     private static final int CHECK_INTERVAL_TICKS = 20 * 3;
@@ -21,12 +22,16 @@ public class CaveScorpionSpawner {
     private static final int SPAWN_CHANCE_DENOMINATOR = 1;
     private static final int SEARCH_RADIUS = 24;
     private static final int MAX_TRIES = 10;
+    private static final int VERTICAL_SEARCH_RANGE = 8;
+    private static final double MIN_PLAYER_DISTANCE_SQR = SEARCH_RADIUS * SEARCH_RADIUS;
+    private static final int MAX_LIGHT_LEVEL = 9;
+    private static final int BABIES_CHANCE_DENOMINATOR = 4;
 
-    private int tickCounter;
+    private static int tickCounter;
 
     @SubscribeEvent
-    public void onLevelTick(LevelTickEvent.Post event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || level.isClientSide) {
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
         if (level.dimension() != Level.OVERWORLD) {
@@ -48,53 +53,44 @@ public class CaveScorpionSpawner {
             if (level.random.nextInt(SPAWN_CHANCE_DENOMINATOR) != 0) {
                 continue;
             }
-            NeoMoCreatures.LOGGER.info("[CaveScorpion] Checking near player at Y={}", player.blockPosition().getY());
             tryCaveSpawnNear(level, player);
         }
     }
 
-    private void tryCaveSpawnNear(ServerLevel level, ServerPlayer player) {
+    private static void tryCaveSpawnNear(ServerLevel level, ServerPlayer player) {
         BlockPos center = player.blockPosition();
         for (int i = 0; i < MAX_TRIES; i++) {
             int dx = level.random.nextInt(SEARCH_RADIUS * 2) - SEARCH_RADIUS;
             int dz = level.random.nextInt(SEARCH_RADIUS * 2) - SEARCH_RADIUS;
-            int dy = level.random.nextInt(16) - 8;
+            int dy = level.random.nextInt(VERTICAL_SEARCH_RANGE * 2) - VERTICAL_SEARCH_RANGE;
             BlockPos pos = center.offset(dx, dy, dz);
 
-            if (pos.getY() > MAX_Y) {
+            if (pos.getY() > MAX_Y
+                    || player.distanceToSqr(Vec3.atCenterOf(pos)) < MIN_PLAYER_DISTANCE_SQR
+                    || !level.getWorldBorder().isWithinBounds(pos)
+                    // Never force-load a chunk just to test a candidate position.
+                    || !level.hasChunkAt(pos)) {
                 continue;
             }
-            if (player.distanceToSqr(Vec3.atCenterOf(pos)) < 24.0D * 24.0D) {
-                continue;
-            }
-            if (!level.getWorldBorder().isWithinBounds(pos)) {
-                continue;
-            }
+            BlockPos above = pos.above();
             boolean spaceOk = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
-                    && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
-            if (!spaceOk) {
-                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: space not ok at {}", i, pos);
+                    && level.getBlockState(above).getCollisionShape(level, above).isEmpty();
+            if (!spaceOk || level.getBlockState(pos.below()).isAir()) {
                 continue;
             }
-            if (level.getBlockState(pos.below()).isAir()) {
-                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: no floor at {}", i, pos);
-                continue;
-            }
-            int brightness = level.getMaxLocalRawBrightness(pos);
-            if (brightness > 9) {
-                NeoMoCreatures.LOGGER.info("[CaveScorpion] try {} rejected: too bright ({}) at {}", i, brightness, pos);
+            if (level.getMaxLocalRawBrightness(pos) > MAX_LIGHT_LEVEL) {
                 continue;
             }
 
             MoCScorpionEntity scorpion = ModEntities.MOC_SCORPION.get().create(level);
             if (scorpion == null) {
-                NeoMoCreatures.LOGGER.info("[CaveScorpion] entity.create() returned null!");
+                NeoMoCreatures.LOGGER.warn("Could not create a cave scorpion entity");
                 return;
             }
             scorpion.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D,
                     level.random.nextFloat() * 360F, 0F);
             scorpion.setVariant(ScorpionVariant.CAVE);
-            if (level.random.nextInt(4) == 0) {
+            if (level.random.nextInt(BABIES_CHANCE_DENOMINATOR) == 0) {
                 scorpion.setHasBabiesPublic(true);
             }
             if (scorpion.checkSpawnObstruction(level)) {
@@ -102,6 +98,5 @@ public class CaveScorpionSpawner {
             }
             return;
         }
-        NeoMoCreatures.LOGGER.info("[CaveScorpion] all {} tries exhausted, none valid", MAX_TRIES);
     }
 }

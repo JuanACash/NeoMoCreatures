@@ -46,8 +46,11 @@ public class NeoMoCreaturesClient {
         modEventBus.register(ModClientParticles.class);
         NeoForge.EVENT_BUS.register(NightmareOverlayHandler.class);
 
-        // Mo'Creatures: register the placeholder model layer + renderer for our horse
-        modEventBus.addListener((EntityRenderersEvent.RegisterLayerDefinitions event) ->{
+    }
+
+    /** Registers the model layer definition of every creature. */
+    @SubscribeEvent
+    static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
                 event.registerLayerDefinition(MoCHorseRenderer.MOC_HORSE_LAYER, MoCHorseModel::createBodyLayer);
                 event.registerLayerDefinition(MoCHorseMobRenderer.MOC_HORSE_MOB_LAYER, MoCHorseMobModel::createBodyLayer);
                 event.registerLayerDefinition(MoCWyvernRenderer.MOC_WYVERN_LAYER, MoCWyvernModel::createBodyLayer);
@@ -118,9 +121,11 @@ public class NeoMoCreaturesClient {
                 event.registerLayerDefinition(MoCEntRenderer.MOC_ENT_LAYER, MoCEntModel::createBodyLayer);
                 event.registerLayerDefinition(MoCMiniGolemRenderer.MOC_MINI_GOLEM_LAYER, MoCMiniGolemModel::createBodyLayer);
                 event.registerLayerDefinition(MoCBigGolemRenderer.MOC_BIG_GOLEM_LAYER, MoCBigGolemModel::createBodyLayer);
-    });
+    }
 
-        modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> {
+    /** Binds every entity type to its renderer. */
+    @SubscribeEvent
+    static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
                 event.registerEntityRenderer(ModEntities.MOC_HORSE.get(), MoCHorseRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_HORSE_MOB.get(), MoCHorseMobRenderer::new);
                 event.registerEntityRenderer(ModEntities.WYVERN.get(), MoCWyvernRenderer::new);
@@ -198,8 +203,6 @@ public class NeoMoCreaturesClient {
                 event.registerEntityRenderer(ModEntities.MOC_THROWABLE_ROCK.get(), MoCThrowableRockRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_BIG_GOLEM.get(), MoCBigGolemRenderer::new);
                 event.registerEntityRenderer(ModEntities.MOC_SUMMONED_ROCK.get(), MoCThrowableRockRenderer::new);
-        });
-                
     }
 
     @SubscribeEvent

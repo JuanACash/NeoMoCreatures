@@ -1,8 +1,10 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.GrowthScaled;
 
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 /**
@@ -10,6 +12,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
  * instead of waiting for its first tick. Otherwise a mob fresh out of a spawn egg or a pet amulet is
  * sent at scale 1 and shows up at full size for a moment before shrinking to its real size.
  */
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class GrowthScaleJoinHandler {
 
     @SubscribeEvent

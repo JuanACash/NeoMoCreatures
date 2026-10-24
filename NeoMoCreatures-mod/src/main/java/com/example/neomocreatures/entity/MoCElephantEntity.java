@@ -19,6 +19,7 @@ import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
@@ -1166,12 +1167,7 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
-        this.setYRot(player.getYRot());
-        this.yRotO = this.getYRot();
-        this.setXRot(player.getXRot() * 0.5F);
-        this.setRot(this.getYRot(), this.getXRot());
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_HALF);
     }
 
     // ---------------------------------------------------------------------

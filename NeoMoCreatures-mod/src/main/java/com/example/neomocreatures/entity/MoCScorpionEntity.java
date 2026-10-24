@@ -27,7 +27,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
@@ -38,7 +37,6 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -436,12 +434,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
-        this.setYRot(player.getYRot());
-        this.yRotO = this.getYRot();
-        this.setXRot(player.getXRot() * 0.5F);
-        this.setRot(this.getYRot(), this.getXRot());
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_HALF);
     }
 
     @Override
@@ -523,12 +516,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
-                        SoundSource.NEUTRAL, 0.5F,
-                        0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
-                if (!player.getAbilities().instabuild) {
-                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
-                }
+                PetInteractionUtil.useWhip(this, player, stack);
             }
             return InteractionResult.SUCCESS;
         }

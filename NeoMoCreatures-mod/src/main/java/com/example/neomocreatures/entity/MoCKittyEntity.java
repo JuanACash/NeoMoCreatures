@@ -14,12 +14,12 @@ import com.example.neomocreatures.entity.kitty.KittyVariant;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
-import com.example.neomocreatures.util.MoCInventoryUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -27,7 +27,6 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -697,9 +696,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
                 setSitting(!isKittySitting());
                 this.setTarget(null);
                 this.getNavigation().stop();
-                this.level().playSound(null, this.blockPosition(), ModSounds.WHIP.get(),
-                        SoundSource.NEUTRAL, 0.5F,
-                        0.4F / (this.random.nextFloat() * 0.4F + 0.8F));
+                PetInteractionUtil.playWhipSound(this);
             }
             return InteractionResult.SUCCESS;
         }

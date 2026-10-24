@@ -12,6 +12,7 @@ import com.example.neomocreatures.util.MoCLootUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.WaterSuffocationUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -219,14 +220,8 @@ public class MoCSharkEntity extends TamableAnimal implements EggHatchable, Growt
 
     /** Wiki: "like other mobs that live in water, sharks will suffocate and die when out of water." */
     private void tickOutOfWaterSuffocation() {
-        if (this.isInWaterOrBubble()) {
-            this.outOfWaterTicks = 0;
-            return;
-        }
-        this.outOfWaterTicks++;
-        if (this.outOfWaterTicks > SUFFOCATION_GRACE_TICKS && this.outOfWaterTicks % SUFFOCATION_INTERVAL_TICKS == 0) {
-            this.hurt(this.damageSources().drown(), SUFFOCATION_DAMAGE);
-        }
+        this.outOfWaterTicks = WaterSuffocationUtil.tick(this, this.outOfWaterTicks,
+                SUFFOCATION_GRACE_TICKS, SUFFOCATION_INTERVAL_TICKS, SUFFOCATION_DAMAGE);
     }
 
     /** The user's own addition, not in the original: swims faster while actively chasing/attacking a target. */

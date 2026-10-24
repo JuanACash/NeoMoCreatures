@@ -1,6 +1,7 @@
 package com.example.neomocreatures.event;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.MoCKittyEntity;
 import com.example.neomocreatures.init.ModEntities;
 
@@ -13,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
@@ -22,6 +24,7 @@ import net.neoforged.neoforge.event.tick.LevelTickEvent;
  * not "is this exact block part of a structure piece") and tops up the local
  * kitty population if it's under the cap.
  */
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class KittyVillageSpawner {
 
     private static final int CHECK_INTERVAL_TICKS = 200;

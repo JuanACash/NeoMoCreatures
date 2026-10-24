@@ -1,11 +1,13 @@
 package com.example.neomocreatures.event;
 
+import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.FireproofMount;
 
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -13,6 +15,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
  * While riding a fireproof mount (see {@link FireproofMount}), the rider doesn't catch fire
  * or take fire/lava damage.
  */
+@EventBusSubscriber(modid = NeoMoCreatures.MODID)
 public class NightmareRiderFireImmunityHandler {
 
     @SubscribeEvent
