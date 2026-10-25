@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;

@@ -64,7 +64,7 @@ import static com.example.neomocreatures.init.ModEntities.WYVERN_TIER2;
 
 import java.util.List;
 
-import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.wyvern.MoCWyvernEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;

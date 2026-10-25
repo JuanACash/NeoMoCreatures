@@ -3,7 +3,7 @@ package com.example.neomocreatures.client;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;

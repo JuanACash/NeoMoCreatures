@@ -3,7 +3,7 @@ package com.example.neomocreatures.client.legacy;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.client.HeldScorpionPose;
 import com.example.neomocreatures.client.TameableOverlayRenderer;
-import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.scorpion.MoCScorpionEntity;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import com.mojang.blaze3d.vertex.PoseStack;
 

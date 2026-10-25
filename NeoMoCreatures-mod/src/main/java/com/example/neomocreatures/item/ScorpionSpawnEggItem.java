@@ -1,6 +1,6 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.scorpion.MoCScorpionEntity;
 import com.example.neomocreatures.entity.scorpion.ScorpionVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;

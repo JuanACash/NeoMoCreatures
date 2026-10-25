@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCSnailEntity;
+import com.example.neomocreatures.entity.snail.MoCSnailEntity;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

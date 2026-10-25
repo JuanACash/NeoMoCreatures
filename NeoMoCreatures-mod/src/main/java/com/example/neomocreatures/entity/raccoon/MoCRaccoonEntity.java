@@ -1,0 +1,252 @@
+package com.example.neomocreatures.entity.raccoon;
+
+import java.util.UUID;
+import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.AgeGrowthScaler;
+import com.example.neomocreatures.entity.GrowthScaled;
+import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
+import com.example.neomocreatures.util.PetStorageTags;
+
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+
+/**
+ * 1:1 behavioural port of drzhark.mocreatures.entity.hunter.MoCEntityRaccoon,
+ * following the wiki: neutral (attacks only if provoked, or attacked first),
+ * wanders and chirps, avoids water/cliffs (default ground-navigation
+ * behaviour already does this). The wiki explicitly notes hunting smaller
+ * mobs is "Not added yet" — matching the original, where that target goal
+ * is commented out — so it's deliberately left out here too, unlike Fox.
+ * <p>
+ * Cub growth/follow-parent behaviour ported the same way as MoCFoxEntity,
+ * even though this specific wiki excerpt doesn't describe cubs — the
+ * original code clearly has that infrastructure (age, EntityAIFollowAdult).
+ * <p>
+ * Extends {@link TamableAnimal} purely so a later taming pass does not
+ * require re-registering the entity type or migrating saved data — taming
+ * itself is intentionally NOT implemented yet.
+ */
+public class MoCRaccoonEntity extends TamableAnimal implements GrowthScaled, StorablePet {
+
+    private static final int GROWTH_TICKS = 24000;
+    private static final float BABY_SCALE = 0.5F;
+    private static final float ADULT_SCALE = 0.7F;
+
+    public MoCRaccoonEntity(EntityType<? extends MoCRaccoonEntity> type, Level level) {
+        super(type, level);
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.FOLLOW_RANGE, 12.0D)
+                .add(Attributes.MAX_HEALTH, 8.0D)
+                .add(Attributes.ATTACK_DAMAGE, 2.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.3D)
+                .add(Attributes.SCALE, 0.7D);
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new ConditionalPanicGoal(this, 1.0D, this::isBaby));
+        // Cubs flee from players; adults are merely neutral and don't flee on sight.
+        this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 6.0F, 1.0D, 1.2D,
+                (Predicate<LivingEntity>) livingEntity -> this.isBaby()));
+        this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0D, false));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // Wiki: "Raccoons will also attack smaller mobs such as insects and
+        // kitties." Same pattern as MoCFoxEntity's own hunting goal.
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Animal.class, true, this::canHuntTarget));
+    }
+
+    private boolean canHuntTarget(@Nullable LivingEntity target) {
+        if (this.isBaby() || this.isTame() || !HuntingRules.canHunt(target) || target instanceof MoCRaccoonEntity) {
+            return false;
+        }
+        return target.getBbWidth() <= 0.7F && target.getBbHeight() <= 0.7F;
+    }
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (this.isBaby() || this.isTame()) {
+            return;
+        }
+        super.setTarget(target);
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ModSounds.RACCOON_AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSounds.RACCOON_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ModSounds.RACCOON_DEATH.get();
+    }
+
+    private final AgeGrowthScaler growth =
+            new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE / ADULT_SCALE, ADULT_SCALE);
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        this.growth.tick(this);
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this);
+    }
+
+    /** Wiki: "tamed by giving them any edible item (including... vanilla and
+     *  mod edible items)... including rotten flesh... and golden apples." A
+     *  plain FOOD-component check covers any of those generically, modded
+     *  included, without hardcoding a list. */
+    private boolean isTamingItem(ItemStack stack) {
+        return stack.has(DataComponents.FOOD);
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION) {
+            // Wiki: "Cubs may also spawn with adults." No per-species variant to
+            // share across the group (unlike Fox/Bear), so no custom
+            // SpawnGroupData is needed — just an independent roll per individual.
+            if (this.random.nextInt(4) == 0) {
+                this.setAge(-GROWTH_TICKS);
+            }
+        }
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return false; // taming isn't food-based breeding/healing — see mobInteract
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
+        }
+
+        if (!this.isTame() && isTamingItem(stack)) {
+            if (!this.level().isClientSide) {
+                this.tame(player);
+                NamingHelper.promptRename(this, player.getUUID());
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && isTamingItem(stack) && this.getHealth() < this.getMaxHealth()) {
+            if (!this.level().isClientSide) {
+                this.heal(this.getMaxHealth());
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.mobInteract(player, hand);
+    }
+
+    @Nullable
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return null; // no breeding — nothing in the wiki excerpt describes any
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
+
+        // Wiki: "0-2 fur... +1 per level of looting... 1 to 5 fur with Looting III."
+        MoCLootUtil.dropItems(this, ModItems.FUR.get(), MoCLootUtil.rollWithFlatLooting(this.random, 3, lootingLevel, 5));
+    }
+
+    /** Builds the NBT payload stored inside a filled Pet Amulet for this raccoon. */
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("Raccoon", true);
+        PetStorageTags.writeCommon(tag, this, owner);
+        return tag;
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return MoCExperienceUtil.rollStandardXp(this.random);
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        PetStorageTags.restoreCommon(tag, this);
+    }
+}

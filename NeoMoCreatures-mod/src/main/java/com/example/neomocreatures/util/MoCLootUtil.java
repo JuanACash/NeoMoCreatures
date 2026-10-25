@@ -1,6 +1,6 @@
 package com.example.neomocreatures.util;
 
-import com.example.neomocreatures.entity.MoCMaggotEntity;
+import com.example.neomocreatures.entity.maggot.MoCMaggotEntity;
 import com.example.neomocreatures.init.ModEntities;
 
 import javax.annotation.Nullable;

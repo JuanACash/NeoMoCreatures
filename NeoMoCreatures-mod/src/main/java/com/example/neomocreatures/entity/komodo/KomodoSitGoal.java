@@ -1,6 +1,5 @@
 package com.example.neomocreatures.entity.komodo;
 
-import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
 
 import net.minecraft.world.entity.ai.goal.Goal;
 

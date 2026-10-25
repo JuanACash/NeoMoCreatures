@@ -1,0 +1,1211 @@
+package com.example.neomocreatures.entity.ostrich;
+
+import static com.example.neomocreatures.util.MoCInventoryUtil.shrinkUnlessCreative;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.Config;
+import com.example.neomocreatures.entity.AgeGrowthScaler;
+import com.example.neomocreatures.entity.AscendingMount;
+import com.example.neomocreatures.entity.EquippedPet;
+import com.example.neomocreatures.entity.FireproofMount;
+import com.example.neomocreatures.entity.GrowthScaled;
+import com.example.neomocreatures.entity.SaddledMount;
+import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.network.OpenPlayerInventoryPayload;
+import com.example.neomocreatures.util.MoCInventoryUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
+import com.example.neomocreatures.util.PetStorageTags;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HasCustomInventoryScreen;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
+        HasCustomInventoryScreen, PlayerRideableJumping, StorablePet, AscendingMount, EquippedPet, FireproofMount,
+        SaddledMount {
+
+    private static final int HIDE_TICKS = 60;
+    private static final int MOUTH_TICKS_MAX = 20;
+    private static final int WING_TICKS_MAX = 80;
+    private static final int GROWTH_TICKS = 48000;
+    private static final float BABY_SCALE = 0.4F;
+    private static final float BABY_HITBOX_SCALE = 0.5F;
+    private static final float JUMP_VELOCITY = 0.63F;
+    private static final double RIDER_BACK_OFFSET = 0.15D;
+    private static final int TRANSFORM_DURATION_TICKS = 100;
+    private static final int TRANSFORM_SOUND_TICKS = 60;
+    private static final int JUMP_DEBOUNCE_TICKS = 10;
+    private static final double CHARGE_RADIUS = 2.0D;
+
+    private static final int CHEST_SLOTS = 18;
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 20.0D;
+    /** Chance (%) that a naturally spawned ostrich spawns as a chick. */
+    private static final int CHICK_SPAWN_PERCENT = 20;
+
+    // Ridden flight physics.
+    private static final float FLIGHT_MOVE_SPEED = 0.096F;
+    private static final double FLIGHT_HORIZONTAL_DRAG = 0.96D;
+    private static final double FLIGHT_VERTICAL_DRAG = 0.89D;
+    private static final double FLIGHT_GRAVITY = 0.055D;
+
+    private static final int WHIP_BOOST_TICKS = 100;
+    private static final int WHIP_BOOST_AMPLIFIER = 1;
+    /** 1 in N chance per tick that a ridden unihorned ostrich checks for targets to charge. */
+    private static final int UNIHORNED_CHARGE_ODDS = 15;
+    /** Extra essence-item drop chance (0.1 = 10%) per level of Looting. */
+    private static final float ESSENCE_ITEM_LOOTING_BONUS_PER_LEVEL = 0.1F;
+
+    public static final int ESSENCE_NONE = 0;
+    public static final int ESSENCE_WYVERN = 1;
+    public static final int ESSENCE_FIRE = 2;
+    public static final int ESSENCE_UNDEAD = 3;
+    public static final int ESSENCE_UNIHORNED = 4;
+
+    public static final int HELMET_NONE = 0;
+    public static final int HELMET_LEATHER = 1;
+    public static final int HELMET_IRON = 2;
+    public static final int HELMET_GOLD = 3;
+    public static final int HELMET_DIAMOND = 4;
+    public static final int HELMET_HIDE = 5;
+    public static final int HELMET_FUR = 6;
+    public static final int HELMET_REPTILE = 7;
+    public static final int HELMET_SCORP_DIRT = 8;
+    public static final int HELMET_SCORP_CAVE = 9;
+    public static final int HELMET_SCORP_FROST = 10;
+    public static final int HELMET_SCORP_NETHER = 11;
+    public static final int HELMET_SCORP_UNDEAD = 12;
+
+    private static final EntityDataAccessor<Integer> DATA_VARIANT =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HIDING =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_WING_TICKS =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_HELMET =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLAG_COLOR =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HEAD_BURIED =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_ESSENCE =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_FLYING =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_TRANSFORM_TICKS =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_ASCEND_HELD =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_PENDING_ESSENCE =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_UNIHORNED_CHARGE_TICKS =
+            SynchedEntityData.defineId(MoCOstrichEntity.class, EntityDataSerializers.INT);
+
+    private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
+    @Nullable
+    private ResourceLocation saddleItemId;
+
+    private int hidingCounter;
+    /** Wild breeding: partner search, egg countdown and laying. */
+    private final OstrichBreedingHandler breeding = new OstrichBreedingHandler(this);
+  private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
+    private int jumpDebounceCounter;
+    private boolean wasAscendHeldLastTick;
+    private boolean jumpPending;
+
+    @Nullable
+    private UUID grudgeTargetUUID;
+
+    public MoCOstrichEntity(EntityType<? extends MoCOstrichEntity> type, Level level) {
+        super(type, level);
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D) {
+            @Override
+            public boolean canUse() {
+                return !MoCOstrichEntity.this.isHiding() && !MoCOstrichEntity.this.isHeadBuried() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !MoCOstrichEntity.this.isHiding() && !MoCOstrichEntity.this.isHeadBuried() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !isBaby() && (getVariant() == OstrichVariant.MALE || getVariant() == OstrichVariant.WHITE)
+                        && super.canUse();
+            }
+        });
+        this.targetSelector.addGoal(2, new AttackEggHolderGoal(this));
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, 0.25D)
+                .add(Attributes.ATTACK_DAMAGE, 3.0D)
+                .add(Attributes.SCALE, 1.0D);
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.0F;
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return false;
+    }
+
+    private boolean isHealingFood(ItemStack stack) {
+        return stack.is(ModTags.OSTRICH_HEALING_FOOD);
+    }
+
+    public OstrichVariant getVariant() {
+        return OstrichVariant.byId(this.entityData.get(DATA_VARIANT));
+    }
+
+    public void setVariant(OstrichVariant variant) {
+        this.entityData.set(DATA_VARIANT, variant.getId());
+    }
+
+    public boolean isHiding() {
+        return this.entityData.get(DATA_HIDING);
+    }
+
+    private void setHiding(boolean hiding) {
+        this.entityData.set(DATA_HIDING, hiding);
+    }
+
+    public boolean isHeadBuried() {
+        return this.entityData.get(DATA_HEAD_BURIED);
+    }
+
+    public int getMouthTicks() {
+        return this.entityData.get(DATA_MOUTH_TICKS);
+    }
+
+    private void startTalking() {
+        if (this.entityData.get(DATA_MOUTH_TICKS) == 0) {
+            this.entityData.set(DATA_MOUTH_TICKS, 1);
+        }
+    }
+
+    public int getWingTicks() {
+        return this.entityData.get(DATA_WING_TICKS);
+    }
+
+    public int getAscendCooldownTicks() {
+        return this.jumpDebounceCounter;
+    }
+
+    private void flapWings() {
+        if (this.entityData.get(DATA_WING_TICKS) == 0) {
+            this.entityData.set(DATA_WING_TICKS, 1);
+        }
+    }
+
+    public boolean isSaddled() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddled(boolean saddled) {
+        this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
+    }
+
+    public boolean hasChest() {
+        return this.entityData.get(DATA_HAS_CHEST);
+    }
+
+    private void setHasChest(boolean hasChest) {
+        this.entityData.set(DATA_HAS_CHEST, hasChest);
+    }
+
+    public int getHelmet() {
+        return this.entityData.get(DATA_HELMET);
+    }
+
+    private void setHelmet(int helmet) {
+        this.entityData.set(DATA_HELMET, helmet);
+    }
+
+    public int getFlagColor() {
+        return this.entityData.get(DATA_FLAG_COLOR);
+    }
+
+    private void setFlagColor(int colorId) {
+        this.entityData.set(DATA_FLAG_COLOR, colorId);
+    }
+
+    /** True while this wild ostrich is about to lay an egg. */
+    public boolean isLayingEgg() {
+        return this.breeding.isLayingEgg();
+    }
+
+    public int getEssence() {
+        return this.entityData.get(DATA_ESSENCE);
+    }
+
+    public void setEssence(int essence) {
+        this.entityData.set(DATA_ESSENCE, essence);
+    }
+
+    public boolean isFlying() {
+        return this.entityData.get(DATA_FLYING);
+    }
+
+    private void setFlying(boolean flying) {
+        if (isFlying() != flying) {
+            this.entityData.set(DATA_FLYING, flying);
+        }
+    }
+
+    public boolean isTransforming() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS) > 0;
+    }
+
+    public int getTransformTicks() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS);
+    }
+
+    public int getPendingEssence() {
+        return this.entityData.get(DATA_PENDING_ESSENCE);
+    }
+
+    private void setPendingEssence(int essence) {
+        this.entityData.set(DATA_PENDING_ESSENCE, essence);
+    }
+
+    public boolean isCharging() {
+        return this.entityData.get(DATA_UNIHORNED_CHARGE_TICKS) > 0;
+    }
+
+    private boolean canFlyEssence() {
+        return this.isVehicle() && (getEssence() == ESSENCE_WYVERN || getEssence() == ESSENCE_FIRE);
+    }
+
+    @Override
+    public void setAscendHeld(boolean held) {
+        this.entityData.set(DATA_ASCEND_HELD, held);
+    }
+
+    private boolean isAscendHeld() {
+        return this.entityData.get(DATA_ASCEND_HELD);
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return getEssence() == ESSENCE_FIRE || super.fireImmune();
+    }
+
+    private static int essenceIdFor(Item item) {
+        if (item == ModItems.ESSENCE_OF_DARKNESS.get()) return ESSENCE_WYVERN;
+        if (item == ModItems.ESSENCE_OF_FIRE.get()) return ESSENCE_FIRE;
+        if (item == ModItems.ESSENCE_OF_UNDEAD.get()) return ESSENCE_UNDEAD;
+        if (item == ModItems.ESSENCE_OF_LIGHT.get()) return ESSENCE_UNIHORNED;
+        return ESSENCE_NONE;
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_VARIANT, OstrichVariant.DARK.getId());
+        builder.define(DATA_HIDING, false);
+        builder.define(DATA_MOUTH_TICKS, 0);
+        builder.define(DATA_WING_TICKS, 0);
+        builder.define(DATA_SADDLED, false);
+        builder.define(DATA_HAS_CHEST, false);
+        builder.define(DATA_HELMET, 0);
+        builder.define(DATA_FLAG_COLOR, -1);
+        builder.define(DATA_HEAD_BURIED, false);
+        builder.define(DATA_ESSENCE, ESSENCE_NONE);
+        builder.define(DATA_FLYING, false);
+        builder.define(DATA_TRANSFORM_TICKS, 0);
+        builder.define(DATA_ASCEND_HELD, false);
+        builder.define(DATA_PENDING_ESSENCE, ESSENCE_NONE);
+        builder.define(DATA_UNIHORNED_CHARGE_TICKS, 0);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString("OstrichVariant", getVariant().name());
+        tag.putInt("OstrichEssence", getEssence());
+        tag.putBoolean("OstrichSaddled", isSaddled());
+        tag.putBoolean("OstrichHasChest", hasChest());
+        tag.putInt("OstrichHelmet", getHelmet());
+        tag.putInt("OstrichFlagColor", getFlagColor());
+        tag.putBoolean("OstrichHeadBuried", isHeadBuried());
+        if (this.saddleItemId != null) {
+            tag.putString("OstrichSaddleItem", this.saddleItemId.toString());
+        }
+        if (grudgeTargetUUID != null) {
+            tag.putUUID("OstrichGrudge", grudgeTargetUUID);
+        }
+        if (hasChest()) {
+            tag.put("OstrichChestItems", MoCInventoryUtil.saveSlots(chestInventory, this.registryAccess()));
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("OstrichVariant", Tag.TAG_STRING)) {
+            try {
+                setVariant(OstrichVariant.valueOf(tag.getString("OstrichVariant")));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        if (tag.contains("OstrichEssence")) {
+            setEssence(tag.getInt("OstrichEssence"));
+        }
+        if (tag.contains("OstrichSaddled")) {
+            setSaddled(tag.getBoolean("OstrichSaddled"));
+        }
+        if (tag.contains("OstrichHasChest")) {
+            setHasChest(tag.getBoolean("OstrichHasChest"));
+        }
+        if (tag.contains("OstrichHelmet")) {
+            setHelmet(tag.getInt("OstrichHelmet"));
+        }
+        if (tag.contains("OstrichFlagColor")) {
+            setFlagColor(tag.getInt("OstrichFlagColor"));
+        }
+        if (tag.contains("OstrichHeadBuried")) {
+            this.entityData.set(DATA_HEAD_BURIED, tag.getBoolean("OstrichHeadBuried"));
+        }
+        if (tag.contains("OstrichSaddleItem", Tag.TAG_STRING)) {
+            this.saddleItemId = ResourceLocation.parse(tag.getString("OstrichSaddleItem"));
+        }
+        if (tag.hasUUID("OstrichGrudge")) {
+            grudgeTargetUUID = tag.getUUID("OstrichGrudge");
+        }
+        if (tag.contains("OstrichChestItems", Tag.TAG_LIST)) {
+            MoCInventoryUtil.loadSlots(chestInventory, tag.getList("OstrichChestItems", Tag.TAG_COMPOUND), this.registryAccess());
+        }
+    }
+
+    @Override
+    public void onHatchedFromEgg(@Nullable Player tamer, @Nullable String variantId) {
+        if (variantId != null) {
+            try {
+                setVariant(OstrichVariant.valueOf(variantId));
+            } catch (IllegalArgumentException ignored) {
+            }
+        } else {
+            setVariant(this.random.nextBoolean() ? OstrichVariant.MALE : OstrichVariant.FEMALE);
+        }
+        this.setBaby(true);
+        this.setAge(-GROWTH_TICKS);
+        this.setHealth(this.getMaxHealth());
+        if (tamer != null) {
+            this.tame(tamer);
+            NamingHelper.promptRename(this, tamer.getUUID());
+        }
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData data =
+                super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+
+        int roll = this.random.nextInt(100);
+        if (roll < CHICK_SPAWN_PERCENT) {
+            // 20% chance to spawn straight as a chick
+            this.setBaby(true);
+            this.setAge(-GROWTH_TICKS);
+            setVariant(this.random.nextBoolean() ? OstrichVariant.MALE : OstrichVariant.FEMALE);
+        } else {
+            setVariant(OstrichVariant.rollNatural(this.random));
+        }
+
+        return data;
+    }
+
+    @Override
+    @Nullable
+    protected SoundEvent getAmbientSound() {
+        if (isHeadBuried()) {
+            return null;
+        }
+        startTalking();
+        return ModSounds.OSTRICH_AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSounds.OSTRICH_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ModSounds.OSTRICH_DEATH.get();
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (isSaddled() && this.getFirstPassenger() instanceof Player player && this.hasPassenger(player)) {
+            return player;
+        }
+        return null;
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+        double x = this.getX() + Math.sin(yaw) * RIDER_BACK_OFFSET;
+        double z = this.getZ() - Math.cos(yaw) * RIDER_BACK_OFFSET;
+        double y = this.getY() + 0.85D * this.getScale();
+        moveFunction.accept(passenger, x, y, z);
+    }
+
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa, 0.0D, player.zza);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        float base = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        if (getEssence() == ESSENCE_FIRE) {
+            base *= 1.4F;
+        }
+        return base;
+    }
+
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_HALF);
+
+        if (this.isInWater() || this.isInLava()) {
+            Vec3 motion = this.getDeltaMovement();
+            if (motion.y < 0.2D) {
+                double newY = Math.min(motion.y + 0.04D, 0.2D);
+                this.setDeltaMovement(motion.x, newY, motion.z);
+            }
+        }
+    }
+
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_HEAD_BURIED, false);
+        }
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
+            boolean isOnAirNow = isOnAirClear();
+            boolean flyingMount = canFlyEssence() && !this.onGround() && isOnAirNow;
+            setFlying(flyingMount);
+
+            // Real makeEntityJump(): fires repeatedly while space is held, not
+            // just on a single press — its own short debounce (not a one-shot).
+            // Real cooldown: counts down every tick regardless of ascend key state,
+            // so releasing and spamming the key does not bypass the wait.
+            if (jumpDebounceCounter > 0) {
+                jumpDebounceCounter--;
+            }
+
+            if (canFlyEssence() && isAscendHeld() && jumpDebounceCounter == 0) {
+                jumpPending = true;
+                jumpDebounceCounter = JUMP_DEBOUNCE_TICKS;
+            }
+
+            if (jumpPending && canFlyEssence()) {
+                Vec3 motion = this.getDeltaMovement();
+                double newY = motion.y + 0.8D;
+                this.setDeltaMovement(motion.x, newY, motion.z);
+                jumpPending = false;
+                if (getEssence() == ESSENCE_FIRE && isOnAirNow) { // selfPropelledFlyer() — Nether only
+                    float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+                    Vec3 boosted = this.getDeltaMovement();
+                    this.setDeltaMovement(
+                            boosted.x - 0.5D * Math.sin(yaw),
+                            boosted.y,
+                            boosted.z + 0.5D * Math.cos(yaw));
+                }
+            }
+
+            if (flyingMount) {
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.moveRelative(FLIGHT_MOVE_SPEED, travelVector);
+                Vec3 motion = this.getDeltaMovement();
+                this.setDeltaMovement(motion.x * FLIGHT_HORIZONTAL_DRAG, motion.y * FLIGHT_VERTICAL_DRAG - FLIGHT_GRAVITY, motion.z * FLIGHT_HORIZONTAL_DRAG);
+                if (this.onGround()) {
+                    jumpPending = false;
+                }
+                return;
+            }
+            if (this.onGround()) {
+                jumpPending = false;
+            }
+        }
+        super.travel(travelVector);
+    }
+
+    private boolean isOnAirClear() {
+        BlockPos below = BlockPos.containing(this.getX(), this.getY() - 0.2D, this.getZ());
+        BlockPos below2 = BlockPos.containing(this.getX(), this.getY() - 1.2D, this.getZ());
+        return this.level().getBlockState(below).isAir() && this.level().getBlockState(below2).isAir();
+    }
+
+    @Override
+    public boolean canJump() {
+        return isSaddled() && this.isVehicle() && !canFlyEssence();
+    }
+
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
+            Vec3 motion = this.getDeltaMovement();
+            this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
+            this.hasImpulse = true;
+        }
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+    }
+
+    @Override
+    public void handleStopJump() {
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (canFlyEssence()) {
+            return false;
+        }
+        return super.causeFallDamage(Math.max(0F, fallDistance - 4F), multiplier, source);
+    }
+
+    public void applyWhipBoost() {
+        this.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SPEED, WHIP_BOOST_TICKS, WHIP_BOOST_AMPLIFIER, false, true));
+        if (getEssence() == ESSENCE_UNIHORNED) {
+            this.entityData.set(DATA_UNIHORNED_CHARGE_TICKS, WHIP_BOOST_TICKS);
+        }
+    }
+
+    @Override
+    public void dropAllEquipment() {
+        if (isSaddled()) {
+            this.ejectPassengers();
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+            this.spawnAtLocation(new ItemStack(saddleItem));
+            this.saddleItemId = null;
+            setSaddled(false);
+        }
+        if (getHelmet() != HELMET_NONE) {
+            this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
+            setHelmet(HELMET_NONE);
+        }
+        if (hasChest()) {
+            this.spawnAtLocation(new ItemStack(Items.CHEST));
+            for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                ItemStack stack = chestInventory.getItem(slot);
+                if (!stack.isEmpty()) {
+                    this.spawnAtLocation(stack);
+                }
+            }
+            chestInventory.clearContent();
+            if (getFlagColor() != -1) {
+                this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
+                setFlagColor(-1);
+            }
+            setHasChest(false);
+        }
+    }
+
+    /** Snapshot used to restore this ostrich later from a filled Pet Amulet. */
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("OstrichVariant", getVariant().name());
+        tag.putInt("OstrichEssence", getEssence());
+        PetStorageTags.writeCommon(tag, this, owner);
+        return tag;
+    }
+
+    private void tickUnihornedCharge() {
+        if (getEssence() != ESSENCE_UNIHORNED || !this.isVehicle() || this.random.nextInt(UNIHORNED_CHARGE_ODDS) != 0) {
+            return;
+        }
+        for (LivingEntity nearby : this.level().getEntitiesOfClass(
+                LivingEntity.class, this.getBoundingBox().inflate(CHARGE_RADIUS),
+                e -> e != this && e != this.getControllingPassenger())) {
+            Vec3 push = nearby.position().subtract(this.position()).normalize().scale(0.8D);
+            nearby.push(push.x, 0.3D, push.z);
+            nearby.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE));
+        }
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
+        }
+
+        // Each step returns null when it does not apply, so the next one is tried.
+        // Keep this order: item-based steps first, riding last.
+        InteractionResult result = tryWhip(player, stack);
+        if (result == null) {
+            result = tryFeedingInteractions(player, stack);
+        }
+        if (result == null) {
+            result = tryAdultOwnerInteractions(player, stack);
+        }
+        if (result == null) {
+            result = tryOpenInventory(player);
+        }
+        if (result == null) {
+            result = tryRide(player, hand, stack);
+        }
+        return result != null ? result : super.mobInteract(player, hand);
+    }
+
+    /** The whip boosts a ridden ostrich, or buries/unburies the head of a free one. */
+    private InteractionResult tryWhip(Player player, ItemStack stack) {
+        // Only the owner can use the whip on the ostrich.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+            if (!this.level().isClientSide) {
+                if (this.isVehicle()) {
+                    applyWhipBoost();
+                } else {
+                    boolean buried = !isHeadBuried();
+                    this.entityData.set(DATA_HEAD_BURIED, buried);
+                    if (buried) {
+                        this.getNavigation().stop();
+                        this.setTarget(null);
+                    }
+                }
+                PetInteractionUtil.useWhip(this, player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Healing food for a tamed ostrich, and melon seeds to make a wild female lay an egg. */
+    private InteractionResult tryFeedingInteractions(Player player, ItemStack stack) {
+        if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+            startTalking();
+            if (!this.level().isClientSide) {
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.heal(4.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.isTame() && !this.isBaby() && !this.breeding.isLayingEgg()
+                && getVariant() != OstrichVariant.MALE
+                && stack.is(Items.MELON_SEEDS)) {
+            startTalking();
+            if (!this.level().isClientSide) {
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.breeding.tryStart(stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Everything only the owner of a tamed adult can do: essences, equipment and shears. */
+    private InteractionResult tryAdultOwnerInteractions(Player player, ItemStack stack) {
+        if (!(this.isTame() && this.isOwnedBy(player) && !this.isBaby())) {
+            return null;
+        }
+
+        InteractionResult result = tryEssence(player, stack);
+        if (result == null) {
+            result = tryEquip(player, stack);
+        }
+        if (result == null) {
+            result = tryShearsInteractions(player, stack);
+        }
+        return result;
+    }
+
+    /** Essence potions: starts the transformation and gives back an empty bottle. */
+    private InteractionResult tryEssence(Player player, ItemStack stack) {
+        int essenceRoll = essenceIdFor(stack.getItem());
+        if (essenceRoll != ESSENCE_NONE && !isTransforming() && getEssence() == ESSENCE_NONE) {
+            if (!this.level().isClientSide) {
+                setPendingEssence(essenceRoll);
+                this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
+                shrinkUnlessCreative(player, stack);
+                this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+                if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                    player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Saddle, helmet, chest and the wool that colors the flag. */
+    private InteractionResult tryEquip(Player player, ItemStack stack) {
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
+        }
+
+        int helmetFromItem = OstrichEquipment.helmetIdFor(stack);
+        if (helmetFromItem != HELMET_NONE) {
+            if (getHelmet() != HELMET_NONE) {
+                // SUCCESS (not FAIL) fully consumes the interaction, so vanilla's own
+                // item-based armor-equip fallback never gets a chance to sneak the new
+                // helmet into the entity's real (unused) head equipment slot.
+                return InteractionResult.SUCCESS;
+            }
+            if (!this.level().isClientSide) {
+                setHelmet(helmetFromItem);
+                this.playSound(ModSounds.HORSE_ARMOR_PUT.get(), 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!hasChest() && stack.is(Items.CHEST)) {
+            if (!this.level().isClientSide) {
+                setHasChest(true);
+                this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        DyeColor woolColor = OstrichEquipment.dyeColorForWool(stack.getItem());
+        if (hasChest() && woolColor != null && woolColor.getId() != getFlagColor()) {
+            if (!this.level().isClientSide) {
+                if (getFlagColor() != -1) {
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
+                }
+                setFlagColor(woolColor.getId());
+                this.playSound(SoundEvents.WOOL_PLACE, 1.0F, 1.0F);
+                shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Shears take off the helmet first, then the saddle. */
+    private InteractionResult tryShearsInteractions(Player player, ItemStack stack) {
+        if (stack.is(Items.SHEARS) && (isSaddled() || getHelmet() != HELMET_NONE)) {
+            if (!this.level().isClientSide) {
+                if (getHelmet() != HELMET_NONE) {
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
+                    setHelmet(HELMET_NONE);
+                    this.playSound(ModSounds.HORSE_ARMOR_OFF.get(), 1.0F, 1.0F);
+                } else {
+                    setSaddled(false);
+                    this.ejectPassengers();
+                    Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+                    this.saddleItemId = null;
+                    this.spawnAtLocation(new ItemStack(saddleItem));
+                    this.playSound(SoundEvents.SHEEP_SHEAR, 1.0F, 1.0F);
+                }
+                if (!player.getAbilities().instabuild) {
+                    stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Sneaking on your own ostrich opens its inventory. */
+    private InteractionResult tryOpenInventory(Player player) {
+        if (this.isTame() && this.isOwnedBy(player) && player.isSecondaryUseActive()) {
+            if (!this.level().isClientSide) {
+                openInventoryFor(player);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    /** Mounts a saddled adult ostrich; anyone can ride it, same as a horse. */
+    private InteractionResult tryRide(Player player, InteractionHand hand, ItemStack stack) {
+        if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            // Before mounting, give priority to whatever the held item wants to do
+            // (scrolls, pet amulet, future items with their own interactLivingEntity).
+            // Same pattern MoCHorseEntity uses for the same reason.
+            if (!stack.isEmpty()) {
+                InteractionResult itemResult = stack.interactLivingEntity(player, this, hand);
+                if (itemResult.consumesAction()) {
+                    return itemResult;
+                }
+            }
+            if (!this.level().isClientSide) {
+                player.startRiding(this);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        return null;
+    }
+
+    public static void alertNearbyOstriches(Level level, Vec3 pos, Player thief, double radius) {
+        List<MoCOstrichEntity> nearby = level.getEntitiesOfClass(MoCOstrichEntity.class,
+                new AABB(pos, pos).inflate(radius),
+                o -> !o.isTame() && !o.isBaby());
+        for (MoCOstrichEntity ostrich : nearby) {
+            ostrich.grudgeTargetUUID = thief.getUUID();
+            ostrich.setTarget(thief);
+        }
+    }
+
+    private static class AttackEggHolderGoal extends Goal {
+        private final MoCOstrichEntity ostrich;
+
+        AttackEggHolderGoal(MoCOstrichEntity ostrich) {
+            this.ostrich = ostrich;
+            this.setFlags(EnumSet.of(Flag.TARGET));
+        }
+
+        @Override
+        public boolean canUse() {
+            return findGrudgeTarget() != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return findGrudgeTarget() != null;
+        }
+
+        @Override
+        public void start() {
+            this.ostrich.setTarget(findGrudgeTarget());
+        }
+
+        @Nullable
+        private Player findGrudgeTarget() {
+            if (this.ostrich.isTame() || this.ostrich.grudgeTargetUUID == null) {
+                return null;
+            }
+            Player player = this.ostrich.level().getPlayerByUUID(this.ostrich.grudgeTargetUUID);
+            if (player == null || !player.isAlive()) {
+                this.ostrich.grudgeTargetUUID = null;
+                return null;
+            }
+            return player;
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isBaby() && source.is(DamageTypes.IN_WALL)) {
+            return false;
+        }
+        boolean hurt = super.hurt(source, amount);
+        if (!hurt || this.level().isClientSide) {
+            return hurt;
+        }
+        if (this.isTame()) {
+            return true;
+        }
+        if (!this.isBaby() && (getVariant() == OstrichVariant.MALE || getVariant() == OstrichVariant.WHITE)) {
+            startTalking();
+            flapWings();
+            return true;
+        }
+        setHiding(true);
+        hidingCounter = HIDE_TICKS;
+        double angle = this.random.nextDouble() * Math.PI * 2.0D;
+        double dx = Math.cos(angle) * 6.0D;
+        double dz = Math.sin(angle) * 6.0D;
+        this.getNavigation().moveTo(this.getX() + dx, this.getY(), this.getZ() + dz, 1.4D);
+        return true;
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this);
+    }
+
+    @Override
+    protected AABB makeBoundingBox() {
+        if (this.isBaby()) {
+            EntityDimensions babyHitbox =
+                    this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
+            return babyHitbox.makeBoundingBox(this.position());
+        }
+        return super.makeBoundingBox();
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        this.growth.tick(this);
+        if (!this.level().isClientSide) {
+            tickIdleCounters();
+            this.breeding.tick();
+            tickAscendFlapSound();
+            if (hidingCounter > 0 && --hidingCounter == 0) {
+                setHiding(false);
+            }
+            tickEssenceTransform();
+            int chargeTicksRemaining = this.entityData.get(DATA_UNIHORNED_CHARGE_TICKS);
+            if (chargeTicksRemaining > 0) {
+                this.entityData.set(DATA_UNIHORNED_CHARGE_TICKS, chargeTicksRemaining - 1);
+                tickUnihornedCharge();
+            }
+        }
+    }
+
+    private void tickEssenceTransform() {
+        int ticks = this.entityData.get(DATA_TRANSFORM_TICKS);
+        if (ticks <= 0) {
+            return;
+        }
+        ticks--;
+        this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
+        if (ticks == TRANSFORM_SOUND_TICKS) {
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+        }
+        if (ticks <= 0) {
+            setEssence(getPendingEssence());
+        }
+    }
+
+    private void tickIdleCounters() {
+        int mouth = this.entityData.get(DATA_MOUTH_TICKS);
+        if (mouth > 0 && ++mouth > MOUTH_TICKS_MAX) {
+            mouth = 0;
+        }
+        this.entityData.set(DATA_MOUTH_TICKS, mouth);
+
+        int wing = this.entityData.get(DATA_WING_TICKS);
+        if (wing > 0 && ++wing > WING_TICKS_MAX) {
+            wing = 0;
+        }
+        this.entityData.set(DATA_WING_TICKS, wing);
+    }
+
+    // Plays the wing-flap sound exactly once per key press (not once per thrust pulse),
+    // entirely server-side so it never depends on client/server timing.
+    private void tickAscendFlapSound() {
+        boolean ascendHeldNow = isAscendHeld();
+        if (ascendHeldNow && !wasAscendHeldLastTick && canFlyEssence()) {
+            this.playSound(ModSounds.HORSE_WING_FLAP.get(), 0.4F, 1.0F);
+        }
+        wasAscendHeldLastTick = ascendHeldNow;
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        if (!this.level().isClientSide) {
+            int lootingLevel = MoCLootUtil.getLootingLevel(source.getEntity());
+
+            // Raw ostrich meat: 0-2 base, affected by Looting. Always dropped raw,
+            // even if it died on fire (there's no "cooked on fire" logic here).
+            MoCLootUtil.dropItems(this, ModItems.OSTRICH_RAW.get(),
+                    MoCLootUtil.rollWithLootingBonus(this.random, 3, lootingLevel));
+
+            // Essence hearts / unicorn horn depending on the ostrich's essence, 25% base + Looting.
+            Item essenceHeartItem = switch (getEssence()) {
+                case ESSENCE_WYVERN -> ModItems.HEART_OF_DARKNESS.get();
+                case ESSENCE_FIRE -> ModItems.HEART_OF_FIRE.get();
+                case ESSENCE_UNDEAD -> ModItems.HEART_OF_UNDEAD.get();
+                case ESSENCE_UNIHORNED -> ModItems.UNICORN_HORN.get();
+                default -> null;
+            };
+            if (essenceHeartItem != null) {
+                if (MoCLootUtil.rollChance(this.random, Config.CREATURES.rareItemDropChance.get() / 100.0F, ESSENCE_ITEM_LOOTING_BONUS_PER_LEVEL, lootingLevel)) {
+                    MoCLootUtil.dropItems(this, essenceHeartItem, 1 + MoCLootUtil.rollWithLootingBonus(this.random, 2, lootingLevel));
+                }
+            }
+
+            // Equipped saddle (the real one or the crafted one, depending on saddleItemId).
+            if (isSaddled()) {
+                Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+                this.spawnAtLocation(new ItemStack(saddleItem));
+            }
+
+            // Equipped helmet.
+            if (getHelmet() != HELMET_NONE) {
+                this.spawnAtLocation(new ItemStack(OstrichEquipment.itemForHelmet(getHelmet())));
+            }
+
+            // Chest + contents + the flag's wool (same as before).
+            if (hasChest()) {
+                this.spawnAtLocation(new ItemStack(Items.CHEST));
+                for (int slot = 0; slot < chestInventory.getContainerSize(); slot++) {
+                    ItemStack chestStack = chestInventory.getItem(slot);
+                    if (!chestStack.isEmpty()) {
+                        this.spawnAtLocation(chestStack);
+                    }
+                }
+                if (getFlagColor() != -1) {
+                    this.spawnAtLocation(new ItemStack(OstrichEquipment.woolItemFor(DyeColor.byId(getFlagColor()))));
+                }
+            }
+        }
+        super.die(source);
+    }
+
+    public void openCustomInventoryScreen(Player player) {
+        if (!this.level().isClientSide && this.isTame()) {
+            openInventoryFor(player);
+        }
+    }
+
+    private void openChestMenu(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            Component title = this.hasCustomName()
+                    ? this.getDisplayName().copy().append(" Storage")
+                    : Component.literal("Ostrich Storage");
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inv, p) -> new ChestMenu(
+                            MenuType.GENERIC_9x2, id, inv, this.chestInventory, 2),
+                    title));
+        }
+    }
+
+    private void openInventoryFor(Player player) {
+        if (hasChest()) {
+            openChestMenu(player);
+        } else if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new OpenPlayerInventoryPayload());
+        }
+    }
+
+    @Nullable
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setVariant(OstrichVariant.valueOf(tag.getString("OstrichVariant")));
+        if (tag.contains("OstrichEssence")) {
+            this.setEssence(tag.getInt("OstrichEssence"));
+        }
+        PetStorageTags.restoreCommon(tag, this);
+    }
+
+    /** An ostrich given the Essence of Fire shields its rider from fire. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getEssence() == ESSENCE_FIRE;
+    }
+}

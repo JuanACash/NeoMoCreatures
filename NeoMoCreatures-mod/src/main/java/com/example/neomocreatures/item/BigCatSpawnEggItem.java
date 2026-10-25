@@ -1,7 +1,7 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
+import com.example.neomocreatures.entity.bigcat.MoCBigCatEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 

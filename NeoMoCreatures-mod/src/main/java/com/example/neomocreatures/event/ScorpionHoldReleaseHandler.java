@@ -1,7 +1,7 @@
 package com.example.neomocreatures.event;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCScorpionEntity;
+import com.example.neomocreatures.entity.scorpion.MoCScorpionEntity;
 
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;

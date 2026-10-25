@@ -2,7 +2,7 @@ package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
-import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.horse.MoCHorseEntity;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;

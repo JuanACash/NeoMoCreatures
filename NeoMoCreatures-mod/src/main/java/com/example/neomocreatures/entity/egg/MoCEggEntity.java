@@ -3,7 +3,7 @@ package com.example.neomocreatures.entity.egg;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.Config;
-import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 

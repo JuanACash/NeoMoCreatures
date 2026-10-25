@@ -1,7 +1,7 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCManticoreEntity;
 import com.example.neomocreatures.entity.manticore.ManticoreVariant;
+import com.example.neomocreatures.entity.manticore.MoCManticoreEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 

@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCWerewolfEntity;
+import com.example.neomocreatures.entity.werewolf.MoCWerewolfEntity;
 import com.example.neomocreatures.entity.werewolf.WerewolfVariant;
 
 import net.minecraft.client.model.HumanoidModel;

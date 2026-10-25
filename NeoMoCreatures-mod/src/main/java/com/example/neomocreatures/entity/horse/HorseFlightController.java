@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.client.ClientRiderInput;
-import com.example.neomocreatures.entity.MoCHorseEntity;
 
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.LivingEntity;

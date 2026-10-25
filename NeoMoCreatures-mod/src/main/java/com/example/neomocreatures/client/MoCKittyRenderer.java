@@ -1,9 +1,9 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCKittyBedEntity;
-import com.example.neomocreatures.entity.MoCKittyEntity;
-import com.example.neomocreatures.entity.MoCLitterBoxEntity;
+import com.example.neomocreatures.entity.kitty.MoCKittyBedEntity;
+import com.example.neomocreatures.entity.kitty.MoCKittyEntity;
+import com.example.neomocreatures.entity.kitty.MoCLitterBoxEntity;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;

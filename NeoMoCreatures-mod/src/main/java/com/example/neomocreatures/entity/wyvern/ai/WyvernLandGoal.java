@@ -4,7 +4,7 @@ import java.util.EnumSet;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.wyvern.MoCWyvernEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

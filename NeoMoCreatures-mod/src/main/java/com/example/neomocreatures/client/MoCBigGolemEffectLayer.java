@@ -4,8 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCBigGolemEntity;
 import com.example.neomocreatures.entity.golem.GolemState;
+import com.example.neomocreatures.entity.golem.MoCBigGolemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 

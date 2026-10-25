@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.entity.egg.MoCEggEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;

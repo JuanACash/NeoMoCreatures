@@ -2,7 +2,7 @@ package com.example.neomocreatures.event;
 
 import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCKittyEntity;
+import com.example.neomocreatures.entity.kitty.MoCKittyEntity;
 import com.example.neomocreatures.init.ModEntities;
 
 import net.minecraft.core.BlockPos;

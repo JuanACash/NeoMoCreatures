@@ -1,8 +1,8 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCKittyBedEntity;
-import com.example.neomocreatures.entity.MoCKittyEntity;
 import com.example.neomocreatures.entity.kitty.KittyCareState;
+import com.example.neomocreatures.entity.kitty.MoCKittyBedEntity;
+import com.example.neomocreatures.entity.kitty.MoCKittyEntity;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;

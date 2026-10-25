@@ -4,9 +4,6 @@ import java.util.Comparator;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.entity.MoCKittyBedEntity;
-import com.example.neomocreatures.entity.MoCKittyEntity;
-import com.example.neomocreatures.entity.MoCLitterBoxEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;

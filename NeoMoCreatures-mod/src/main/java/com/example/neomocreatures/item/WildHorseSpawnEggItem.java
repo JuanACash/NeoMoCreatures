@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Coat;
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.entity.horse.MoCHorseEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 

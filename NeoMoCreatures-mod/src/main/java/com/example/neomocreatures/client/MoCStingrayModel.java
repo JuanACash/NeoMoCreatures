@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCStingrayEntity;
+import com.example.neomocreatures.entity.stingray.MoCStingrayEntity;
 
 
 import net.minecraft.client.model.HierarchicalModel;

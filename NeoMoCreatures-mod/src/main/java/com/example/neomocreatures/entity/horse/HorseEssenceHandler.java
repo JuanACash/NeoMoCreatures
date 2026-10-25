@@ -6,7 +6,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.world.InteractionResult;

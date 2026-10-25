@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCMediumFishEntity;
+import com.example.neomocreatures.entity.mediumfish.MoCMediumFishEntity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 

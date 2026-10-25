@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client.legacy;
 
-import com.example.neomocreatures.entity.MoCBigCatEntity;
+import com.example.neomocreatures.entity.bigcat.MoCBigCatEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 

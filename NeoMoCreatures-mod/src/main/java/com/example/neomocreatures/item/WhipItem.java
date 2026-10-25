@@ -1,10 +1,10 @@
 package com.example.neomocreatures.item;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
-import com.example.neomocreatures.entity.MoCElephantEntity;
-import com.example.neomocreatures.entity.MoCHorseEntity;
-import com.example.neomocreatures.entity.MoCOstrichEntity;
-import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.elephant.MoCElephantEntity;
+import com.example.neomocreatures.entity.horse.MoCHorseEntity;
+import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
+import com.example.neomocreatures.entity.wyvern.MoCWyvernEntity;
 import com.example.neomocreatures.init.ModSounds;
 
 import net.minecraft.core.BlockPos;

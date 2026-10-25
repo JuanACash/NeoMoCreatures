@@ -2,7 +2,6 @@ package com.example.neomocreatures.entity.ostrich;
 
 import javax.annotation.Nullable;
 
-import com.example.neomocreatures.entity.MoCOstrichEntity;
 import com.example.neomocreatures.init.ModItems;
 
 import net.minecraft.world.item.DyeColor;

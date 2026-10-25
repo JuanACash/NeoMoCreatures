@@ -1,8 +1,8 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
-import com.example.neomocreatures.entity.MoCHorseEntity;
+import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
+import com.example.neomocreatures.entity.horse.MoCHorseEntity;
 
 import java.util.EnumSet;
 

@@ -1,7 +1,6 @@
 package com.example.neomocreatures.entity.horse;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics.Species;
-import com.example.neomocreatures.entity.MoCHorseEntity;
 import com.example.neomocreatures.init.ModParticles;
 
 import net.minecraft.core.BlockPos;

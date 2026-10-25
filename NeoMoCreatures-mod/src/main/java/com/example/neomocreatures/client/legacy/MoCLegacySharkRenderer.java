@@ -2,7 +2,7 @@ package com.example.neomocreatures.client.legacy;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.client.TameableOverlayRenderer;
-import com.example.neomocreatures.entity.MoCSharkEntity;
+import com.example.neomocreatures.entity.shark.MoCSharkEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.model.geom.ModelLayerLocation;

@@ -1,6 +1,6 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCFoxEntity;
+import com.example.neomocreatures.entity.fox.MoCFoxEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 

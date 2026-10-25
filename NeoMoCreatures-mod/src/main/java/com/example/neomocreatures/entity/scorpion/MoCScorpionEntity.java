@@ -1,0 +1,941 @@
+package com.example.neomocreatures.entity.scorpion;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.AgeGrowthScaler;
+import com.example.neomocreatures.entity.EquippedPet;
+import com.example.neomocreatures.entity.FireproofMount;
+import com.example.neomocreatures.entity.GrowthScaled;
+import com.example.neomocreatures.entity.SaddledMount;
+import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
+import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MoCInventoryUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
+import com.example.neomocreatures.util.PetStorageTags;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RestrictSunGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, EggHatchable, PlayerRideableJumping,
+        Enemy, StorablePet, EquippedPet, FireproofMount, SaddledMount {
+
+    private static final int STING_CHANCE = 5; // 1 in 5, matches rand.nextInt(5)==0
+    private static final int STING_ANIM_TICKS = 50;
+    private static final int CLAW_SWING_TICKS = 24;
+    private static final int MOUTH_TALK_TICKS = 50;
+    private static final int MAX_BABIES_DROPPED = 5; // rand.nextInt(5) -> 0-4 babies, matches the original
+    private static final float HEAL_AMOUNT = 4.0F;
+    private static final double TAMED_MAX_HEALTH = 40.0D;
+    private static final int TRANSFORM_DURATION_TICKS = 100; // 5s, matches the wyvern/big cat essence pacing
+    private static final int TRANSFORM_SOUND_TICKS = 60;
+    private static final float BABY_SCALE = 0.3F;
+    private static final int GROWTH_TICKS = 24000;
+    private static final float BABY_HITBOX_SCALE = 0.4F;
+    private static final float RIDER_HEIGHT = 0F;
+    private static final float RIDER_FORWARD = -0.1F;
+    // v^2-proportional to jump height, same relation as the big cat's 0.62F -> 2.7 blocks; ~1.6 blocks target per the wiki.
+    private static final float JUMP_VELOCITY = 0.48F;
+    private static final float SIDEWAYS_RIDDEN_FACTOR = 0.3F; // wiki: "very slow when moving sideways"
+
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    /** Wild HP; it becomes {@link #TAMED_MAX_HEALTH} once tamed. */
+    private static final double WILD_MAX_HEALTH = 18.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.3D;
+    private static final double BASE_ATTACK_DAMAGE = 3.0D;
+    /** Natural spawns at or below this Y level become cave scorpions. */
+    private static final int CAVE_SPAWN_MAX_Y = 40;
+    private static final float FULL_TURN_DEGREES = 360F;
+    /** Ticks of the claw swing at which the claw sound plays. */
+    private static final int CLAW_SOUND_FIRST_TICK = 10;
+    private static final int CLAW_SOUND_SECOND_TICK = 20;
+  private final AgeGrowthScaler growth = new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F);
+
+    private static final EntityDataAccessor<Integer> DATA_VARIANT =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_BABIES =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_CLAW_TICKS =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_STING_TICKS =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TRANSFORM_TICKS =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_HELD_BY =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SITTING_SYNCED =
+            SynchedEntityData.defineId(MoCScorpionEntity.class, EntityDataSerializers.BOOLEAN);
+
+    public MoCScorpionEntity(EntityType<? extends MoCScorpionEntity> type, Level level) {
+        super(type, level);
+    }
+
+    @Nullable
+    private ResourceLocation saddleItemId;
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
+        this.goalSelector.addGoal(2, new RestrictSunGoal(this));
+        this.goalSelector.addGoal(6, new LeapAtTargetGoal(this, 0.4F));
+
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::canHuntPlayers));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D) {
+            @Override
+            public boolean canUse() {
+                return !MoCScorpionEntity.this.isOrderedToSit() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !MoCScorpionEntity.this.isOrderedToSit() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+    }
+
+    private static int getRawLight(MoCScorpionEntity scorpion) {
+        return scorpion.level().getMaxLocalRawBrightness(scorpion.blockPosition());
+    }
+
+    /** Wild, non-undead scorpions hunt players anywhere in the Nether, otherwise only in the dark. */
+    private boolean canHuntPlayers() {
+        if (this.isTame() || this.getVariant() == ScorpionVariant.UNDEAD) {
+            return false;
+        }
+        boolean inNether = this.level().dimension() == Level.NETHER;
+        return inNether || getRawLight(this) <= 9;
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, WILD_MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
+                .add(Attributes.SCALE, 1.0D);
+    }
+
+    /**
+     * Animal's own spawn check only accepts grass, or spots bright enough to walk on — which is why wild
+     * scorpions never spawned at night on sand (deserts) or stone. Its darkness and ground rules already
+     * live in its spawn placement (ModEntities), so nothing else is needed here.
+     */
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        return true;
+    }
+
+    /** Animal never despawns; a wild scorpion should, like any other monster, once no player is near. */
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isTame() && !this.isPersistenceRequired();
+    }
+
+    /** Wild ones vanish on Peaceful like other monsters; tamed ones stay. */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return !this.isTame();
+    }
+
+    @Override
+    public void tame(Player player) {
+        super.tame(player);
+        AttributeInstance healthAttr = this.getAttribute(Attributes.MAX_HEALTH);
+        if (healthAttr != null) {
+            healthAttr.setBaseValue(TAMED_MAX_HEALTH);
+        }
+        this.setHealth((float) TAMED_MAX_HEALTH);
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return false; // taming is the pick-up-baby mechanic, not feeding (later step)
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return 5;
+    }
+    
+
+    private boolean isHealingFood(ItemStack stack) {
+        return stack.is(ModTags.SCORPION_HEALING_FOOD);
+    }
+
+    public boolean isTransforming() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS) > 0;
+    }
+
+    public int getTransformTicks() {
+        return this.entityData.get(DATA_TRANSFORM_TICKS);
+    }
+
+    private void startUndeadTransform() {
+        this.entityData.set(DATA_TRANSFORM_TICKS, TRANSFORM_DURATION_TICKS);
+    }
+
+    /** Counts down an in-progress Undead transform; plays the sound partway through, then flips the variant. */
+    private void tickEssenceTransform() {
+        if (this.level().isClientSide || !isTransforming()) {
+            return;
+        }
+        int ticks = this.entityData.get(DATA_TRANSFORM_TICKS) - 1;
+        this.entityData.set(DATA_TRANSFORM_TICKS, ticks);
+        if (ticks == TRANSFORM_SOUND_TICKS) {
+            this.playSound(ModSounds.HORSE_TRANSFORM.get(), 1.0F, 1.0F);
+        }
+        if (ticks <= 0) {
+            setVariant(ScorpionVariant.UNDEAD);
+        }
+    }
+
+    /** Drinking sound + item consumption shared by every essence use, same pattern as the wyvern/big cat. */
+    private void useEssence(Player player, ItemStack stack) {
+        if (!this.level().isClientSide) {
+            MoCInventoryUtil.shrinkUnlessCreative(player, stack);
+            this.playSound(ModSounds.HORSE_DRINKING.get(), 1.0F, 1.0F);
+            if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
+                player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
+            }
+        }
+    }
+
+    /** Each color only ever lays its own egg. */
+    private static Item eggItemFor(ScorpionVariant variant) {
+        return switch (variant) {
+            case DIRT -> ModItems.DIRT_SCORPION_EGG.get();
+            case CAVE -> ModItems.CAVE_SCORPION_EGG.get();
+            case FROST -> ModItems.FROST_SCORPION_EGG.get();
+            case NETHER -> ModItems.FIRE_SCORPION_EGG.get();
+            case UNDEAD -> ModItems.UNDEAD_SCORPION_EGG.get();
+        };
+    }
+
+    /** Each color drops its own chitin. */
+    private static Item chitinItemFor(ScorpionVariant variant) {
+        return switch (variant) {
+            case DIRT -> ModItems.CHITIN.get();
+            case CAVE -> ModItems.CHITIN_BLACK.get();
+            case FROST -> ModItems.CHITIN_FROST.get();
+            case NETHER -> ModItems.CHITIN_NETHER.get();
+            case UNDEAD -> ModItems.CHITIN_UNDEAD.get();
+        };
+    }
+
+    /** Each color only ever drops its own sting. */
+    private static Item stingItemFor(ScorpionVariant variant) {
+        return switch (variant) {
+            case DIRT -> ModItems.SCORP_STING_DIRT.get();
+            case CAVE -> ModItems.SCORP_STING_CAVE.get();
+            case FROST -> ModItems.SCORP_STING_FROST.get();
+            case NETHER -> ModItems.SCORP_STING_NETHER.get();
+            case UNDEAD -> ModItems.SCORP_STING_UNDEAD.get();
+        };
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this);
+    }
+
+    @Nullable
+    private Player heldBy;
+
+    public boolean isHeld() {
+        return this.entityData.get(DATA_HELD_BY).isPresent();
+    }
+
+    /** Client-side use: lets the renderer track the holder's live, interpolated position instead of the network-lagged one. */
+    @Nullable
+    public Player getHolder() {
+        return this.entityData.get(DATA_HELD_BY).map(uuid -> this.level().getPlayerByUUID(uuid)).orElse(null);
+    }
+
+    private void startHolding(Player player) {
+        this.heldBy = player;
+        this.entityData.set(DATA_HELD_BY, Optional.of(player.getUUID()));
+        this.setNoAi(true);
+        this.setNoGravity(true);
+        this.noPhysics = true;
+        this.setDeltaMovement(Vec3.ZERO);
+    }
+
+    private void stopHolding() {
+        this.entityData.set(DATA_HELD_BY, Optional.empty());
+        this.setNoAi(false);
+        this.setNoGravity(false);
+        this.noPhysics = false;
+        this.heldBy = null;
+    }
+
+    public void releaseHeldPublic() {
+        stopHolding();
+    }
+
+    private void tickHeld() {
+        if (!isHeld()) {
+            return;
+        }
+        if (this.heldBy == null || this.heldBy.isRemoved() || this.heldBy.level() != this.level()) {
+            stopHolding();
+            return;
+        }
+        Vec3 look = this.heldBy.getLookAngle();
+        Vec3 handPos = this.heldBy.getEyePosition()
+                .add(look.scale(0.6D))
+                .add(0.0D, -0.35D, 0.0D);
+        this.moveTo(handPos.x, handPos.y, handPos.z, this.getYRot(), 0.0F);
+        this.setDeltaMovement(Vec3.ZERO);
+    }
+
+    public ScorpionVariant getVariant() {
+        return ScorpionVariant.byId(this.entityData.get(DATA_VARIANT));
+    }
+
+    public void setVariant(ScorpionVariant variant) {
+        this.entityData.set(DATA_VARIANT, variant.getId());
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return getVariant().isFireImmune() || super.fireImmune();
+    }
+
+    /** Same trick vanilla's own Spider uses: touching a wall horizontally counts as "on a climbable". */
+    @Override
+    public boolean onClimbable() {
+        return this.horizontalCollision;
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !isHeld();
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return !isHeld() && super.canBeCollidedWith();
+    }
+
+    @Override
+    public void pushEntities() {
+        if (isHeld()) {
+            return;
+        }
+        super.pushEntities();
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (isSaddled() && this.getFirstPassenger() instanceof Player player && this.hasPassenger(player)) {
+            return player;
+        }
+        return null;
+    }
+
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (!this.level().isClientSide) {
+            setSitting(false);
+        }
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+        double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
+        double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
+        double y = this.getY() + RIDER_HEIGHT * this.getScale();
+        moveFunction.accept(passenger, x, y, z);
+    }
+
+    /** Wiki: same speed forward/backward, but very slow moving sideways. */
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa * SIDEWAYS_RIDDEN_FACTOR, 0.0D, player.zza);
+    }
+
+    /** Wiki: riding doesn't change its speed — no multiplier here, unlike the big cat. */
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_HALF);
+    }
+
+    @Override
+    public boolean canJump() {
+        return isSaddled() && this.isVehicle();
+    }
+
+    /** Fixed jump, no charge bar — same one-shot approach as the elephant's. Works from water/lava too. */
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
+            Vec3 motion = this.getDeltaMovement();
+            this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
+            this.hasImpulse = true;
+        }
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+        // No charge to release — the jump already happened in onPlayerJump().
+    }
+
+    @Override
+    public void handleStopJump() {
+        // Nothing to reset — no charge state is kept.
+    }
+
+    public boolean hasBabies() {
+        return this.entityData.get(DATA_HAS_BABIES);
+    }
+
+    private void setHasBabies(boolean flag) {
+        this.entityData.set(DATA_HAS_BABIES, flag);
+    }
+
+    public boolean isSaddled() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddled(boolean saddled) {
+        this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
+    }
+
+    public boolean isSittingSynced() {
+        return this.entityData.get(DATA_SITTING_SYNCED);
+    }
+
+    private void setSitting(boolean sitting) {
+        this.setOrderedToSit(sitting);
+        this.entityData.set(DATA_SITTING_SYNCED, sitting);
+    }
+
+    /** Public entry point for spawn eggs / other external code — internal logic stays on setHasBabies(). */
+    public void setHasBabiesPublic(boolean flag) {
+        setHasBabies(flag);
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        // Whip toggles sitting — only while tamed and not currently being
+        // ridden, exactly like the original MoCEntityPetScorpion.
+        // Only the owner can order the scorpion to sit or stand.
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get()) && !this.isVehicle()) {
+            if (!this.level().isClientSide) {
+                setSitting(!this.isSittingSynced());
+                this.setTarget(null);
+                this.getNavigation().stop();
+                PetInteractionUtil.useWhip(this, player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player)) {
+            // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+            InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+            if (shared != InteractionResult.PASS) {
+                return shared;
+            }
+            if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
+                    && getVariant() != ScorpionVariant.UNDEAD && !isTransforming()) {
+                if (!this.level().isClientSide) {
+                    startUndeadTransform();
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (stack.is(ModItems.ESSENCE_OF_UNDEAD.get())
+                    && getVariant() == ScorpionVariant.UNDEAD) {
+                if (!this.level().isClientSide) {
+                    this.spawnAtLocation(new ItemStack(eggItemFor(ScorpionVariant.UNDEAD)));
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (stack.is(ModItems.ESSENCE_OF_DARKNESS.get())
+                    && getVariant() != ScorpionVariant.UNDEAD) {
+                if (!this.level().isClientSide) {
+                    this.spawnAtLocation(new ItemStack(eggItemFor(getVariant())));
+                }
+                useEssence(player, stack);
+                return InteractionResult.SUCCESS;
+            }
+            if (isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+                startTalking();
+                if (!this.level().isClientSide) {
+                    this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                    this.heal(HEAL_AMOUNT);
+                    MoCInventoryUtil.shrinkUnlessCreative(player, stack);
+                }
+                return InteractionResult.SUCCESS;
+            }
+            InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+            if (saddle != null) {
+                return saddle;
+            }
+        }
+
+        // Anyone can mount a saddled tame scorpion, same as a horse — not just the owner.
+        if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            if (!this.level().isClientSide) {
+                this.setOrderedToSit(false);
+                player.startRiding(this);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isBaby()) {
+            if (!this.level().isClientSide) {
+                if (isHeld()) {
+                    stopHolding();
+                } else {
+                    boolean wasTame = this.isTame();
+                    startHolding(player);
+                    if (!wasTame) {
+                        this.tame(player);
+                        NamingHelper.promptRename(this, player.getUUID());
+                    }
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        // Shears remove the saddle (owner only) and wear down here.
+        InteractionResult unsaddle = MountInteractionUtil.tryRemoveSaddle(this, player, stack, true);
+        if (unsaddle != null) {
+            return unsaddle;
+        }
+
+        return super.mobInteract(player, hand);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_VARIANT, ScorpionVariant.DIRT.getId());
+        builder.define(DATA_HAS_BABIES, false);
+        builder.define(DATA_MOUTH_TICKS, 0);
+        builder.define(DATA_CLAW_TICKS, 0);
+        builder.define(DATA_STING_TICKS, 0);
+        builder.define(DATA_TRANSFORM_TICKS, 0);
+        builder.define(DATA_HELD_BY, Optional.empty());
+        builder.define(DATA_SADDLED, false);
+        builder.define(DATA_SITTING_SYNCED, false);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putString("ScorpionVariant", getVariant().name());
+        tag.putBoolean("ScorpionBabies", hasBabies());
+        tag.putBoolean("ScorpionSaddled", isSaddled());
+        tag.putBoolean("ScorpionSittingSynced", isSittingSynced());
+        if (this.saddleItemId != null) {
+            tag.putString("ScorpionSaddleItem", this.saddleItemId.toString());
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("ScorpionVariant", Tag.TAG_STRING)) {
+            try {
+                setVariant(ScorpionVariant.valueOf(tag.getString("ScorpionVariant")));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        if (tag.contains("ScorpionBabies")) {
+            setHasBabies(tag.getBoolean("ScorpionBabies"));
+        }
+        if (tag.contains("ScorpionSaddled")) {
+            setSaddled(tag.getBoolean("ScorpionSaddled"));
+        }
+        if (tag.contains("ScorpionSittingSynced")) {
+            setSitting(tag.getBoolean("ScorpionSittingSynced"));
+        }
+        if (tag.contains("ScorpionSaddleItem", Tag.TAG_STRING)) {
+            this.saddleItemId = ResourceLocation.parse(tag.getString("ScorpionSaddleItem"));
+        }
+    }
+
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new WallClimberNavigation(this, level);
+    }
+
+    @Override
+    protected AABB makeBoundingBox() {
+        if (this.isBaby()) {
+            EntityDimensions babyHitbox =
+                    this.getType().getDimensions().scale(BABY_HITBOX_SCALE);
+            return babyHitbox.makeBoundingBox(this.position());
+        }
+        return super.makeBoundingBox();
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(
+            ServerLevelAccessor level,
+            DifficultyInstance difficulty,
+            MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnReason == MobSpawnType.NATURAL
+                || spawnReason == MobSpawnType.CHUNK_GENERATION) {
+            boolean isNether = level.getLevel().dimension() == Level.NETHER;
+            if (isNether) {
+                setVariant(ScorpionVariant.NETHER);
+            } else if (this.blockPosition().getY() <= CAVE_SPAWN_MAX_Y) {
+                setVariant(ScorpionVariant.CAVE);
+            } else {
+                var biome = level.getBiome(this.blockPosition());
+                if (biome.is(ModTags.FIRE_VARIANT_BIOMES)) {
+                    // Volcanic overworld biomes (from biome mods) get the Nether's fire variant.
+                    setVariant(ScorpionVariant.NETHER);
+                } else {
+                    setVariant(biome.is(ModTags.FROST_VARIANT_BIOMES) ? ScorpionVariant.FROST : ScorpionVariant.DIRT);
+                }
+            }
+
+            boolean hasBabies = this.random.nextInt(4) == 0;
+            if (hasBabies) {
+                setHasBabies(true);
+            }
+
+            // Wiki: a scorpion carrying babies on its back can never have a rider.
+            if (!hasBabies && this.random.nextFloat() < 0.15F) {
+                EntityType<?> riderType = isNether
+                        ? (this.random.nextBoolean() ? EntityType.ZOMBIFIED_PIGLIN
+                                : EntityType.PIGLIN)
+                        : (this.random.nextBoolean() ? EntityType.ZOMBIE
+                                : EntityType.SKELETON);
+                spawnRider(level, riderType);
+            }
+        }
+        return super.finalizeSpawn(level, difficulty, spawnReason, spawnGroupData);
+    }
+
+    private void spawnRider(ServerLevelAccessor level, EntityType<?> riderType) {
+        Entity rider = riderType.create(level.getLevel());
+        if (rider instanceof Mob mob) {
+            mob.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0F);
+            level.getLevel().addFreshEntity(mob);
+            mob.startRiding(this);
+        }
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        if (!this.level().isClientSide) {
+            trySpawnBabies();
+        }
+        super.die(source);
+    }
+
+    /** Wiki: killing an adult carrying babies knocks 0-4 of them loose, wild and pick-up-able. */
+    private void trySpawnBabies() {
+        if (this.isBaby() || !hasBabies()) {
+            return;
+        }
+        int count = this.random.nextInt(MAX_BABIES_DROPPED);
+        for (int i = 0; i < count; i++) {
+            MoCScorpionEntity baby = (MoCScorpionEntity) this.getType().create(this.level());
+            if (baby == null) {
+                continue;
+            }
+            baby.moveTo(this.getX(), this.getY(), this.getZ(), this.random.nextFloat() * FULL_TURN_DEGREES, 0F);
+            baby.setVariant(getVariant());
+            baby.setBaby(true);
+            baby.setAge(-GROWTH_TICKS);
+            baby.setPersistenceRequired();
+            this.level().addFreshEntity(baby);
+            baby.playSound(SoundEvents.SLIME_SQUISH, 1.0F, 1.0F);
+        }
+    }
+
+    /** Saddle always drops if equipped, regardless of who removed it. */
+    @Override
+    public void dropAllEquipment() {
+        if (isSaddled()) {
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+            this.spawnAtLocation(new ItemStack(saddleItem));
+            this.saddleItemId = null;
+            setSaddled(false);
+        }
+    }
+
+    /** Snapshot used to restore this scorpion later from a filled Pet Amulet. */
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("ScorpionVariant", getVariant().name());
+        PetStorageTags.writeIdentity(tag, this, owner);
+        tag.putBoolean("Adult", !this.isBaby());
+        return tag;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, source, recentlyHit);
+
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, source);
+
+        if (this.isBaby()) {
+            // Babies only ever drop string — no chitin, no stings.
+            // 0-2 base, extended by looting
+            MoCLootUtil.dropItems(this, Items.STRING, MoCLootUtil.rollWithLootingRange(this.random, 3, lootingLevel));
+        } else {
+            // 0-1 base each, extended by looting
+            MoCLootUtil.dropItems(this, chitinItemFor(getVariant()), MoCLootUtil.rollWithLootingRange(this.random, 2, lootingLevel));
+            MoCLootUtil.dropItems(this, stingItemFor(getVariant()), MoCLootUtil.rollWithLootingRange(this.random, 2, lootingLevel));
+        }
+
+        if (isSaddled()) {
+            Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+            this.spawnAtLocation(new ItemStack(saddleItem)); // not affected by looting
+        }
+    }
+
+    @Override
+    public void onHatchedFromEgg(@Nullable Player tamer, @Nullable String variantId) {
+        if (variantId != null) {
+            try {
+                setVariant(ScorpionVariant.valueOf(variantId));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        this.setBaby(true);
+        this.setAge(-GROWTH_TICKS);
+        this.setHealth(this.getMaxHealth());
+        if (tamer != null) {
+            this.tame(tamer);
+            NamingHelper.promptRename(this, tamer.getUUID());
+        }
+    }
+
+    public int getMouthTicks() {
+        return this.entityData.get(DATA_MOUTH_TICKS);
+    }
+
+    private void startTalking() {
+        if (this.entityData.get(DATA_MOUTH_TICKS) == 0) {
+            this.entityData.set(DATA_MOUTH_TICKS, 1);
+        }
+    }
+
+    public int getClawTicks() {
+        return this.entityData.get(DATA_CLAW_TICKS);
+    }
+
+    private void swingClaw() {
+        if (this.entityData.get(DATA_CLAW_TICKS) == 0) {
+            this.entityData.set(DATA_CLAW_TICKS, 1);
+        }
+    }
+
+    public int getStingTicks() {
+        return this.entityData.get(DATA_STING_TICKS);
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        startTalking();
+        return ModSounds.SCORPION_AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSounds.SCORPION_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ModSounds.SCORPION_DEATH.get();
+    }
+
+    /**
+     * ~20% chance per hit to sting instead of a plain claw swing — matches
+     * rand.nextInt(5)==0. Nether's ignite is Player-only and only outside the
+     * Nether; every other color's potion effect applies to any LivingEntity.
+     */
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        boolean hurt = super.doHurtTarget(target);
+        if (!hurt) {
+            return false;
+        }
+        boolean stinging = this.entityData.get(DATA_STING_TICKS) == 0 && this.random.nextInt(STING_CHANCE) == 0;
+        if (stinging && target instanceof LivingEntity living) {
+            this.entityData.set(DATA_STING_TICKS, 1);
+            this.playSound(ModSounds.SCORPION_STING.get(), 1.0F, 1.0F);
+            getVariant().applySting(living, this.level().dimension() == Level.NETHER);
+        } else {
+            swingClaw();
+        }
+        return true;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        this.growth.tick(this);
+        if (!this.level().isClientSide) {
+            tickHeld();
+            if (this.isNoAi() && !isHeld()) {
+                this.setNoAi(false);
+            }
+            // Like any other hostile mob: never sticks around once the difficulty
+            // drops to Peaceful (wild only — a tamed one stays with its owner).
+            if (!this.isTame() && this.level().getDifficulty() == Difficulty.PEACEFUL) {
+                this.discard();
+                return;
+            }
+
+            tickIdleCounters();
+            tickEssenceTransform();
+        }
+    }
+
+    private void tickIdleCounters() {
+        int mouth = this.entityData.get(DATA_MOUTH_TICKS);
+        if (mouth > 0 && ++mouth > MOUTH_TALK_TICKS) {
+            mouth = 0;
+        }
+        this.entityData.set(DATA_MOUTH_TICKS, mouth);
+
+        int claw = this.entityData.get(DATA_CLAW_TICKS);
+        if (claw > 0) {
+            if (claw == CLAW_SOUND_FIRST_TICK || claw == CLAW_SOUND_SECOND_TICK) {
+                this.playSound(ModSounds.SCORPION_CLAW.get(), 1.0F, 1.0F);
+            }
+            if (++claw > CLAW_SWING_TICKS) {
+                claw = 0;
+            }
+        }
+        this.entityData.set(DATA_CLAW_TICKS, claw);
+
+        int sting = this.entityData.get(DATA_STING_TICKS);
+        if (sting > 0 && ++sting > STING_ANIM_TICKS) {
+            sting = 0;
+        }
+        this.entityData.set(DATA_STING_TICKS, sting);
+    }
+
+    @Nullable
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        this.setVariant(ScorpionVariant.valueOf(tag.getString("ScorpionVariant")));
+        this.setBaby(!tag.getBoolean("Adult"));
+        PetStorageTags.restoreIdentity(tag, this);
+    }
+
+    /** The nether scorpion shields its rider from fire. */
+    @Override
+    public boolean protectsRiderFromFire() {
+        return getVariant() == ScorpionVariant.NETHER;
+    }
+}

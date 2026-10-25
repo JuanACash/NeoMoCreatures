@@ -4,8 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import com.example.neomocreatures.NeoMoCreatures;
-import com.example.neomocreatures.entity.MoCTurtleEntity;
-import com.example.neomocreatures.entity.MoCTurtleEntity.TmntBrother;
+import com.example.neomocreatures.entity.turtle.MoCTurtleEntity;
+import com.example.neomocreatures.entity.turtle.MoCTurtleEntity.TmntBrother;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

@@ -1,7 +1,7 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCBearEntity;
 import com.example.neomocreatures.entity.bear.BearVariant;
+import com.example.neomocreatures.entity.bear.MoCBearEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 

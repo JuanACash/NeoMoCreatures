@@ -1,6 +1,6 @@
 package com.example.neomocreatures.item;
 
-import com.example.neomocreatures.entity.MoCOstrichEntity;
+import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
 import com.example.neomocreatures.entity.ostrich.OstrichVariant;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.util.MoCInventoryUtil;

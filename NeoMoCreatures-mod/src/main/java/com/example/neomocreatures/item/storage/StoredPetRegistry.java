@@ -1,16 +1,16 @@
 package com.example.neomocreatures.item.storage;
 
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
-import com.example.neomocreatures.entity.MoCCrabEntity;
-import com.example.neomocreatures.entity.MoCDolphinEntity;
-import com.example.neomocreatures.entity.MoCFishyEntity;
-import com.example.neomocreatures.entity.MoCJellyfishEntity;
-import com.example.neomocreatures.entity.MoCMantaRayEntity;
-import com.example.neomocreatures.entity.MoCMediumFishEntity;
-import com.example.neomocreatures.entity.MoCSmallFishEntity;
-import com.example.neomocreatures.entity.MoCStingrayEntity;
-import com.example.neomocreatures.entity.MoCTurtleEntity;
 import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.crab.MoCCrabEntity;
+import com.example.neomocreatures.entity.dolphin.MoCDolphinEntity;
+import com.example.neomocreatures.entity.fishy.MoCFishyEntity;
+import com.example.neomocreatures.entity.jellyfish.MoCJellyfishEntity;
+import com.example.neomocreatures.entity.mantaray.MoCMantaRayEntity;
+import com.example.neomocreatures.entity.mediumfish.MoCMediumFishEntity;
+import com.example.neomocreatures.entity.smallfish.MoCSmallFishEntity;
+import com.example.neomocreatures.entity.stingray.MoCStingrayEntity;
+import com.example.neomocreatures.entity.turtle.MoCTurtleEntity;
 import com.example.neomocreatures.entity.wyvern.WyvernTier;
 import com.example.neomocreatures.init.ModEntities;
 

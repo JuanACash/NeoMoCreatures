@@ -3,8 +3,8 @@ package com.example.neomocreatures.client.legacy;
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.client.AlphaVertexConsumer;
 import com.example.neomocreatures.client.TameableOverlayRenderer;
-import com.example.neomocreatures.entity.MoCBigCatEntity;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
+import com.example.neomocreatures.entity.bigcat.MoCBigCatEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 

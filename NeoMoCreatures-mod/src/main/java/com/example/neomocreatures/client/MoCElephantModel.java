@@ -1,7 +1,7 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCElephantEntity;
 import com.example.neomocreatures.entity.elephant.ElephantVariant;
+import com.example.neomocreatures.entity.elephant.MoCElephantEntity;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;

@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCTurtleEntity;
+import com.example.neomocreatures.entity.turtle.MoCTurtleEntity;
 
 
 import net.minecraft.client.model.HierarchicalModel;

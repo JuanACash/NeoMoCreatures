@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client;
 
-import com.example.neomocreatures.entity.MoCKomodoDragonEntity;
+import com.example.neomocreatures.entity.komodo.MoCKomodoDragonEntity;
 
 
 import net.minecraft.client.model.HierarchicalModel;

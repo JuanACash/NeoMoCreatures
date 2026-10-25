@@ -1,0 +1,634 @@
+package com.example.neomocreatures.entity.komodo;
+
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.AgeGrowthScaler;
+import com.example.neomocreatures.entity.AscendingMount;
+import com.example.neomocreatures.entity.DescendingMount;
+import com.example.neomocreatures.entity.EquippedPet;
+import com.example.neomocreatures.entity.GrowthScaled;
+import com.example.neomocreatures.entity.SaddledMount;
+import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
+import com.example.neomocreatures.entity.egg.EggHatchable;
+import com.example.neomocreatures.init.ModItems;
+import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
+import com.example.neomocreatures.util.MoCExperienceUtil;
+import com.example.neomocreatures.util.MoCInventoryUtil;
+import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
+import com.example.neomocreatures.util.NamingHelper;
+import com.example.neomocreatures.util.PetInteractionUtil;
+import com.example.neomocreatures.util.PetStorageTags;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.fluids.FluidType;
+
+/**
+ * 1:1 behavioural port of drzhark.mocreatures.entity.hunter.MoCEntityKomodo,
+ * following the wiki: wanders on land and in water, hisses and flicks its
+ * tongue idly, occasionally sits down, and aggressively hunts and poisons
+ * the player.
+ * <p>
+ * Extends {@link TamableAnimal} (like {@code MoCManticoreEntity} and
+ * {@code MoCScorpionEntity}) purely so a future taming/riding pass does not
+ * require re-registering the entity type or migrating saved data. Taming
+ * itself is intentionally NOT implemented yet — {@link #isFood} always
+ * returns false and {@link #getBreedOffspring} always returns null.
+ */
+public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled, EggHatchable,
+        PlayerRideableJumping, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount {
+
+    /** How long the mouth-open hiss pose lasts after a sound plays, in ticks. */
+    private static final int MOUTH_TICKS_MAX = 20;
+    private static final int POISON_DURATION_TICKS = 120; // 6 seconds
+    private static final int POISON_AMPLIFIER = 0;
+
+    /** Ticks from hatch to full adult — same "grows visibly over time" pattern as MoCManticoreEntity. */
+    private static final int GROWTH_TICKS = 48000;
+    /** Fraction of ADULT_SCALE a freshly-hatched baby starts at. */
+    private static final float BABY_SCALE = 0.4F;
+    /** Base adult scale before per-individual variance is applied. */
+    private static final float ADULT_SCALE = 1.6F;
+    /** Wiki: "often spawn with random sizes... can grow to at least 3 blocks long." */
+    private static final float MIN_ADULT_SCALE_VARIANCE = 0.6F;
+    private static final float MAX_ADULT_SCALE_VARIANCE = 1.0F;
+    private static final float LARGE_ADULT_EGG_SCALE_THRESHOLD = ADULT_SCALE * 0.9F;
+
+    /** Wiki: "made to jump (1.2 blocks)" — same velocity vanilla gives the player's ~1.25-block jump. */
+    private static final float JUMP_VELOCITY = 0.42F;
+    /** Rider seat position relative to the entity's own origin — likely needs visual tuning in-game. */
+    private static final double RIDER_FORWARD = -0.1D;
+    private static final double RIDER_HEIGHT = 0.3D;
+    private static final double RIDER_HEIGHT_SWIMMING = 0.1D;
+    /** Much gentler than MoCBigCatEntity's flight thrust — this is swimming, not flying. */
+    private static final double RIDDEN_ASCEND_THRUST = 0.05D;
+    private static final double RIDDEN_DESCEND_THRUST = 0.05D;
+    private static final float SWIM_SPEED_MULTIPLIER = 1.6F;
+
+    private static final double BASE_FOLLOW_RANGE = 24.0D;
+    private static final double BASE_MAX_HEALTH = 25.0D;
+    private static final double BASE_ARMOR = 4.0D;
+    private static final double BASE_ATTACK_DAMAGE = 5.0D;
+    private static final double BASE_MOVEMENT_SPEED = 0.25D;
+    private static final int RANDOM_SWIM_INTERVAL = 10;
+
+    /** This individual's rolled adult scale — same for its whole life, persisted below. */
+    private float individualAdultScale = ADULT_SCALE;
+
+    public void setIndividualAdultScale(float scale) {
+        this.individualAdultScale = scale;
+    }
+
+    private static final EntityDataAccessor<Integer> DATA_MOUTH_TICKS =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_ASCEND_HELD =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DESCEND_HELD =
+            SynchedEntityData.defineId(MoCKomodoDragonEntity.class, EntityDataSerializers.BOOLEAN);
+
+    /** Which item to give back when the saddle is sheared off — vanilla saddle vs the mod's crafted one. */
+    @Nullable
+    private ResourceLocation saddleItemId;
+
+    public MoCKomodoDragonEntity(EntityType<? extends MoCKomodoDragonEntity> type, Level level) {
+        super(type, level);
+        // Without this, the pathfinder treats water as costly terrain and the
+        // dragon hesitates at the shoreline instead of moving in and out freely.
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
+        // Default MoveControl only handles vertical movement by jumping, which is
+        // exactly why the dragon was bobbing at the surface instead of swimming to
+        // a submerged target. This drives deltaMovement toward the goal directly.
+        this.moveControl = new DeepSwimMoveControl(this,
+                () -> this.isSwimmingDeep() && !this.isVehicle(), SWIM_SPEED_MULTIPLIER);
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.0F;
+    }
+
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        // Lets the dragon path across both land and water, the same way
+        // vanilla's Frog/Turtle do — required for the wiki's "semi-aquatic"
+        // behaviour (wandering into and swimming through water).
+        return new AmphibiousPathNavigation(this, level);
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.isSwimmingDeep()) {
+            if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider) {
+                travelRiddenInWater(rider, travelVector);
+            } else {
+                // KomodoSwimMoveControl already computes the desired deltaMovement
+                // each tick — just apply it and let drag settle it.
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
+            }
+        } else {
+            super.travel(travelVector);
+        }
+    }
+
+    /**
+     * Ridden + submerged bypasses KomodoSwimMoveControl entirely and reads the
+     * player's own input directly — same pace as unridden swimming (deliberately
+     * unchanged), but actually steerable instead of just drifting with whatever
+     * the AI wander goal happened to be doing. Holds depth steady since there's
+     * no dive/surface input yet (that's the separate Z-key feature).
+     */
+    private void travelRiddenInWater(Player rider, Vec3 travelVector) {
+        this.tickRidden(rider, travelVector);
+        Vec3 input = this.getRiddenInput(rider, travelVector);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+        double dx = -Math.sin(yaw) * input.z + Math.cos(yaw) * input.x;
+        double dz = Math.cos(yaw) * input.z + Math.sin(yaw) * input.x;
+
+        float speed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * SWIM_SPEED_MULTIPLIER;
+        Vec3 desired = new Vec3(dx * speed, 0.0D, dz * speed);
+
+        Vec3 current = this.getDeltaMovement();
+        double newY;
+        if (isAscendHeld()) {
+            newY = current.y + RIDDEN_ASCEND_THRUST;
+        } else if (isDescendHeld()) {
+            newY = current.y - RIDDEN_DESCEND_THRUST;
+        } else {
+            newY = current.y * 0.8D; // no input: hold depth steady, same as before
+        }
+
+        this.setDeltaMovement(new Vec3(
+                Mth.lerp(0.2D, current.x, desired.x),
+                newY,
+                Mth.lerp(0.2D, current.z, desired.z)));
+        this.move(MoverType.SELF, this.getDeltaMovement());
+    }
+
+    @Override
+    public boolean isPushedByFluid() {
+        return false;
+    }
+
+     /** True only when genuinely submerged (eyes underwater) — not just standing
+     *  in ankle-deep water at the shore, which is where isInWater() gets noisy
+     *  and was causing the swim/land movement models to fight each other. */
+    public boolean isSwimmingDeep() {
+        return this.isEyeInFluid(FluidTags.WATER);
+    }
+
+    @Override
+    public boolean isAffectedByFluids() {
+        // Opts out of vanilla's water buoyancy/"gasping for air" push entirely —
+        // that push runs in LivingEntity.aiStep() regardless of our travel()
+        // override, and it's what kept winning against KomodoSwimMoveControl.
+        return false;
+    }
+
+    @Override
+    public boolean canDrownInFluidType(FluidType type) {
+        // NeoForge's replacement for the now-final canBreatheUnderwater() — same
+        // intent as the original mod's MoCEntityKomodo.canBreatheUnderwater().
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
+            return false;
+        }
+        return super.canDrownInFluidType(type);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_MOUTH_TICKS, 0);
+        builder.define(DATA_SADDLED, false);
+        builder.define(DATA_ASCEND_HELD, false);
+        builder.define(DATA_DESCEND_HELD, false);
+    }
+
+    @Override
+    public void setAscendHeld(boolean held) {
+        this.entityData.set(DATA_ASCEND_HELD, held);
+    }
+
+    @Override
+    public void setDescendHeld(boolean held) {
+        this.entityData.set(DATA_DESCEND_HELD, held);
+    }
+
+    public boolean isAscendHeld() {
+        return this.entityData.get(DATA_ASCEND_HELD);
+    }
+
+    public boolean isDescendHeld() {
+        return this.entityData.get(DATA_DESCEND_HELD);
+    }
+
+    public boolean isSaddled() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddled(boolean saddled) {
+        this.entityData.set(DATA_SADDLED, saddled);
+    }
+
+    @Override
+    @Nullable
+    public ResourceLocation getSaddleItemId() {
+        return this.saddleItemId;
+    }
+
+    @Override
+    public void setSaddleItemId(@Nullable ResourceLocation saddleItemId) {
+        this.saddleItemId = saddleItemId;
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
+                .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
+                .add(Attributes.ARMOR, BASE_ARMOR)
+                .add(Attributes.ATTACK_DAMAGE, BASE_ATTACK_DAMAGE)
+                .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
+                .add(Attributes.SCALE, ADULT_SCALE);
+    }
+
+    @Override
+    protected void registerGoals() {
+        // Top priority so a whip-forced sit overrides everything else — same
+        // vanilla mechanism wolves/cats use, and it already reuses
+        // isInSittingPose() for the pose, same as KomodoSitGoal below.
+        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, true));
+        this.goalSelector.addGoal(2, new KomodoSitGoal(this));
+        this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.9D));
+        this.goalSelector.addGoal(5, new RandomSwimmingGoal(this, 1.0D, RANDOM_SWIM_INTERVAL));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, this::canAttackPlayer));
+    }
+
+    private boolean canAttackPlayer(@Nullable LivingEntity target) {
+        // Wiki: unlike most other creatures here, Komodo dragons are aggressive
+        // at every age — deliberately no "!this.isBaby()" exclusion. Only being
+        // tamed turns it off.
+        return !this.isTame();
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        startHiss();
+        return this.random.nextBoolean() ? ModSounds.KOMODO_HISS_1.get() : ModSounds.KOMODO_HISS_2.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        startHiss();
+        return ModSounds.KOMODO_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        startHiss();
+        return ModSounds.KOMODO_DEATH.get();
+    }
+
+    private void startHiss() {
+        if (this.entityData.get(DATA_MOUTH_TICKS) == 0) {
+            this.entityData.set(DATA_MOUTH_TICKS, 1);
+        }
+    }
+
+    /** @return ticks remaining in the open-mouth hiss pose; 0 when closed. Used by the model. */
+    public int getMouthTicks() {
+        return this.entityData.get(DATA_MOUTH_TICKS);
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        tickMouthAnimation();
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, this.individualAdultScale);
+    }
+
+    private final AgeGrowthScaler growth = new AgeGrowthScaler();
+
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this, GROWTH_TICKS, BABY_SCALE, this.individualAdultScale);
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
+            DifficultyInstance difficulty, MobSpawnType spawnType,
+            @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnType == MobSpawnType.NATURAL
+                || spawnType == MobSpawnType.CHUNK_GENERATION
+                || spawnType == MobSpawnType.SPAWN_EGG) {
+            // Rolled once per individual and kept for life — egg-hatched dragons
+            // (onHatchedFromEgg) deliberately skip this and keep the flat ADULT_SCALE.
+            this.individualAdultScale = ADULT_SCALE
+                    * Mth.randomBetween(this.random, MIN_ADULT_SCALE_VARIANCE, MAX_ADULT_SCALE_VARIANCE);
+        }
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putFloat("IndividualAdultScale", this.individualAdultScale);
+        tag.putBoolean("KomodoSaddled", isSaddled());
+        if (this.saddleItemId != null) {
+            tag.putString("KomodoSaddleItem", this.saddleItemId.toString());
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("IndividualAdultScale")) {
+            this.individualAdultScale = tag.getFloat("IndividualAdultScale");
+        }
+        if (tag.contains("KomodoSaddled")) {
+            setSaddled(tag.getBoolean("KomodoSaddled"));
+        }
+        if (tag.contains("KomodoSaddleItem", Tag.TAG_STRING)) {
+            this.saddleItemId = ResourceLocation.parse(tag.getString("KomodoSaddleItem"));
+        }
+    }
+
+    private void tickMouthAnimation() {
+        int mouthTicks = this.entityData.get(DATA_MOUTH_TICKS);
+        if (mouthTicks > 0 && ++mouthTicks > MOUTH_TICKS_MAX) {
+            mouthTicks = 0;
+        }
+        this.entityData.set(DATA_MOUTH_TICKS, mouthTicks);
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        boolean hurt = super.doHurtTarget(target);
+        if (hurt && target instanceof LivingEntity living) {
+            living.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+        }
+        return hurt;
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return false; // taming happens via egg hatching, not feeding — see onHatchedFromEgg
+    }
+
+    private boolean isHealingFood(ItemStack stack) {
+        // Wiki: "Tamed Komodo dragons can be healed with raw turkey or raw rat."
+        return stack.is(ModTags.KOMODO_DRAGON_HEALING_FOOD);
+    }
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+
+        // Shared owner interactions: rename with a book and capture with a Pet Amulet.
+        // Any equipment is dropped on the ground by the helper, never stored in the amulet.
+        InteractionResult shared = PetInteractionUtil.tryOwnerBookOrAmulet(this, player, hand, this::buildAmuletTag);
+        if (shared != InteractionResult.PASS) {
+            return shared;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+            if (!this.level().isClientSide) {
+                this.setOrderedToSit(!this.isOrderedToSit());
+                this.setTarget(null);
+                this.getNavigation().stop();
+                PetInteractionUtil.useWhip(this, player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isTame() && this.isOwnedBy(player) && isHealingFood(stack) && this.getHealth() < this.getMaxHealth()) {
+            if (!this.level().isClientSide) {
+                this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+                this.heal(this.getMaxHealth());
+                MoCInventoryUtil.shrinkUnlessCreative(player, stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        // Wiki: "After a Komodo dragon reaches its full size, it can be equipped
+        // with a saddle" — gated on adulthood (!isBaby()), same as the tame check.
+        InteractionResult saddle = MountInteractionUtil.tryEquipSaddle(this, player, stack);
+        if (saddle != null) {
+            return saddle;
+        }
+
+        // Shears remove the saddle (owner only).
+        InteractionResult unsaddle = MountInteractionUtil.tryRemoveSaddle(this, player, stack, false);
+        if (unsaddle != null) {
+            return unsaddle;
+        }
+
+        if (isSaddled() && !this.isBaby() && !this.isVehicle() && !player.isSecondaryUseActive()) {
+            if (!this.level().isClientSide) {
+                this.setOrderedToSit(false);
+                this.setInSittingPose(false);
+                player.startRiding(this);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        return super.mobInteract(player, hand);
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (isSaddled() && this.getFirstPassenger() instanceof Player player && this.hasPassenger(player)) {
+            return player;
+        }
+        return null;
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+        double x = this.getX() - Math.sin(yaw) * RIDER_FORWARD;
+        double z = this.getZ() + Math.cos(yaw) * RIDER_FORWARD;
+        double height = this.isSwimmingDeep() ? RIDER_HEIGHT_SWIMMING : RIDER_HEIGHT;
+        double y = this.getY() + height * this.getScale();
+        moveFunction.accept(passenger, x, y, z);
+    }
+
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        // Wiki: "very slow when moving sideways" — forward/back stays full, strafe is cut down hard.
+        return new Vec3(player.xxa * 0.3D, 0.0D, player.zza);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) *0.5F;
+    }
+
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_LEVEL);
+    }
+
+    @Override
+    public boolean canJump() {
+        // Wiki: jumping is turned off while mounted in water — Space instead
+        // means "ascend" there (see travelRiddenInWater).
+        return isSaddled() && this.isVehicle() && !this.isInWater();
+    }
+
+    /** Wiki: "made to jump (1.2 blocks)" — fixed impulse, no charge bar. */
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        if (jumpPower > 0 && (this.onGround() || this.isInWater() || this.isInLava())) {
+            Vec3 motion = this.getDeltaMovement();
+            this.setDeltaMovement(motion.x, JUMP_VELOCITY, motion.z);
+            this.hasImpulse = true;
+        }
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+        // No charge to release — the jump already happened in onPlayerJump().
+    }
+
+    @Override
+    public void handleStopJump() {
+        // Nothing to reset — no charge state is kept.
+    }
+
+    @Override
+    public void onHatchedFromEgg(@Nullable Player tamer, @Nullable String variantId) {
+        this.setBaby(true);
+        this.setAge(-GROWTH_TICKS);
+        this.setHealth(this.getMaxHealth());
+        if (tamer != null) {
+            this.tame(tamer);
+            NamingHelper.promptRename(this, tamer.getUUID());
+        }
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+
+        int lootingLevel = MoCLootUtil.getLootingLevel(level, damageSource);
+
+        MoCLootUtil.dropItems(this, ModItems.REPTILE_HIDE.get(), MoCLootUtil.rollWithFlatLooting(this.random, 2, lootingLevel, 4));
+
+        if (!this.isBaby() && this.individualAdultScale >= LARGE_ADULT_EGG_SCALE_THRESHOLD) {
+            if (MoCLootUtil.rollChance(this.random, 0.25F, 0.10F, lootingLevel)) {
+                this.spawnAtLocation(new ItemStack(ModItems.KOMODO_DRAGON_EGG.get()));
+            }
+        }
+
+        dropAllEquipment();
+    }
+
+    @Override
+    public void dropAllEquipment() {
+        if (!isSaddled()) {
+            return;
+        }
+        Item saddleItem = MoCInventoryUtil.saddleItemOrDefault(this.saddleItemId);
+        this.spawnAtLocation(new ItemStack(saddleItem));
+        this.saddleItemId = null;
+        setSaddled(false);
+    }
+
+    /** Builds the NBT payload stored inside a filled Pet Amulet for this dragon. */
+    private CompoundTag buildAmuletTag(UUID owner) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("KomodoDragon", true);
+        tag.putFloat("IndividualAdultScale", this.individualAdultScale);
+        PetStorageTags.writeCommon(tag, this, owner);
+        return tag;
+    }
+
+    @Override
+    protected int getBaseExperienceReward() {
+        return MoCExperienceUtil.rollStandardXp(this.random);
+    }
+
+    @Nullable
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return null; // no breeding
+    }
+
+    // ---------------------------------------------------------------------
+    // Pet Amulet / Fish Net storage
+    // ---------------------------------------------------------------------
+
+    /** Restores the data saved by {@link #buildAmuletTag} when a Pet Amulet releases this pet. */
+    @Override
+    public void restoreFromStorage(CompoundTag tag) {
+        if (tag.contains("IndividualAdultScale")) {
+            this.setIndividualAdultScale(tag.getFloat("IndividualAdultScale"));
+        }
+        PetStorageTags.restoreCommon(tag, this);
+    }
+}

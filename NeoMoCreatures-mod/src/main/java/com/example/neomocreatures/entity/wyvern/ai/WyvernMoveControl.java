@@ -1,6 +1,6 @@
 package com.example.neomocreatures.entity.wyvern.ai;
 
-import com.example.neomocreatures.entity.MoCWyvernEntity;
+import com.example.neomocreatures.entity.wyvern.MoCWyvernEntity;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.control.MoveControl;

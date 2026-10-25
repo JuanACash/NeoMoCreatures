@@ -1,6 +1,6 @@
 package com.example.neomocreatures.client.legacy;
 
-import com.example.neomocreatures.entity.MoCSharkEntity;
+import com.example.neomocreatures.entity.shark.MoCSharkEntity;
 
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
