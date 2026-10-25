@@ -38,6 +38,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -164,11 +165,31 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
 
     /** Wild, non-undead scorpions hunt players anywhere in the Nether, otherwise only in the dark. */
     private boolean canHuntPlayers() {
-        if (this.isTame() || this.getVariant() == ScorpionVariant.UNDEAD) {
+        if (this.isTame() || this.isBaby() || this.getVariant() == ScorpionVariant.UNDEAD) {
             return false;
         }
         boolean inNether = this.level().dimension() == Level.NETHER;
         return inNether || getRawLight(this) <= 9;
+    }
+
+    /** Babies never take suffocation damage, wherever their small hitbox ends up. */
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return (this.isBaby() && source.is(DamageTypes.IN_WALL)) || super.isInvulnerableTo(source);
+    }
+
+    /** Babies are never aggressive, tamed or wild: they cannot pick a target from any source. */
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target != null && this.isBaby()) {
+            return;
+        }
+        super.setTarget(target);
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        return !this.isBaby() && super.canAttack(target);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -854,6 +875,9 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
      */
     @Override
     public boolean doHurtTarget(Entity target) {
+        if (this.isBaby()) {
+            return false; // Babies never attack, whatever tried to make them
+        }
         boolean hurt = super.doHurtTarget(target);
         if (!hurt) {
             return false;

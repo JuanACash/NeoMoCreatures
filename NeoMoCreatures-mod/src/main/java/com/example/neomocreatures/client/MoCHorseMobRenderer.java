@@ -10,7 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class MoCHorseMobRenderer extends MobRenderer<MoCHorseMobEntity, MoCHorseMobModel> {
 
-    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_horse_mob");
+    // The hostile horse reuses the horse textures (same file names), so they are stored only once.
+    private static final EntityTextureCache TEXTURE_CACHE = new EntityTextureCache("moc_horse");
 
     public static final ModelLayerLocation MOC_HORSE_MOB_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "moc_horse_mob"), "main");
