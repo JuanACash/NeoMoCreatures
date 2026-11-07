@@ -7,6 +7,7 @@ import com.example.neomocreatures.entity.ostrich.MoCOstrichEntity;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,7 +29,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidType;
 
 /**
@@ -61,8 +62,10 @@ public class MoCEggEntity extends Mob {
     private static final double WATCH_RADIUS = 24.0D;
     /** Wiki: stray more than ~9 blocks away and the hatched baby comes out wild. */
     private static final double TAME_RADIUS = 9.0D;
-    /** Block-light level of a torch (14) and above counts as "near a torch". */
-    private static final int MIN_LIGHT_TO_HATCH = 14;
+    /** Light emission of a torch (14) and above counts as a valid heat/light source. */
+    private static final int MIN_LIGHT_EMISSION = 14;
+    /** Blocks (in every direction) around the egg that are scanned for a light source. */
+    private static final int LIGHT_SOURCE_RADIUS = 4;
     /** Wiki-inspired: can't be picked back up in the first few seconds after being placed. */
     private static final int PICKUP_DELAY_TICKS = 60;
 
@@ -174,8 +177,7 @@ public class MoCEggEntity extends Mob {
         }
 
         if (this.random.nextInt(TIMER_ADVANCE_ODDS) == 0) {
-            boolean lightOk = !this.requiresLight
-                    || this.level().getBrightness(LightLayer.BLOCK, this.blockPosition()) >= MIN_LIGHT_TO_HATCH;
+            boolean lightOk = !this.requiresLight || hasNearbyLightSource();
             // Wiki: shark eggs "can only hatch if they are in the water" — no torch needed.
             boolean waterOk = !this.requiresWater || this.isInWater();
             if (lightOk && waterOk) {
@@ -188,6 +190,24 @@ public class MoCEggEntity extends Mob {
                 }
             }
         }
+    }
+
+    /**
+     * A torch only emits 14 in its own block (13 in the neighbouring ones), so reading
+     * the light level at the egg's position almost never passes. Scanning for the
+     * emitting block itself within a radius fixes that.
+     */
+    private boolean hasNearbyLightSource() {
+        BlockPos center = this.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(
+                center.offset(-LIGHT_SOURCE_RADIUS, -LIGHT_SOURCE_RADIUS, -LIGHT_SOURCE_RADIUS),
+                center.offset(LIGHT_SOURCE_RADIUS, LIGHT_SOURCE_RADIUS, LIGHT_SOURCE_RADIUS))) {
+            BlockState state = this.level().getBlockState(pos);
+            if (state.getLightEmission(this.level(), pos) >= MIN_LIGHT_EMISSION) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void notifyNearbyPlayer() {
