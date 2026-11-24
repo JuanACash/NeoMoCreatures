@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "neomocreatures:item/fine_silver_ingot"
+  }
+}

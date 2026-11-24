@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "neomocreatures:silver_mattock",
+    "neomocreatures:shark_mattock",
+    "neomocreatures:scorp_mattock_cave",
+    "neomocreatures:scorp_mattock_dirt",
+    "neomocreatures:scorp_mattock_nether",
+    "neomocreatures:scorp_mattock_frost",
+    "neomocreatures:scorp_mattock_undead"
+  ]
+}

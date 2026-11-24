@@ -9,6 +9,7 @@ import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.entity.bear.BearVariant;
 import com.example.neomocreatures.entity.bigcat.BigCatVariant;
 import com.example.neomocreatures.entity.smallfish.SmallFishVariant;
+import com.example.neomocreatures.item.AncientSilverBowItem;
 import com.example.neomocreatures.item.BearSpawnEggItem;
 import com.example.neomocreatures.item.BigCatSpawnEggItem;
 import com.example.neomocreatures.item.BirdSpawnEggItem;
@@ -21,6 +22,7 @@ import com.example.neomocreatures.item.FoxSpawnEggItem;
 import com.example.neomocreatures.item.KittyBedItem;
 import com.example.neomocreatures.item.LitterBoxItem;
 import com.example.neomocreatures.item.ManticoreSpawnEggItem;
+import com.example.neomocreatures.item.MattockItem;
 import com.example.neomocreatures.item.MediumFishEggItem;
 import com.example.neomocreatures.item.MoCEggItem;
 import com.example.neomocreatures.item.OstrichSpawnEggItem;
@@ -57,6 +59,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.JukeboxSong;
@@ -66,6 +69,7 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -74,6 +78,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModItems {
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(NeoMoCreatures.MODID);
+
+    private static final float SCORPION_MATTOCK_DAMAGE = 1.0F;
+    private static final float SCORPION_MATTOCK_SPEED = -2.8F;
 
     /** Duration of the potion effect scorpion weapons apply on hit (5 seconds). */
     private static final int SCORPION_EFFECT_TICKS = 100;
@@ -239,6 +246,8 @@ public class ModItems {
     public static final DeferredItem<Item> ANCIENT_SILVER_INGOT = ITEMS.registerSimpleItem("ancient_silver_ingot", new Item.Properties());
     public static final DeferredItem<Item> ANCIENT_SILVER_NUGGET = ITEMS.registerSimpleItem("ancient_silver_nugget", new Item.Properties());
     public static final DeferredItem<Item> ANCIENT_SILVER_SCRAP = ITEMS.registerSimpleItem("ancient_silver_scrap", new Item.Properties());
+    public static final DeferredItem<Item> FINE_SILVER_INGOT = ITEMS.registerSimpleItem("fine_silver_ingot", new Item.Properties());
+    public static final DeferredItem<Item> FINE_SILVER_NUGGET = ITEMS.registerSimpleItem("fine_silver_nugget", new Item.Properties());
 
     // ---- Fur / Hide / Reptile Armor ----
     public static final DeferredItem<Item> FUR = ITEMS.registerSimpleItem("fur", new Item.Properties());
@@ -302,8 +311,19 @@ public class ModItems {
     public static final DeferredItem<Item> SAI = sword("sai", Tiers.IRON);
     public static final DeferredItem<Item> SHARK_AXE = axe("shark_axe", Tiers.IRON, 6.0F, -3.1F);
     public static final DeferredItem<Item> SHARK_SWORD = sword("shark_sword", Tiers.IRON);
+    public static final DeferredItem<Item> SILVER_MATTOCK = mattock("silver_mattock", Tiers.IRON, 2.0F, -2.7F);
+    public static final DeferredItem<Item> SHARK_MATTOCK = mattock("shark_mattock", Tiers.IRON, 1.0F, -2.8F);
+    public static final DeferredItem<Item> SCORP_MATTOCK_CAVE = scorpionMattock("scorp_mattock_cave", MobEffects.CONFUSION);
+    public static final DeferredItem<Item> SCORP_MATTOCK_DIRT = scorpionMattock("scorp_mattock_dirt", MobEffects.POISON);
+    public static final DeferredItem<Item> SCORP_MATTOCK_NETHER = fireScorpionMattock("scorp_mattock_nether", 4);
+    public static final DeferredItem<Item> SCORP_MATTOCK_FROST = scorpionMattock("scorp_mattock_frost", MobEffects.MOVEMENT_SLOWDOWN);
+    public static final DeferredItem<Item> SCORP_MATTOCK_UNDEAD = scorpionMattock("scorp_mattock_undead", MobEffects.WEAKNESS);
     public static final DeferredItem<Item> SHARK_TEETH = ITEMS.registerSimpleItem("shark_teeth", new Item.Properties());
     public static final DeferredItem<Item> SILVER_AXE = axe("silver_axe", Tiers.GOLD, 6.0F, -3.0F);
+    public static final DeferredItem<Item> ANCIENT_SILVER_BOW = ITEMS.register("ancient_silver_bow",
+            () -> new AncientSilverBowItem(
+                    new Item.Properties().stacksTo(1).durability(AncientSilverBowItem.DURABILITY),
+                    () -> Ingredient.of(ANCIENT_SILVER_INGOT.get())));
     public static final DeferredItem<Item> SILVER_SWORD = sword("silver_sword", Tiers.GOLD);
     public static final DeferredItem<Item> TUSKS_DIAMOND = ITEMS.registerSimpleItem("tusks_diamond", new Item.Properties().stacksTo(1).durability(1562));
     public static final DeferredItem<Item> TUSKS_IRON = ITEMS.registerSimpleItem("tusks_iron", new Item.Properties().stacksTo(1).durability(251));
@@ -351,6 +371,9 @@ public class ModItems {
     public static final DeferredItem<Item> UNICORN_HORN = ITEMS.registerSimpleItem("unicorn_horn", new Item.Properties());
     public static final DeferredItem<Item> WHIP = ITEMS.register("whip",
         () -> new WhipItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> REPTILE_WHIP = ITEMS.register("reptile_whip",
+        () -> new WhipItem(new Item.Properties().stacksTo(1), 224, 17,
+            () -> Ingredient.of(REPTILE_HIDE.get())));
     // ---- Elephant / Mammoth ----
     public static final DeferredItem<Item> ELEPHANT_CHEST = ITEMS.registerSimpleItem("elephant_chest", new Item.Properties());
     public static final DeferredItem<Item> ELEPHANT_GARMENT = ITEMS.registerSimpleItem("elephant_garment", new Item.Properties().stacksTo(1));
@@ -491,6 +514,7 @@ public class ModItems {
     public static final DeferredItem<BlockItem> LEAVES_OGRE_LAIR_ITEM = ITEMS.registerSimpleBlockItem("leaves_ogre_lair", ModBlocks.LEAVES_OGRE_LAIR);
     public static final DeferredItem<BlockItem> WOOD_PLANKS_OGRE_LAIR_ITEM = ITEMS.registerSimpleBlockItem("wood_planks_ogre_lair", ModBlocks.WOOD_PLANKS_OGRE_LAIR);
     public static final DeferredItem<BlockItem> ANCIENT_SILVER_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("ancient_silver_block", ModBlocks.ANCIENT_SILVER_BLOCK);
+    public static final DeferredItem<BlockItem> FINE_SILVER_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("fine_silver_block", ModBlocks.FINE_SILVER_BLOCK);
     public static final DeferredItem<BlockItem> SILVER_SAND_ITEM = ITEMS.registerSimpleBlockItem("silver_sand", ModBlocks.SILVER_SAND);
     public static final DeferredItem<BlockItem> SILVER_SANDSTONE_ITEM = ITEMS.registerSimpleBlockItem("silver_sandstone", ModBlocks.SILVER_SANDSTONE);
     public static final DeferredItem<BlockItem> SILVER_SANDSTONE_CARVED_ITEM = ITEMS.registerSimpleBlockItem("silver_sandstone_carved", ModBlocks.SILVER_SANDSTONE_CARVED);
@@ -559,6 +583,29 @@ public class ModItems {
         return new Item.Properties().stacksTo(1)
                 .attributes(AxeItem.createAttributes(Tiers.DIAMOND, 5.0F, -3.0F))
                 .durability(Tiers.DIAMOND.getUses());
+    }
+
+    private static Item.Properties mattockProperties(Tier tier, float attackDamage, float attackSpeed) {
+        return new Item.Properties().stacksTo(1)
+                .attributes(DiggerItem.createAttributes(tier, attackDamage, attackSpeed))
+                .durability(tier.getUses());
+    }
+
+    private static DeferredItem<Item> mattock(String name, Tier tier, float attackDamage, float attackSpeed) {
+        return ITEMS.register(name, () -> new MattockItem(tier, mattockProperties(tier, attackDamage, attackSpeed)));
+    }
+
+    /** Diamond-tier scorpion mattock that applies a potion effect on hit. */
+    private static DeferredItem<Item> scorpionMattock(String name, Holder<MobEffect> effect) {
+        return ITEMS.register(name, () -> new MattockItem(Tiers.DIAMOND,
+                mattockProperties(Tiers.DIAMOND, SCORPION_MATTOCK_DAMAGE, SCORPION_MATTOCK_SPEED),
+                () -> new MobEffectInstance(effect, SCORPION_EFFECT_TICKS, 0)));
+    }
+
+    /** Diamond-tier scorpion mattock that sets the target on fire. */
+    private static DeferredItem<Item> fireScorpionMattock(String name, int fireSeconds) {
+        return ITEMS.register(name, () -> new MattockItem(Tiers.DIAMOND,
+                mattockProperties(Tiers.DIAMOND, SCORPION_MATTOCK_DAMAGE, SCORPION_MATTOCK_SPEED), fireSeconds));
     }
 
     private static DeferredItem<Item> food(String name, int nutrition, float saturation) {

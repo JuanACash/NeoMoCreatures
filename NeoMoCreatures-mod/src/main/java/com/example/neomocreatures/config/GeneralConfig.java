@@ -12,6 +12,7 @@ public final class GeneralConfig {
     public final ModConfigSpec.BooleanValue hideHealthBar;
     public final ModConfigSpec.BooleanValue craftableHorseArmor;
     public final ModConfigSpec.BooleanValue craftableSaddles;
+    public final ModConfigSpec.BooleanValue enableFineSilver;
 
     public GeneralConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("general")).push("general");
@@ -50,6 +51,11 @@ public final class GeneralConfig {
                 .comment("Allows crafting the Mo' Creatures horse saddle.")
                 .translation(ConfigTranslations.of("craftableSaddles"))
                 .define("craftableSaddles", true);
+
+        enableFineSilver = builder
+                .comment("Adds Fine Silver, obtained by smelting Ancient Silver, which can be used in any recipe that requires silver. Needs a data reload (/reload) to apply.")
+                .translation(ConfigTranslations.of("enableFineSilver"))
+                .define("enableFineSilver", true);
 
         builder.pop();
     }

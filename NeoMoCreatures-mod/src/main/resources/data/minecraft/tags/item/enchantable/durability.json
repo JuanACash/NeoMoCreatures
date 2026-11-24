@@ -37,6 +37,15 @@
     "neomocreatures:scorp_helmet_undead",
     "neomocreatures:scorp_plate_undead",
     "neomocreatures:scorp_legs_undead",
-    "neomocreatures:scorp_boots_undead"
+    "neomocreatures:scorp_boots_undead",
+    "neomocreatures:ancient_silver_bow",
+    "neomocreatures:silver_mattock",
+    "neomocreatures:shark_mattock",
+    "neomocreatures:scorp_mattock_cave",
+    "neomocreatures:scorp_mattock_dirt",
+    "neomocreatures:scorp_mattock_nether",
+    "neomocreatures:scorp_mattock_frost",
+    "neomocreatures:scorp_mattock_undead",
+    "neomocreatures:reptile_whip"
   ]
 }

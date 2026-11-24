@@ -10,10 +10,12 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.entity.AgeGrowthScaler;
 import com.example.neomocreatures.entity.CarriedPet;
 import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.ScaleHitboxSync;
 import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -23,6 +25,7 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetStorageTags;
 import com.example.neomocreatures.util.PetStorageUtil;
+import com.example.neomocreatures.util.TamedOffspring;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -36,6 +39,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -43,14 +47,19 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -61,6 +70,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
@@ -98,6 +108,14 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     private static final int GROWTH_STEP_ODDS = 900;
     /** Smaller changes are float noise, not worth a refreshDimensions() call. */
     private static final float SCALE_CHANGE_THRESHOLD = 0.001F;
+    // ---- Breeding ----
+    private static final double BREED_SPEED = 0.8D;
+    private static final double TEMPT_SPEED = 0.8D;
+    private static final double FOLLOW_PARENT_SPEED = 0.8D;
+    /** Same baby window as vanilla's default (24000 ticks). */
+    private static final int BABY_GROWTH_TICKS = 24000;
+    /** A hatchling starts at half of the wild adult size. */
+    private static final float BABY_SCALE_FRACTION = 0.5F;
 
     // ---- Hiding (wild turtles only) ----
     private static final double THREAT_SCAN_RADIUS = 4.0D;
@@ -135,6 +153,8 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     private int struggleTicks;
     private int pickupCooldown;
     private final ScaleHitboxSync hitboxSync = new ScaleHitboxSync(SCALE_CHANGE_THRESHOLD);
+    private final AgeGrowthScaler babyGrowth =
+            new AgeGrowthScaler(BABY_GROWTH_TICKS, BABY_SCALE_FRACTION, (float) WILD_SCALE, SCALE_CHANGE_THRESHOLD);
 
     /** Cache for {@link #getTmntBrother()}: the name is compared by identity, so it is only parsed when it changes. */
     @Nullable
@@ -175,6 +195,9 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
         this.goalSelector.addGoal(0, new ImmobilizedGoal(this));
         this.goalSelector.addGoal(2, new FollowOwnerWithinRangeGoal(this, 0.8D));
         this.goalSelector.addGoal(3, new SeekFloorFoodGoal(this, 0.8D));
+        this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(4, new TemptGoal(this, TEMPT_SPEED, MoCTurtleEntity::isTurtleFood, false));
+        this.goalSelector.addGoal(4, new FollowParentGoal(this, FOLLOW_PARENT_SPEED));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
     }
@@ -261,6 +284,10 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     private void tickGrowth() {
         AttributeInstance scaleAttribute = this.getAttribute(Attributes.SCALE);
         if (scaleAttribute == null) {
+            return;
+        }
+        if (this.isBaby()) {
+            this.babyGrowth.tick(this);
             return;
         }
         if (!this.level().isClientSide && this.isTame() && scaleAttribute.getBaseValue() < MAX_SCALE
@@ -693,21 +720,30 @@ public class MoCTurtleEntity extends TamableAnimal implements CarriedPet, Growth
     // Vanilla animal hooks that do not apply to turtles
     // ---------------------------------------------------------------------
 
-    /** Turtles have no baby stage, so vanilla's 5% baby roll at spawn must not make one. */
+    /**
+     * Wild turtles never spawn as babies: vanilla's 5% baby roll is switched off here.
+     * Only breeding produces hatchlings, and those do not go through finalizeSpawn().
+     */
     @Override
-    public void setAge(int age) {
-        super.setAge(0);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
+                                        MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        return super.finalizeSpawn(level, difficulty, spawnType, new AgeableMob.AgeableMobGroupData(false));
     }
 
+    /** Taming and healing are handled in mobInteract(); this is only the breeding food. */
     @Override
     public boolean isFood(ItemStack stack) {
-        return false; // taming and healing are handled in mobInteract()
+        return isTurtleFood(stack);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null; // turtles do not breed
+        MoCTurtleEntity hatchling = ModEntities.MOC_TURTLE.get().create(level);
+        if (hatchling != null) {
+            TamedOffspring.inheritOwner(hatchling, this, otherParent);
+        }
+        return hatchling;
     }
 
     /**

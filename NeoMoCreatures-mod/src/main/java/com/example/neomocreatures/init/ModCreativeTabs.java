@@ -1,5 +1,6 @@
 package com.example.neomocreatures.init;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.NeoMoCreatures;
 
 import net.minecraft.core.registries.Registries;
@@ -117,6 +118,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SUGAR_LUMP.get());
         output.accept(ModItems.BIG_CAT_CLAW.get());
         output.accept(ModItems.WHIP.get());
+        output.accept(ModItems.REPTILE_WHIP.get());
         output.accept(ModItems.MEDALLION.get());
         output.accept(ModItems.KITTY_LITTER.get());
         output.accept(ModItems.KITTY_BED.get());
@@ -211,6 +213,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SCORP_BOOTS_DIRT.get());
         output.accept(ModItems.SCORP_SWORD_DIRT.get());
         output.accept(ModItems.SCORP_AXE_DIRT.get());
+        output.accept(ModItems.SCORP_MATTOCK_DIRT.get());
         output.accept(ModItems.SCORP_STING_DIRT.get());
         output.accept(ModItems.CHITIN_BLACK.get());
         output.accept(ModItems.SCORP_HELMET_CAVE.get());
@@ -219,6 +222,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SCORP_BOOTS_CAVE.get());
         output.accept(ModItems.SCORP_SWORD_CAVE.get());
         output.accept(ModItems.SCORP_AXE_CAVE.get());
+        output.accept(ModItems.SCORP_MATTOCK_CAVE.get());
         output.accept(ModItems.SCORP_STING_CAVE.get());
         output.accept(ModItems.CHITIN_FROST.get());
         output.accept(ModItems.SCORP_HELMET_FROST.get());
@@ -227,6 +231,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SCORP_BOOTS_FROST.get());
         output.accept(ModItems.SCORP_SWORD_FROST.get());
         output.accept(ModItems.SCORP_AXE_FROST.get());
+        output.accept(ModItems.SCORP_MATTOCK_FROST.get());
         output.accept(ModItems.SCORP_STING_FROST.get());
         output.accept(ModItems.CHITIN_NETHER.get());
         output.accept(ModItems.SCORP_HELMET_NETHER.get());
@@ -235,6 +240,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SCORP_BOOTS_NETHER.get());
         output.accept(ModItems.SCORP_SWORD_NETHER.get());
         output.accept(ModItems.SCORP_AXE_NETHER.get());
+        output.accept(ModItems.SCORP_MATTOCK_NETHER.get());
         output.accept(ModItems.SCORP_STING_NETHER.get());
         output.accept(ModItems.CHITIN_UNDEAD.get());
         output.accept(ModItems.SCORP_HELMET_UNDEAD.get());
@@ -243,23 +249,28 @@ public final class ModCreativeTabs {
         output.accept(ModItems.SCORP_BOOTS_UNDEAD.get());
         output.accept(ModItems.SCORP_SWORD_UNDEAD.get());
         output.accept(ModItems.SCORP_AXE_UNDEAD.get());
+        output.accept(ModItems.SCORP_MATTOCK_UNDEAD.get());
         output.accept(ModItems.SCORP_STING_UNDEAD.get());
         output.accept(ModItems.ANCIENT_SILVER_SCRAP.get());
         output.accept(ModItems.ANCIENT_SILVER_INGOT.get());
         output.accept(ModItems.ANCIENT_SILVER_NUGGET.get());
         output.accept(ModItems.ANCIENT_SILVER_BLOCK_ITEM.get());
+        addFineSilver(output);
         output.accept(ModItems.ANCIENT_SILVER_HELMET.get());
         output.accept(ModItems.ANCIENT_SILVER_CHESTPLATE.get());
         output.accept(ModItems.ANCIENT_SILVER_LEGGINGS.get());
         output.accept(ModItems.ANCIENT_SILVER_BOOTS.get());
         output.accept(ModItems.SILVER_SWORD.get());
         output.accept(ModItems.SILVER_AXE.get());
+        output.accept(ModItems.ANCIENT_SILVER_BOW.get());
+        output.accept(ModItems.SILVER_MATTOCK.get());
         output.accept(ModItems.KATANA.get());
         output.accept(ModItems.BO.get());
         output.accept(ModItems.SAI.get());
         output.accept(ModItems.NUNCHAKU.get());
         output.accept(ModItems.SHARK_SWORD.get());
         output.accept(ModItems.SHARK_AXE.get());
+        output.accept(ModItems.SHARK_MATTOCK.get());
         // Spawn eggs
         output.accept(ModItems.WILD_HORSE_SPAWN_EGG.get());
         output.accept(ModItems.MOC_HORSE_MOB_SPAWN_EGG.get());
@@ -341,4 +352,14 @@ public final class ModCreativeTabs {
         output.accept(ModItems.MINI_GOLEM_SPAWN_EGG.get());
         output.accept(ModItems.BIG_GOLEM_SPAWN_EGG.get());
     }
+    /** Fine Silver is only listed while its config option is enabled. */
+    private static void addFineSilver(CreativeModeTab.Output output) {
+        if (!Config.GENERAL.enableFineSilver.get()) {
+            return;
+        }
+        output.accept(ModItems.FINE_SILVER_INGOT.get());
+        output.accept(ModItems.FINE_SILVER_NUGGET.get());
+        output.accept(ModItems.FINE_SILVER_BLOCK_ITEM.get());
+    }
+
 }

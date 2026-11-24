@@ -1,10 +1,15 @@
 package com.example.neomocreatures.entity.duck;
 
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.entity.AgeGrowthScaler;
+import com.example.neomocreatures.entity.GrowthScaled;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -18,11 +23,15 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -43,12 +52,27 @@ import net.minecraft.world.level.block.state.BlockState;
  * Wiki: lays an egg every 5 minutes, same as a vanilla Chicken (using vanilla's own egg item, since
  * the mod has no duck-specific one).
  */
-public class MoCDuckEntity extends TamableAnimal {
+public class MoCDuckEntity extends TamableAnimal implements GrowthScaled {
 
     private static final double MAX_HEALTH = 4.0D;
     private static final double MOVEMENT_SPEED = 0.25D;
     private static final double PANIC_SPEED = 1.4D;
     private static final double WANDER_SPEED = 1.0D;
+    private static final double BREED_SPEED = 1.0D;
+    private static final double TEMPT_SPEED = 1.0D;
+    private static final double FOLLOW_PARENT_SPEED = 1.1D;
+
+    /** Extended: ducks are bred with any of the four vanilla seeds. */
+    private static final Set<Item> BREEDING_ITEMS =
+            Set.of(Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS);
+
+    /** Same baby window as vanilla's default (24000 ticks), so setBaby() needs no override. */
+    private static final int GROWTH_TICKS = 24000;
+    private static final float BABY_SCALE = 0.5F;
+    private static final float SCALE_CHANGE_THRESHOLD = 0.01F;
+
+    private final AgeGrowthScaler growth =
+            new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F, SCALE_CHANGE_THRESHOLD);
 
     /** Wiki: "lay eggs every 5 minutes" — a flat 6000-tick timer, matching that exact interval,
      *  instead of vanilla Chicken's own randomized 6000-12000 range. */
@@ -70,13 +94,17 @@ public class MoCDuckEntity extends TamableAnimal {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, MAX_HEALTH)
-                .add(Attributes.MOVEMENT_SPEED, MOVEMENT_SPEED);
+                .add(Attributes.MOVEMENT_SPEED, MOVEMENT_SPEED)
+                .add(Attributes.SCALE, 1.0D);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, PANIC_SPEED));
+        this.goalSelector.addGoal(2, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(3, new TemptGoal(this, TEMPT_SPEED, MoCDuckEntity::isBreedingItem, false));
+        this.goalSelector.addGoal(4, new FollowParentGoal(this, FOLLOW_PARENT_SPEED));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
     }
@@ -86,6 +114,7 @@ public class MoCDuckEntity extends TamableAnimal {
     @Override
     public void aiStep() {
         super.aiStep();
+        this.growth.tick(this);
         this.oFlapPosition = this.flapPosition;
         this.oFlap = this.flap;
         this.flapPosition = this.flapPosition + (this.onGround() ? -1.0F : 4.0F) * 0.3F;
@@ -99,7 +128,7 @@ public class MoCDuckEntity extends TamableAnimal {
         }
         this.flap += this.flapSpeed * 2.0F;
 
-        if (!this.level().isClientSide && --this.eggTimer <= 0) {
+        if (!this.level().isClientSide && !this.isBaby() && --this.eggTimer <= 0) {
             this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
                     SoundEvents.CHICKEN_EGG, SoundSource.NEUTRAL, 1.0F,
                     (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
@@ -123,15 +152,24 @@ public class MoCDuckEntity extends TamableAnimal {
         return level.isUnobstructed(this);
     }
 
+    private static boolean isBreedingItem(ItemStack stack) {
+        return BREEDING_ITEMS.contains(stack.getItem());
+    }
+
     @Override
     public boolean isFood(ItemStack stack) {
-        return false;
+        return isBreedingItem(stack);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null;
+        return ModEntities.MOC_DUCK.get().create(level);
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this);
     }
 
     // ---------------------------------------------------------------------

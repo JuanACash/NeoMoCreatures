@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CHC",
+    "H H",
+    "C S"
+  ],
+  "key": {
+    "C": { "item": "neomocreatures:big_cat_claw" },
+    "H": { "item": "neomocreatures:reptile_hide" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "id": "neomocreatures:reptile_whip", "count": 1 }
+}

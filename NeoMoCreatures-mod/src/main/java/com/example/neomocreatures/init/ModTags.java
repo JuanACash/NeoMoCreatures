@@ -65,6 +65,9 @@ public class ModTags {
     /** Ground bears can spawn on besides grass (#minecraft:animals_spawnable_on): ice and snow blocks for polar bears. */
     public static final TagKey<Block> BEAR_SPAWNABLE_ON = blockTag("bear_spawnable_on");
 
+    /** Blocks a mattock mines at full speed (pickaxe + shovel blocks). */
+    public static final TagKey<Block> MINEABLE_WITH_MATTOCK = blockTag("mineable/mattock");
+
     private static TagKey<EntityType<?>> entityTag(String name) {
         return TagKey.create(Registries.ENTITY_TYPE,
                 ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));

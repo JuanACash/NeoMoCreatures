@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "neomocreatures:block/wyvwood_pressure_plate"
+    },
+    "powered=true": {
+      "model": "neomocreatures:block/wyvwood_pressure_plate_down"
+    }
+  }
+}

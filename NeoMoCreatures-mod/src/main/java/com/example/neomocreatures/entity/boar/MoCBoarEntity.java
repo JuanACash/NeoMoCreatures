@@ -1,6 +1,7 @@
 package com.example.neomocreatures.entity.boar;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -11,6 +12,7 @@ import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.entity.fox.MoCFoxEntity;
 import com.example.neomocreatures.entity.raccoon.MoCRaccoonEntity;
 import com.example.neomocreatures.entity.turkey.MoCTurkeyEntity;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -24,6 +26,8 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -31,13 +35,16 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -61,6 +68,11 @@ public class MoCBoarEntity extends Animal {
     private static final float FLEE_DISTANCE = 4.0F;
     private static final double FOLLOW_ADULT_SPEED = 1.0D;
     private static final double WANDER_SPEED = 1.0D;
+    private static final double BREED_SPEED = 1.0D;
+    private static final double TEMPT_SPEED = 1.0D;
+
+    /** Extended: boars are bred with either vanilla mushroom. */
+    private static final Set<Item> BREEDING_ITEMS = Set.of(Items.BROWN_MUSHROOM, Items.RED_MUSHROOM);
 
      /** Hit-and-run only when the boar started the fight itself: hits once, backs off for a bit,
      *  then closes in again — like a baby Hoglin. If the player hit it first, it just fights
@@ -72,6 +84,8 @@ public class MoCBoarEntity extends Animal {
     /** Original: setMoCAge(60) at spawn — a baby grows from here up to full size over time. */
     private static final int BABY_START_AGE = 60;
     private static final int GROWN_AGE = 100;
+    /** Extended: feeding a piglet skips a tenth of its growth window. */
+    private static final int FEED_GROWTH_STEPS = (GROWN_AGE - BABY_START_AGE) / 10;
 
     /** Wiki: attacks if the player gets too close, even unprovoked. */
     private static final double PLAYER_PROXIMITY = 6.0D;
@@ -115,6 +129,8 @@ public class MoCBoarEntity extends Animal {
         this.goalSelector.addGoal(2, new ConditionalAvoidEntityGoal<>(this, Player.class, FLEE_DISTANCE, FLEE_SPEED, FLEE_SPEED,
                 () -> !this.isGrownAdult()));
         this.goalSelector.addGoal(3, new FollowParentGoal(this, FOLLOW_ADULT_SPEED));
+        this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(5, new TemptGoal(this, TEMPT_SPEED, stack -> BREEDING_ITEMS.contains(stack.getItem()), false));
         this.goalSelector.addGoal(4, new ConditionalMeleeAttackGoal(this, ATTACK_SPEED, false, this::isRetaliating));
         this.goalSelector.addGoal(4, new BoarHitAndRunGoal(this));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, WANDER_SPEED));
@@ -123,7 +139,8 @@ public class MoCBoarEntity extends Animal {
         // Wiki (piglets never attack): only an adult chases the player when provoked or approached,
         // and occasionally goes after a few specific small mobs — not in the decompiled source,
         // which had no target-selector goal at all.
-        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, 10, false, false, null, this::isGrownAdult));
+        this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, 10, false, false,
+                this::isNotHoldingBreedingFood, this::isHostileToPlayers));
         this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCFoxEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
         this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCRaccoonEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
         this.targetSelector.addGoal(3, new ConditionalTargetGoal<>(this, MoCTurkeyEntity.class, SMALL_MOB_RECHECK_TICKS, true, false, null, this::canHuntSmallMobs));
@@ -132,6 +149,16 @@ public class MoCBoarEntity extends Animal {
     /** Attacking players is aggression; the small-mob goals are hunting and follow enableHunters. */
     private boolean canHuntSmallMobs() {
         return this.isGrownAdult() && HuntingRules.isHuntingEnabled();
+    }
+
+    /** An adult attacks players unprovoked, except while it is in love. */
+    private boolean isHostileToPlayers() {
+        return this.isGrownAdult() && !this.isInLove();
+    }
+
+    /** Lets a player walk up to a boar with food in hand without being targeted. */
+    private boolean isNotHoldingBreedingFood(LivingEntity target) {
+        return !target.isHolding(stack -> BREEDING_ITEMS.contains(stack.getItem()));
     }
 
     @Override
@@ -227,13 +254,28 @@ public class MoCBoarEntity extends Animal {
 
     @Override
     public boolean isFood(ItemStack stack) {
-        return false; // no breeding goal in the original
+        return BREEDING_ITEMS.contains(stack.getItem());
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null;
+        // Vanilla calls setBaby(true) right after this, which sets the piglet's MocAge
+        return ModEntities.MOC_BOAR.get().create(level);
+    }
+
+    /** Feeding a piglet speeds up its growth instead of vanilla's age, which this boar does not use. */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (this.isBaby() && this.isFood(stack)) {
+            if (!this.level().isClientSide) {
+                this.usePlayerItem(player, hand, stack);
+                this.setMocAge(this.getMocAge() + FEED_GROWTH_STEPS);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        return super.mobInteract(player, hand);
     }
 
     // ---------------------------------------------------------------------

@@ -1,4 +1,5 @@
 package com.example.neomocreatures.entity.deer;
+import net.minecraft.util.RandomSource;
 
 /** Original: selectType() rolls 20% stag, 50% doe, 30% fawn (which also forces non-adult). */
 public enum DeerVariant {
@@ -37,4 +38,13 @@ public enum DeerVariant {
         }
         return DOE;
     }
+
+    /** Same stag to doe ratio the original uses when rolling a spawn (20% stag, 50% doe). */
+    private static final int STAG_WEIGHT = 20;
+    private static final int DOE_WEIGHT = 50;
+
+    public static DeerVariant randomAdult(RandomSource random) {
+        return random.nextInt(STAG_WEIGHT + DOE_WEIGHT) < STAG_WEIGHT ? STAG : DOE;
+    }
+
 }

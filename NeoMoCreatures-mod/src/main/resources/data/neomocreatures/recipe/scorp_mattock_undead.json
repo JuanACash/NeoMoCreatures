@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SCC",
+    "CGP"
+  ],
+  "key": {
+    "S": {
+      "item": "neomocreatures:scorp_sting_undead"
+    },
+    "C": {
+      "item": "neomocreatures:chitin_undead"
+    },
+    "G": {
+      "item": "minecraft:diamond_shovel"
+    },
+    "P": {
+      "item": "minecraft:diamond_pickaxe"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:scorp_mattock_undead",
+    "count": 1
+  }
+}

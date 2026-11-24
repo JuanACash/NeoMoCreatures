@@ -154,9 +154,11 @@ public class ModBlocks {
 
    public static final DeferredBlock<Block> ANCIENT_SILVER_BLOCK = BLOCKS.register(
         "ancient_silver_block",
-        () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
-                .strength(3.0F, 10.0F))
-        );
+        () -> new Block(silverBlockProperties()));
+
+   public static final DeferredBlock<Block> FINE_SILVER_BLOCK = BLOCKS.register(
+        "fine_silver_block",
+        () -> new Block(silverBlockProperties().mapColor(MapColor.CLAY)));
 
    public static final DeferredBlock<ColoredFallingBlock> SILVER_SAND = BLOCKS.register(
         "silver_sand",
@@ -221,6 +223,11 @@ public class ModBlocks {
         fire.setFlammable(TALL_WYVGRASS.get(), 60, 100);
         fire.setFlammable(TALL_GRASS_OGRE_LAIR.get(), 60, 100);
         WyvwoodBlocks.registerFlammability(fire);
+    }
+
+    /** Shared hardness and resistance of every silver storage block. */
+    private static BlockBehaviour.Properties silverBlockProperties() {
+        return BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.0F, 10.0F);
     }
 
 }

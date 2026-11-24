@@ -8,9 +8,12 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.NeoMoCreatures;
+import com.example.neomocreatures.entity.AgeGrowthScaler;
 import com.example.neomocreatures.entity.CarriedPet;
+import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -21,6 +24,7 @@ import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetCarryUtil;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.TamedOffspring;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -54,14 +58,18 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -80,7 +88,7 @@ import net.minecraft.world.phys.Vec3;
  * fall damage) and a massive speed boost to any mount the holder is riding,
  * same idea as {@code MoCBunnyEntity}.
  */
-public class MoCBirdEntity extends TamableAnimal implements CarriedPet, StorablePet {
+public class MoCBirdEntity extends TamableAnimal implements CarriedPet, GrowthScaled, StorablePet {
 
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
             SynchedEntityData.defineId(MoCBirdEntity.class, EntityDataSerializers.INT);
@@ -93,6 +101,17 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     private static final int SLOW_FALLING_REFRESH_TICKS = 5;
     private static final double HEAD_HEIGHT_OFFSET = 0.25D;
     private static final double MOUNT_SPEED_BOOST = 4.0D;
+    private static final double BREED_SPEED = 1.0D;
+    private static final double TEMPT_SPEED = 1.0D;
+    private static final double FOLLOW_PARENT_SPEED = 1.1D;
+
+    /** Same baby window as vanilla's default (24000 ticks), so setBaby() needs no override. */
+    private static final int GROWTH_TICKS = 24000;
+    private static final float BABY_SCALE = 0.5F;
+    private static final float SCALE_CHANGE_THRESHOLD = 0.01F;
+
+    private final AgeGrowthScaler growth =
+            new AgeGrowthScaler(GROWTH_TICKS, BABY_SCALE, 1.0F, SCALE_CHANGE_THRESHOLD);
 
     private static final double BASE_MAX_HEALTH = 6.0D;
     private static final double BASE_FOLLOW_RANGE = 12.0D;
@@ -161,6 +180,9 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
                 livingEntity -> !(livingEntity instanceof MoCBirdEntity)
                         && (livingEntity.getBbWidth() > 0.4F || livingEntity.getBbHeight() > 0.4F)));
         this.goalSelector.addGoal(2, new SeekSeedGoal(this));
+        this.goalSelector.addGoal(2, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(3, new TemptGoal(this, TEMPT_SPEED, MoCBirdEntity::isSeed, false));
+        this.goalSelector.addGoal(4, new FollowParentGoal(this, FOLLOW_PARENT_SPEED));
         this.goalSelector.addGoal(3, new TreePerchGoal(this));
         // Same wander style as vanilla's Parrot: alternates between flying
         // to a random nearby spot and hopping/walking on the ground.
@@ -175,7 +197,8 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
                 .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
                 .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
-                .add(Attributes.FLYING_SPEED, BASE_FLYING_SPEED);
+                .add(Attributes.FLYING_SPEED, BASE_FLYING_SPEED)
+                .add(Attributes.SCALE, 1.0D);
     }
 
     @Override
@@ -210,17 +233,34 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
         }
     }
 
+    /** Seeds are only breeding food here; taming still happens via the ground-seeds-then-empty-hand flow. */
     @Override
     public boolean isFood(ItemStack stack) {
-        // Taming happens via the ground-seeds-then-empty-hand flow in
-        // mobInteract(), not vanilla food-taming.
-        return false;
+        return isSeed(stack);
+    }
+
+    /** Only birds of the same colour can mate. */
+    @Override
+    public boolean canMate(Animal otherAnimal) {
+        return otherAnimal instanceof MoCBirdEntity other
+                && other.getVariant() == this.getVariant()
+                && super.canMate(otherAnimal);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null;
+        MoCBirdEntity chick = ModEntities.MOC_BIRD.get().create(level);
+        if (chick != null) {
+            chick.setVariant(this.getVariant());
+            TamedOffspring.inheritOwner(chick, this, otherParent);
+        }
+        return chick;
+    }
+
+    @Override
+    public void updateGrowthScale() {
+        this.growth.tick(this);
     }
 
     @Override
@@ -458,6 +498,7 @@ public class MoCBirdEntity extends TamableAnimal implements CarriedPet, Storable
     @Override
     public void aiStep() {
         super.aiStep();
+        this.growth.tick(this);
         if (this.pickupCooldown > 0) {
             this.pickupCooldown--;
         }

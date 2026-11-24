@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SI ",
+    "I  "
+  ],
+  "key": {
+    "S": {
+      "item": "neomocreatures:ancient_silver_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:silver_mattock",
+    "count": 1
+  }
+}

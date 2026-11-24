@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " S*",
+    "I *",
+    " S*"
+  ],
+  "key": {
+    "S": {
+      "item": "neomocreatures:ancient_silver_ingot"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "*": {
+      "tag": "c:strings"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:ancient_silver_bow",
+    "count": 1
+  }
+}

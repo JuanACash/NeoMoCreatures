@@ -19,7 +19,8 @@ public record ConfigCondition(String option) implements ICondition {
 
     private static final Map<String, BooleanSupplier> OPTIONS = Map.of(
             "craftable_saddles", () -> Config.GENERAL.craftableSaddles.get(),
-            "craftable_horse_armor", () -> Config.GENERAL.craftableHorseArmor.get());
+            "craftable_horse_armor", () -> Config.GENERAL.craftableHorseArmor.get(),
+            "fine_silver", () -> Config.GENERAL.enableFineSilver.get());
 
     @Override
     public boolean test(IContext context) {

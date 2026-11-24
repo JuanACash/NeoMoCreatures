@@ -1,11 +1,12 @@
 package com.example.neomocreatures.entity.deer;
 
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -16,6 +17,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
@@ -27,17 +30,20 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
-
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityDeer}. Passive: never fights back, only
  * flees anything bigger than 0.8 blocks that isn't another deer, and panics when hurt. Built on
@@ -66,6 +72,11 @@ public class MoCDeerEntity extends TamableAnimal {
      *  fixed 1.3 scale by the time it reaches max age. */
     private static final int START_AGE = 75;
     private static final int MAX_AGE = 130;
+    private static final double BREED_SPEED = 1.0D;
+    private static final double TEMPT_SPEED = 1.0D;
+    /** Extended: feeding a fawn skips a tenth of its growth window. */
+    private static final int FEED_GROWTH_STEPS = (MAX_AGE - START_AGE) / 10;
+
 
     /** Original: readyToJumpTimer — a bounding "leap" gait, roughly every 1-1.5s while moving fast. */
     private static final float LEAP_SPEED_THRESHOLD = 0.17F;
@@ -138,9 +149,11 @@ public class MoCDeerEntity extends TamableAnimal {
                 AI_SPEED, FLEE_NEAR_SPEED, e -> !(e instanceof MoCDeerEntity)
                         && (e.getBbHeight() > FLEE_SIZE_THRESHOLD || e.getBbWidth() > FLEE_SIZE_THRESHOLD)));
         this.goalSelector.addGoal(2, new PanicGoal(this, PANIC_SPEED));
-        this.goalSelector.addGoal(4, new FollowParentGoal(this, AI_SPEED));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, AI_SPEED));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(4, new TemptGoal(this, TEMPT_SPEED, stack -> stack.is(Items.WHEAT), false));
+        this.goalSelector.addGoal(5, new FollowParentGoal(this, AI_SPEED));
+        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, AI_SPEED));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0F));
     }
 
     // ---------------------------------------------------------------------
@@ -160,6 +173,21 @@ public class MoCDeerEntity extends TamableAnimal {
         return this.isFawn();
     }
 
+    /** Adds growth steps to a fawn; at max age it turns into an adult stag or doe. */
+    private void growFawn(int steps) {
+        int newAge = Math.min(this.getMocAge() + steps, MAX_AGE);
+        this.entityData.set(DATA_MOC_AGE, newAge);
+        if (newAge >= MAX_AGE) {
+            this.entityData.set(DATA_VARIANT, DeerVariant.randomAdult(this.random).getId());
+        }
+    }
+
+    /** Turns a freshly created deer into a newborn fawn. */
+    private void becomeFawn() {
+        this.entityData.set(DATA_VARIANT, DeerVariant.FAWN.getId());
+        this.entityData.set(DATA_MOC_AGE, START_AGE);
+    }
+
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
                                         DifficultyInstance difficulty,
@@ -175,8 +203,8 @@ public class MoCDeerEntity extends TamableAnimal {
     public void aiStep() {
         super.aiStep();
         if (!this.level().isClientSide) {
-            if (this.isFawn() && this.getMocAge() < MAX_AGE && this.random.nextInt(GROWTH_CHANCE) == 0) {
-                this.entityData.set(DATA_MOC_AGE, this.getMocAge() + 1);
+            if (this.isFawn() && this.random.nextInt(GROWTH_CHANCE) == 0) {
+                this.growFawn(1);
             }
             this.tickLeap();
         }
@@ -237,13 +265,41 @@ public class MoCDeerEntity extends TamableAnimal {
 
     @Override
     public boolean isFood(ItemStack stack) {
-        return false; // no breeding goal in the original
+        return stack.is(Items.WHEAT);
+    }
+
+    /** Extended: only an adult stag and an adult doe can mate. */
+    @Override
+    public boolean canMate(Animal otherAnimal) {
+        return otherAnimal instanceof MoCDeerEntity other
+                && !this.isFawn()
+                && !other.isFawn()
+                && this.getVariant() != other.getVariant()
+                && super.canMate(otherAnimal);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null;
+        MoCDeerEntity baby = ModEntities.MOC_DEER.get().create(level);
+        if (baby != null) {
+            baby.becomeFawn();
+        }
+        return baby;
+    }
+
+    /** Feeding a fawn speeds up its growth instead of using vanilla's age, which this deer does not use. */
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (this.isFawn() && this.isFood(stack)) {
+            if (!this.level().isClientSide) {
+                this.usePlayerItem(player, hand, stack);
+                this.growFawn(FEED_GROWTH_STEPS);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+        return super.mobInteract(player, hand);
     }
 
     // ---------------------------------------------------------------------

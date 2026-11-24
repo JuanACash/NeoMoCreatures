@@ -10,6 +10,7 @@ import com.example.neomocreatures.entity.AgeGrowthScaler;
 import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
@@ -18,6 +19,7 @@ import com.example.neomocreatures.util.MoCTickUtil;
 import com.example.neomocreatures.util.NamingHelper;
 import com.example.neomocreatures.util.PetInteractionUtil;
 import com.example.neomocreatures.util.PetStorageTags;
+import com.example.neomocreatures.util.TamedOffspring;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -43,12 +45,15 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -96,6 +101,9 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
     private static final double DUEL_RIVAL_RANGE = 14.0D;
     /** Chance (%) that a naturally spawned goat is a kid. */
     private static final int BABY_SPAWN_PERCENT = 15;
+    private static final int COLOR_COUNT = 6;
+    private static final double BREED_SPEED = 1.0D;
+    private static final double TEMPT_SPEED = 1.0D;
 
     private static final EntityDataAccessor<Boolean> DATA_MALE =
             SynchedEntityData.defineId(MoCGoatEntity.class, EntityDataSerializers.BOOLEAN);
@@ -182,9 +190,11 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         // Wiki: "Male goats will fight between themselves."
         this.goalSelector.addGoal(3, new GoatDuelGoal(this));
+        this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
         this.goalSelector.addGoal(4, new GoatEatItemGoal(this));
         // Wiki: "A goat will follow the player if they have any edible item in hand."
         this.goalSelector.addGoal(5, new GoatFollowFoodGoal(this));
+        this.goalSelector.addGoal(5, new TemptGoal(this, TEMPT_SPEED, stack -> stack.is(Items.WHEAT), false));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
@@ -340,7 +350,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         }
 
         // Wiki: "To heal a hurt goat, feed it with any edible item" — tamed only.
-        if (this.isTame() && this.isOwnedBy(player) && isFood(stack) && this.getHealth() < this.getMaxHealth()) {
+        if (this.isTame() && this.isOwnedBy(player) && isEdible(stack) && this.getHealth() < this.getMaxHealth()) {
             if (!this.level().isClientSide) {
                 this.setHealth(this.getMaxHealth());
                 this.playSound(ModSounds.GOAT_EATING.get(), 1.0F, 1.0F);
@@ -350,7 +360,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         }
 
         // Wiki: "A goat can be tamed by feeding it any edible food item."
-        if (!this.isTame() && isFood(stack)) {
+        if (!this.isTame() && isEdible(stack)) {
             if (!this.level().isClientSide) {
                 this.tame(player);
                 NamingHelper.promptRename(this, player.getUUID());
@@ -358,6 +368,11 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
                 MoCInventoryUtil.shrinkUnlessCreative(player, stack);
             }
             return InteractionResult.SUCCESS;
+        }
+
+        if (!this.isBaby() && this.isFood(stack)) {
+            // Being fed to breed calms an angry goat
+            this.setTarget(null);
         }
 
         return super.mobInteract(player, hand);
@@ -535,7 +550,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
 
         @Override
         public boolean canUse() {
-            if (!this.self.isMale() || this.self.isBaby() || this.self.getTarget() != null
+            if (!this.self.isMale() || this.self.isBaby() || this.self.isInLove() || this.self.getTarget() != null
                     || this.self.getRandom().nextInt(DUEL_START_ODDS) != 0) {
                 return false;
             }
@@ -593,7 +608,7 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             this.setBaby(true);
         }
         setMale(this.random.nextBoolean());
-        setColorIndex(this.random.nextInt(6));
+        setColorIndex(this.random.nextInt(COLOR_COUNT));
         return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
@@ -615,18 +630,35 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         }
     }
 
+    /** Wiki: "any edible food item (mod and vanilla)" tames and heals a goat. */
+    private static boolean isEdible(ItemStack stack) {
+        return stack.has(DataComponents.FOOD);
+    }
+
+    /** Vanilla's breeding food. Taming and healing use isEdible() instead. */
     @Override
     public boolean isFood(ItemStack stack) {
-        // Wiki: "any edible food item (mod and vanilla)" — same check
-        // GoatFollowFoodGoal already uses to decide if a player is "holding
-        // something edible", just applied here to the item in hand.
-        return stack.has(DataComponents.FOOD);
+        return stack.is(Items.WHEAT);
+    }
+
+    /** Extended: only a male and a female can mate. */
+    @Override
+    public boolean canMate(Animal otherAnimal) {
+        return otherAnimal instanceof MoCGoatEntity other
+                && other.isMale() != this.isMale()
+                && super.canMate(otherAnimal);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
-        return null;
+        MoCGoatEntity kid = ModEntities.MOC_GOAT.get().create(level);
+        if (kid != null) {
+            kid.setMale(this.random.nextBoolean());
+            kid.setColorIndex(this.random.nextInt(COLOR_COUNT));
+            TamedOffspring.inheritOwner(kid, this, otherParent);
+        }
+        return kid;
     }
 
     @Override

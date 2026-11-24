@@ -3,6 +3,7 @@
   "values": [
     "neomocreatures:wyvern_iron_ore",
     "neomocreatures:wyvern_lapis_ore",
-    "neomocreatures:ancient_silver_block"
+    "neomocreatures:ancient_silver_block",
+    "neomocreatures:fine_silver_block"
   ]
 }

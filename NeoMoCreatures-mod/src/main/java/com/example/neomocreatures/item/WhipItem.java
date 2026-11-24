@@ -1,5 +1,9 @@
 package com.example.neomocreatures.item;
 
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
 import com.example.neomocreatures.breeding.MoCHorseGenetics;
 import com.example.neomocreatures.entity.elephant.MoCElephantEntity;
 import com.example.neomocreatures.entity.horse.MoCHorseEntity;
@@ -16,7 +20,9 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -33,14 +39,34 @@ public class WhipItem extends Item {
     private static final int SPEED_AMPLIFIER = 1;
     private static final double RADIUS = 12.0D;
 
+    private static final int DEFAULT_DURABILITY = 24;
+    private static final int DEFAULT_ENCHANTMENT_VALUE = 14;
+
+    private final int enchantmentValue;
+    @Nullable
+    private final Supplier<Ingredient> repairIngredient;
+
     public WhipItem(Properties properties) {
-        super(properties.durability(24));
+        this(properties, DEFAULT_DURABILITY, DEFAULT_ENCHANTMENT_VALUE, null);
+    }
+
+    public WhipItem(Properties properties, int durability, int enchantmentValue,
+                    @Nullable Supplier<Ingredient> repairIngredient) {
+        super(properties.durability(durability));
+        this.enchantmentValue = enchantmentValue;
+        this.repairIngredient = repairIngredient;
     }
 
     @Override
     public int getEnchantmentValue() {
-            return 14;
-        }
+        return this.enchantmentValue;
+    }
+
+    @Override
+    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
+        return (this.repairIngredient != null && this.repairIngredient.get().test(repairCandidate))
+                || super.isValidRepairItem(stack, repairCandidate);
+    }
 
     @Override
     public InteractionResult useOn(UseOnContext context) {

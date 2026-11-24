@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "#X ",
+    "S  "
+  ],
+  "key": {
+    "#": {
+      "item": "neomocreatures:shark_teeth"
+    },
+    "X": {
+      "tag": "minecraft:planks"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:shark_mattock",
+    "count": 1
+  }
+}

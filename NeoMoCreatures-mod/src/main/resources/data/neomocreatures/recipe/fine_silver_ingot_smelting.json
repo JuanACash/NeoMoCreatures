@@ -1,0 +1,18 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neomocreatures:config",
+      "option": "fine_silver"
+    }
+  ],
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "neomocreatures:ancient_silver_ingot"
+  },
+  "result": {
+    "id": "neomocreatures:fine_silver_ingot",
+    "count": 1
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

@@ -224,6 +224,7 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
         if (ownerUUID != null) {
             baby.setOwnerUUID(ownerUUID);
             baby.setTame(true, true);
+            NamingHelper.promptRename(baby, ownerUUID);
         }
     }
 

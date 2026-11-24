@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.FireBlock;
+import net.minecraft.world.level.block.PressurePlateBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
@@ -34,6 +35,10 @@ public final class WyvwoodBlocks {
             props -> new ButtonBlock(ModBlockSetTypes.WYVWOOD, BUTTON_PRESS_TICKS, props),
             woodProperties(Blocks.OAK_BUTTON));
 
+    public static final DeferredBlock<PressurePlateBlock> PRESSURE_PLATE = ModBlocks.BLOCKS.registerBlock("wyvwood_pressure_plate",
+            props -> new PressurePlateBlock(ModBlockSetTypes.WYVWOOD, props),
+            woodProperties(Blocks.OAK_PRESSURE_PLATE));
+
     public static final DeferredBlock<FenceBlock> FENCE = ModBlocks.BLOCKS.registerBlock("wyvwood_fence",
             FenceBlock::new, plankProperties(Blocks.OAK_FENCE));
 
@@ -51,6 +56,7 @@ public final class WyvwoodBlocks {
             () -> new DoubleHighBlockItem(DOOR.get(), new Item.Properties()));
     public static final DeferredItem<BlockItem> TRAPDOOR_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_trapdoor", TRAPDOOR);
     public static final DeferredItem<BlockItem> BUTTON_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_button", BUTTON);
+    public static final DeferredItem<BlockItem> PRESSURE_PLATE_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_pressure_plate", PRESSURE_PLATE);
     public static final DeferredItem<BlockItem> FENCE_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_fence", FENCE);
     public static final DeferredItem<BlockItem> FENCE_GATE_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_fence_gate", FENCE_GATE);
     public static final DeferredItem<BlockItem> SLAB_ITEM = ModItems.ITEMS.registerSimpleBlockItem("wyvwood_slab", SLAB);
@@ -67,6 +73,7 @@ public final class WyvwoodBlocks {
         output.accept(DOOR_ITEM.get());
         output.accept(TRAPDOOR_ITEM.get());
         output.accept(BUTTON_ITEM.get());
+        output.accept(PRESSURE_PLATE_ITEM.get());
         output.accept(FENCE_ITEM.get());
         output.accept(FENCE_GATE_ITEM.get());
         output.accept(SLAB_ITEM.get());

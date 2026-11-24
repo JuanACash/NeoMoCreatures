@@ -1,0 +1,6 @@
+{
+  "parent": "neomocreatures:item/ancient_silver_bow",
+  "textures": {
+    "layer0": "neomocreatures:item/ancient_silver_bow_pulling_1"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SCC",
+    "CGP"
+  ],
+  "key": {
+    "S": {
+      "item": "neomocreatures:scorp_sting_dirt"
+    },
+    "C": {
+      "item": "neomocreatures:chitin"
+    },
+    "G": {
+      "item": "minecraft:diamond_shovel"
+    },
+    "P": {
+      "item": "minecraft:diamond_pickaxe"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:scorp_mattock_dirt",
+    "count": 1
+  }
+}
