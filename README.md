@@ -96,6 +96,9 @@ many people:
   gleaming glass pane), with their textures and recipes, adapted for NeoForge 1.21.1.
 - **[VExt Mod](https://github.com/Lord-of-the-Rings-Middle-Earth-Mod/VExt-Mod)** — reference for
   the Wyvern Lair trees.
+- **[Another Apple Tree Mod](https://github.com/sdarthur/AnotherAppleTreeMod)** — by **SDArthur**,
+  released under the MIT License. Source of the apple tree textures (the leaves in each growth stage
+  and the sapling) and of the settings of the apple tree, adapted for NeoForge 1.21.1.
 
 All original creatures, models, textures and sounds belong to their respective authors.
 
