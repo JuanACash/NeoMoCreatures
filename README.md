@@ -91,9 +91,12 @@ many people:
   Mo' Creatures Extended team (**ACGaming**, **IcarussOne**, **xJon**).
 - **[Mo' Creatures Extended](https://github.com/Elite-Modding-Team/MoCreaturesExtended)** — the
   1.12.2 continuation by **ACGaming**, **IcarussOne**, **Tomanex**, **DemonLexe** and **xJon**.
-  Reference for the content added after the original: the wyvwood and wyvern stone decorative
-  blocks (doors, trapdoors, fences, slabs, stairs, walls, buttons, pressure plates and the
-  gleaming glass pane), with their textures and recipes, adapted for NeoForge 1.21.1.
+  Reference for the content added after the original, adapted for NeoForge 1.21.1:
+  - The wyvwood and wyvern stone decorative blocks (doors, trapdoors, fences, slabs, stairs, walls,
+    buttons, pressure plates and the gleaming glass pane), with their textures and recipes.
+  - The mattocks (silver, shark and the five scorpion ones), the Ancient Silver Bow and the Reptile
+    Whip, with their textures, stats and recipes.
+  - Silver (ingot, nugget and block) and its config option.
 - **[VExt Mod](https://github.com/Lord-of-the-Rings-Middle-Earth-Mod/VExt-Mod)** — reference for
   the Wyvern Lair trees.
 - **[Another Apple Tree Mod](https://github.com/sdarthur/AnotherAppleTreeMod)** — by **SDArthur**,
