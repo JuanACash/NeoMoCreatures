@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "neomocreatures:wyvwood_leaves",
-    "neomocreatures:leaves_ogre_lair"
+    "neomocreatures:leaves_ogre_lair",
+    "neomocreatures:apple_leaves"
   ]
 }

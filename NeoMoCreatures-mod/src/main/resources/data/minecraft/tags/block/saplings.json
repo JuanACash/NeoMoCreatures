@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "neomocreatures:wyvwood_sapling"
+    "neomocreatures:wyvwood_sapling",
+    "neomocreatures:apple_tree_sapling"
   ]
 }

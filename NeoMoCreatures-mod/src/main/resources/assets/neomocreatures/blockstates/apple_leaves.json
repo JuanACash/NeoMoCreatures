@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "age=0": {
+      "model": "neomocreatures:block/apple_leaves"
+    },
+    "age=1": {
+      "model": "neomocreatures:block/apple_flower_leaves"
+    },
+    "age=2": {
+      "model": "neomocreatures:block/unripe_apple_leaves"
+    },
+    "age=3": {
+      "model": "neomocreatures:block/ripe_apple_leaves"
+    }
+  }
+}

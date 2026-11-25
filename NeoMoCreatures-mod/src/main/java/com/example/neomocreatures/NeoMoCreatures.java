@@ -2,6 +2,7 @@ package com.example.neomocreatures;
 
 import org.slf4j.Logger;
 
+import com.example.neomocreatures.init.AppleTreeBlocks;
 import com.example.neomocreatures.init.GleamingGlassBlocks;
 import com.example.neomocreatures.init.ModArmorMaterials;
 import com.example.neomocreatures.init.ModBiomeModifiers;
@@ -46,6 +47,7 @@ public class NeoMoCreatures {
 
     private void registerDeferredRegistries(IEventBus modEventBus) {
         WyvwoodBlocks.init();
+        AppleTreeBlocks.init();
         WyvstoneBlocks.init();
         SilverSandstoneBlocks.init();
         GleamingGlassBlocks.init();

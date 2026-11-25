@@ -44,6 +44,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.WYVWOOD_PLANKS_ITEM.get());
         WyvwoodBlocks.addToCreativeTab(output);
         output.accept(ModItems.WYVWOOD_SAPLING_ITEM.get());
+        AppleTreeBlocks.addToCreativeTab(output);
         output.accept(ModItems.WYVERN_DIAMOND_ORE_ITEM.get());
         output.accept(ModItems.WYVERN_EMERALD_ORE_ITEM.get());
         output.accept(ModItems.WYVERN_LAPIS_ORE_ITEM.get());
