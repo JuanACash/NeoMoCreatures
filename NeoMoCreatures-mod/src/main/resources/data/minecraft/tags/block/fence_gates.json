@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "neomocreatures:wyvwood_fence_gate"
+    "neomocreatures:wyvwood_fence_gate",
+    "neomocreatures:fence_gate_ogre_lair"
   ]
 }

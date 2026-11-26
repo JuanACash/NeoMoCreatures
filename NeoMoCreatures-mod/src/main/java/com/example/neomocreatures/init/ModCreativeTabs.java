@@ -57,6 +57,8 @@ public final class ModCreativeTabs {
         output.accept(ModItems.LOG_OGRE_LAIR_ITEM.get());
         output.accept(ModItems.LEAVES_OGRE_LAIR_ITEM.get());
         output.accept(ModItems.WOOD_PLANKS_OGRE_LAIR_ITEM.get());
+        OgreLairWoodBlocks.addToCreativeTab(output);
+        OgreLairTreeBlocks.addToCreativeTab(output);
         output.accept(ModItems.SILVER_SAND_ITEM.get());
         output.accept(ModItems.SILVER_SANDSTONE_ITEM.get());
         output.accept(ModItems.SILVER_SANDSTONE_CARVED_ITEM.get());
@@ -142,6 +144,7 @@ public final class ModCreativeTabs {
         output.accept(ModItems.WOOL_BALL.get());
         output.accept(ModItems.PET_FOOD.get());
         output.accept(ModItems.STAFF_PORTAL.get());
+        output.accept(ModItems.STAFF_OGRE_LAIR.get());
         output.accept(ModItems.STAFF_TELEPORT.get());
         output.accept(ModItems.BUILDER_HAMMER.get());
         output.accept(ModItems.ESSENCE_OF_DARKNESS.get());

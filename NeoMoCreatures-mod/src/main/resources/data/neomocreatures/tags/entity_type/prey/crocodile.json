@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:parrot",
+    "minecraft:chicken",
+    "minecraft:cow",
+    "minecraft:pig",
+    "minecraft:sheep",
+    "neomocreatures:moc_bird",
+    "neomocreatures:moc_boar",
+    "neomocreatures:moc_crab",
+    "neomocreatures:moc_fishy",
+    "neomocreatures:moc_mouse",
+    "neomocreatures:moc_rat",
+    "neomocreatures:moc_snake",
+    "neomocreatures:moc_turtle",
+    "neomocreatures:moc_ostrich",
+    "neomocreatures:moc_small_fish",
+    "neomocreatures:moc_turkey",
+    "neomocreatures:moc_cod",
+    "neomocreatures:moc_salmon",
+    "neomocreatures:moc_bass"
+  ]
+}

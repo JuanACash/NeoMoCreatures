@@ -1,9 +1,10 @@
 package com.example.neomocreatures.entity.ogre;
 
+import javax.annotation.Nullable;
+
+import com.example.neomocreatures.init.ModDimensions;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
-
-import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -147,17 +148,28 @@ public abstract class MoCOgreEntity extends Monster {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new OgreBreakObstructionGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, ATTACK_SPEED, false));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         // Wiki: neutral toward players — only fights back once hit, never attacks on sight.
+        // Exception: inside the Ogre Lair they hunt players on sight.
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, target -> this.isInOgreLair()));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
+    }
+
+    /** Evaluated on every target scan, so an ogre that changes dimension behaves correctly right away. */
+    private boolean isInOgreLair() {
+        return this.level().dimension() == ModDimensions.OGRE_LAIR;
     }
 
     /** Original: fights back only above Peaceful, and never against whatever is riding it. */
     @Override
     public boolean hurt(DamageSource damageSource, float amount) {
+        if (damageSource.getEntity() instanceof MoCOgreEntity) {
+            return false;
+        }
         if (!super.hurt(damageSource, amount)) {
             return false;
         }
@@ -168,6 +180,12 @@ public abstract class MoCOgreEntity extends Monster {
             this.setTarget(attacker);
         }
         return true;
+    }
+
+    /** Ogres never pick another ogre as a target, so they can't be turned against each other. */
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        return !(target instanceof MoCOgreEntity) && super.canAttack(target);
     }
 
     // ---------------------------------------------------------------------
@@ -212,7 +230,8 @@ public abstract class MoCOgreEntity extends Monster {
         }
         double radius = this.getDestroyRadius();
         AABB area = this.getBoundingBox().inflate(radius, radius, radius);
-        for (LivingEntity nearby : this.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != this)) {
+        for (LivingEntity nearby : this.level().getEntitiesOfClass(LivingEntity.class, area,
+                e -> e != this && !(e instanceof MoCOgreEntity))) {
             if (this.distanceToSqr(nearby) <= radius * radius) {
                 nearby.hurt(this.damageSources().mobAttack(this), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE));
             }

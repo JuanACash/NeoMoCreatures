@@ -37,6 +37,7 @@ import com.example.neomocreatures.item.SharkSpawnEggItem;
 import com.example.neomocreatures.item.SmallFishEggItem;
 import com.example.neomocreatures.item.SmallFishSpawnEggItem;
 import com.example.neomocreatures.item.SnakeSpawnEggItem;
+import com.example.neomocreatures.item.StaffOgreLairItem;
 import com.example.neomocreatures.item.StaffPortalItem;
 import com.example.neomocreatures.item.WhipItem;
 import com.example.neomocreatures.item.WildHorseSpawnEggItem;
@@ -481,6 +482,8 @@ public class ModItems {
     public static final DeferredItem<Item> STAFF3 = ITEMS.registerSimpleItem("staff3", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> STAFF_PORTAL = ITEMS.register("staff_portal",
             () -> new StaffPortalItem(new Item.Properties().stacksTo(1).durability(4)));
+    public static final DeferredItem<Item> STAFF_OGRE_LAIR = ITEMS.register("staff_ogre_lair",
+            () -> new StaffOgreLairItem(new Item.Properties().stacksTo(1).durability(4)));
     public static final DeferredItem<Item> STAFF_TELEPORT = ITEMS.registerSimpleItem("staff_teleport", new Item.Properties().stacksTo(1));
     public static final DeferredItem<Item> SUGAR_LUMP = ITEMS.registerSimpleItem("sugar_lump", new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.6F).build()).stacksTo(32));
     public static final DeferredItem<Item> WOOL_BALL = ITEMS.registerSimpleItem("wool_ball", new Item.Properties());

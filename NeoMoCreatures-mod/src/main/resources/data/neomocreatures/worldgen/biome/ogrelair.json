@@ -1,0 +1,53 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.8,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 1707814,
+    "fog_color": 1707814,
+    "water_color": 4159204,
+    "water_fog_color": 329011,
+    "mood_sound": {
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000,
+      "block_search_extent": 8,
+      "offset": 2.0
+    },
+    "music": {
+      "sound": "minecraft:music.overworld.lush_caves",
+      "min_delay": 12000,
+      "max_delay": 24000,
+      "replace_current_music": false
+    }
+  },
+  "spawners": {
+    "monster": [],
+    "creature": [],
+    "ambient": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "neomocreatures:ogre_lair_diamond_ore",
+      "neomocreatures:ogre_lair_firestone_cluster",
+      "neomocreatures:ogre_lair_silver_sand_bunker"
+    ],
+    [],
+    [],
+    [
+      "neomocreatures:ogre_lair_trees",
+      "neomocreatures:patch_tall_grass_ogre_lair"
+    ]
+  ]
+}

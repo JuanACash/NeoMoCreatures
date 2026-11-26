@@ -67,6 +67,9 @@ public final class SpawnConfig {
         DEFAULT_WEIGHTS.put("fire_ogre_spawns", 80);
         DEFAULT_WEIGHTS.put("fire_ogre_spawns_nether", 40);
         DEFAULT_WEIGHTS.put("green_ogre_spawns", 80);
+        DEFAULT_WEIGHTS.put("cave_ogre_spawns_lair", 50);
+        DEFAULT_WEIGHTS.put("fire_ogre_spawns_lair", 50);
+        DEFAULT_WEIGHTS.put("green_ogre_spawns_lair", 50);
         DEFAULT_WEIGHTS.put("ostrich_spawns", 12);
         DEFAULT_WEIGHTS.put("raccoon_spawns", 10);
         DEFAULT_WEIGHTS.put("rat_spawns", 100);

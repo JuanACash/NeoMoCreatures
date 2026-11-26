@@ -75,7 +75,15 @@ public class ModTags {
 
     /** Large animals that wild big cats and bears never hunt (each other, elephants, pandas...). */
     public static final TagKey<EntityType<?>> NOT_HUNTED_BY_PREDATORS = entityTag("not_hunted_by_predators");
-
+    /** What each predator species may hunt. A tamed predator never hunts, whatever its tag says. */
+    public static final TagKey<EntityType<?>> BEAR_PREY = entityTag("prey/bear");
+    public static final TagKey<EntityType<?>> BIG_CAT_PREY = entityTag("prey/big_cat");
+    public static final TagKey<EntityType<?>> KOMODO_DRAGON_PREY = entityTag("prey/komodo_dragon");
+    public static final TagKey<EntityType<?>> CROCODILE_PREY = entityTag("prey/crocodile");
+    public static final TagKey<EntityType<?>> FOX_PREY = entityTag("prey/fox");
+    public static final TagKey<EntityType<?>> RACCOON_PREY = entityTag("prey/raccoon");
+    public static final TagKey<EntityType<?>> SNAKE_PREY = entityTag("prey/snake");
+    
     private static TagKey<Biome> biomeTag(String name) {
         return TagKey.create(Registries.BIOME,
                 ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, name));

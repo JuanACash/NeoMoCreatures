@@ -5,12 +5,20 @@
     "neomocreatures:log_ogre_lair",
     "neomocreatures:wood_planks_ogre_lair",
     "neomocreatures:wyvwood_door",
+    "neomocreatures:door_ogre_lair",
     "neomocreatures:wyvwood_trapdoor",
+    "neomocreatures:trapdoor_ogre_lair",
     "neomocreatures:wyvwood_button",
+    "neomocreatures:button_ogre_lair",
     "neomocreatures:wyvwood_fence",
+    "neomocreatures:fence_ogre_lair",
     "neomocreatures:wyvwood_fence_gate",
+    "neomocreatures:fence_gate_ogre_lair",
     "neomocreatures:wyvwood_slab",
+    "neomocreatures:slab_ogre_lair",
     "neomocreatures:wyvwood_stairs",
-    "neomocreatures:wyvwood_pressure_plate"
+    "neomocreatures:stairs_ogre_lair",
+    "neomocreatures:wyvwood_pressure_plate",
+    "neomocreatures:pressure_plate_ogre_lair"
   ]
 }

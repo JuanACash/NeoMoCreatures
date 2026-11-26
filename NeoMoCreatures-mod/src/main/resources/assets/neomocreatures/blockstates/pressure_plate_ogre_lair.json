@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "neomocreatures:block/pressure_plate_ogre_lair"
+    },
+    "powered=true": {
+      "model": "neomocreatures:block/pressure_plate_down_ogre_lair"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "neomocreatures:staff_portal",
+      "components": { "minecraft:damage": 0 }
+    },
+    { "item": "neomocreatures:firestone_chunk" }
+  ],
+  "result": {
+    "id": "neomocreatures:staff_ogre_lair",
+    "count": 1
+  }
+}

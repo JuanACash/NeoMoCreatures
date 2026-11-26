@@ -24,4 +24,8 @@ public final class ModDimensions {
     public static final ResourceKey<Level> WYVERN_LAIR = ResourceKey.create(
             Registries.DIMENSION,
             ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "wyvernlairworld"));
+    public static final ResourceKey<Level> OGRE_LAIR = ResourceKey.create(
+            Registries.DIMENSION,
+            ResourceLocation.fromNamespaceAndPath(NeoMoCreatures.MODID, "ogrelairworld"));
+
 }

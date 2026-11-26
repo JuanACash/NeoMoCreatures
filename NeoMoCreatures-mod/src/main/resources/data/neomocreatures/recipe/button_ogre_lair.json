@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "tag": "minecraft:wooden_buttons"
+    },
+    {
+      "item": "neomocreatures:wood_planks_ogre_lair"
+    }
+  ],
+  "result": {
+    "id": "neomocreatures:button_ogre_lair",
+    "count": 1
+  }
+}

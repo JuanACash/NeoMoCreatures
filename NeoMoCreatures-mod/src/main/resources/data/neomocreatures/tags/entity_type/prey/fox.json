@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:chicken",
+    "minecraft:parrot",
+    "minecraft:rabbit",
+    "neomocreatures:moc_bird",
+    "neomocreatures:moc_bunny",
+    "neomocreatures:moc_duck",
+    "neomocreatures:moc_snake",
+    "neomocreatures:moc_kitty"
+  ]
+}

@@ -78,15 +78,24 @@ public class StaffPortalItem extends Item {
             return InteractionResultHolder.success(stack);
         }
 
+        if (!isUsableIn(serverLevel.dimension())) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         serverPlayer.resetFallDistance();
 
-        if (serverLevel.dimension() == ModDimensions.WYVERN_LAIR) {
+        if (serverLevel.dimension() == getDestinationDimension()) {
             teleportBackHome(serverPlayer, stack);
         } else {
-            teleportToWyvernLair(serverPlayer, stack, serverLevel);
+            teleportToDestination(serverPlayer, stack, serverLevel);
         }
 
         return InteractionResultHolder.success(stack);
+    }
+
+    /** Staffs only work in the Overworld and in their own lair, so a player can never get stranded between lairs. */
+    private boolean isUsableIn(ResourceKey<Level> dimension) {
+        return dimension == Level.OVERWORLD || dimension == getDestinationDimension();
     }
 
     /**
@@ -110,22 +119,36 @@ public class StaffPortalItem extends Item {
         player.setItemInHand(hand, ItemStack.EMPTY);
     }
 
-    private void teleportToWyvernLair(ServerPlayer player, ItemStack stack, ServerLevel currentLevel) {
+    private void teleportToDestination(ServerPlayer player, ItemStack stack, ServerLevel currentLevel) {
         MinecraftServer server = player.server;
-        ServerLevel destination = server.getLevel(ModDimensions.WYVERN_LAIR);
+        ServerLevel destination = server.getLevel(getDestinationDimension());
         if (destination == null) {
             return;
         }
 
         storeReturnPoint(stack, currentLevel.dimension(), player.blockPosition());
-        BlockPos arrivalPos = resolveArrivalPos(destination);
-        WyvernPortalPlatform.generateIfMissing(destination, arrivalPos);
+        BlockPos arrivalPos = prepareArrival(destination);
 
-        Vec3 targetPos = Vec3.atBottomCenterOf(arrivalPos.above());
+        Vec3 targetPos = Vec3.atBottomCenterOf(arrivalPos);
         player.changeDimension(new DimensionTransition(destination, targetPos, Vec3.ZERO,
                 player.getYRot(), player.getXRot(), DimensionTransition.PLACE_PORTAL_TICKET));
 
         stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+    }
+
+    /** Dimension this staff travels to; subclasses override it to target another one. */
+    protected ResourceKey<Level> getDestinationDimension() {
+        return ModDimensions.WYVERN_LAIR;
+    }
+
+    /**
+     * Prepares the arrival point in the destination and returns the block the player's feet go on.
+     * Default behaviour: the Wyvern Lair quartz platform.
+     */
+    protected BlockPos prepareArrival(ServerLevel destination) {
+        BlockPos arrivalPos = resolveArrivalPos(destination);
+        WyvernPortalPlatform.generateIfMissing(destination, arrivalPos);
+        return arrivalPos.above();
     }
 
     private static BlockPos cachedArrivalPos = null;

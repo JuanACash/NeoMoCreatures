@@ -12,6 +12,7 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.SaddledMount;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -320,6 +321,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, this::canAttackPlayer));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntPrey));
     }
 
     private boolean canAttackPlayer(@Nullable LivingEntity target) {
@@ -327,6 +329,11 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         // at every age — deliberately no "!this.isBaby()" exclusion. Only being
         // tamed turns it off.
         return !this.isTame();
+    }
+
+    /** Like its attack on players, hunting applies at every age; only taming turns it off. */
+    private boolean canHuntPrey(@Nullable LivingEntity target) {
+        return !this.isTame() && HuntingRules.isPrey(ModTags.KOMODO_DRAGON_PREY, target);
     }
 
     @Override

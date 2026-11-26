@@ -78,6 +78,7 @@ import net.minecraft.world.entity.SpawnPlacements.SpawnPredicate;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -255,7 +256,12 @@ public final class ModSpawnPlacements {
     private static <T extends Mob> SpawnPredicate<T> deepUnderground() {
         return (type, level, reason, pos, random) ->
                 level.getBlockState(pos.below()).canOcclude()
-                        && pos.getY() <= 40 && !level.canSeeSky(pos);
+                        && (isOgreLair(level) || (pos.getY() <= 40 && !level.canSeeSky(pos)));
+    }
+
+    /** True when the level is the Ogre Lair, where ogres spawn without light or depth restrictions. */
+    private static boolean isOgreLair(ServerLevelAccessor level) {
+        return level.getLevel().dimension() == ModDimensions.OGRE_LAIR;
     }
 
     private static <T extends Mob> SpawnPredicate<T> inWater() {
@@ -446,7 +452,7 @@ public final class ModSpawnPlacements {
             if (!level.getBlockState(pos.below()).canOcclude()) {
                 return false;
             }
-            if (level.getLevel().dimension() == Level.NETHER) {
+            if (level.getLevel().dimension() == Level.NETHER || isOgreLair(level)) {
                 return true; // Wiki: "can be found at any light level" in the Nether
             }
             // Wiki: only a 25% chance to spawn in the Overworld at all.

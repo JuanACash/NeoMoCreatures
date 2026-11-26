@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "*X*",
+    "*X*"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:wood_planks_ogre_lair"
+    },
+    "*": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:fence_gate_ogre_lair",
+    "count": 1
+  }
+}

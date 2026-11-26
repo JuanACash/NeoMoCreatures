@@ -223,6 +223,7 @@ public class ModBlocks {
         fire.setFlammable(TALL_WYVGRASS.get(), 60, 100);
         fire.setFlammable(TALL_GRASS_OGRE_LAIR.get(), 60, 100);
         WyvwoodBlocks.registerFlammability(fire);
+        OgreLairWoodBlocks.registerFlammability(fire);
         AppleTreeBlocks.registerFlammability(fire);
     }
 

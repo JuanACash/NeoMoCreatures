@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "##"
+  ],
+  "key": {
+    "#": {
+      "item": "neomocreatures:wood_planks_ogre_lair"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:pressure_plate_ogre_lair",
+    "count": 1
+  }
+}

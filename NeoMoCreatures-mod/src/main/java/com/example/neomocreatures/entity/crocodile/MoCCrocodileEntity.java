@@ -5,8 +5,10 @@ import java.util.EnumSet;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCLootUtil;
 
 import net.minecraft.core.BlockPos;
@@ -21,6 +23,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
@@ -187,6 +190,12 @@ public class MoCCrocodileEntity extends TamableAnimal {
         // of the time, which reads as neutral rather than hostile. Attacks on sight instead, matching
         // the wiki and normal hostile-mob expectations.
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntPrey));
+    }
+
+    /** Wild crocodiles hunt the animals in their prey tag; a tamed one never does. */
+    private boolean canHuntPrey(@Nullable LivingEntity target) {
+        return !this.isTame() && HuntingRules.isPrey(ModTags.CROCODILE_PREY, target);
     }
 
     public boolean isResting() {

@@ -69,7 +69,6 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -327,14 +326,8 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        if (this.isTame()) {
-            return false; // A tamed bear never hunts other animals on its own.
-        }
-        if (!HuntingRules.canHunt(target)) {
-            return false;
-        }
-        return !(target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))
-                && !(target instanceof Bee);
+        // A tamed bear never hunts other animals on its own
+        return !this.isTame() && HuntingRules.isPrey(ModTags.BEAR_PREY, target);
     }
 
     @Override
@@ -360,7 +353,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new ProtectCubGoal(this));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, true, this::shouldTargetPlayers));
-        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Animal.class, true, this::canHuntAnimal));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntAnimal));
     }
 
     @Override

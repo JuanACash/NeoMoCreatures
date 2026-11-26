@@ -10,9 +10,11 @@ import com.example.neomocreatures.entity.CarriedPet;
 import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
+import com.example.neomocreatures.entity.ai.HuntingRules;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
@@ -299,6 +301,11 @@ public class MoCSnakeEntity extends TamableAnimal
         // is equivalent and avoids a target-then-do-nothing dead end.
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, TARGET_CHECK_INTERVAL, false, false,
                 target -> this.isPissed() && this.getVariant().isBold() && !this.isTame() && !this.isBaby()));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntPrey));
+    }
+
+    private boolean canHuntPrey(@Nullable LivingEntity target) {
+        return !this.isTame() && !this.isBaby() && HuntingRules.isPrey(ModTags.SNAKE_PREY, target);
     }
 
     public static AttributeSupplier.Builder createAttributes() {

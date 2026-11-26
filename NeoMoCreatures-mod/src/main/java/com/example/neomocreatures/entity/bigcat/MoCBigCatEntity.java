@@ -106,8 +106,6 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, Play
     private static final double SPRINT_SPEED_BONUS = 0.15D;
     /** How long it stays "fed" and ignores prey after a kill — 5 minutes. */
     private static final int HUNGER_COOLDOWN_TICKS = 6000;
-    /** Matches the original's canAttackTarget(): won't bother with anything bigger than roughly a player/deer. */
-    private static final float MAX_PREY_SIZE = 2.0F;
     /** Independent of BABY_SCALE (which only affects the visual model) — this is purely the collision box size. */
     private static final float BABY_HITBOX_SCALE = 0.75F;
     private static final double EAT_NEARBY_ITEM_RANGE = 12.0D;
@@ -202,7 +200,7 @@ protected void registerGoals() {
         // wiki: "from mobs as small as ants to as large as deer, including the
         // player") until they've made a kill, then go neutral until hungry again.
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, this::canHunt));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Animal.class, true, this::canHuntAnimal));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntAnimal));
     }
 
     private boolean canHunt(@Nullable LivingEntity target) {
@@ -210,11 +208,7 @@ protected void registerGoals() {
     }
 
     private boolean canHuntAnimal(@Nullable LivingEntity target) {
-        if (!canHunt(target) || !HuntingRules.canHunt(target)
-                || (target != null && target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS))) {
-            return false;
-        }
-        return target != null && target.getBbHeight() < MAX_PREY_SIZE && target.getBbWidth() < MAX_PREY_SIZE;
+        return canHunt(target) && HuntingRules.isPrey(ModTags.BIG_CAT_PREY, target);
     }
 
     @Override

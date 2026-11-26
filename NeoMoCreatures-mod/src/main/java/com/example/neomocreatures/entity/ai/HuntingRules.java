@@ -3,7 +3,10 @@ package com.example.neomocreatures.entity.ai;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.init.ModTags;
 
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
@@ -28,4 +31,13 @@ public final class HuntingRules {
         }
         return !(target instanceof Wolf) || Config.CREATURES.attackWolves.get();
     }
+
+    /** Whether a predator may attack this entity, given the prey tag of its species. */
+    public static boolean isPrey(TagKey<EntityType<?>> preyTag, @Nullable LivingEntity target) {
+        return target != null
+                && canHunt(target)
+                && target.getType().is(preyTag)
+                && !target.getType().is(ModTags.NOT_HUNTED_BY_PREDATORS);
+    }
+
 }

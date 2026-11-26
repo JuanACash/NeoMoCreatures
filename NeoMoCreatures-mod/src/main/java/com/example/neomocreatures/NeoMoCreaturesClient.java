@@ -11,6 +11,7 @@ import com.example.neomocreatures.client.legacy.MoCLegacySharkModel;
 import com.example.neomocreatures.client.legacy.MoCLegacySharkRenderer;
 import com.example.neomocreatures.init.ModBlocks;
 import com.example.neomocreatures.init.ModEntities;
+import com.example.neomocreatures.init.OgreLairWoodBlocks;
 import com.example.neomocreatures.init.WyvwoodBlocks;
 
 import net.minecraft.client.model.HumanoidModel;
@@ -215,6 +216,8 @@ public class NeoMoCreaturesClient {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WYVWOOD_LEAVES.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(WyvwoodBlocks.DOOR.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(WyvwoodBlocks.TRAPDOOR.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(OgreLairWoodBlocks.DOOR.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(OgreLairWoodBlocks.TRAPDOOR.get(), RenderType.cutout());
             ModItemProperties.register();
         });
     }

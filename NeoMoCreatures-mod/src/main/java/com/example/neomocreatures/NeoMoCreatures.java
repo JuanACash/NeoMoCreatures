@@ -17,6 +17,8 @@ import com.example.neomocreatures.init.ModParticles;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModSpawnPlacements;
 import com.example.neomocreatures.init.ModTrunkPlacerTypes;
+import com.example.neomocreatures.init.OgreLairTreeBlocks;
+import com.example.neomocreatures.init.OgreLairWoodBlocks;
 import com.example.neomocreatures.init.SilverSandstoneBlocks;
 import com.example.neomocreatures.init.WyvstoneBlocks;
 import com.example.neomocreatures.init.WyvwoodBlocks;
@@ -48,6 +50,8 @@ public class NeoMoCreatures {
     private void registerDeferredRegistries(IEventBus modEventBus) {
         WyvwoodBlocks.init();
         AppleTreeBlocks.init();
+        OgreLairTreeBlocks.init();
+        OgreLairWoodBlocks.init();
         WyvstoneBlocks.init();
         SilverSandstoneBlocks.init();
         GleamingGlassBlocks.init();

@@ -18,6 +18,8 @@ public final class CreatureConfig {
     public final ModConfigSpec.IntValue kittyVillageSpawnChance;
     public final ModConfigSpec.BooleanValue staticBed;
     public final ModConfigSpec.BooleanValue staticLitter;
+    public final ModConfigSpec.IntValue deerCalmSeconds;
+    public final ModConfigSpec.BooleanValue deerRideable;
 
     public CreatureConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("creatures")).push("creatures");
@@ -85,6 +87,16 @@ public final class CreatureConfig {
                 .comment("Makes the kitty litter box impossible to push.")
                 .translation(ConfigTranslations.of("staticLitter"))
                 .define("staticLitter", false);
+
+        deerCalmSeconds = builder
+                .comment("How many seconds a deer stays calm after being given a haystack. While calm it does not run from players and can be ridden.")
+                .translation(ConfigTranslations.of("deerCalmSeconds"))
+                .defineInRange("deerCalmSeconds", 180, 120, 3600);
+
+        deerRideable = builder
+                .comment("Allows players to ride a calm adult deer.")
+                .translation(ConfigTranslations.of("deerRideable"))
+                .define("deerRideable", true);
 
         builder.pop();
     }

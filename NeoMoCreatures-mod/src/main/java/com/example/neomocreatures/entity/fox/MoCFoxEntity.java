@@ -55,8 +55,6 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -135,18 +133,12 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         // Wiki: "give chase and hunt down insects, kitties, birds or any other
         // mob smaller than them" — the original had this exact goal commented
         // out; the wiki describes it as real behaviour, so it's enabled here.
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Animal.class, true, this::canHuntTarget));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntTarget));
     }
 
     private boolean canHuntTarget(@Nullable LivingEntity target) {
-        // Excludes both this mod's own foxes AND vanilla's net.minecraft...Fox —
-        // "hunt anything smaller than them" was never meant to include other foxes.
         // Wiki: "Tamed foxes stop attacking other mobs too."
-        if (this.isBaby() || this.isTame() || !HuntingRules.canHunt(target) || target instanceof MoCFoxEntity
-                || target instanceof Fox) {
-            return false;
-        }
-        return target.getBbWidth() <= 0.7F && target.getBbHeight() <= 0.7F;
+        return !this.isBaby() && !this.isTame() && HuntingRules.isPrey(ModTags.FOX_PREY, target);
     }
 
     @Override

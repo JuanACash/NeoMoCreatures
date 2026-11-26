@@ -1,0 +1,11 @@
+{
+  "type": "neomocreatures:ogrelairworld",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "neomocreatures:ogrelairworld",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "neomocreatures:ogrelair"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "variants": {
+    "facing=east,half=lower,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_bottom_left_ogre_lair"
+    },
+    "facing=east,half=lower,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_bottom_left_open_ogre_lair",
+      "y": 90
+    },
+    "facing=east,half=lower,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_bottom_right_ogre_lair"
+    },
+    "facing=east,half=lower,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_bottom_right_open_ogre_lair",
+      "y": 270
+    },
+    "facing=east,half=upper,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_top_left_ogre_lair"
+    },
+    "facing=east,half=upper,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_top_left_open_ogre_lair",
+      "y": 90
+    },
+    "facing=east,half=upper,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_top_right_ogre_lair"
+    },
+    "facing=east,half=upper,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_top_right_open_ogre_lair",
+      "y": 270
+    },
+    "facing=south,half=lower,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_bottom_left_ogre_lair",
+      "y": 90
+    },
+    "facing=south,half=lower,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_bottom_left_open_ogre_lair",
+      "y": 180
+    },
+    "facing=south,half=lower,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_bottom_right_ogre_lair",
+      "y": 90
+    },
+    "facing=south,half=lower,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_bottom_right_open_ogre_lair"
+    },
+    "facing=south,half=upper,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_top_left_ogre_lair",
+      "y": 90
+    },
+    "facing=south,half=upper,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_top_left_open_ogre_lair",
+      "y": 180
+    },
+    "facing=south,half=upper,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_top_right_ogre_lair",
+      "y": 90
+    },
+    "facing=south,half=upper,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_top_right_open_ogre_lair"
+    },
+    "facing=west,half=lower,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_bottom_left_ogre_lair",
+      "y": 180
+    },
+    "facing=west,half=lower,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_bottom_left_open_ogre_lair",
+      "y": 270
+    },
+    "facing=west,half=lower,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_bottom_right_ogre_lair",
+      "y": 180
+    },
+    "facing=west,half=lower,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_bottom_right_open_ogre_lair",
+      "y": 90
+    },
+    "facing=west,half=upper,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_top_left_ogre_lair",
+      "y": 180
+    },
+    "facing=west,half=upper,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_top_left_open_ogre_lair",
+      "y": 270
+    },
+    "facing=west,half=upper,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_top_right_ogre_lair",
+      "y": 180
+    },
+    "facing=west,half=upper,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_top_right_open_ogre_lair",
+      "y": 90
+    },
+    "facing=north,half=lower,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_bottom_left_ogre_lair",
+      "y": 270
+    },
+    "facing=north,half=lower,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_bottom_left_open_ogre_lair"
+    },
+    "facing=north,half=lower,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_bottom_right_ogre_lair",
+      "y": 270
+    },
+    "facing=north,half=lower,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_bottom_right_open_ogre_lair",
+      "y": 180
+    },
+    "facing=north,half=upper,hinge=left,open=false": {
+      "model": "neomocreatures:block/door_top_left_ogre_lair",
+      "y": 270
+    },
+    "facing=north,half=upper,hinge=left,open=true": {
+      "model": "neomocreatures:block/door_top_left_open_ogre_lair"
+    },
+    "facing=north,half=upper,hinge=right,open=false": {
+      "model": "neomocreatures:block/door_top_right_ogre_lair",
+      "y": 270
+    },
+    "facing=north,half=upper,hinge=right,open=true": {
+      "model": "neomocreatures:block/door_top_right_open_ogre_lair",
+      "y": 180
+    }
+  }
+}

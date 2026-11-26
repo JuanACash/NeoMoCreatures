@@ -1,0 +1,8 @@
+{
+  "feature": "neomocreatures:ogre_lair_silver_sand_bunker",
+  "placement": [
+    { "type": "minecraft:count_on_every_layer", "count": 1 },
+    { "type": "minecraft:rarity_filter", "chance": 4 },
+    { "type": "minecraft:biome" }
+  ]
+}

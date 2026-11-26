@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_right_open",
+  "textures": {
+    "bottom": "neomocreatures:block/door_ogre_lair_lower",
+    "top": "neomocreatures:block/door_ogre_lair_upper"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "neomocreatures:wood_planks_ogre_lair"
+    }
+  },
+  "result": {
+    "id": "neomocreatures:slab_ogre_lair",
+    "count": 6
+  }
+}

@@ -2,12 +2,15 @@ package com.example.neomocreatures.entity.deer;
 
 import javax.annotation.Nullable;
 
+import com.example.neomocreatures.Config;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCLootUtil;
+import com.example.neomocreatures.util.MountInteractionUtil;
 
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -21,6 +24,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -35,7 +39,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
-import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
@@ -44,6 +47,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 /**
  * Port of {@code drzhark.mocreatures.entity.passive.MoCEntityDeer}. Passive: never fights back, only
  * flees anything bigger than 0.8 blocks that isn't another deer, and panics when hurt. Built on
@@ -73,10 +77,22 @@ public class MoCDeerEntity extends TamableAnimal {
     private static final int START_AGE = 75;
     private static final int MAX_AGE = 130;
     private static final double BREED_SPEED = 1.0D;
-    private static final double TEMPT_SPEED = 1.0D;
     /** Extended: feeding a fawn skips a tenth of its growth window. */
     private static final int FEED_GROWTH_STEPS = (MAX_AGE - START_AGE) / 10;
-
+    private static final int TICKS_PER_SECOND = 20;
+    /** Share of the usual fall damage that a rider takes. */
+    private static final float RIDER_FALL_DAMAGE_MULTIPLIER = 0.25F;
+    /** Height of the model's back above the ground at scale 1 (14 of 16 pixels). */
+    private static final double BODY_TOP_HEIGHT = 0.875D;
+    /** How far the rider's feet sit below the back. The rider does not scale with the deer, so it is fixed. */
+    private static final double RIDER_SINK = 0.54D;
+    /** The model's body is centred 1 pixel (1/16 block) to the left of and behind the entity's origin. */
+    private static final double BODY_CENTRE_LEFT = 0.0625D;
+    private static final double BODY_CENTRE_BACK = 0.0625D;
+    private static final double THROW_HORIZONTAL_SPEED = 0.5D;
+    private static final double THROW_VERTICAL_SPEED = 0.4D;
+    private static final int CALM_PARTICLE_COUNT = 7;
+    private static final double CALM_PARTICLE_SPREAD = 0.5D;
 
     /** Original: readyToJumpTimer — a bounding "leap" gait, roughly every 1-1.5s while moving fast. */
     private static final float LEAP_SPEED_THRESHOLD = 0.17F;
@@ -91,6 +107,7 @@ public class MoCDeerEntity extends TamableAnimal {
             SynchedEntityData.defineId(MoCDeerEntity.class, EntityDataSerializers.BOOLEAN);
 
     private int jumpTimer;
+    private final DeerCalm calm = new DeerCalm();
 
     /** Deviates from the original (which ties the tilt sign to the current vertical velocity, so
      *  it flips mid-arc, rising one way and falling the other): tilts the same direction for the
@@ -129,11 +146,13 @@ public class MoCDeerEntity extends TamableAnimal {
         super.addAdditionalSaveData(tag);
         tag.putInt(TAG_VARIANT, this.getVariant().getId());
         tag.putInt(TAG_MOC_AGE, this.getMocAge());
+        this.calm.save(tag);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.calm.load(tag);
         if (tag.contains(TAG_VARIANT, Tag.TAG_INT)) {
             this.entityData.set(DATA_VARIANT, tag.getInt(TAG_VARIANT));
         }
@@ -147,10 +166,10 @@ public class MoCDeerEntity extends TamableAnimal {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new AvoidEntityGoal<>(this, LivingEntity.class, FLEE_DISTANCE,
                 AI_SPEED, FLEE_NEAR_SPEED, e -> !(e instanceof MoCDeerEntity)
+                        && !this.calm.trusts(e)
                         && (e.getBbHeight() > FLEE_SIZE_THRESHOLD || e.getBbWidth() > FLEE_SIZE_THRESHOLD)));
         this.goalSelector.addGoal(2, new PanicGoal(this, PANIC_SPEED));
         this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
-        this.goalSelector.addGoal(4, new TemptGoal(this, TEMPT_SPEED, stack -> stack.is(Items.WHEAT), false));
         this.goalSelector.addGoal(5, new FollowParentGoal(this, AI_SPEED));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, AI_SPEED));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0F));
@@ -206,7 +225,10 @@ public class MoCDeerEntity extends TamableAnimal {
             if (this.isFawn() && this.random.nextInt(GROWTH_CHANCE) == 0) {
                 this.growFawn(1);
             }
-            this.tickLeap();
+            this.tickCalm();
+            if (!this.isVehicle()) {
+                this.tickLeap();
+            }
         }
     }
 
@@ -219,6 +241,10 @@ public class MoCDeerEntity extends TamableAnimal {
     /** Original: getDamageAfterMagicAbsorb-equivalent override — never takes fall damage. */
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
+        // The deer itself never takes fall damage; whoever rides it takes a reduced share
+        for (Entity passenger : this.getPassengers()) {
+            passenger.causeFallDamage(distance, damageMultiplier * RIDER_FALL_DAMAGE_MULTIPLIER, source);
+        }
         return false;
     }
 
@@ -292,6 +318,13 @@ public class MoCDeerEntity extends TamableAnimal {
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (!this.isFawn() && !this.calm.isActive()
+                && stack.is(ModItems.HAYSTACK.get()) && player.isShiftKeyDown()) {
+            return this.tryCalm(player, stack);
+        }
+        if (this.canBeRiddenBy(player) && !this.isFood(stack)) {
+            return this.tryRide(player);
+        }
         if (this.isFawn() && this.isFood(stack)) {
             if (!this.level().isClientSide) {
                 this.usePlayerItem(player, hand, stack);
@@ -340,6 +373,111 @@ public class MoCDeerEntity extends TamableAnimal {
     @Override
     protected int getBaseExperienceReward() {
         return MoCExperienceUtil.rollStandardXp(this.random);
+    }
+
+    // ---------------------------------------------------------------------
+    // Calm and riding
+    // ---------------------------------------------------------------------
+
+    private InteractionResult tryCalm(Player player, ItemStack hay) {
+        if (!this.level().isClientSide) {
+            this.calmDown();
+            if (!player.getAbilities().instabuild) {
+                hay.shrink(1);
+            }
+        }
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
+    }
+
+    private InteractionResult tryRide(Player player) {
+        if (!this.level().isClientSide) {
+            player.startRiding(this);
+        }
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
+    }
+
+    private boolean canBeRiddenBy(Player player) {
+        return Config.CREATURES.deerRideable.get()
+                && this.calm.isActive()
+                && !this.isFawn()
+                && !this.isVehicle()
+                && !player.isSecondaryUseActive();
+    }
+
+    /** Hay calms an adult deer: it stops fleeing players and can be ridden until the calm runs out. */
+    private void calmDown() {
+        this.calm.start(Config.CREATURES.deerCalmSeconds.get() * TICKS_PER_SECOND);
+        this.setLastHurtByMob(null);
+        this.getNavigation().stop();
+        this.playSound(ModSounds.HORSE_EATING.get(), 1.0F, 1.0F);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getEyeY(), this.getZ(),
+                    CALM_PARTICLE_COUNT, CALM_PARTICLE_SPREAD, CALM_PARTICLE_SPREAD, CALM_PARTICLE_SPREAD, 0.0D);
+        }
+    }
+
+    private void tickCalm() {
+        if (this.calm.tick()) {
+            this.throwOffRiders();
+        }
+    }
+
+    /** When the calm ends the deer bucks off its rider, then runs from them like from any other player. */
+    private void throwOffRiders() {
+        Vec3 back = Vec3.directionFromRotation(0.0F, this.getYRot() + 180.0F);
+        for (Entity rider : this.getPassengers()) {
+            rider.stopRiding();
+            rider.setDeltaMovement(back.x * THROW_HORIZONTAL_SPEED, THROW_VERTICAL_SPEED, back.z * THROW_HORIZONTAL_SPEED);
+            rider.hurtMarked = true;
+        }
+    }
+
+    /** Getting hurt breaks the calm, which also drops any rider. */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean hurt = super.hurt(source, amount);
+        if (hurt && !this.level().isClientSide && this.calm.isActive()) {
+            this.calm.clear();
+            this.throwOffRiders();
+        }
+        return hurt;
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        return this.getFirstPassenger() instanceof Player player ? player : null;
+    }
+
+    @Override
+    protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        if (!this.hasPassenger(passenger)) {
+            return;
+        }
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
+        double scale = this.getAgeScale();
+        double left = BODY_CENTRE_LEFT * scale;
+        double back = BODY_CENTRE_BACK * scale;
+        double x = this.getX() + Math.cos(yaw) * left + Math.sin(yaw) * back;
+        double z = this.getZ() + Math.sin(yaw) * left - Math.cos(yaw) * back;
+        double seatY = this.getY() + BODY_TOP_HEIGHT * scale - RIDER_SINK;
+        moveFunction.accept(passenger, x, seatY, z);
+    }
+
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
+        return new Vec3(player.xxa, 0.0D, player.zza);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        MountInteractionUtil.alignWithRider(this, player, MountInteractionUtil.PITCH_LEVEL);
     }
 
 }

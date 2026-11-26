@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "neomocreatures:block/slab_ogre_lair"
+    },
+    "type=double": {
+      "model": "neomocreatures:block/wood_planks_ogre_lair"
+    },
+    "type=top": {
+      "model": "neomocreatures:block/slab_top_ogre_lair"
+    }
+  }
+}
