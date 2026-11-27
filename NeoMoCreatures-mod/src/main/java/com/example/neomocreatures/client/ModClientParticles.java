@@ -38,6 +38,14 @@ public class ModClientParticles {
                 sprites -> new StarParticle.Provider(sprites, 1.0F, 0.25F, 0.25F));
         event.registerSpriteSet(ModParticles.STAR_FX_BLACK.get(),
                 sprites -> new StarParticle.Provider(sprites, 0.35F, 0.35F, 0.35F));
+        event.registerSpriteSet(ModParticles.STAR_FX_MAGENTA.get(),
+                sprites -> new StarParticle.Provider(sprites, 0.85F, 0.1F, 0.65F));
+        event.registerSpriteSet(ModParticles.STAR_FX_GRAY.get(),
+                sprites -> new StarParticle.Provider(sprites, 0.55F, 0.58F, 0.65F));
+        event.registerSpriteSet(ModParticles.STAR_FX_LIGHTGRAY.get(),
+                sprites -> new StarParticle.Provider(sprites, 0.85F, 0.88F, 0.95F));
+        event.registerSpriteSet(ModParticles.STAR_FX_BROWN.get(),
+                sprites -> new StarParticle.Provider(sprites, 0.55F, 0.35F, 0.15F));
         event.registerSpriteSet(ModParticles.VANISH_FX.get(), StarParticle.Provider::new);
     }
 }

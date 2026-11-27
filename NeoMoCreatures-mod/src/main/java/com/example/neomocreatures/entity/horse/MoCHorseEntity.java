@@ -248,7 +248,11 @@ public class MoCHorseEntity extends AbstractHorse implements StorablePet, Ascend
             Map.entry(DyeColor.PURPLE, MoCHorseGenetics.FairyColor.PURPLE),
             Map.entry(DyeColor.PINK, MoCHorseGenetics.FairyColor.PINK),
             Map.entry(DyeColor.RED, MoCHorseGenetics.FairyColor.RED),
-            Map.entry(DyeColor.BLACK, MoCHorseGenetics.FairyColor.BLACK)
+            Map.entry(DyeColor.BLACK, MoCHorseGenetics.FairyColor.BLACK),
+            Map.entry(DyeColor.MAGENTA, MoCHorseGenetics.FairyColor.MAGENTA),
+            Map.entry(DyeColor.GRAY, MoCHorseGenetics.FairyColor.GRAY),
+            Map.entry(DyeColor.LIGHT_GRAY, MoCHorseGenetics.FairyColor.LIGHTGRAY),
+            Map.entry(DyeColor.BROWN, MoCHorseGenetics.FairyColor.BROWN)
     );
 
     @Override

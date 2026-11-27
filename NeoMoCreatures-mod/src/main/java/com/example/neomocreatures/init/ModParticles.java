@@ -48,6 +48,14 @@ public class ModParticles {
             PARTICLE_TYPES.register("star_fx_red", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_BLACK =
             PARTICLE_TYPES.register("star_fx_black", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_MAGENTA =
+            PARTICLE_TYPES.register("star_fx_magenta", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_GRAY =
+            PARTICLE_TYPES.register("star_fx_gray", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_LIGHTGRAY =
+            PARTICLE_TYPES.register("star_fx_lightgray", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR_FX_BROWN =
+            PARTICLE_TYPES.register("star_fx_brown", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VANISH_FX =
             PARTICLE_TYPES.register("vanish_fx", () -> new SimpleParticleType(false));
 
@@ -66,6 +74,10 @@ public class ModParticles {
         FAIRY_STAR_BY_COLOR.put(FairyColor.PINK, STAR_FX_PINK);
         FAIRY_STAR_BY_COLOR.put(FairyColor.RED, STAR_FX_RED);
         FAIRY_STAR_BY_COLOR.put(FairyColor.BLACK, STAR_FX_BLACK);
+        FAIRY_STAR_BY_COLOR.put(FairyColor.MAGENTA, STAR_FX_MAGENTA);
+        FAIRY_STAR_BY_COLOR.put(FairyColor.GRAY, STAR_FX_GRAY);
+        FAIRY_STAR_BY_COLOR.put(FairyColor.LIGHTGRAY, STAR_FX_LIGHTGRAY);
+        FAIRY_STAR_BY_COLOR.put(FairyColor.BROWN, STAR_FX_BROWN);
     }
 
     public static SimpleParticleType starFxForFairyColor(FairyColor color) {

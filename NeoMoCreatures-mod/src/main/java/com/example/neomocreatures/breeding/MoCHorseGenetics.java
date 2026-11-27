@@ -30,7 +30,8 @@ public final class MoCHorseGenetics {
     }
 
     public enum FairyColor {
-        WHITE, ORANGE, YELLOW, LIGHTGREEN, GREEN, CYAN, BLUE, DARKBLUE, PURPLE, PINK, RED, BLACK
+        WHITE, ORANGE, YELLOW, LIGHTGREEN, GREEN, CYAN, BLUE, DARKBLUE, PURPLE, PINK, RED, BLACK,
+        MAGENTA, GRAY, LIGHTGRAY, BROWN
     }
 
     /** Tier-1 coats: the ones that spawn naturally in the wild. */
