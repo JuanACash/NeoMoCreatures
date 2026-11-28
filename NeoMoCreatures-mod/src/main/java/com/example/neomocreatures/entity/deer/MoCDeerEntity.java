@@ -3,6 +3,10 @@ package com.example.neomocreatures.entity.deer;
 import javax.annotation.Nullable;
 
 import com.example.neomocreatures.Config;
+import com.example.neomocreatures.entity.ai.DefendYoungGoal;
+import com.example.neomocreatures.entity.ai.FightOrFlightPanicGoal;
+import com.example.neomocreatures.entity.ai.YoungDefender;
+import com.example.neomocreatures.entity.ai.YoungDefense;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -38,7 +42,7 @@ import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
@@ -54,11 +58,13 @@ import net.minecraft.world.phys.Vec3;
  * {@link TamableAnimal} for consistency with the project's own class hierarchy, but — like the
  * Crocodile — has no taming interaction of any kind; the original doesn't have one either.
  */
-public class MoCDeerEntity extends TamableAnimal {
+public class MoCDeerEntity extends TamableAnimal implements YoungDefender {
 
     private static final double FOLLOW_RANGE = 12.0D;
     private static final double MAX_HEALTH = 10.0D;
     private static final double MOVEMENT_SPEED = 0.35D;
+    private static final double ATTACK_DAMAGE = 3.0D;
+    private static final double MELEE_SPEED = 1.2D;
 
     /** Original: a 1 in 300 chance per tick to grow by 1 — not every tick. */
     private static final int GROWTH_CHANCE = 300;
@@ -109,6 +115,8 @@ public class MoCDeerEntity extends TamableAnimal {
     private int jumpTimer;
     private final DeerCalm calm = new DeerCalm();
 
+    private DefendYoungGoal defendYoungGoal;
+
     /** Deviates from the original (which ties the tilt sign to the current vertical velocity, so
      *  it flips mid-arc, rising one way and falling the other): tilts the same direction for the
      *  whole jump instead, alternating sides jump to jump — that reads much better visually. */
@@ -122,7 +130,8 @@ public class MoCDeerEntity extends TamableAnimal {
         return Mob.createMobAttributes()
                 .add(Attributes.FOLLOW_RANGE, FOLLOW_RANGE)
                 .add(Attributes.MAX_HEALTH, MAX_HEALTH)
-                .add(Attributes.MOVEMENT_SPEED, MOVEMENT_SPEED);
+                .add(Attributes.MOVEMENT_SPEED, MOVEMENT_SPEED)
+                .add(Attributes.ATTACK_DAMAGE, ATTACK_DAMAGE);
     }
 
     @Override
@@ -167,9 +176,13 @@ public class MoCDeerEntity extends TamableAnimal {
         this.goalSelector.addGoal(1, new AvoidEntityGoal<>(this, LivingEntity.class, FLEE_DISTANCE,
                 AI_SPEED, FLEE_NEAR_SPEED, e -> !(e instanceof MoCDeerEntity)
                         && !this.calm.trusts(e)
+                        && e != this.getTarget()
                         && (e.getBbHeight() > FLEE_SIZE_THRESHOLD || e.getBbWidth() > FLEE_SIZE_THRESHOLD)));
-        this.goalSelector.addGoal(2, new PanicGoal(this, PANIC_SPEED));
+        this.goalSelector.addGoal(2, new FightOrFlightPanicGoal(this, PANIC_SPEED));
         this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, MELEE_SPEED, false));
+        this.defendYoungGoal = new DefendYoungGoal(this);
+        this.targetSelector.addGoal(1, this.defendYoungGoal);
         this.goalSelector.addGoal(5, new FollowParentGoal(this, AI_SPEED));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, AI_SPEED));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0F));
@@ -292,6 +305,16 @@ public class MoCDeerEntity extends TamableAnimal {
     @Override
     public boolean isFood(ItemStack stack) {
         return stack.is(Items.WHEAT);
+    }
+
+    /** The stag fights for its fawn; the doe runs from whoever hurt it. */
+    @Override
+    public void defendYoung(LivingEntity attacker) {
+        if (this.getVariant() == DeerVariant.STAG) {
+            this.defendYoungGoal.alert(attacker);
+        } else if (YoungDefense.isValidAttacker(this, attacker)) {
+            this.setLastHurtByMob(attacker);
+        }
     }
 
     /** Extended: only an adult stag and an adult doe can mate. */

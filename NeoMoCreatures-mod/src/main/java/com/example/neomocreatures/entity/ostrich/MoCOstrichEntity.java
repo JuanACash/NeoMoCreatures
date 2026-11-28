@@ -776,7 +776,7 @@ public class MoCOstrichEntity extends TamableAnimal implements GrowthScaled, Egg
     /** The whip boosts a ridden ostrich, or buries/unburies the head of a free one. */
     private InteractionResult tryWhip(Player player, ItemStack stack) {
         // Only the owner can use the whip on the ostrich.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 if (this.isVehicle()) {
                     applyWhipBoost();

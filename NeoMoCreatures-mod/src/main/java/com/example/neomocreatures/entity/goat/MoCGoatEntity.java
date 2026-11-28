@@ -10,6 +10,8 @@ import com.example.neomocreatures.entity.AgeGrowthScaler;
 import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
+import com.example.neomocreatures.entity.ai.DefendYoungGoal;
+import com.example.neomocreatures.entity.ai.YoungDefender;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.util.MoCExperienceUtil;
@@ -78,7 +80,7 @@ import net.minecraft.world.phys.Vec3;
  * eating, and male dueling are all core WILD behaviour per the wiki, so
  * they're implemented now rather than deferred.
  */
-public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, StorablePet {
+public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, StorablePet, YoungDefender {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -119,6 +121,8 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
             SynchedEntityData.defineId(MoCGoatEntity.class, EntityDataSerializers.INT);
 
     private int angerTicks;
+
+    private DefendYoungGoal defendYoungGoal;
 
     public MoCGoatEntity(EntityType<? extends MoCGoatEntity> type, Level level) {
         super(type, level);
@@ -190,6 +194,8 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
         // Wiki: "Male goats will fight between themselves."
         this.goalSelector.addGoal(3, new GoatDuelGoal(this));
+        this.defendYoungGoal = new DefendYoungGoal(this);
+        this.targetSelector.addGoal(1, this.defendYoungGoal);
         this.goalSelector.addGoal(3, new BreedGoal(this, BREED_SPEED));
         this.goalSelector.addGoal(4, new GoatEatItemGoal(this));
         // Wiki: "A goat will follow the player if they have any edible item in hand."
@@ -199,6 +205,11 @@ public class MoCGoatEntity extends TamableAnimal implements GrowthScaled, Storab
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+    }
+
+    @Override
+    public void defendYoung(LivingEntity attacker) {
+        this.defendYoungGoal.alert(attacker);
     }
 
     @Override

@@ -85,13 +85,18 @@ public class OgreBreakObstructionGoal extends Goal {
 
     private void breakObstructionsIn(AABB searchBox) {
         Level level = this.ogre.level();
+        boolean destroyedAny = false;
         for (BlockPos pos : BlockPos.betweenClosed(
                 Mth.floor(searchBox.minX), Mth.floor(searchBox.minY), Mth.floor(searchBox.minZ),
                 Mth.floor(searchBox.maxX), Mth.floor(searchBox.maxY), Mth.floor(searchBox.maxZ))) {
             BlockState state = level.getBlockState(pos);
             if (this.isBreakableObstruction(level, pos, state, searchBox)) {
                 level.destroyBlock(pos, true, this.ogre);
+                destroyedAny = true;
             }
+        }
+        if (destroyedAny) {
+            this.ogre.playBlockBreakSound();
         }
     }
 

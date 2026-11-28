@@ -23,6 +23,8 @@ public class ModTags {
     public static final TagKey<Item> REPAIRS_SCORP_NETHER = tag("repairs_scorp_nether_armor");
     public static final TagKey<Item> REPAIRS_SCORP_FROST = tag("repairs_scorp_frost_armor");
     public static final TagKey<Item> REPAIRS_SCORP_UNDEAD = tag("repairs_scorp_undead_armor");
+    /** Every item that works as a whip on pets. */
+    public static final TagKey<Item> WHIPS = tag("whips");
     public static final TagKey<Item> REPAIRS_SILVER = tag("repairs_silver_armor");
     public static final TagKey<Item> REPAIRS_FUR = tag("repairs_fur_armor");
     public static final TagKey<Item> REPAIRS_REPTILE = tag("repairs_reptile_armor");

@@ -264,6 +264,7 @@
   "block.neomocreatures.glass_gleaming_pane": "Gleaming Glass Pane",
   "block.neomocreatures.wyvwood_pressure_plate": "Wyvwood Pressure Plate",
   "neomocreatures.configuration.enableFineSilver": "Enable Fine Silver",
+  "neomocreatures.configuration.petsDefendOwner": "Pets Defend Owner",
   "block.neomocreatures.apple_leaves": "Apple Leaves",
   "block.neomocreatures.apple_tree_sapling": "Apple Tree Sapling",
   "block.neomocreatures.sapling_ogre_lair": "Ogre Lair Sapling",

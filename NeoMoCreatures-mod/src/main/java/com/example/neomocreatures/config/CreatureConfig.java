@@ -20,6 +20,7 @@ public final class CreatureConfig {
     public final ModConfigSpec.BooleanValue staticLitter;
     public final ModConfigSpec.IntValue deerCalmSeconds;
     public final ModConfigSpec.BooleanValue deerRideable;
+    public final ModConfigSpec.BooleanValue petsDefendOwner;
 
     public CreatureConfig(ModConfigSpec.Builder builder) {
         builder.translation(ConfigTranslations.of("creatures")).push("creatures");
@@ -97,6 +98,11 @@ public final class CreatureConfig {
                 .comment("Allows players to ride a calm adult deer.")
                 .translation(ConfigTranslations.of("deerRideable"))
                 .define("deerRideable", true);
+
+        petsDefendOwner = builder
+                .comment("Tamed big cats, manticores, bears, komodo dragons, scorpions, foxes, snakes and elephants attack whoever hurts their owner or whoever their owner hurts, like wolves. A sitting pet stays seated.")
+                .translation(ConfigTranslations.of("petsDefendOwner"))
+                .define("petsDefendOwner", true);
 
         builder.pop();
     }

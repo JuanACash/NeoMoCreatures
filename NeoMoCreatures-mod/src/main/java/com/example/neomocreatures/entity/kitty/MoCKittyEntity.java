@@ -14,6 +14,7 @@ import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
+import com.example.neomocreatures.init.ModTags;
 import com.example.neomocreatures.util.MoCExperienceUtil;
 import com.example.neomocreatures.util.MoCInventoryUtil;
 import com.example.neomocreatures.util.MoCTickUtil;
@@ -692,7 +693,7 @@ public class MoCKittyEntity extends TamableAnimal implements CarriedPet, GrowthS
             return shared;
         }
 
-        if (this.isTame() && isWhipable() && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && isWhipable() && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 setSitting(!isKittySitting());
                 this.setTarget(null);

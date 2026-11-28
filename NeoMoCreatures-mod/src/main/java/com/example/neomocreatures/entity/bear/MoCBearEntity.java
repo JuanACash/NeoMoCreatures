@@ -14,6 +14,7 @@ import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -351,9 +352,15 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
         this.targetSelector.addGoal(2, new ProtectCubGoal(this));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, true, this::shouldTargetPlayers));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntAnimal));
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     @Override
@@ -866,7 +873,7 @@ public class MoCBearEntity extends TamableAnimal implements GrowthScaled, HasCus
         }
 
         // Only the owner can order the pet to sit or stand.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 setBearState(getBearState() == SITTING_STATE ? FOURS_STATE : SITTING_STATE);
                 this.standingTicks = 0; // whip-sit is permanent, not the timed wild stand/sit

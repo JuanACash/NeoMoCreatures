@@ -9,6 +9,8 @@ import com.example.neomocreatures.entity.ai.ConditionalAvoidEntityGoal;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.YoungDefender;
+import com.example.neomocreatures.entity.ai.YoungDefense;
 import com.example.neomocreatures.entity.fox.MoCFoxEntity;
 import com.example.neomocreatures.entity.raccoon.MoCRaccoonEntity;
 import com.example.neomocreatures.entity.turkey.MoCTurkeyEntity;
@@ -58,7 +60,7 @@ import net.minecraft.world.phys.Vec3;
  * never retaliates. Spawns already as an adult (75% of the time) or a small baby (25%) — there is no
  * breeding goal in the original, so this doesn't breed either.
  */
-public class MoCBoarEntity extends Animal {
+public class MoCBoarEntity extends Animal implements YoungDefender {
 
     private static final float MAX_HEALTH = 10.0F;
     private static final float ATTACK_DAMAGE = 2.5F;
@@ -241,6 +243,15 @@ public class MoCBoarEntity extends Animal {
             this.retaliating = false;
         }
         return this.retaliating;
+    }
+
+    /** Defending a piglet is a straight fight: no hit and run, so the boar does not back off. */
+    @Override
+    public void defendYoung(LivingEntity attacker) {
+        if (this.isGrownAdult() && YoungDefense.isValidAttacker(this, attacker)) {
+            this.setTarget(attacker);
+            this.retaliating = true;
+        }
     }
 
     // ---------------------------------------------------------------------

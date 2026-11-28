@@ -11,6 +11,7 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -302,6 +303,12 @@ public class MoCSnakeEntity extends TamableAnimal
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, TARGET_CHECK_INTERVAL, false, false,
                 target -> this.isPissed() && this.getVariant().isBold() && !this.isTame() && !this.isBaby()));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntPrey));
+        OwnerDefense.addGoals(this.targetSelector, this);
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     private boolean canHuntPrey(@Nullable LivingEntity target) {

@@ -12,6 +12,7 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.SaddledMount;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -143,6 +144,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         this.goalSelector.addGoal(6, new LeapAtTargetGoal(this, 0.4F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
         this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::canHuntPlayers));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D) {
             @Override
@@ -157,6 +159,11 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         });
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     private static int getRawLight(MoCScorpionEntity scorpion) {
@@ -537,7 +544,7 @@ public class MoCScorpionEntity extends TamableAnimal implements GrowthScaled, Eg
         // Whip toggles sitting — only while tamed and not currently being
         // ridden, exactly like the original MoCEntityPetScorpion.
         // Only the owner can order the scorpion to sit or stand.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get()) && !this.isVehicle()) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS) && !this.isVehicle()) {
             if (!this.level().isClientSide) {
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);

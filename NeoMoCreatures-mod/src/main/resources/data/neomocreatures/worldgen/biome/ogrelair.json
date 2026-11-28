@@ -43,7 +43,9 @@
       "neomocreatures:ogre_lair_firestone_cluster",
       "neomocreatures:ogre_lair_silver_sand_bunker"
     ],
-    [],
+    [
+      "neomocreatures:ogre_lair_stalactites"
+    ],
     [],
     [
       "neomocreatures:ogre_lair_trees",

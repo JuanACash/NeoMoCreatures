@@ -1,0 +1,24 @@
+{
+  "type": "neomocreatures:stalactite",
+  "config": {
+    "block": {
+      "type": "minecraft:simple_state_provider",
+      "state": { "Name": "neomocreatures:deep_wyvstone" }
+    },
+    "ceiling": {
+      "type": "minecraft:matching_blocks",
+      "blocks": "neomocreatures:deep_wyvstone"
+    },
+    "base_radius": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 1,
+      "max_inclusive": 3
+    },
+    "length": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 4,
+      "max_inclusive": 12
+    },
+    "max_ceiling_scan": 24
+  }
+}

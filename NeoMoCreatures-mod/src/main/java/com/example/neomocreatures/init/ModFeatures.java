@@ -2,6 +2,8 @@ package com.example.neomocreatures.init;
 
 import com.example.neomocreatures.NeoMoCreatures;
 import com.example.neomocreatures.worldgen.FirestoneClusterFeature;
+import com.example.neomocreatures.worldgen.StalactiteConfiguration;
+import com.example.neomocreatures.worldgen.StalactiteFeature;
 import com.example.neomocreatures.worldgen.WyvernIslandFeature;
 import com.example.neomocreatures.worldgen.WyvernNestFeature;
 
@@ -27,4 +29,9 @@ public class ModFeatures {
    public static final DeferredHolder<Feature<?>, WyvernIslandFeature> WYVERN_ISLAND =
         FEATURES.register("wyvern_island",
                 () -> new WyvernIslandFeature(NoneFeatureConfiguration.CODEC));
+
+    public static final DeferredHolder<Feature<?>, StalactiteFeature> STALACTITE =
+            FEATURES.register("stalactite",
+                    () -> new StalactiteFeature(StalactiteConfiguration.CODEC));
+
 }

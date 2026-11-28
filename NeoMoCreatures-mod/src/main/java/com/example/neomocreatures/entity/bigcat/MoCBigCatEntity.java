@@ -15,7 +15,10 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.SaddledMount;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
+import com.example.neomocreatures.entity.ai.DefendYoungGoal;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
+import com.example.neomocreatures.entity.ai.YoungDefender;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -100,7 +103,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * saddle, and chest still come in later steps.
  */
 public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, PlayerRideableJumping,
-        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount {
+        HasCustomInventoryScreen, StorablePet, AscendingMount, DescendingMount, EquippedPet, SaddledMount, YoungDefender {
 
     private static final float BABY_SCALE = 0.5F;
     private static final double SPRINT_SPEED_BONUS = 0.15D;
@@ -177,6 +180,8 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, Play
     /** Ticks left before it's hungry again and resumes hunting — 0 means "hungry, will hunt". */
     private int hungerCooldown;
 
+    private DefendYoungGoal defendYoungGoal;
+
     private final SimpleContainer chestInventory = new SimpleContainer(CHEST_SLOTS);
     @Nullable
     private ResourceLocation saddleItemId;
@@ -186,7 +191,7 @@ public class MoCBigCatEntity extends TamableAnimal implements GrowthScaled, Play
     }
 
     @Override
-protected void registerGoals() {
+    protected void registerGoals() {
         this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, false));
@@ -194,13 +199,25 @@ protected void registerGoals() {
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-
+        this.defendYoungGoal = new DefendYoungGoal(this);
+        this.targetSelector.addGoal(1, this.defendYoungGoal);
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
         // Wild adult big cats actively hunt players AND smaller animals (per the
         // wiki: "from mobs as small as ants to as large as deer, including the
         // player") until they've made a kill, then go neutral until hungry again.
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, this::canHunt));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntAnimal));
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
+    }
+
+    @Override
+    public void defendYoung(LivingEntity attacker) {
+        this.defendYoungGoal.alert(attacker);
     }
 
     private boolean canHunt(@Nullable LivingEntity target) {
@@ -254,7 +271,7 @@ protected void registerGoals() {
     /** The whip toggles sitting on a tamed cat. */
     private InteractionResult tryWhip(Player player, ItemStack stack) {
         // Only the owner can order the cat to sit or stand.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 setSitting(!isSittingSynced());
                 this.setTarget(null);

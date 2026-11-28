@@ -14,6 +14,7 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalMeleeAttackGoal;
 import com.example.neomocreatures.entity.ai.ConditionalStrollGoal;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
 import com.example.neomocreatures.init.ModTags;
@@ -216,6 +217,12 @@ public class MoCElephantEntity extends TamableAnimal implements GrowthScaled, Pl
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     /** Sneaking near a tamed, harnessed elephant sits it for a short while so it can be mounted. */

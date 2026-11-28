@@ -163,6 +163,7 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_AMBIENT = register("moc_ogre.ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_HURT = register("moc_ogre.hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_DEATH = register("moc_ogre.death");
+    public static final DeferredHolder<SoundEvent, SoundEvent> OGRE_DESTROY = register("moc_ogre.destroy");
 
     public static final DeferredHolder<SoundEvent, SoundEvent> WEREWOLF_AMBIENT = register("moc_werewolf.ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> WEREWOLF_HURT = register("moc_werewolf.hurt");

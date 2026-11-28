@@ -7,6 +7,9 @@ import javax.annotation.Nullable;
 import com.example.neomocreatures.entity.AgeGrowthScaler;
 import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.StorablePet;
+import com.example.neomocreatures.entity.ai.DefendYoungGoal;
+import com.example.neomocreatures.entity.ai.FightOrFlightPanicGoal;
+import com.example.neomocreatures.entity.ai.YoungDefender;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -30,6 +33,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -39,7 +43,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
@@ -52,7 +56,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 
-public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, StorablePet {
+public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, StorablePet, YoungDefender {
 
     private static final int GROWTH_TICKS = 24000;
     private static final float BABY_SCALE = 0.5F;
@@ -64,6 +68,10 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
     private static final int BREEDING_COOLDOWN_TICKS = 6000;
     /** Vanilla entity event that spawns love hearts. */
     private static final byte LOVE_HEARTS_EVENT_ID = 18;
+    private static final double ATTACK_DAMAGE = 2.0D;
+    private static final double MELEE_SPEED = 1.2D;
+
+    private DefendYoungGoal defendYoungGoal;
 
     private static final Ingredient TEMPTATION_ITEMS = Ingredient.of(Items.MELON_SEEDS);
     private static final Ingredient BREEDING_ITEMS = Ingredient.of(Items.WHEAT_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS);
@@ -94,18 +102,30 @@ public class MoCTurkeyEntity extends TamableAnimal implements GrowthScaled, Stor
                 .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
                 .add(Attributes.MAX_HEALTH, BASE_MAX_HEALTH)
                 .add(Attributes.MOVEMENT_SPEED, BASE_MOVEMENT_SPEED)
-                .add(Attributes.SCALE, 1.0D);
+                .add(Attributes.SCALE, 1.0D)
+                .add(Attributes.ATTACK_DAMAGE, ATTACK_DAMAGE);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.4D));
+        this.goalSelector.addGoal(1, new FightOrFlightPanicGoal(this, 1.4D));
         this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(3, new TemptGoal(this, 1.0D, TEMPTATION_ITEMS, false));
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, MELEE_SPEED, false));
+        this.defendYoungGoal = new DefendYoungGoal(this);
+        this.targetSelector.addGoal(1, this.defendYoungGoal);
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
 
+    }
+
+    /** Only the males defend the young. */
+    @Override
+    public void defendYoung(LivingEntity attacker) {
+        if (this.isMale()) {
+            this.defendYoungGoal.alert(attacker);
+        }
     }
 
     @Override

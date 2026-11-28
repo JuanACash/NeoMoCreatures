@@ -241,6 +241,7 @@ public abstract class MoCOgreEntity extends Monster {
         }
         BlockPos center = this.blockPosition();
         int intRadius = (int) Math.ceil(radius);
+        boolean destroyedAny = false;
         // Only in front of it, roughly at standing height — not a sphere that also digs down or
         // reaches behind it.
         Vec3 forward = Vec3.directionFromRotation(0F, this.getYRot());
@@ -260,6 +261,7 @@ public abstract class MoCOgreEntity extends Monster {
                 continue;
             }
             this.level().destroyBlock(pos, true, this);
+            destroyedAny = true;
             if (this.isFireStarter() && this.random.nextInt(3) == 0) {
                 BlockPos above = pos.above();
                 if (this.level().getBlockState(above).isAir()) {
@@ -267,6 +269,15 @@ public abstract class MoCOgreEntity extends Monster {
                 }
             }
         }
+        if (destroyedAny) {
+            this.playBlockBreakSound();
+        }
+
+    }
+
+    /** Plays the rubble sound. Called once per batch of broken blocks, never once per block. */
+    public void playBlockBreakSound() {
+        this.playSound(ModSounds.OGRE_DESTROY.get(), 1.0F, 0.9F + this.random.nextFloat() * 0.2F);
     }
 
     /** Original: startArmSwingAttack() — single-headed ogres always swing their right arm (they

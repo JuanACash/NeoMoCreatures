@@ -623,7 +623,7 @@ public class MoCWyvernEntity extends TamableAnimal implements EggHatchable, HasC
 
     /** The whip toggles sitting. */
     private InteractionResult tryWhip(Player player, ItemStack stack) {
-        if (stack.is(ModItems.WHIP.get())) {
+        if (stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 this.setSitting(!this.isSittingSynced());
                 this.setTarget(null);

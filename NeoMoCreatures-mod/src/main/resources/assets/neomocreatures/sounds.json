@@ -409,6 +409,12 @@
     ]
   },
 
+  "moc_ogre.destroy": {
+    "sounds": [
+      "neomocreatures:moc_ogre/destroy"
+    ]
+  },
+
   "moc_deer.ambient": {
     "sounds": [ "neomocreatures:moc_deer/deer_grunt" ]
   },

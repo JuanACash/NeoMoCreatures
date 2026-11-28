@@ -13,6 +13,7 @@ import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.VariantGroupData;
 import com.example.neomocreatures.entity.ai.ConditionalPanicGoal;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.init.ModEntities;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -134,6 +135,12 @@ public class MoCFoxEntity extends TamableAnimal implements GrowthScaled, Storabl
         // mob smaller than them" — the original had this exact goal commented
         // out; the wiki describes it as real behaviour, so it's enabled here.
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntTarget));
+        OwnerDefense.addGoals(this.targetSelector, this);
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     private boolean canHuntTarget(@Nullable LivingEntity target) {

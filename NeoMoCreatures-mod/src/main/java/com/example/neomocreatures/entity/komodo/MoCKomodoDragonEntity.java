@@ -13,6 +13,7 @@ import com.example.neomocreatures.entity.SaddledMount;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.DeepSwimMoveControl;
 import com.example.neomocreatures.entity.ai.HuntingRules;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -320,8 +321,14 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true, this::canAttackPlayer));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, this::canHuntPrey));
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     private boolean canAttackPlayer(@Nullable LivingEntity target) {
@@ -457,7 +464,7 @@ public class MoCKomodoDragonEntity extends TamableAnimal implements GrowthScaled
             return shared;
         }
 
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 this.setOrderedToSit(!this.isOrderedToSit());
                 this.setTarget(null);

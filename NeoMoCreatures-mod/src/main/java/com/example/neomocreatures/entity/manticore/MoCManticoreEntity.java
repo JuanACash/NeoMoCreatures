@@ -13,6 +13,7 @@ import com.example.neomocreatures.entity.GrowthScaled;
 import com.example.neomocreatures.entity.SaddledMount;
 import com.example.neomocreatures.entity.StorablePet;
 import com.example.neomocreatures.entity.ai.ConditionalTargetGoal;
+import com.example.neomocreatures.entity.ai.OwnerDefense;
 import com.example.neomocreatures.entity.egg.EggHatchable;
 import com.example.neomocreatures.init.ModItems;
 import com.example.neomocreatures.init.ModSounds;
@@ -153,7 +154,13 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        OwnerDefense.addGoals(this.targetSelector, this);
         this.targetSelector.addGoal(2, new ConditionalTargetGoal<>(this, Player.class, true, this::canHuntPlayers));
+    }
+
+    @Override
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        return OwnerDefense.wantsToAttack(target, owner);
     }
 
     private static float getBrightness(MoCManticoreEntity manticore) {
@@ -440,7 +447,7 @@ public class MoCManticoreEntity extends TamableAnimal implements GrowthScaled, E
         }
 
         // Only the owner can order the pet to sit or stand.
-        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModItems.WHIP.get())) {
+        if (this.isTame() && this.isOwnedBy(player) && stack.is(ModTags.WHIPS)) {
             if (!this.level().isClientSide) {
                 setSitting(!this.isSittingSynced());
                 this.setTarget(null);
